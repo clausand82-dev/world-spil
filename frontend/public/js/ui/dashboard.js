@@ -1,65 +1,62 @@
 /* =========================================================
    ui/dashboard.js
-   - RETTET: Har nu sin egen live-timer til progress bars og tid.
+   - Viser et samlet overblik ved at kalde funktioner fra overview.js
 ========================================================= */
 
-let dashboardTimer = null;
-
-function dashboardTick() {
-    const now = Date.now();
-    for (const jobId in (window.ActiveBuilds || {})) {
-        const job = window.ActiveBuilds[jobId];
-        const elementId = jobId.replace(/\./g, '-');
-        
-        // Opdater tid
-        const timeElement = document.getElementById(`time-remaining-${elementId}`);
-        if (timeElement) {
-            timeElement.textContent = formatTimeRemaining((job.endTs - now) / 1000);
-        }
-
-        // Opdater progress bar
-        const progressWrapper = document.querySelector(`.build-progress[data-pb-for="${jobId}"]`);
-        if (progressWrapper) {
-            const fill = progressWrapper.querySelector(".pb-fill");
-            const label = progressWrapper.parentElement.querySelector(".pb-label"); // Label er nu ved siden af
-            if (fill && label) {
-                const pct = Math.min(100, Math.round(Math.max(0, (now - job.startTs) / (job.endTs - job.startTs)) * 100));
-                fill.style.width = `${pct}%`;
-                label.textContent = `${pct}%`;
-            }
-        }
-    }
-}
-
 window.renderDashboard = () => {
-    if (dashboardTimer) clearInterval(dashboardTimer);
-    
     const main = $("#main");
-    if (!window.data?.defs || typeof renderActiveJobs !== 'function') {
-        main.innerHTML = `<div class="sub">Indlæser...</div>`;
+    if (!window.data || !window.data.defs) {
+        main.innerHTML = `<div class="sub">Indlæser data...</div>`;
         return;
     }
 
+    // Tjek om funktionerne fra overview.js er tilgængelige
+    if (typeof renderActiveJobs !== 'function' || typeof renderPassiveYields !== 'function') {
+        main.innerHTML = `<div class="sub">Fejl: Oversigts-funktioner er ikke indlæst.</div>`;
+        console.error("renderActiveJobs eller renderPassiveYields er ikke defineret. Sørg for at overview.js er inkluderet korrekt i index.html.");
+        return;
+    }
+
+    // Kald de globale funktioner for at få HTML-indholdet
     const activeBuildingsHTML = renderActiveJobs('bld');
     const activeAddonsHTML = renderActiveJobs('add');
-    const activeResearchHTML = renderActiveJobs('rsd');
+    const activeResearchHTML = renderActiveJobs('rsd'); // <-- NYT KALD
     const passiveYieldsHTML = renderPassiveYields();
 
+    // Sæt den endelige HTML for dashboardet
     main.innerHTML = `
-        <section class="panel section"><div class="section-head">🏗️ Aktive Bygge-jobs</div><div class="section-body">${activeBuildingsHTML}</div></section>
-        <section class="panel section"><div class="section-head">➕ Aktive Addon-jobs</div><div class="section-body">${activeAddonsHTML}</div></section>
-        <section class="panel section"><div class="section-head">🔬 Igangværende Forskning</div><div class="section-body">${activeResearchHTML}</div></section>
-        <section class="panel section"><div class="section-head">📊 Passiv Produktion</div><div class="section-body">${passiveYieldsHTML}</div></section>`;
+        <section class="panel section">
+            <div class="section-head">🏗️ Aktive Bygge-jobs</div>
+            <div class="section-body">
+                ${activeBuildingsHTML}
+            </div>
+        </section>
+        
+        <section class="panel section">
+            <div class="section-head">➕ Aktive Addon-jobs</div>
+            <div class="section-body">
+                ${activeAddonsHTML}
+            </div>
+        </section>
 
-    // Kør tick én gang med det samme og start derefter intervallet
-    dashboardTick();
-    dashboardTimer = setInterval(dashboardTick, 1000);
+        <!-- ======================================================== -->
+        <!-- NY SEKTION: Viser igangværende forskning                 -->
+        <!-- ======================================================== -->
+        <section class="panel section">
+            <div class="section-head">🔬 Igangværende Forskning</div>
+            <div class="section-body">
+                ${activeResearchHTML}
+            </div>
+        </section>
+
+        <section class="panel section">
+            <div class="section-head">📊 Passiv Produktion</div>
+            <div class="section-body">
+                ${passiveYieldsHTML}
+            </div>
+        </section>
+    `;
+
+    // Sørg for, at de nye progress bars også bliver opdateret med det samme
+    window.BuildingsProgress?.rehydrate?.(main);
 };
-
-// Sørg for at stoppe timeren, når vi forlader dashboardet
-window.addEventListener('hashchange', () => {
-    if (location.hash !== '#/dashboard' && dashboardTimer) {
-        clearInterval(dashboardTimer);
-        dashboardTimer = null;
-    }
-});

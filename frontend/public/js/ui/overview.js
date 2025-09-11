@@ -6,12 +6,13 @@
 function formatTimeRemaining(totalSeconds) { /* ... uændret ... */ }
 
 function renderActiveJobs(type) {
-    const now = Date.now();
+    const H = window.helpers;
     let rows = [];
     const typeName = type === 'bld' ? 'Bygger' : (type === 'add' ? 'Addon' : 'Forsker');
 
     for (const jobId in (window.ActiveBuilds || {})) {
         if (!jobId.startsWith(`${type}.`)) continue;
+
         const job = window.ActiveBuilds[jobId];
         const key = jobId.replace(new RegExp(`^${type}\\.`), '');
         const def = window.data?.defs?.[type]?.[key];
@@ -23,29 +24,33 @@ function renderActiveJobs(type) {
         let linkHref = `#/`;
         if (type === 'bld' || type === 'add') {
             const family = key.replace(/\.l\d+$/, '');
-            linkHref = `#/building/${family}.l1`; // Link til base-bygningen
+            linkHref = `#/building/${family}.l1`;
         } else if (type === 'rsd') {
             linkHref = '#/research';
         }
 
+        // =====================================================================
+        // RETTELSE: Ny, robust HTML-struktur for progress baren
+        // Den fylder nu hele bunden og indeholder både tid og procent-label.
+        // =====================================================================
         rows.push(`
             <div class="item">
                 <div class="icon">${def.icon || '⏱️'}</div>
-                <div>
+                <div class="grow" style="display: flex; flex-direction: column; gap: 4px;">
                     <div class="title"><a href="${linkHref}" class="link">${def.name || key}</a></div>
                     <div class="sub">
                         <span class="badge ${level > 1 ? 'price-warn' : 'price-ok'}">${actionType}</span>
                         ${type !== 'rsd' ? `<span>Level ${level}</span>` : ''}
                     </div>
-                    <div class="build-progress" data-pb-for="${jobId}" style="display:block; margin-top: 8px; width: 160px;">
+                    <div class="build-progress" data-pb-for="${jobId}" style="display:block; width: 100%;">
                         <div class="pb-track" style="position:relative; height:12px; background:var(--border,#ddd); border-radius:6px; overflow:hidden;">
                             <div class="pb-fill" style="height:100%; width:0%; background:var(--primary,#4aa);"></div>
                         </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 12px; margin-top: 4px; opacity: 0.8;">
+                            <span id="time-remaining-${jobId.replace(/\./g, '-')}"></span>
+                            <span class="pb-label">0%</span>
+                        </div>
                     </div>
-                </div>
-                <div class="right">
-                    <strong id="time-remaining-${jobId.replace(/\./g, '-')}"></strong>
-                    <div class="pb-label" style="font-size:12px; width: 40px; text-align: right;">0%</div>
                 </div>
             </div>
         `);
