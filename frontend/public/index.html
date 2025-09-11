@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>World — v3.4</title>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body class="dark">
+
+  
+  <!-- ==== TOPBAR ==== -->
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-emoji">🌍</span>
+      <span class="brand-name">World</span>
+    </div>
+
+    <!-- Ressource-chips + AnimalCap + Footprint -->
+    <div class="header-resources" id="headerRes"></div>
+
+    <div class="header-tools">
+      <div class="player-meta">
+    <span id="playerName">Guest</span>
+    <span id="playerLoc">- / - / -</span>
+</div>
+      <div id="authBtns" class="auth"></div>
+      <button id="themeToggle" class="icon-btn" title="Light/Dark">☀️/🌙</button>
+    </div>
+  </header>
+
+  <!-- ==== CONTENT (to kolonner) ==== -->
+  <div class="content">
+    <main id="main"></main>
+    <aside id="sidebar"></aside>
+  </div>
+
+
+  
+  <!-- Quick links / bottom nav (fixed) -->
+  <nav class="quickbar">
+    <a href="#/dashboard"  data-page="dashboard"  title="Dashboard">🏠<span>Dashboard</span></a>
+    <a href="#/buildings"  data-page="buildings"  title="Buildings">🏗️<span>Buildings</span></a>
+    <a href="#/research"   data-page="research"   title="Research">🔬<span>Research</span></a>
+    <a href="#/animals"    data-page="animals"    title="Animals">🐄<span>Animals</span></a>
+    <a href="#/inventory"  data-page="inventory"  title="Inventory">📦<span>Inventory</span></a>
+    <a href="#/stats"      data-page="stats"      title="Statistics">📊<span>Stats</span></a>
+    <a href="#/logs"       data-page="logs"       title="Logs">📝<span>Logs</span></a>
+    <a href="#/user"       data-page="user"       title="User">👤<span>User</span></a>
+  </nav>
+
+  <!-- Modal (confirm/login osv.) -->
+  <div id="modal" class="modal" hidden>
+    <div class="modal__content">
+      <button id="modalClose" class="modal__close" title="Luk">✖</button>
+      <div id="modalBody"></div>
+      <div class="modal__actions" id="modalActions"></div>
+    </div>
+  </div>
+
+  <!-- (Usynlig) Map-select side – vises kun når den rute vælges -->
+  <div id="mapSelect" class="mapselect" hidden>
+    <div class="mapselect__inner panel">
+      <h2>Vælg startfelt</h2>
+      <p class="sub">Placeholder for kortvalg (kommer senere).</p>
+      <div style="margin-top:12px; display:flex; gap:8px; justify-content:flex-end">
+        <a href="#/dashboard" class="btn">Tilbage</a>
+        <button class="btn primary" onclick="location.hash='#/dashboard'">OK</button>
+      </div>
+    </div>
+  </div>
+
+    <!-- JS (ingen bundler; rækkefølge = afhængigheder) -->
+  
+
+  <!-- services -->  
+  <script src="js/state.js"></script>
+  
+  <script src="js/services/data.js"></script>
+  <script src="js/ui/common.js"></script>
+  <script src="js/services/kv.js"></script>
+<!-- views -->
+<script src="js/ui/buildings.js"></script>    
+<script src="js/ui/dashboard.js"></script>
+  
+  <script src="js/ui/buildingDetail.js"></script>
+  <script src="js/ui/research.js"></script>
+  <script src="js/ui/inventory.js"></script>
+  <script src="js/ui/animals.js"></script>
+  <script src="js/ui/stats.js"></script>
+  <script src="js/ui/logs.js"></script>
+  <script src="js/ui/user.js"></script>
+  
+ <!-- demo/data wrapper--> 
+<script src="js/services/api.js"></script>
+
+<!-- app til sidst -->
+  <script src="js/app.js"></script>
+  
+</body>
+</html>

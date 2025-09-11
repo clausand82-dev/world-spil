@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+  <history ver="version 3.4">
+    <change>- added build time for buildings (preparations for addons, research and production/recipes)<br>
+    - visuel changes and additions for building list page and building detail pages <br>
+    - added passive yields from buildings and addons
+    </change>
+  </history>
+    <history ver="version 3.3">
+    <change>
+    - Added DB support for buy buildings <br>
+    - Added update system for resource use (aka auto update without refresh hole site) <br>
+    </change>
+    </history>
+     <history ver="version 3.2">
+    <change>
+    - Added demo addons system there render actual requested ressources and research<br>
+    - xxx <br>
+    </change>
+  </history>
+       <history ver="version 3.1">
+    <change>
+    - remove demo data and intergrate real data from DB <br>
+    - xxx <br>
+    </change>
+  </history>
+       <history ver="version 3.0">
+    <change>
+    - New layout <br>
+    - Behind the scenes movement of code and files to be more orgineced <br>
+    </change>
+  </history>
