@@ -6,11 +6,11 @@
 ========================================================= */
 
 // Flag: mock-tilstand (true = brug hardcodet data)
-const MOCK = true;
+const MOCK = false;
 
 // Base-URL til backend API (når du kobler på PHP)
 const API_BASE = "../../backend/api/"; // ændres senere når du er klar
-
+/*
 // --- Offentlige API-funktioner (bruges af app.js / UI) ----
 window.api = {
   // Hent definitions (res, bld, rsd, rcp)
@@ -40,10 +40,10 @@ window.api = {
     });
     return rsp.json();
   }
-};
+};*/
 
 // --- MOCK DATA (kopi fra v4.3 – trimmet en smule) ----------- BRUGER RIGTIGE TAL NU
-async function mockDefs() {
+/*async function mockDefs() {
   await window.dataReady;
 
   const res = {};
@@ -128,7 +128,7 @@ const def = getDef(key);   // <— brug 'key' (uden prefix) her
         yield:[{res:"res.water", amount:25, time:"1h"}], durability:0.80, footprintDelta:-2, animalCapDelta:0,
         repairPrice:{"res.money":60}, price:{"res.money":800},
         req:[{type:"rsd", id:"rsd.water.access", label:"Water Access"}]
-      }*/
+      }*//*
     },
     rsd: {
       "rsd.agri.adv": { name:"Advanced Agriculture", icon:"🎋", desc:"Better crop yield.", cost:{"res.money":600}, progress:1.0 },
@@ -183,7 +183,7 @@ async function mockAction(name, payload){
     return { ok:true, statePatch:{} };
   }
   return { ok:true, message:"noop" };
-}
+}*/
 
 /* --- AUTH: append-only (overskriver intet eksisterende) --- */
 (function(){

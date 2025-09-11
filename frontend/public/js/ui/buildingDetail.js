@@ -550,7 +550,7 @@ if (!window.__RecipeStartWired__) {
 // =====================================================================
 
 
-function hasResearch(rsdIdFull) {
+window.hasResearch = function(rsdIdFull) {
   const S = window.data?.state || window.state || {};
   if (S.rsd && (S.rsd[rsdIdFull] || S.rsd[rsdIdFull?.replace(/^rsd\./, "")])) return true;
   const R = S.research || {};

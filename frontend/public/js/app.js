@@ -225,15 +225,15 @@ async function boot(){
     if (window.loadArtManifest) await window.loadArtManifest();
 
     // 1) Hent defs + state (demo/mock)
-    const defsData  = await api.getDefs();
-    const stateData = await api.getState();
+    /*const defsData  = await api.getDefs();
+    const stateData = await api.getState();*/
 
-    // Bevar objekter, MERGE ind
+    /*// Bevar objekter, MERGE ind
     window.defs  = window.defs  || {};
     Object.assign(window.defs, defsData || {});
 
     window.state = window.state || {};
-    Object.assign(window.state, stateData || {});
+    Object.assign(window.state, stateData || {});*/
 
     // 2) Session + profil
     try {

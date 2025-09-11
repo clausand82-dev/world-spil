@@ -1,81 +1,65 @@
 /* =========================================================
    ui/dashboard.js
-   - Dashboard-side (liste af bygninger, research, produktion)
+   - RETTET: Har nu sin egen live-timer til progress bars og tid.
 ========================================================= */
 
+let dashboardTimer = null;
+
+function dashboardTick() {
+    const now = Date.now();
+    for (const jobId in (window.ActiveBuilds || {})) {
+        const job = window.ActiveBuilds[jobId];
+        const elementId = jobId.replace(/\./g, '-');
+        
+        // Opdater tid
+        const timeElement = document.getElementById(`time-remaining-${elementId}`);
+        if (timeElement) {
+            timeElement.textContent = formatTimeRemaining((job.endTs - now) / 1000);
+        }
+
+        // Opdater progress bar
+        const progressWrapper = document.querySelector(`.build-progress[data-pb-for="${jobId}"]`);
+        if (progressWrapper) {
+            const fill = progressWrapper.querySelector(".pb-fill");
+            const label = progressWrapper.parentElement.querySelector(".pb-label"); // Label er nu ved siden af
+            if (fill && label) {
+                const pct = Math.min(100, Math.round(Math.max(0, (now - job.startTs) / (job.endTs - job.startTs)) * 100));
+                fill.style.width = `${pct}%`;
+                label.textContent = `${pct}%`;
+            }
+        }
+    }
+}
+
 window.renderDashboard = () => {
-  const main = $("#main");
+    if (dashboardTimer) clearInterval(dashboardTimer);
+    
+    const main = $("#main");
+    if (!window.data?.defs || typeof renderActiveJobs !== 'function') {
+        main.innerHTML = `<div class="sub">Indlæser...</div>`;
+        return;
+    }
 
-  // Bygninger (liste)
-  const bldsHtml = Object.entries(defs.bld).map(([id, d]) => {
-    const owned = !!state.owned.bld[id];
-    const req   = renderReqLine(d);
-    const thumb = id === "bld.farm.l2" ? d.photoMedium : ""; // demo: kun farm har thumb
-    const icon  = thumb
-      ? `<img src="${thumb}" alt="" style="width:28px;height:28px;border-radius:6px;border:1px solid var(--border)">`
-      : (d.icon || "🏗️");
-    return `
-      <div class="item">
-        <div class="icon">${icon}</div>
-        <div>
-          <div class="title"><a href="#/building/${id}" class="link">${d.name}</a></div>
-          <div class="sub">Level ${d.level}</div>
-          ${req}
-        </div>
-        <div class="right">
-          ${owned ? `<span class="badge owned">Owned</span>` : `<button class="btn primary" onclick="fakeBuild('${id}')">Build</button>`}
-        </div>
-      </div>
-    `;
-  }).join("");
+    const activeBuildingsHTML = renderActiveJobs('bld');
+    const activeAddonsHTML = renderActiveJobs('add');
+    const activeResearchHTML = renderActiveJobs('rsd');
+    const passiveYieldsHTML = renderPassiveYields();
 
-    // Research (liste + progress + start/continue/cancel)
-  const rsdHtml = Object.entries(defs.rsd).map(([id, d]) => {
-    const completed = d.progress >= 1 || !!state.research[id];
-    const pct  = Math.round((completed ? 1 : d.progress || 0) * 100);
-    const btns = completed
-      ? `<span class="badge">✓ Complete</span>`
-      : (pct>0
-        ? `<div style="display:flex;gap:8px">
-             <button class="btn" onclick="continueResearch('${id}')">Continue</button>
-             <button class="btn" onclick="cancelResearch('${id}')">Cancel</button>
-           </div>`
-        : `<button class="btn primary" onclick="startResearch('${id}')">Start</button>`);
-    return `
-      <div class="item">
-        <div class="icon">${d.icon||"🧪"}</div>
-        <div>
-          <div class="title">${d.name}</div>
-          <div class="sub">${renderCostColored(d.cost)}</div>
-          <div class="progress"><span style="width:${pct}%"></span><div class="pct">${pct}%</div></div>
-        </div>
-        <div class="right">${btns}</div>
-      </div>
-    `;
-  }).join("");
+    main.innerHTML = `
+        <section class="panel section"><div class="section-head">🏗️ Aktive Bygge-jobs</div><div class="section-body">${activeBuildingsHTML}</div></section>
+        <section class="panel section"><div class="section-head">➕ Aktive Addon-jobs</div><div class="section-body">${activeAddonsHTML}</div></section>
+        <section class="panel section"><div class="section-head">🔬 Igangværende Forskning</div><div class="section-body">${activeResearchHTML}</div></section>
+        <section class="panel section"><div class="section-head">📊 Passiv Produktion</div><div class="section-body">${passiveYieldsHTML}</div></section>`;
 
-  // Production overview (simpel aggregering / time)
-  const prodRows = Object.values(defs.bld).flatMap(b => (b.yield||[]));
-  const agg = {};
-  for (const y of prodRows) agg[y.res] = (agg[y.res]||0) + y.amount;
-  const prodHtml = Object.entries(agg).map(([rid, amt]) => {
-    const r = defs.res[rid] || { name: rid, emoji: "" };
-    return `<div class="item"><div class="icon">${r.emoji||"⚙️"}</div><div class="title">+${amt} ${r.name} / h</div></div>`;
-  }).join("") || `<div class="sub" style="padding:10px 12px">Ingen produktion endnu.</div>`;
-
-  // Sæt side
-  main.innerHTML = `
-    <section class="panel section">
-      <div class="section-head">🏗️ Buildings</div>
-      <div class="section-body">${bldsHtml}</div>
-    </section>
-    <section class="panel section">
-      <div class="section-head">🔬 Research</div>
-      <div class="section-body">${rsdHtml}</div>
-    </section>
-    <section class="panel section">
-      <div class="section-head">📊 Production Overview</div>
-      <div class="section-body">${prodHtml}</div>
-    </section>
-  `;
+    // Kør tick én gang med det samme og start derefter intervallet
+    dashboardTick();
+    dashboardTimer = setInterval(dashboardTick, 1000);
 };
+
+// Sørg for at stoppe timeren, når vi forlader dashboardet
+window.addEventListener('hashchange', () => {
+    if (location.hash !== '#/dashboard' && dashboardTimer) {
+        clearInterval(dashboardTimer);
+        dashboardTimer = null;
+    }
+});
