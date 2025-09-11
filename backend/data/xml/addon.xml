@@ -53,7 +53,7 @@
     <recipes>
       <recipe id="rcp.leather.l1"/>
     </recipes>
-    <yield period="10s">
+    <yield period="1h">
       <res id="res.rawhide" amount="1"/>
     </yield>
   </addon>

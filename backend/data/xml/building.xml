@@ -17,7 +17,7 @@
       <res id="res.wood" amount="25"/>
       <res id="res.stone" amount="5"/>
     </cost>
-    <yield period="10s">
+    <yield period="1h">
       <res id="res.money" amount="10"/>
       <res id="res.wood" amount="2"/>
       <res id="res.stone" amount="2"/>
