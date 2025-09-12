@@ -220,10 +220,16 @@
   <entry key="res.rawfish.desc">Kan bruges som foder eller forarbejdes til mad</entry>
   <entry key="ani.cow.name">Kalv</entry>
   <entry key="ani.cow.desc">Kalve vokser op og blive mælke aktive</entry>
-    <entry key="ani.chicken.name">Kylling</entry>
+  <entry key="ani.chicken.name">Kylling</entry>
   <entry key="ani.chicken.desc">Kylling giver lidt kød, fjer og æg</entry>
-    <entry key="ani.deer.name">Hjort</entry>
+  <entry key="ani.deer.name">Hjort</entry>
   <entry key="ani.deer.desc">Hjorte bor i skoven og giver kød og skind</entry>
-    <entry key="ani.sheep.name">Får</entry>
+  <entry key="ani.sheep.name">Får</entry>
   <entry key="ani.sheep.desc">Får giver skind, uld og lidt kød</entry>
+  <entry key="ani.pig.name">Gris</entry>
+  <entry key="ani.pig.desc">Gris giver kød</entry>
+  <entry key="ani.duck.name">And</entry>
+  <entry key="ani.duck.desc">And giver lidt kød, fjer og æg</entry>
+  <entry key="ani.goat.name">Ged</entry>
+  <entry key="ani.goat.desc">Ged giver lidt kød og skind</entry>
 </language>

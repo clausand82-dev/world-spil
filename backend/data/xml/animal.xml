@@ -55,7 +55,7 @@
     <emoji>🐐</emoji>
   </animal>
 
-   <animal id="ani.sheep" family="sheep" stage="1">
+   <animal id="ani.sheep" family="barn" stage="1">
    <stats>animal_cap=-5</stats>
     <cost>
       <res id="res.money" amount="10"/>
@@ -70,7 +70,7 @@
     <emoji>🐏</emoji>
   </animal>
 
-   <animal id="ani.chicken" stage="1">
+   <animal id="ani.chicken" family="barn" stage="1">
    <stats>animal_cap=-1</stats>
     <cost>
       <res id="res.money" amount="10"/>
@@ -84,7 +84,7 @@
     <emoji>🐔</emoji>
   </animal>
 
-   <animal id="ani.duck" stage="1">
+   <animal id="ani.duck" family="lake" stage="1">
    <stats>animal_cap=-1</stats>
     <cost>
       <res id="res.money" amount="10"/>
