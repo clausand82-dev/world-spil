@@ -263,6 +263,8 @@ function spend_locked_costs(PDO $db, int $userId, array $lockedCosts, string $sc
 }
 
 
+
+
 /* ================================
    Defs/price normalisering
 ================================= */

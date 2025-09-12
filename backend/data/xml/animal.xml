@@ -5,7 +5,7 @@
   <stats>animal_cap=-10</stats>
     <cost>
       <res id="res.money" amount="10"/>
-      <res id="res.food" amount="5"/>
+      <res id="res.food" amount="6"/>
     </cost>
     <yield>
         <res id="res.fertilizer" amount="2"/>
@@ -20,7 +20,7 @@
     <stats>animal_cap=-10</stats>
     <cost>
       <res id="res.money" amount="10"/>
-      <res id="res.food" amount="1"/>
+      <res id="res.food" amount="2"/>
     </cost>
     <yield>
         <res id="res.rawhide" amount="3"/>
@@ -33,7 +33,7 @@
       <stats>animal_cap=-4</stats>
     <cost>
       <res id="res.money" amount="10"/>
-      <res id="res.food" amount="1"/>
+      <res id="res.food" amount="2"/>
     </cost>
     <yield>
         <res id="res.rawmeat" amount="6"/>
@@ -74,7 +74,7 @@
    <stats>animal_cap=-1</stats>
     <cost>
       <res id="res.money" amount="10"/>
-      <res id="res.food" amount="1"/>
+      <res id="res.food" amount="2"/>
     </cost>
     <yield>
         <res id="res.rawmeat" amount="1"/>
@@ -88,7 +88,7 @@
    <stats>animal_cap=-1</stats>
     <cost>
       <res id="res.money" amount="10"/>
-      <res id="res.food" amount="1"/>
+      <res id="res.food" amount="2"/>
     </cost>
     <yield>
         <res id="res.egg" amount="1"/>

@@ -1,58 +1,130 @@
 <?php
 declare(strict_types=1);
 require_once __DIR__ . '/../_init.php';
-require_once __DIR__ . '/../lib/purchase_helpers.php';
 
-header('Content-Type: application/json');
-
-// =========================================================
-// SECTION: MANGLENDE HJÆLPEFUNKTIONER (nu inkluderet)
-// =========================================================
+// =====================================================================
+// SEKTION 1: ALLE NØDVENDIGE HJÆLPEFUNKTIONER (KOPIERET IND FOR AT VÆRE UAFHÆNGIG)
+// =====================================================================
 
 /**
- * Tilføjer ressourcer til spillerens beholdning.
+ * Privat hjælpefunktion til at hente alle spil-definitioner.
+ * Denne logik er en kopi af den fra alldata.php for at gøre dette script selvstændigt.
  */
-function credit_resources(PDO $db, int $userId, array $list): void {
-    if (empty($list)) return;
-
-    $stmt = $db->prepare("INSERT INTO inventory (user_id, res_id, amount) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE amount = amount + VALUES(amount)");
+function _animal_api_load_all_defs(): array {
+    static $defs = null;
+    if ($defs !== null) return $defs;
     
+    // Antager at disse funktioner er tilgængelige via _init.php
+    $cfg = load_config_ini();
+    $xmlDir = resolve_dir((string)($cfg['dirs']['xml_dir'] ?? ''), 'data/xml');
+    
+    $defs = ['res' => [], 'bld' => [], 'rsd' => [], 'rcp' => [], 'add' => [], 'ani' => []];
+    $xml_map = [
+        'resource' => 'res', 'building' => 'bld', 'research' => 'rsd',
+        'recipe' => 'rcp', 'addon' => 'add', 'animal' => 'ani',
+    ];
+    
+    $rii = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($xmlDir, FilesystemIterator::SKIP_DOTS));
+    foreach ($rii as $fileInfo) {
+        if (!$fileInfo->isFile() || strtolower($fileInfo->getExtension()) !== 'xml') continue;
+        $xml = @simplexml_load_file($fileInfo->getPathname());
+        if (!$xml) continue;
+        foreach ($xml_map as $tag => $prefix) {
+            if ($xml->xpath("//{$tag}")) {
+                // Simpel inline parser for at undgå afhængigheder
+                foreach ($xml->xpath("//{$tag}") as $node) {
+                    $idRaw = (string)($node['id'] ?? '');
+                    if ($idRaw === '') continue;
+                    $id = preg_replace("/^{$prefix}\\./", '', $idRaw);
+                    $item = ['id' => $id];
+                    foreach ($node->attributes() as $k => $v) if ($k !== 'id') $item[(string)$k] = (string)$v;
+                    if (isset($node->stats)) $item['stats'] = parse_stats_string((string)$node->stats);
+                    $costs = [];
+                    foreach($node->xpath('cost/*')?:[] as $c){$row=['type'=>$c->getName()];foreach($c->attributes() as $k=>$v)$row[(string)$k]=(string)$v;$costs[]=$row;}
+                    if($costs)$item['cost']=$costs;
+                    $defs[$prefix][$id] = $item;
+                }
+            }
+        }
+    }
+    
+    // Normaliser res-nøgler
+    if (!empty($defs['res'])) {
+        $norm = [];
+        foreach ($defs['res'] as $id => $row) $norm[preg_replace('/^res\./','',$id)] = $row;
+        $defs['res'] = $norm;
+    }
+    
+    return $defs;
+}
+
+/**
+ * Privat hjælpefunktion til at normalisere en cost-liste.
+ */
+function _animal_api_normalize_costs($raw): array {
+    if (!$raw) return [];
+    $out = [];
+    if (is_array($raw)) {
+        foreach ($raw as $row) {
+            if (!is_array($row)) continue;
+            $rid = $row['res_id'] ?? $row['id'] ?? $row['res'] ?? null;
+            $amt = $row['amount'] ?? $row['qty'] ?? null;
+            if ($rid === null || $amt === null) continue;
+            $out[] = ['res_id' => strtolower((string)$rid), 'amount' => (float)$amt];
+        }
+    }
+    return $out;
+}
+
+/**
+ * Privat hjælpefunktion til at tilføje ressourcer til inventory.
+ */
+function _animal_api_credit_resources(PDO $db, int $userId, array $list): void {
+    if (empty($list)) return;
+    $stmt = $db->prepare("INSERT INTO inventory (user_id, res_id, amount) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE amount = amount + ?");
     foreach ($list as $row) {
         $resId = $row['res_id'] ?? null;
         $amount = (float)($row['amount'] ?? 0);
         if ($resId && $amount > 0) {
-            $stmt->execute([$userId, $resId, $amount]);
+            $stmt->execute([$userId, $resId, $amount, $amount]);
         }
     }
 }
 
 /**
- * Fjerner ressourcer fra spillerens beholdning.
+ * Privat hjælpefunktion til at fjerne ressourcer fra inventory.
  */
-function spend_resources(PDO $db, int $userId, array $costs): void {
+function _animal_api_spend_resources(PDO $db, int $userId, array $costs): void {
     if (empty($costs)) return;
-
+    
+    // Valider først
     foreach ($costs as $cost) {
         $resId = $cost['res_id'] ?? null;
-        $amount = (float)($cost['amount'] ?? 0);
-        if (!$resId || $amount <= 0) continue;
+        $amountNeeded = (float)($cost['amount'] ?? 0);
+        if (!$resId || $amountNeeded <= 0) continue;
         
-        // Valider at spilleren har nok
-        $stmtCheck = $db->prepare("SELECT amount FROM inventory WHERE user_id = ? AND res_id = ?");
+        $stmtCheck = $db->prepare("SELECT amount FROM inventory WHERE user_id = ? AND res_id = ? FOR UPDATE");
         $stmtCheck->execute([$userId, $resId]);
         $currentAmount = (float)($stmtCheck->fetchColumn() ?: 0.0);
-        if ($currentAmount < $amount) {
-            throw new Exception("Not enough resources for {$resId}.");
-        }
         
-        $stmt = $db->prepare("UPDATE inventory SET amount = GREATEST(0, amount - ?) WHERE user_id = ? AND res_id = ?");
-        $stmt->execute([$amount, $userId, $resId]);
+        if ($currentAmount < $amountNeeded) {
+            throw new Exception("Not enough resources for {$resId}. Required: {$amountNeeded}, Have: {$currentAmount}");
+        }
+    }
+
+    // Træk ressourcer fra bagefter
+    $stmtUpdate = $db->prepare("UPDATE inventory SET amount = GREATEST(0, amount - ?) WHERE user_id = ? AND res_id = ?");
+    foreach ($costs as $cost) {
+        $resId = $cost['res_id'] ?? null;
+        $amountToSpend = (float)($cost['amount'] ?? 0);
+        if ($resId && $amountToSpend > 0) {
+            $stmtUpdate->execute([$amountToSpend, $userId, $resId]);
+        }
     }
 }
 
-
 // =========================================================
-// SECTION: HOVEDLOGIK
+// SECTION: HOVEDLOGIK FOR animal.php
 // =========================================================
 
 try {
@@ -61,66 +133,16 @@ try {
     $action = strtolower($input['action'] ?? '');
     
     $db = db();
-    // Build minimal defs for animals by scanning XML dir (self-contained to avoid heavy includes)
-    $xmlDir = realpath(__DIR__ . '/../data/xml');
-    if ($xmlDir === false || !is_dir($xmlDir)) {
-        throw new RuntimeException('XML directory not found');
-    }
-    $defs = ['ani' => []];
-    $stack = [$xmlDir];
-    while ($stack) {
-        $dir = array_pop($stack);
-        $entries = @scandir($dir);
-        if ($entries === false) continue;
-        foreach ($entries as $name) {
-            if ($name === '.' || $name === '..') continue;
-            $path = rtrim($dir, '/\\') . DIRECTORY_SEPARATOR . $name;
-            if (is_dir($path)) { $stack[] = $path; continue; }
-            if (is_file($path) && strtolower(pathinfo($path, PATHINFO_EXTENSION)) === 'xml') {
-                $xml = @simplexml_load_file($path);
-                if (!$xml) continue;
-                foreach ($xml->xpath('//animal') ?: [] as $node) {
-                    $idRaw = (string)($node['id'] ?? '');
-                    if ($idRaw === '') continue;
-                    $idKey = preg_replace('/^ani\./', '', $idRaw);
-                    $item = [ 'id' => $idKey ];
-                    // stats
-                    $stats = [];
-                    foreach ($node->xpath('./stats') ?: [] as $s) {
-                        $val = trim((string)$s);
-                        if ($val !== '') {
-                            foreach (preg_split('/[;,\n]/', $val) as $pair) {
-                                $pair = trim($pair);
-                                if ($pair === '') continue;
-                                [$k,$v] = array_pad(explode('=', $pair, 2), 2, '');
-                                $k = trim($k); $v = trim($v);
-                                if ($k !== '') $stats[$k] = is_numeric($v) ? $v + 0 : $v;
-                            }
-                        }
-                    }
-                    if ($stats) $item['stats'] = $stats;
-                    // cost
-                    $cost = [];
-                    foreach ($node->xpath('./cost/res') ?: [] as $resNode) {
-                        $rid = (string)($resNode['id'] ?? '');
-                        $amt = (float)($resNode['amount'] ?? 0);
-                        if ($rid && $amt > 0) $cost[] = ['res_id' => $rid, 'amount' => $amt];
-                    }
-                    if ($cost) $item['cost'] = $cost;
-                    $defs['ani'][$idKey] = $item;
-                }
-            }
-        }
-    }
+    $defs = _animal_api_load_all_defs();
 
     if ($action === 'buy') {
         $animalsToBuy = $input['animals'] ?? [];
-        if (empty($animalsToBuy)) throw new Exception('No animals selected.');
+        if (empty($animalsToBuy)) throw new Exception('No animals selected for purchase.');
 
         $db->beginTransaction();
 
         $totalCost = [];
-        $totalAnimalCap = 0;
+        // Her bør du tilføje validering for staldplads...
 
         foreach ($animalsToBuy as $aniId => $quantity) {
             $quantity = (int)$quantity;
@@ -130,21 +152,16 @@ try {
             $def = $defs['ani'][$key] ?? null;
             if (!$def) throw new Exception("Unknown animal: {$aniId}");
 
-            // Stats store consumption as negative. Use absolute cost for validation/accounting if needed.
-            $capCost = (int)abs((int)($def['stats']['animal_cap'] ?? 1)) ?: 1;
-            $totalAnimalCap += $capCost * $quantity;
-            
-            $costs = normalize_costs($def['cost'] ?? []);
+            $costs = _animal_api_normalize_costs($def['cost'] ?? []);
             foreach ($costs as $cost) {
                 $totalCost[$cost['res_id']] = ($totalCost[$cost['res_id']] ?? 0) + ($cost['amount'] * $quantity);
             }
         }
         
-        // Her bør du have en mere avanceret cap-validering, men for nu stoler vi på frontenden.
-        
         $totalCostArray = [];
         foreach($totalCost as $rid => $amt) $totalCostArray[] = ['res_id' => $rid, 'amount' => $amt];
-        spend_resources($db, $userId, $totalCostArray);
+        
+        _animal_api_spend_resources($db, $userId, $totalCostArray);
 
         $stmt = $db->prepare("INSERT INTO animals (user_id, ani_id, quantity) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE quantity = quantity + VALUES(quantity)");
         foreach ($animalsToBuy as $aniId => $quantity) {
@@ -154,7 +171,7 @@ try {
         }
         
         $db->commit();
-        jout(true, ['message' => 'Animals purchased.']);
+        jout(true, ['message' => 'Animals purchased successfully.']);
 
     } elseif ($action === 'sell') {
         $aniId = $input['animal_id'] ?? null;
@@ -167,22 +184,22 @@ try {
         $stmt->execute([$userId, $aniId]);
         $ownedQuantity = (int)($stmt->fetchColumn() ?: 0);
         if ($ownedQuantity < $quantity) {
-            throw new Exception("Not enough of this animal to sell.");
+            throw new Exception("You don't have enough of this animal to sell.");
         }
 
         $key = preg_replace('/^ani\./', '', $aniId);
         $def = $defs['ani'][$key] ?? null;
         $refund = [];
         if ($def && isset($def['cost'])) {
-            $costs = normalize_costs($def['cost']);
+            $costs = _animal_api_normalize_costs($def['cost']);
             foreach ($costs as $cost) {
                 $refund[] = ['res_id' => $cost['res_id'], 'amount' => ($cost['amount'] * $quantity) * 0.50];
             }
         }
         
-        credit_resources($db, $userId, $refund);
+        _animal_api_credit_resources($db, $userId, $refund);
 
-        if ($ownedQuantity <= $quantity) { // Brug <= for en sikkerheds skyld
+        if ($ownedQuantity <= $quantity) {
             $stmt = $db->prepare("DELETE FROM animals WHERE user_id = ? AND ani_id = ?");
             $stmt->execute([$userId, $aniId]);
         } else {
@@ -192,6 +209,7 @@ try {
 
         $db->commit();
         jout(true, ['message' => 'Animal sold.']);
+
     } else {
         throw new Exception('Invalid action.');
     }

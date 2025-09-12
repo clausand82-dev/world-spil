@@ -493,6 +493,24 @@ foreach ($state['add'] as $id => $val) {
     }
 }
 
+//ANIMAL UDREGNING HER
+// Compute used animal capacity from owned animals (state['ani']).
+// Each animal has stats.animal_cap (negative in defs for consumption).
+// Sum abs(animal_cap) * quantity for all owned animals.
+$usedAnimalCapByAnimals = 0;
+if (!empty($state['ani']) && !empty($defs['ani'])) {
+  foreach ($state['ani'] as $aniId => $row) {
+    $qty = (int)($row['quantity'] ?? 0);
+    if ($qty <= 0) continue;
+    $key = preg_replace('/^ani\./', '', (string)$aniId);
+    $def = $defs['ani'][$key] ?? null;
+    if (!$def) continue;
+    $capPer = (int)abs((int)($def['stats']['animal_cap'] ?? 1));
+    if ($capPer <= 0) $capPer = 1;
+    $usedAnimalCapByAnimals += $capPer * $qty;
+  }
+}
+
 
 // 3) Base fra config (tolerér begge navne)
 $CONFIG = isset($config) ? $config : (isset($cfg) ? $cfg : []);
@@ -525,7 +543,9 @@ $bonusSolid  = 0;
 $bonusFootprint  = $availableFP;
 $usedFootprint = $usedFP;
 $bonusAnimalCap  = $availableAC;
-$usedAnimalCap = $usedAC;
+
+// Use the animal-based calculation for 'used'
+$usedAnimalCap = $usedAnimalCapByAnimals;
 
 // 5) Sæt i state
 $state['cap'] = [

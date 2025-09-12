@@ -87,13 +87,14 @@ function renderOwnedAnimals() {
         if (!def) return '';
         return `
             <div class="item">
-                <div class="icon">${def.icon || '🐾'}</div>
+                <div class="icon">${def.emoji || '🐾'}</div>
                 <div>
                     <div class="title">${def.name} (x${data.quantity})</div>
                     <div class="sub">Optager ${Math.abs(def.stats?.animal_cap ?? 1) || 1} staldplads pr. stk.</div>
                 </div>
                 <div class="right">
                     <button class="btn" data-sell-animal-id="${aniId}">Sælg 1</button>
+                    <button class="btn" data-sell-all-animal-id="${aniId}">Sælg alle</button>
                 </div>
             </div>`;
     }).join('');
@@ -175,15 +176,21 @@ function updatePurchaseUI() {
     const summaryEl = document.getElementById('animal-purchase-summary');
     if (summaryEl) {
         const costStr = _animalsRenderCostColored(totalCost, true) || '0';
-        summaryEl.innerHTML = `<strong>Total:</strong> ${costStr} &nbsp; <strong>Staldplads:</strong> ${usedCap + capToUse} / ${totalCap}`;
+        
+        // =====================================================================
+        // RETTELSE 1: Tilføj rød farve, hvis staldpladsen overskrides.
+        // =====================================================================
+        const finalUsedCap = usedCap + capToUse;
+        const capColorClass = finalUsedCap > totalCap ? 'price-bad' : '';
+        
+        summaryEl.innerHTML = `<strong>Total:</strong> ${costStr} &nbsp; <strong>Staldplads:</strong> <span class="${capColorClass}">${finalUsedCap}</span> / ${totalCap}`;
     }
     
-    // RETTELSE: Den fejlbehæftede blok, der ændrede slider.max, er FJERNET.
-
     const buyBtn = document.getElementById('buy-animals-btn');
     if (buyBtn) {
-        // Knappen deaktiveres, hvis den samlede staldplads overskrides, eller intet er valgt.
-        buyBtn.disabled = (capToUse === 0 || capToUse > availableCap);
+        // Tjekker nu også, om spilleren har råd.
+        const affordCheck = _animalsCanAfford(totalCost);
+        buyBtn.disabled = (capToUse === 0 || (usedCap + capToUse) > totalCap || !affordCheck.ok);
     }
 }
 
@@ -198,6 +205,8 @@ window.renderAnimalsPage = () => {
 
 if (!window.__AnimalPageWired__) {
     window.__AnimalPageWired__ = true;
+    
+    // 'input' listeneren forbliver UÆNDRET
     document.addEventListener('input', (e) => {
         if (e.target.matches('[data-animal-slider-id]')) {
             const aniId = e.target.dataset.animalSliderId;
@@ -211,6 +220,8 @@ if (!window.__AnimalPageWired__) {
             updatePurchaseUI();
         }
     });
+
+    // ERSTAT HELE DENNE 'click' LISTENER MED DEN NYE KODE
     document.addEventListener('click', async (e) => {
         const buyBtn = e.target.closest('#buy-animals-btn');
         if (buyBtn) {
@@ -221,19 +232,44 @@ if (!window.__AnimalPageWired__) {
                 if (!resp.ok) throw new Error(resp.data.message);
                 await dataApi.loadData();
                 renderAnimalsPage();
+                renderHeader?.();
+                renderSidebar?.();
             } catch (err) {
                 console.error("Failed to buy animals:", err);
                 alert(`Køb fejlede: ${err.message}`);
                 buyBtn.disabled = false;
             }
+            return; // Vigtigt at stoppe her
         }
         
+        // --- Helper funktion KUN for salg ---
+        const getRefundInfo = (aniId, quantity) => {
+            const key = aniId.replace(/^ani\./, '');
+            const def = window.data?.defs?.ani?.[key];
+            if (!def || !def.cost) return { text: '(Ukendt værdi)' };
+            
+            const costs = _animalsNormalizePrice(def.cost);
+            const refundValue = {};
+            for (const c of Object.values(costs)) {
+                refundValue[c.id] = {
+                    id: c.id,
+                    amount: (c.amount * quantity) * 0.50 // 50% refusion
+                };
+            }
+            
+            // Brug den lokale _animalsRenderCostColored til at formatere teksten
+            const refundText = _animalsRenderCostColored(refundValue, true);
+            return { text: refundText };
+        };
+
         const sellBtn = e.target.closest('[data-sell-animal-id]');
         if (sellBtn) {
             const aniId = sellBtn.dataset.sellAnimalId;
+            const refund = getRefundInfo(aniId, 1);
+
             openConfirm({
-                title: "Sælg Dyr",
-                body: "Er du sikker på, at du vil sælge 1 af dette dyr? Du får 50% af prisen tilbage.",
+                title: "Sælg 1 Dyr",
+                body: `Er du sikker? Du får følgende tilbage:<br><div style="margin-top: 8px;">${refund.text}</div>`,
                 confirmText: "Sælg",
                 onConfirm: async () => {
                     try {
@@ -242,12 +278,67 @@ if (!window.__AnimalPageWired__) {
                         if (!resp.ok) throw new Error(resp.data.message);
                         await dataApi.loadData();
                         renderAnimalsPage();
+                        renderHeader?.();
+                        renderSidebar?.();
                     } catch (err) {
                         console.error("Failed to sell animal:", err);
                         alert(`Salg fejlede: ${err.message}`);
                     }
                 }
             });
+            return; // Vigtigt at stoppe her
+        }
+        
+        const sellAllBtn = e.target.closest('[data-sell-all-animal-id]');
+        if (sellAllBtn) {
+            const aniId = sellAllBtn.dataset.sellAllAnimalId;
+            const qty = Number(window.data?.state?.ani?.[aniId]?.quantity || 0);
+            if (!qty) return;
+
+            const refund = getRefundInfo(aniId, qty);
+            
+            openConfirm({
+                title: "Sælg Alle Dyr",
+                body: `Er du sikker på, at du vil sælge alle ${qty} dyr? Du får følgende tilbage:<br><div style="margin-top: 8px;">${refund.text}</div>`,
+                confirmText: "Sælg Alle",
+                onConfirm: async () => {
+                    try {
+                        const payload = { action: 'sell', animal_id: aniId, quantity: qty };
+                        const resp = await postJSON(`${BASE_API}/actions/animal.php`, payload);
+                        if (!resp.ok) throw new Error(resp.data.message);
+                        await dataApi.loadData();
+                        renderAnimalsPage();
+                        renderHeader?.();
+                        renderSidebar?.();
+                    } catch (err) {
+                        console.error("Failed to sell all animals:", err);
+                        alert(`Salg fejlede: ${err.message}`);
+                    }
+                }
+            });
         }
     });
+}
+
+// Check if player can afford a given aggregated price map: { rid: { id, amount } }
+function _animalsCanAfford(map) {
+    if (!map || Object.keys(map).length === 0) return { ok: true, miss: [] };
+    const inv = window?.data?.state?.inv ?? {};
+    const liquid = inv.liquid ?? {};
+    const solid = inv.solid ?? {};
+    const haveOf = (rid) => {
+        const ridNoPrefix = String(rid).replace(/^res\./, "");
+        const lastSeg = String(rid).split(".").pop();
+        const v = liquid[rid] ?? solid[rid] ?? liquid[ridNoPrefix] ?? solid[ridNoPrefix] ?? liquid[lastSeg] ?? solid[lastSeg] ?? 0;
+        return (typeof v === "object" && v !== null) ? +(v.amount ?? 0) : +v;
+    };
+    const miss = [];
+    for (const row of Object.values(map)) {
+        const rid = row?.id ?? "";
+        const need = +(row?.amount ?? 0);
+        if (!rid || need <= 0) continue;
+        const have = haveOf(rid);
+        if (have < need) miss.push({ rid, need, have });
+    }
+    return { ok: miss.length === 0, miss };
 }
