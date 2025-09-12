@@ -17,7 +17,7 @@
       <res id="res.wood" amount="25"/>
       <res id="res.stone" amount="5"/>
     </cost>
-    <yield period="1h">
+    <yield period="2h">
       <res id="res.money" amount="10"/>
       <res id="res.wood" amount="2"/>
       <res id="res.stone" amount="2"/>
@@ -33,8 +33,8 @@
       <res id="res.wood" amount="100"/>
       <res id="res.stone" amount="50"/>
     </cost>
-    <yield>
-      <res id="res.money" amount="5" time="1m"/>
+    <yield period="2h">
+      <res id="res.money" amount="5"/>
     </yield>
     <durability>35.0</durability>
     <upgradesTo>bld.basecamp.l4</upgradesTo>
@@ -48,8 +48,8 @@
       <res id="res.wood" amount="250"/>
       <res id="res.stone" amount="100"/>
     </cost>
-    <yield>
-      <res res="res.money" amount="10" time="1m"/>
+    <yield period="2h">
+      <res res="res.money" amount="10"/>
     </yield>
     <durability>50.0</durability>
   </building>

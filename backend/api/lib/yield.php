@@ -1,13 +1,48 @@
 <?php
 declare(strict_types=1);
 
-/**
- * yield.php — passiv yield motor
- * Håndterer nu BÅDE bygninger og addons via to separate, sikre forespørgsler.
- */
-
 require_once __DIR__ . '/../_init.php';
 require_once __DIR__ . '/purchase_helpers.php';
+
+// =====================================================================
+// SECTION: LOKALE HJÆLPEFUNKTIONER (for at gøre filen selvstændig)
+// =====================================================================
+
+/**
+ * Privat funktion til at hente alle defs.
+ * En sikker, isoleret kopi af logikken fra alldata.php.
+ */
+function _yield_load_all_defs(): array {
+    static $defs = null;
+    if ($defs !== null) return $defs;
+
+    // Disse funktioner skal være tilgængelige via _init.php
+    $cfg = load_config_ini();
+    $xmlDir = resolve_dir((string)($cfg['dirs']['xml_dir'] ?? ''), 'data/xml');
+
+    $defs = ['res' => [], 'bld' => [], 'rsd' => [], 'rcp' => [], 'add' => [], 'ani' => []];
+    $rii = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($xmlDir, FilesystemIterator::SKIP_DOTS));
+    
+    foreach ($rii as $fileInfo) {
+        if (!$fileInfo->isFile() || strtolower($fileInfo->getExtension()) !== 'xml') continue;
+        $path = $fileInfo->getPathname();
+        if (str_contains($path, 'animal')) $defs['ani'] = array_merge($defs['ani'], load_animals_xml($path));
+        elseif (str_contains($path, 'addon')) $defs['add'] = array_merge($defs['add'], load_addons_xml($path));
+        elseif (str_contains($path, 'building')) $defs['bld'] = array_merge($defs['bld'], load_buildings_xml($path));
+        elseif (str_contains($path, 'research')) $defs['rsd'] = array_merge($defs['rsd'], load_research_xml($path));
+        elseif (str_contains($path, 'recipe')) $defs['rcp'] = array_merge($defs['rcp'], load_recipes_xml($path));
+        elseif (str_contains($path, 'resource')) $defs['res'] = array_merge($defs['res'], load_resources_xml($path));
+    }
+
+    if (!empty($defs['res'])) {
+        $norm = [];
+        foreach ($defs['res'] as $id => $row) $norm[strip_prefix($id, 'res')] = $row;
+        $defs['res'] = $norm;
+    }
+
+    return $defs;
+}
+
 
 if (!function_exists('canonical_res_id')) {
   function canonical_res_id(string $rid): string {
@@ -17,17 +52,11 @@ if (!function_exists('canonical_res_id')) {
 }
 
 /**
- * Kør passiv yield for alle aktive producenter (bygninger OG addons) for en bruger.
- *
- * @return array {summary: [...], updated: n}
+ * Kør passiv yield for alle aktive producenter (bygninger, addons, dyr).
  */
 function apply_passive_yields_for_user(int $userId): array {
-  $db   = db();
-  
-  if (!function_exists('load_all_defs')) {
-      require_once __DIR__ . '/../api/alldata.php';
-  }
-  $defs = load_all_defs();
+  $db = db();
+  $defs = _yield_load_all_defs(); // Bruger den nye, sikre lokale funktion
 
   $ownTxn = !$db->inTransaction();
   if ($ownTxn) $db->beginTransaction();
@@ -35,55 +64,41 @@ function apply_passive_yields_for_user(int $userId): array {
   try {
     $summary = [];
     $updated = 0;
-    $allProducers = [];
 
-    // =====================================================================
-    // START PÅ RETTELSE: Brug to separate, sikre forespørgsler.
-    // =====================================================================
-    
-    // 1) Hent og lås bygninger
-    $stmtBuildings = $db->prepare("
-      SELECT id, bld_id AS item_id, last_yield_ts_utc, 'buildings' AS table_name
-        FROM buildings
-       WHERE user_id = ? AND yield_enabled = 1
-       FOR UPDATE
-    ");
+    $stmtBuildings = $db->prepare("SELECT id, bld_id AS item_id, 1 AS quantity, last_yield_ts_utc, 'buildings' AS table_name FROM buildings WHERE user_id = ? AND yield_enabled = 1 FOR UPDATE");
     $stmtBuildings->execute([$userId]);
     $buildingRows = $stmtBuildings->fetchAll(PDO::FETCH_ASSOC);
 
-    // 2) Hent og lås addons
-    $stmtAddons = $db->prepare("
-      SELECT id, add_id AS item_id, last_yield_ts_utc, 'addon' AS table_name
-        FROM addon
-       WHERE user_id = ? AND yield_enabled = 1
-       FOR UPDATE
-    ");
+    $stmtAddons = $db->prepare("SELECT id, add_id AS item_id, 1 AS quantity, last_yield_ts_utc, 'addon' AS table_name FROM addon WHERE user_id = ? AND yield_enabled = 1 FOR UPDATE");
     $stmtAddons->execute([$userId]);
     $addonRows = $stmtAddons->fetchAll(PDO::FETCH_ASSOC);
 
-    // 3) Saml resultaterne i ét array
-    $allProducers = array_merge($buildingRows, $addonRows);
-    
-    // =====================================================================
-    // SLUT PÅ RETTELSE
-    // =====================================================================
+    $stmtAnimals = $db->prepare("SELECT id, ani_id AS item_id, quantity, last_yield_ts_utc, 'animals' AS table_name FROM animals WHERE user_id = ? AND yield_enabled = 1 FOR UPDATE");
+    $stmtAnimals->execute([$userId]);
+    $animalRows = $stmtAnimals->fetchAll(PDO::FETCH_ASSOC);
 
+    $allProducers = array_merge($buildingRows, $addonRows, $animalRows);
+    
     $nowUtc = new DateTimeImmutable('now', new DateTimeZone('UTC'));
 
     foreach ($allProducers as $r) {
       $itemId = (string)$r['item_id'];
       $tableName = (string)$r['table_name'];
+      $quantity = (int)$r['quantity'];
       
       $parts = explode('.', $itemId, 2);
-      $scope = $parts[0]; // 'bld' eller 'add'
+      $scope = $parts[0];
       $key   = $parts[1];
 
-      $def = $defs[$scope][$key] ?? null;
+      // Defs nøglen for 'animals' er 'ani', ikke 'animals'
+      $def_scope = ($scope === 'animals') ? 'ani' : $scope;
+      $def = $defs[$def_scope][$key] ?? null;
+
       if (!$def) continue;
 
       $periodS = (int)($def['yield_period_s'] ?? 0);
       $lines   = $def['yield'] ?? [];
-      if ($periodS <= 0 || empty($lines)) continue;
+      if ($periodS <= 0 || empty($lines) || $quantity <= 0) continue;
 
       $last = $r['last_yield_ts_utc'] ? new DateTimeImmutable((string)$r['last_yield_ts_utc'], new DateTimeZone('UTC')) : null;
 
@@ -98,7 +113,7 @@ function apply_passive_yields_for_user(int $userId): array {
       $cycles  = intdiv($elapsed, $periodS);
       if ($cycles <= 0) continue;
 
-      $cycles = min($cycles, 10000); // Throttle
+      $cycles = min($cycles, 10000);
 
       $credited = [];
       foreach ($lines as $ln) {
@@ -107,7 +122,7 @@ function apply_passive_yields_for_user(int $userId): array {
         if ($resId === '' || $amount <= 0) continue;
 
         $resIdCanon = canonical_res_id($resId);
-        $out = $cycles * $amount;
+        $out = $cycles * $amount * $quantity;
         
         if ($out > 0) {
           credit_inventory($db, $defs, $userId, $resIdCanon, $out);
@@ -124,12 +139,7 @@ function apply_passive_yields_for_user(int $userId): array {
            WHERE id = ? AND user_id = ?
         ";
         $db->prepare($updateSql)->execute([$advanceS, $cycles, $r['id'], $userId]);
-
-        $summary[] = [
-          'item_id'  => $itemId,
-          'cycles'   => $cycles,
-          'credited' => $credited
-        ];
+        $summary[] = [ 'item_id' => $itemId, 'cycles' => $cycles, 'credited' => $credited, 'quantity' => $quantity ];
         $updated++;
       }
     }
@@ -143,9 +153,6 @@ function apply_passive_yields_for_user(int $userId): array {
   }
 }
 
-/** 
- * Skriver til en samlet `inventory`-tabel.
- */
 function credit_inventory(PDO $db, array $defs, int $userId, string $resId, float $amount): void {
   if ($amount <= 0) return;
   $rid = canonical_res_id($resId);

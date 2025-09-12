@@ -140,5 +140,42 @@ body{padding-bottom:72px} /* plads til quickbar */
 
 /*main {padding-top: 60px; padding-bottom: 60px;}
 
+/* ====== Collapsible / Accordion for Yield ====== */
+.collapsible-item {
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.collapsible-item:hover {
+    background-color: rgba(255, 255, 255, 0.05); /* Lidt highlight ved hover */
+}
+
+.collapsible-item .chevron {
+    transition: transform 0.3s ease;
+}
+
+.collapsible-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+    background-color: rgba(0, 0, 0, 0.1);
+    margin: -10px 0 10px 0;
+    border-radius: 0 0 10px 10px;
+    border: 1px solid var(--border);
+    border-top: none;
+}
+
+.yield-source-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 12px;
+    font-size: 14px;
+    border-bottom: 1px solid var(--border);
+}
+
+.yield-source-item:last-child {
+    border-bottom: none;
+}
+
 
 

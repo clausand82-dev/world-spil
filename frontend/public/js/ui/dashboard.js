@@ -1,62 +1,76 @@
 /* =========================================================
    ui/dashboard.js
-   - Viser et samlet overblik ved at kalde funktioner fra overview.js
+   - Viser nu den nye interaktive yield-oversigt.
 ========================================================= */
 
+let dashboardTimer = null;
+
+function dashboardTick() { /* ... din eksisterende tick-funktion er uændret ... */ }
+
 window.renderDashboard = () => {
+    if (dashboardTimer) clearInterval(dashboardTimer);
+    
     const main = $("#main");
-    if (!window.data || !window.data.defs) {
-        main.innerHTML = `<div class="sub">Indlæser data...</div>`;
+    if (!window.data?.defs || typeof renderActiveJobs !== 'function') {
+        main.innerHTML = `<div class="sub">Indlæser...</div>`;
         return;
     }
 
-    // Tjek om funktionerne fra overview.js er tilgængelige
-    if (typeof renderActiveJobs !== 'function' || typeof renderPassiveYields !== 'function') {
-        main.innerHTML = `<div class="sub">Fejl: Oversigts-funktioner er ikke indlæst.</div>`;
-        console.error("renderActiveJobs eller renderPassiveYields er ikke defineret. Sørg for at overview.js er inkluderet korrekt i index.html.");
-        return;
-    }
-
-    // Kald de globale funktioner for at få HTML-indholdet
     const activeBuildingsHTML = renderActiveJobs('bld');
     const activeAddonsHTML = renderActiveJobs('add');
-    const activeResearchHTML = renderActiveJobs('rsd'); // <-- NYT KALD
-    const passiveYieldsHTML = renderPassiveYields();
+    const activeResearchHTML = renderActiveJobs('rsd');
+    
+    // Kald den nye, interaktive funktion
+    const interactiveYieldsHTML = renderInteractiveYields();
 
-    // Sæt den endelige HTML for dashboardet
     main.innerHTML = `
-        <section class="panel section">
-            <div class="section-head">🏗️ Aktive Bygge-jobs</div>
-            <div class="section-body">
-                ${activeBuildingsHTML}
-            </div>
-        </section>
-        
-        <section class="panel section">
-            <div class="section-head">➕ Aktive Addon-jobs</div>
-            <div class="section-body">
-                ${activeAddonsHTML}
-            </div>
-        </section>
-
-        <!-- ======================================================== -->
-        <!-- NY SEKTION: Viser igangværende forskning                 -->
-        <!-- ======================================================== -->
-        <section class="panel section">
-            <div class="section-head">🔬 Igangværende Forskning</div>
-            <div class="section-body">
-                ${activeResearchHTML}
-            </div>
-        </section>
-
+        <section class="panel section"><div class="section-head">🏗️ Aktive Bygge-jobs</div><div class="section-body">${activeBuildingsHTML}</div></section>
+        <section class="panel section"><div class="section-head">➕ Aktive Addon-jobs</div><div class="section-body">${activeAddonsHTML}</div></section>
+        <section class="panel section"><div class="section-head">🔬 Igangværende Forskning</div><div class="section-body">${activeResearchHTML}</div></section>
         <section class="panel section">
             <div class="section-head">📊 Passiv Produktion</div>
             <div class="section-body">
-                ${passiveYieldsHTML}
+                ${interactiveYieldsHTML}
             </div>
-        </section>
-    `;
+        </section>`;
 
-    // Sørg for, at de nye progress bars også bliver opdateret med det samme
-    window.BuildingsProgress?.rehydrate?.(main);
+    dashboardTick();
+    dashboardTimer = setInterval(dashboardTick, 1000);
 };
+
+window.addEventListener('hashchange', () => {
+    if (location.hash !== '#/dashboard' && dashboardTimer) {
+        clearInterval(dashboardTimer);
+        dashboardTimer = null;
+    }
+});
+
+// =========================================================
+// NY EVENT LISTENER for "fold-ud" funktionalitet
+// =========================================================
+if (!window.__DashboardCollapseWired__) {
+    window.__DashboardCollapseWired__ = true;
+    
+    document.addEventListener('click', (e) => {
+        const header = e.target.closest('.collapsible-item');
+        if (!header) return;
+
+        const resId = header.dataset.yieldResId;
+        if (!resId) return;
+
+        const content = document.getElementById(`details-${resId.replace(/\./g, '-')}`);
+        const chevron = header.querySelector('.chevron');
+
+        if (content && chevron) {
+            const isVisible = content.style.maxHeight && content.style.maxHeight !== '0px';
+            if (isVisible) {
+                content.style.maxHeight = '0px';
+                chevron.style.transform = 'rotate(0deg)';
+            } else {
+                // Sæt maxHeight til den faktiske højde af indholdet for en glidende animation
+                content.style.maxHeight = `${content.scrollHeight}px`;
+                chevron.style.transform = 'rotate(90deg)';
+            }
+        }
+    });
+}

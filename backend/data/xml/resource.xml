@@ -94,48 +94,8 @@
     <unitSpace>0.1</unitSpace>
     <emoji>🦴</emoji >
   </resource>
-  <resource id="res.cow" family="animal" type="animalBigSize" lvl="1" stage="1.0">
-    <unit>pcs</unit>
-    <unitSpace>3.0</unitSpace>
-    <emoji>🐄</emoji >
-    <stats>habitat=barn</stats>
-  </resource>
-  <resource id="res.deer" family="animal" type="animalBigSize" lvl="1" stage="1.0">
-    <unit>pcs</unit>
-    <unitSpace>3.0</unitSpace>
-    <emoji>🦌</emoji >
-    <stats>habitat=forest</stats>
-  </resource>
-  <resource id="res.pig" family="animal" type="animalMediumSize" lvl="1" stage="1.0">
-    <unit>pcs</unit>
-    <unitSpace>2.0</unitSpace>
-    <emoji>🐖</emoji >
-    <stats>habitat=barn</stats>
-  </resource>
-  <resource id="res.goat" family="animal" type="animalMediumSize" lvl="1" stage="1.0">
-    <unit>pcs</unit>
-    <unitSpace>2.0</unitSpace>
-    <emoji>🐐</emoji >
-    <stats>habitat=barn.forest</stats>
-  </resource>
-  <resource id="res.sheep" family="animal" type="animalMediumSize" lvl="1" stage="1.0">
-    <unit>pcs</unit>
-    <unitSpace>2.0</unitSpace>
-    <emoji>🐑</emoji >
-    <stats>habitat=barn,forest</stats>
-  </resource>
-  <resource id="res.chicken" family="animal" type="animalSmallSize" lvl="1" stage="1.0">
-    <unit>pcs</unit>
-    <unitSpace>0.5</unitSpace>
-    <emoji>🐔</emoji >
-    <stats>habitat=barn|forest;animal_cap=1</stats>
-  </resource>
-  <resource id="res.rabbit" family="animal" type="animalSmallSize" lvl="1" stage="1.0">
-    <unit>pcs</unit>
-    <unitSpace>0.5</unitSpace>
-    <emoji>🐇</emoji >
-    <stats>habitat=forest</stats>
-  </resource>
+
+
   <resource id="res.hide" family="product" type="animalProduct" lvl="1" stage="1.0">
     <unit>pcs</unit>
     <unitSpace>0.2</unitSpace>
