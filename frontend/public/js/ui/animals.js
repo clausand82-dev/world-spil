@@ -64,13 +64,23 @@ function _animalsRenderCostColored(map, inline = false) {
     return inline ? parts.join(" • ") : parts.join(" ");
 }
 
+/**
+ * Hent samlet staldkapacitet fra state og udled total/used/available.
+ */
+function _animalsGetAnimalCap() {
+    const cap = window.data?.state?.cap?.animal_cap || {};
+    const total = cap.total ?? ((cap.base || 0) + (cap.bonus || 0));
+    const used = Math.abs(cap.used || 0);
+    return { total, used, available: Math.max(0, total - used) };
+}
+
 // =========================================================
 // SECTION: SIDENS FUNKTIONER
 // =========================================================
 
 function renderOwnedAnimals() {
     const owned = window.data?.state?.ani || {};
-    if (Object.keys(owned).length === 0) return `<div class="sub">Du ejer ingen dyr endnu.</div>`;
+    if (Object.keys(owned).length === 0) return `<div class="sub">Du ejer ingen dyr endnu!</div>`;
     return Object.entries(owned).map(([aniId, data]) => {
         const key = aniId.replace(/^ani\./, '');
         const def = window.data.defs.ani?.[key];
@@ -109,9 +119,7 @@ function renderAvailableAnimals() {
         return `<div class="sub">Ingen nye dyr er tilgængelige. Byg eller opgrader relevante bygninger.</div>`;
     }
 
-    const totalCap = state.cap.animal_cap?.total || 0;
-    const usedCap = state.cap.animal_cap?.used || 0;
-    const availableCap = totalCap - usedCap;
+    const { total: totalCap, used: usedCap, available: availableCap } = _animalsGetAnimalCap();
 
     return availableAnimals.map(([key, def]) => {
         const aniId = `ani.${key}`;
@@ -142,10 +150,7 @@ function renderAvailableAnimals() {
 
 function updatePurchaseUI() {
     const defs = window.data.defs;
-    const state = window.data.state;
-    const totalCap = state.cap.animal_cap?.total || 0;
-    const usedCap = state.cap.animal_cap?.used || 0;
-    const availableCap = totalCap - usedCap;
+    const { total: totalCap, used: usedCap, available: availableCap } = _animalsGetAnimalCap();
     
     let totalCost = {};
     let capToUse = 0;
