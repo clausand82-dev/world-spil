@@ -442,3 +442,20 @@ function backend_purchase_research(PDO $db, int $userId, string $rsdIdFull): arr
 }
 
 
+// Bruges til animal systemet
+function spend_resources(PDO $db, int $userId, array $costs): void {
+    if (empty($costs)) return;
+
+    foreach ($costs as $cost) {
+        $resId = $cost['res_id'] ?? null;
+        $amount = (float)($cost['amount'] ?? 0);
+        if (!$resId || $amount <= 0) continue;
+
+        // Denne logik bør matche din `credit_resources` for at vælge den rigtige tabel
+        $table = str_contains($resId, 'water') || str_contains($resId, 'milk') ? 'inventory_liquid' : 'inventory_solid';
+        
+        $stmt = $db->prepare("UPDATE {$table} SET amount = GREATEST(0, amount - ?) WHERE user_id = ? AND res_id = ?");
+        $stmt->execute([$amount, $userId, $resId]);
+    }
+}
+

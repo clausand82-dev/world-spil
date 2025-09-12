@@ -370,6 +370,14 @@ if (WS_RUN_MODE === 'run') {
         $state['bld']=[]; $stmt=$pdo->prepare("SELECT bld_id,level,durability FROM buildings WHERE user_id=?"); $stmt->execute([$uid]); foreach($stmt as $r)$state['bld'][$r['bld_id']]=$r;
         $state['add']=[]; $stmt=$pdo->prepare("SELECT add_id,level FROM addon WHERE user_id=?"); $stmt->execute([$uid]); foreach($stmt as $r)$state['add'][$r['add_id']]=$r;
         $state['rsd']=[]; $stmt=$pdo->prepare("SELECT rsd_id,level FROM research WHERE user_id=?"); $stmt->execute([$uid]); foreach($stmt as $r)$state['rsd'][$r['rsd_id']]=$r;
+        // Henter animals fra DB
+$state['ani'] = [];
+$sql = "SELECT ani_id, quantity FROM animals WHERE user_id = :uid";
+$stmt = $pdo->prepare($sql);
+$stmt->execute([':uid' => $uid]);
+foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $r) {
+    $state['ani'][$r['ani_id']] = ['quantity' => (int)$r['quantity']];
+}
     }
 
     /* 5) Normaliser og merge sprog-data */

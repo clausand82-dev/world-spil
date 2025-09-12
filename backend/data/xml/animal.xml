@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <animals source="World 2025.xlsx" sheet="Addon">
   
-  <animal id="ani.cow" animal_cap="-10" family="barn">
+  <animal id="ani.cow"  family="barn" stage="1">
+  <stats>animal_cap=-10</stats>
     <cost>
       <res id="res.money" amount="10"/>
       <res id="res.food" amount="5"/>
@@ -12,9 +13,11 @@
         <res id="res.rawmeat" amount="4"/>
         <res id="res.rawhide" amount="1"/>
     </yield>
+    <emoji>🐄</emoji>
   </animal>
 
-    <animal id="ani.deer" animal_cap="-10" family="forest">
+    <animal id="ani.deer" family="forest" stage="1">
+    <stats>animal_cap=-10</stats>
     <cost>
       <res id="res.money" amount="10"/>
       <res id="res.food" amount="1"/>
@@ -23,9 +26,23 @@
         <res id="res.rawhide" amount="3"/>
         <res id="res.rawmeat" amount="4"/>
     </yield>
+    <emoji>🦌</emoji>
   </animal>
 
-    <animal id="ani.goat" animal_cap="-5" family="barn">
+      <animal id="ani.pig" family="barn" stage="1">
+      <stats>animal_cap=-4</stats>
+    <cost>
+      <res id="res.money" amount="10"/>
+      <res id="res.food" amount="1"/>
+    </cost>
+    <yield>
+        <res id="res.rawmeat" amount="6"/>
+    </yield>
+    <emoji>🐖</emoji>
+  </animal>
+
+    <animal id="ani.goat" family="barn" stage="1">
+    <stats>animal_cap=-5</stats>
     <cost>
       <res id="res.money" amount="10"/>
       <res id="res.food" amount="2"/>
@@ -35,9 +52,11 @@
         <res id="res.bones" amount="3"/>
         <res id="res.rawhide" amount="1"/>
     </yield>
+    <emoji>🐐</emoji>
   </animal>
 
-   <animal id="ani.sheep" animal_cap="-5" family="sheep">
+   <animal id="ani.sheep" family="sheep" stage="1">
+   <stats>animal_cap=-5</stats>
     <cost>
       <res id="res.money" amount="10"/>
       <res id="res.food" amount="2"/>
@@ -48,9 +67,11 @@
         <res id="res.rawhide" amount="1"/>
         <res id="res.wool" amount="2"/>
     </yield>
+    <emoji>🐏</emoji>
   </animal>
 
-   <animal id="ani.chicken" animal_cap="-1">
+   <animal id="ani.chicken" stage="1">
+   <stats>animal_cap=-1</stats>
     <cost>
       <res id="res.money" amount="10"/>
       <res id="res.food" amount="1"/>
@@ -60,9 +81,11 @@
         <res id="res.egg" amount="2"/>
         <res id="res.feather" amount="2"/>
     </yield>
+    <emoji>🐔</emoji>
   </animal>
 
-   <animal id="ani.duck" animal_cap="-1">
+   <animal id="ani.duck" stage="1">
+   <stats>animal_cap=-1</stats>
     <cost>
       <res id="res.money" amount="10"/>
       <res id="res.food" amount="1"/>
@@ -72,6 +95,7 @@
         <res id="res.rawmeat" amount="1"/>
         <res id="res.feather" amount="1"/>
     </yield>
+    <emoji>🦆</emoji>
   </animal>
 
 
