@@ -313,7 +313,21 @@ async function postJSON(url, body) {
       credentials: "include",
       body: JSON.stringify(body)
     });
-    const responseData = await res.json();
+
+    let responseData;
+    try {
+      // Try JSON first
+      responseData = await res.clone().json();
+    } catch {
+      // Fallback: parse text or return empty object
+      try {
+        const t = await res.text();
+        responseData = t ? { message: t } : {};
+      } catch {
+        responseData = {};
+      }
+    }
+
     return {
       ok: res.ok,
       status: res.status,

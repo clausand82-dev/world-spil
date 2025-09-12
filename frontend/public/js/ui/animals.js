@@ -90,7 +90,7 @@ function renderOwnedAnimals() {
                 <div class="icon">${def.icon || '🐾'}</div>
                 <div>
                     <div class="title">${def.name} (x${data.quantity})</div>
-                    <div class="sub">Optager ${def.stats?.animal_cap || 1} staldplads pr. stk.</div>
+                    <div class="sub">Optager ${Math.abs(def.stats?.animal_cap ?? 1) || 1} staldplads pr. stk.</div>
                 </div>
                 <div class="right">
                     <button class="btn" data-sell-animal-id="${aniId}">Sælg 1</button>
@@ -123,7 +123,9 @@ function renderAvailableAnimals() {
 
     return availableAnimals.map(([key, def]) => {
         const aniId = `ani.${key}`;
-        const capCost = def.stats?.animal_cap || 1;
+        // Animal stats store capacity consumption as negative numbers.
+        // Use absolute value so sliders reflect how many we can fit.
+        const capCost = Math.abs(def.stats?.animal_cap ?? 1) || 1;
         
         // RETTELSE: `max` er nu den absolutte maksimale mængde, der er plads til.
         const maxVal = Math.floor(Math.max(0, availableCap / capCost));
@@ -159,10 +161,12 @@ function updatePurchaseUI() {
         if (qty > 0) {
             const def = defs.ani[aniId.replace(/^ani\./, '')];
             if (def) {
-                capToUse += (def.stats?.animal_cap || 1) * qty;
+                const capCost = Math.abs(def.stats?.animal_cap ?? 1) || 1;
+                capToUse += capCost * qty;
                 const costs = _animalsNormalizePrice(def.cost);
                 for (const c of Object.values(costs)) {
-                    totalCost[c.id] = (totalCost[c.id] || 0) + (c.amount * qty);
+                    if (!totalCost[c.id]) totalCost[c.id] = { id: c.id, amount: 0 };
+                    totalCost[c.id].amount += (c.amount * qty);
                 }
             }
         }
@@ -170,7 +174,7 @@ function updatePurchaseUI() {
 
     const summaryEl = document.getElementById('animal-purchase-summary');
     if (summaryEl) {
-        const costStr = _animalsRenderCostColored(totalCost, true);
+        const costStr = _animalsRenderCostColored(totalCost, true) || '0';
         summaryEl.innerHTML = `<strong>Total:</strong> ${costStr} &nbsp; <strong>Staldplads:</strong> ${usedCap + capToUse} / ${totalCap}`;
     }
     

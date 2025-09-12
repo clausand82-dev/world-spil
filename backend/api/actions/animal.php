@@ -15,13 +15,13 @@ header('Content-Type: application/json');
 function credit_resources(PDO $db, int $userId, array $list): void {
     if (empty($list)) return;
 
-    $stmt = $db->prepare("INSERT INTO inventory (user_id, res_id, amount) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE amount = amount + VALUES(?)");
+    $stmt = $db->prepare("INSERT INTO inventory (user_id, res_id, amount) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE amount = amount + VALUES(amount)");
     
     foreach ($list as $row) {
         $resId = $row['res_id'] ?? null;
         $amount = (float)($row['amount'] ?? 0);
         if ($resId && $amount > 0) {
-            $stmt->execute([$userId, $resId, $amount, $amount]);
+            $stmt->execute([$userId, $resId, $amount]);
         }
     }
 }
@@ -61,10 +61,57 @@ try {
     $action = strtolower($input['action'] ?? '');
     
     $db = db();
-    if (!function_exists('load_all_defs')) {
-        require_once __DIR__ . '/../api/alldata.php';
+    // Build minimal defs for animals by scanning XML dir (self-contained to avoid heavy includes)
+    $xmlDir = realpath(__DIR__ . '/../data/xml');
+    if ($xmlDir === false || !is_dir($xmlDir)) {
+        throw new RuntimeException('XML directory not found');
     }
-    $defs = load_all_defs();
+    $defs = ['ani' => []];
+    $stack = [$xmlDir];
+    while ($stack) {
+        $dir = array_pop($stack);
+        $entries = @scandir($dir);
+        if ($entries === false) continue;
+        foreach ($entries as $name) {
+            if ($name === '.' || $name === '..') continue;
+            $path = rtrim($dir, '/\\') . DIRECTORY_SEPARATOR . $name;
+            if (is_dir($path)) { $stack[] = $path; continue; }
+            if (is_file($path) && strtolower(pathinfo($path, PATHINFO_EXTENSION)) === 'xml') {
+                $xml = @simplexml_load_file($path);
+                if (!$xml) continue;
+                foreach ($xml->xpath('//animal') ?: [] as $node) {
+                    $idRaw = (string)($node['id'] ?? '');
+                    if ($idRaw === '') continue;
+                    $idKey = preg_replace('/^ani\./', '', $idRaw);
+                    $item = [ 'id' => $idKey ];
+                    // stats
+                    $stats = [];
+                    foreach ($node->xpath('./stats') ?: [] as $s) {
+                        $val = trim((string)$s);
+                        if ($val !== '') {
+                            foreach (preg_split('/[;,\n]/', $val) as $pair) {
+                                $pair = trim($pair);
+                                if ($pair === '') continue;
+                                [$k,$v] = array_pad(explode('=', $pair, 2), 2, '');
+                                $k = trim($k); $v = trim($v);
+                                if ($k !== '') $stats[$k] = is_numeric($v) ? $v + 0 : $v;
+                            }
+                        }
+                    }
+                    if ($stats) $item['stats'] = $stats;
+                    // cost
+                    $cost = [];
+                    foreach ($node->xpath('./cost/res') ?: [] as $resNode) {
+                        $rid = (string)($resNode['id'] ?? '');
+                        $amt = (float)($resNode['amount'] ?? 0);
+                        if ($rid && $amt > 0) $cost[] = ['res_id' => $rid, 'amount' => $amt];
+                    }
+                    if ($cost) $item['cost'] = $cost;
+                    $defs['ani'][$idKey] = $item;
+                }
+            }
+        }
+    }
 
     if ($action === 'buy') {
         $animalsToBuy = $input['animals'] ?? [];
@@ -83,7 +130,9 @@ try {
             $def = $defs['ani'][$key] ?? null;
             if (!$def) throw new Exception("Unknown animal: {$aniId}");
 
-            $totalAnimalCap += (int)($def['stats']['animal_cap'] ?? 1) * $quantity;
+            // Stats store consumption as negative. Use absolute cost for validation/accounting if needed.
+            $capCost = (int)abs((int)($def['stats']['animal_cap'] ?? 1)) ?: 1;
+            $totalAnimalCap += $capCost * $quantity;
             
             $costs = normalize_costs($def['cost'] ?? []);
             foreach ($costs as $cost) {
