@@ -714,9 +714,10 @@ if (Array.isArray(resp.data?.yield?.summary) && resp.data.yield.summary.length) 
     // =====================================================================
     // START PÅ RETTELSE: Korrekt scope-detektion for research
     // =====================================================================
-    const scope = String(bldId).startsWith("rsd.") ? "research"
-                : String(bldId).startsWith("add.") ? "addon"
-                : "building";
+const scope = String(bldId).startsWith("rsd.") ? "research"
+            : String(bldId).startsWith("add.") ? "addon"
+            : String(bldId).startsWith("rcp.") ? "recipe"
+            : "building";
 
     const resp = await postJSON(`${BASE}/actions/build_start.php`, { id: bldId, scope });
     
@@ -767,9 +768,10 @@ if (Array.isArray(resp.data?.yield?.summary) && resp.data.yield.summary.length) 
     // =====================================================================
     // START PÅ RETTELSE: Korrekt scope-detektion for research
     // =====================================================================
-    const scope = String(bldId).startsWith("rsd.") ? "research"
-                : String(bldId).startsWith("add.") ? "addon"
-                : "building";
+const scope = String(bldId).startsWith("rsd.") ? "research"
+            : String(bldId).startsWith("add.") ? "addon"
+            : String(bldId).startsWith("rcp.") ? "recipe"
+            : "building";
 
    const resp = await postJSON(`${BASE}/actions/build_cancel.php`, { id: bldId, job_id: job.jobId, scope });
     

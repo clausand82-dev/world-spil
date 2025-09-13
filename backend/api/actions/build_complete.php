@@ -12,77 +12,70 @@ try {
     $db = db();
     $db->beginTransaction();
 
-    require_once __DIR__ . '/../lib/yield.php';
-$yres = apply_passive_yields_for_user($userId);
-
-    // Trin 1: Hent og LÅS jobrækken.
+    // Hent og lås jobbet
     $stmt = $db->prepare("SELECT * FROM build_jobs WHERE id=? AND user_id=? FOR UPDATE");
     $stmt->execute([$jobId, $userId]);
     $job = $stmt->fetch(PDO::FETCH_ASSOC);
-
-    if (!$job) {
-        throw new Exception('Job not found');
-    }
-
-    // =====================================================================
-    // START PÅ DEN VIGTIGSTE RETTELSE: Tjek job-status ALLERFØRST.
-    // Hvis en anden anmodning allerede har fuldført jobbet, vil statussen
-    // være 'done', og denne anmodning vil blive stoppet her.
-    // =====================================================================
+    if (!$job) throw new Exception('Job not found');
     if ($job['state'] !== 'running') {
-        // Dette er ikke en fejl, men en forventet situation ved race conditions.
-        // Vi returnerer 'ok', fordi jobbet ER fuldført. Frontend rydder op.
-        $db->rollBack(); // Annuller transaktionen, da der ikke skal gøres noget.
-        echo json_encode(['ok' => true, 'message' => 'Job already completed by another request.']);
+        $db->rollBack();
+        echo json_encode(['ok' => true, 'message' => 'Job already processed.']);
         return;
     }
-
-    // Trin 2: Tjek om tiden er gået (med UTC-tid).
-    $stmt = $db->prepare("
-        SELECT GREATEST(0, TIMESTAMPDIFF(SECOND, start_utc, UTC_TIMESTAMP()) - duration_s) AS secs_over
-        FROM build_jobs WHERE id=?
-    ");
+    
+    // Tjek om tiden er gået
+    $stmt = $db->prepare("SELECT TIMESTAMPDIFF(SECOND, start_utc, UTC_TIMESTAMP()) - duration_s AS secs_over FROM build_jobs WHERE id=?");
     $stmt->execute([$jobId]);
-    $over = (int)($stmt->fetchColumn() ?: -1);
-
-    if ($over <= 0) {
+    if ((int)$stmt->fetchColumn() < 0) {
         $db->rollBack();
         http_response_code(400);
         echo json_encode(['ok' => false, 'message' => 'Not finished yet']);
         return;
     }
 
-    // Trin 3: Jobbet er 'running' og tiden er gået. Udfør handlingen.
     $jobItemId = (string)$job['bld_id'];
-    $locked = json_decode((string)$job['locked_costs_json'], true) ?? [];
-    $delta = [];
+    $lockedCosts = json_decode((string)$job['locked_costs_json'], true) ?? [];
+    $delta = null;
 
-    if (str_starts_with($jobItemId, 'rsd.')) {
-        spend_locked_costs($db, $userId, $locked, 'research', $jobItemId);
-        $delta = backend_purchase_research($db, $userId, $jobItemId);
-    } elseif (str_starts_with($jobItemId, 'add.')) {
-        spend_locked_costs($db, $userId, $locked, 'addon', $jobItemId);
-        $delta = backend_purchase_addon($db, $userId, $jobItemId);
+    // =====================================================================
+    // KORREKT LOGIK-GREN: Håndter `recipe` FØRST og separat.
+    // =====================================================================
+    if (str_starts_with($jobItemId, 'rcp.')) {
+        
+        // Hent defs, da vi skal bruge dem
+        if (!function_exists('load_all_defs')) require_once __DIR__ . '/../api/alldata.php';
+        $defs = load_all_defs();
+
+        // 1. Forbrug de låste input-ressourcer
+        spend_locked_costs($db, $userId, $lockedCosts, 'recipe', $jobItemId);
+        
+        // 2. Krediter output-ressourcerne
+        $delta = backend_complete_recipe($db, $userId, $jobItemId, $defs);
+
+        // 3. Opdater jobbet til 'produced'
+        $upd = $db->prepare("UPDATE build_jobs SET state='produced', end_utc=UTC_TIMESTAMP() WHERE id=?");
+        $upd->execute([$jobId]);
+
     } else {
-        spend_locked_costs($db, $userId, $locked, 'building', $jobItemId);
-        $delta = backend_purchase_building($db, $userId, $jobItemId);
+        // --- Din eksisterende, fungerende logik for bygninger, addons og research ---
+        if (str_starts_with($jobItemId, 'rsd.')) {
+            spend_locked_costs($db, $userId, $lockedCosts, 'research', $jobItemId);
+            $delta = backend_purchase_research($db, $userId, $jobItemId);
+        } elseif (str_starts_with($jobItemId, 'add.')) {
+            spend_locked_costs($db, $userId, $lockedCosts, 'addon', $jobItemId);
+            $delta = backend_purchase_addon($db, $userId, $jobItemId);
+        } else {
+            spend_locked_costs($db, $userId, $lockedCosts, 'building', $jobItemId);
+            $delta = backend_purchase_building($db, $userId, $jobItemId);
+        }
+        
+        // Opdater jobbet til 'done' for disse typer
+        $upd = $db->prepare("UPDATE build_jobs SET state='done', end_utc=UTC_TIMESTAMP() WHERE id=?");
+        $upd->execute([$jobId]);
     }
 
-    // Trin 4: Opdater job-status til 'done'.
-    $upd = $db->prepare("UPDATE build_jobs SET state='done', end_utc=UTC_TIMESTAMP() WHERE id=?");
-    $upd->execute([$jobId]);
-
     $db->commit();
-    echo json_encode(['ok' => true, 'delta' => $delta, 'yield' => $yres,]);
-
-// Start/align passiv timer for denne producent
-$upd = $db->prepare("
-  UPDATE buildings
-     SET yield_enabled = 1,
-         last_yield_ts_utc = UTC_TIMESTAMP()
-   WHERE user_id = ? AND bld_id = ?
-");
-$upd->execute([$userId, $jobItemId]); // $jobItemId skal være "bld.<family>.lN"
+    echo json_encode(['ok' => true, 'delta' => $delta]);
 
 } catch (Throwable $e) {
     if (isset($db) && $db->inTransaction()) $db->rollBack();

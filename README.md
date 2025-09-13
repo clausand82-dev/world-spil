@@ -13,3 +13,39 @@ På to do liste ligger ting som (bliver inddelt i stages senere):
 - Handels system - Online med andre bruger (sent)
 - Buff system (snarligt)
 - 
+
+Change/update History
+
+
+
+3.4:
+- added build time for buildings (preparations for addons, research and production/recipes)<br>
+- visuel changes and additions for building list page and building detail pages <br>
+- added passive yields from buildings and addons
+- adding animal system
+- fixed errors
+- dashboard now have overview over build jobs and research 
+- building jobs and research can now be canceled from dashboard
+- dashboard have overview over all passive yields and where they come from
+- Animal system know works and produce yields
+
+3.3:
+- Added DB support for buy buildings
+- Added update system for resource use (aka auto update without refresh hole site)
+
+3.2:
+- Added demo addons system there render actual requested ressources and research
+
+3.1:
+- remove demo data and intergrate real data from DB 
+
+3.0:
+- New layout
+- Behind the scenes movement of code and files to be more orginized
+- third attempt and approved
+
+2.0:
+- second attempt - also abondoned
+
+1.0:
+- 1 attempt but abondoned

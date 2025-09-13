@@ -20,7 +20,7 @@
       <res id="res.rawmeat" amount="2"/>
     </cost>
     <time>15s</time>
-    <require>add.bigfireplace.l1</require>
+    <require></require>
   </recipe>
 
   <recipe id="rcp.hide.l1" family="basecamp" type="recipe" lvl="1" stage="1" mode="active">
@@ -48,16 +48,17 @@
     <require>add.tailorspot.l1</require>
   </recipe>
 
-  <recipe id="rcp.slaughtercow.l1" family="slaughter" type="recipe" lvl="1" stage="1" mode="active">
+  <recipe id="rcp.slaughtercow.l1" family="basecamp" type="recipe" lvl="1" stage="1" mode="active">
     <yield>
       <res id="res.rawhide" amount="3"/>
       <res id="res.rawmeat" amount="6"/>
       <res id="res.bone" amount="10"/>
     </yield>
     <cost>
-      <res id="res.animal.cow" amount="1"/>
+      <res id="ani.cow" amount="1"/>
     </cost>
     <time>1h</time>
+    <require>add.slaughterspot.l1</require>
   </recipe>
 
   <recipe id="rcp.slaughterdeer.l1" family="slaughter" type="recipe" lvl="1" stage="1" mode="active">

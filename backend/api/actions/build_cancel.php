@@ -24,8 +24,9 @@ $yres = apply_passive_yields_for_user($userId);
   if (($job['state'] ?? '') !== 'running') throw new Exception('Job not running');
 
   $jobItemId = (string)$job['bld_id'];
-  $scope = str_starts_with($jobItemId, 'rsd.') ? 'research'
-          : (str_starts_with($jobItemId, 'add.') ? 'addon' : 'building');
+ $scope = str_starts_with($jobItemId, 'rsd.') ? 'research'
+      : (str_starts_with($jobItemId, 'add.') ? 'addon'
+      : (str_starts_with($jobItemId, 'rcp.') ? 'recipe' : 'building'));
 
           
   release_locked_costs($db, $userId, $scope, $jobItemId);

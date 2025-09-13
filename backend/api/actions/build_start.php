@@ -12,13 +12,14 @@ try {
   $scopeIn = strtolower(trim((string)($input['scope'] ?? '')));
   if ($reqId === '') throw new Exception('Missing id');
 
-  // Udled scope fra ID-præfiks for at være robust
-  if (str_starts_with($reqId, 'rsd.')) $scopeIn = 'research';
-  elseif (str_starts_with($reqId, 'add.')) $scopeIn = 'addon';
-  else $scopeIn = 'building';
+// Udled scope robust (denne linje er uændret)
+if (str_starts_with($reqId, 'rsd.')) $scopeIn = 'research';
+elseif (str_starts_with($reqId, 'add.')) $scopeIn = 'addon';
+elseif (str_starts_with($reqId, 'rcp.')) $scopeIn = 'recipe';
+else $scopeIn = 'building';
 
-  $defs = load_all_defs();
-  $db = db();
+$defs = load_all_defs();
+$db = db();
 
    require_once __DIR__ . '/../lib/yield.php';
 $yres = apply_passive_yields_for_user($userId);
@@ -39,6 +40,13 @@ $yres = apply_passive_yields_for_user($userId);
     $itemId = 'add.' . $rawKey;
     $duration_s = (int)($def['duration_s'] ?? $def['time_s'] ?? 10);
     $costs = normalize_costs($def['cost'] ?? []);
+  } elseif ($scopeIn === 'recipe') { // <-- NY, SIMPEL BLOK
+  $rawKey = preg_replace('~^rcp\.~i', '', $reqId);
+  $def = $defs['rcp'][$rawKey] ?? null;
+  if (!$def) throw new Exception('Unknown recipe: ' . $reqId);
+  $itemId = $reqId;
+  $duration_s = (int)($def['duration_s'] ?? 10);
+  $costs = normalize_costs($def['cost'] ?? []);
   } else { // building
     $rawKey = preg_replace('/^bld\./i', '', $reqId);
     if (!isset($defs['bld'][$rawKey])) throw new Exception('Unknown building id');

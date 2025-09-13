@@ -443,21 +443,89 @@ function backend_purchase_research(PDO $db, int $userId, string $rsdIdFull): arr
     ];
 }
 
+// ANDEN NYE FUNKTION: backend_complete_recipe
+/**
+ * Fuldfører et "recipe" job.
+ * RETTET: Bruger nu `normalize_costs` og den nye `credit_resources`.
+ */
+function backend_complete_recipe(PDO $db, int $userId, string $rcpIdFull, array $defs): array {
+    $key = preg_replace('~^rcp\.~i', '', $rcpIdFull);
+    $def = $defs['rcp'][$key] ?? null;
+    if (!$def) {
+        error_log("Warning: Unknown recipe definition for ID: " . $rcpIdFull);
+        return [];
+    }
 
-// Bruges til animal systemet
+    // RETTET: Bruger din eksisterende `normalize_costs` funktion.
+    $yield = normalize_costs($def['yield'] ?? []);
+    
+    if (!empty($yield)) {
+        // RETTET: Bruger den nye `credit_resources` funktion.
+        credit_resources($db, $userId, $yield);
+    }
+
+    $delta = ['resources' => []];
+    foreach ($yield as $y) {
+        $resId = $y['res_id'];
+        $amount = (float)$y['amount'];
+        $delta['resources'][$resId] = ($delta['resources'][$resId] ?? 0) + $amount;
+    }
+    
+    return $delta;
+}
+
+/**
+ * Krediterer ressourcer til den SAMLEDE inventory-tabel.
+ */
+function credit_resources(PDO $db, int $userId, array $list): void {
+    if (empty($list)) return;
+    $stmt = $db->prepare("INSERT INTO inventory (user_id, res_id, amount) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE amount = amount + VALUES(amount)");
+    foreach ($list as $row) {
+        $resId = $row['res_id'] ?? null;
+        $amount = (float)($row['amount'] ?? 0);
+        if ($resId && $amount > 0) {
+            $stmt->execute([$userId, canonical_res_id($resId), $amount]);
+        }
+    }
+}
+
+
+/**
+ * Fjerner ressourcer fra spillerens beholdning.
+ * Nu med korrekt SQL og validering.
+ */
 function spend_resources(PDO $db, int $userId, array $costs): void {
     if (empty($costs)) return;
 
+    if (!function_exists('load_all_defs')) {
+        require_once __DIR__ . '/../api/alldata.php';
+    }
+    $defs = load_all_defs();
+    
+    // Valider først
     foreach ($costs as $cost) {
         $resId = $cost['res_id'] ?? null;
-        $amount = (float)($cost['amount'] ?? 0);
-        if (!$resId || $amount <= 0) continue;
-
-        // Denne logik bør matche din `credit_resources` for at vælge den rigtige tabel
-        $table = str_contains($resId, 'water') || str_contains($resId, 'milk') ? 'inventory_liquid' : 'inventory_solid';
+        $amountNeeded = (float)($cost['amount'] ?? 0);
+        if (!$resId || $amountNeeded <= 0) continue;
         
-        $stmt = $db->prepare("UPDATE {$table} SET amount = GREATEST(0, amount - ?) WHERE user_id = ? AND res_id = ?");
-        $stmt->execute([$amount, $userId, $resId]);
+        $currentAmount = read_inventory_amount($db, $userId, $resId); // Bruger din eksisterende, robuste funktion
+        if ($currentAmount < $amountNeeded) {
+            throw new Exception("Not enough resources for {$resId}. Required: {$amountNeeded}, Have: {$currentAmount}");
+        }
+    }
+
+    // Træk ressourcer fra bagefter
+    foreach ($costs as $cost) {
+        $resId = $cost['res_id'] ?? null;
+        $amountToSpend = (float)($cost['amount'] ?? 0);
+        if (!$resId || $amountToSpend <= 0) continue;
+        
+        $key = preg_replace('/^res\./', '', $resId);
+        $unit = strtolower((string)($defs['res'][$key]['unit'] ?? ''));
+        $table = ($unit === 'l') ? 'inventory_liquid' : 'inventory_solid';
+
+        $stmtUpdate = $db->prepare("UPDATE {$table} SET amount = GREATEST(0, amount - ?) WHERE user_id = ? AND res_id = ?");
+        $stmtUpdate->execute([$amountToSpend, $userId, $resId]);
     }
 }
 
