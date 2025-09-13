@@ -1,5 +1,4 @@
 <?php
-declare(strict_types=1);
 require_once __DIR__ . '/../_init.php';
 require_once __DIR__ . '/../lib/purchase_helpers.php';
 header('Content-Type: application/json');
@@ -12,35 +11,30 @@ try {
 
     $db = db();
     $db->beginTransaction();
-    
-    // Vi kører yield FØR job-behandling, så det altid er opdateret
+
     require_once __DIR__ . '/../lib/yield.php';
     $yres = apply_passive_yields_for_user($userId);
 
-    // Trin 1: Hent og LÅS jobrækken.
     $stmt = $db->prepare("SELECT * FROM build_jobs WHERE id=? AND user_id=? FOR UPDATE");
     $stmt->execute([$jobId, $userId]);
     $job = $stmt->fetch(PDO::FETCH_ASSOC);
-
     if (!$job) throw new Exception('Job not found');
 
     if ($job['state'] !== 'running') {
         $db->rollBack();
-        echo json_encode(['ok' => true, 'message' => 'Job already processed.']);
+        echo json_encode(['ok' => true, 'message' => 'Job already completed.']);
         return;
     }
 
-    // Trin 2: Tjek om tiden er gået (med UTC-tid).
-    $stmt = $db->prepare("SELECT TIMESTAMPDIFF(SECOND, start_utc, UTC_TIMESTAMP()) - duration_s AS secs_over FROM build_jobs WHERE id=?");
+    $stmt = $db->prepare("SELECT GREATEST(0, TIMESTAMPDIFF(SECOND, start_utc, UTC_TIMESTAMP()) - duration_s) AS secs_over FROM build_jobs WHERE id=?");
     $stmt->execute([$jobId]);
-    if ((int)$stmt->fetchColumn() < 0) {
+    if ((int)$stmt->fetchColumn() <= 0) {
         $db->rollBack();
         http_response_code(400);
         echo json_encode(['ok' => false, 'message' => 'Not finished yet']);
         return;
     }
 
-    // Trin 3: Jobbet er 'running' og tiden er gået. Udfør handlingen.
     $jobItemId = (string)$job['bld_id'];
     $lockedCosts = json_decode((string)$job['locked_costs_json'], true) ?? [];
     $delta = null;
@@ -50,18 +44,16 @@ try {
     // =====================================================================
     if (str_starts_with($jobItemId, 'rcp.')) {
         // --- Håndtering af RECIPES ---
-        if (!function_exists('load_all_defs')) {
-            require_once __DIR__ . '/../api/alldata.php';
-        }
+        if (!function_exists('load_all_defs')) require_once __DIR__ . '/../api/alldata.php';
         $defs = load_all_defs();
         
-        // 1. Forbrug ALLE omkostninger (både ressourcer og dyr)
-        spend_resources($db, $userId, $lockedCosts);
+        // 1. Forbrug ALLE låste omkostninger (både ressourcer og dyr) med det korrekte scope
+        spend_locked_costs($db, $userId, $lockedCosts, 'recipe', $jobItemId);
         
-        // 2. Krediter udbyttet
+        // 2. Krediter udbyttet til spillerens inventory
         $delta = backend_complete_recipe($db, $userId, $jobItemId, $defs);
 
-        // 3. Opdater jobbet til 'produced'
+        // 3. Opdater jobbet til den nye 'produced' state
         $upd = $db->prepare("UPDATE build_jobs SET state='produced', end_utc=UTC_TIMESTAMP() WHERE id=?");
         $upd->execute([$jobId]);
 

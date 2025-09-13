@@ -10,8 +10,6 @@
     <yield period="1h">
         <res id="res.fertilizer" amount="2"/>
         <res id="res.cowmilk" amount="2"/>
-        <res id="res.rawmeat" amount="4"/>
-        <res id="res.rawhide" amount="1"/>
     </yield>
     <emoji>🐄</emoji>
   </animal>
@@ -23,8 +21,6 @@
       <res id="res.food" amount="2"/>
     </cost>
     <yield period="1h">
-        <res id="res.rawhide" amount="3"/>
-        <res id="res.rawmeat" amount="4"/>
     </yield>
     <emoji>🦌</emoji>
   </animal>
@@ -36,7 +32,7 @@
       <res id="res.food" amount="2"/>
     </cost>
     <yield period="1h">
-        <res id="res.rawmeat" amount="6"/>
+        <res id="res.fertilizer" amount="4"/>
     </yield>
     <emoji>🐖</emoji>
   </animal>
@@ -48,9 +44,8 @@
       <res id="res.food" amount="2"/>
     </cost>
     <yield period="1h">
-        <res id="res.rawmeat" amount="2"/>
-        <res id="res.bone" amount="3"/>
-        <res id="res.rawhide" amount="1"/>
+        <res id="res.goatmilk" amount="2"/>
+        <res id="res.fertilizer" amount="1"/>
     </yield>
     <emoji>🐐</emoji>
   </animal>
@@ -62,10 +57,8 @@
       <res id="res.food" amount="2"/>
     </cost>
     <yield period="1h">
-        <res id="res.rawmeat" amount="3"/>
-        <res id="res.bone" amount="2"/>
-        <res id="res.rawhide" amount="1"/>
         <res id="res.wool" amount="2"/>
+        <res id="res.fertilizer" amount="1"/>
     </yield>
     <emoji>🐏</emoji>
   </animal>
@@ -77,9 +70,9 @@
       <res id="res.food" amount="2"/>
     </cost>
     <yield period="1h">
-        <res id="res.rawmeat" amount="1"/>
         <res id="res.egg" amount="2"/>
-        <res id="res.feather" amount="2"/>
+        <res id="res.feather" amount="1"/>
+        <res id="res.fertilizer" amount="1"/>
     </yield>
     <emoji>🐔</emoji>
   </animal>
@@ -92,7 +85,6 @@
     </cost>
     <yield period="1h">
         <res id="res.egg" amount="1"/>
-        <res id="res.rawmeat" amount="1"/>
         <res id="res.feather" amount="1"/>
     </yield>
     <emoji>🦆</emoji>
