@@ -48,7 +48,7 @@
     <require>add.tailorspot.l1</require>
   </recipe>
 
-  <recipe id="rcp.slaughtercow.l1" family="basecamp" type="recipe" lvl="1" stage="1" mode="active">
+  <recipe id="rcp.slaughtercow.l1" family="barn" type="recipe" lvl="1" stage="1" mode="active">
     <yield>
       <res id="res.rawhide" amount="3"/>
       <res id="res.rawmeat" amount="6"/>
@@ -56,8 +56,9 @@
     </yield>
     <cost>
       <res id="ani.cow" amount="1"/>
+      <res id="res.water" amount="1"/>
     </cost>
-    <time>1h</time>
+    <time>20s</time>
     <require>add.slaughterspot.l1</require>
   </recipe>
 

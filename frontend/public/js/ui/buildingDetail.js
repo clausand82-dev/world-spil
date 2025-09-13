@@ -713,6 +713,8 @@ function renderResearchListForBuilding(family, backId) {
   return `<section class="panel section"><div class="section-head">🔬 Related Research</div><div class="section-body">${rows.join("") || "<div class='sub'>Ingen</div>"}</div></section>`;
 }
 
+// buildingDetail.js
+
 function recipeRow(rcpKey, def, curStage, familyForBuilding) {
   const fullId = "rcp." + rcpKey;
   const myLvl  = Number(rcpKey.match(/\.l(\d+)$/)?.[1] || 1);
@@ -728,7 +730,7 @@ function recipeRow(rcpKey, def, curStage, familyForBuilding) {
   const priceObj = normalizeCostObj(def.cost);
   const parts = (typeof renderReqLine === "function")
     ? renderReqLine(
-        { id: fullId, price: priceObj, req: def.require || def.req || "", isUpgrade: (myLvl > 1) },
+        { id: fullId, price: priceObj, req: def.require || def.req || "", isUpgrade: (myLvl > 1) , duration_s: def.duration_s},
         { context: "recipe", showLabels: true, split: false, compact: true, returnParts: true }
       )
     : { bothInline: "", allOk: true };
@@ -763,44 +765,43 @@ function recipeRow(rcpKey, def, curStage, familyForBuilding) {
               </div>`;
   }
 
-  // --- VIS OPSKRIFT (emoji + tal) + TID på samme linje ------------------
-  const resName = (rid) => {
-    const key = String(rid || '').replace(/^res\./,'');
-    return window.data?.defs?.res?.[key]?.name || key;
+  // =====================================================================
+  // START PÅ DEN ENESTE, KORREKTE RETTELSE
+  // =====================================================================
+  
+  // Helper til at formatere et enkelt item (ressource eller dyr)
+  const formatItem = (item) => {
+      const id = item.id ?? item.res_id ?? item.resource ?? item.type;
+      const amount = item.amount ?? item.qty ?? item.value;
+      let defItem = null;
+      let name = id;
+      let emoji = '❔';
+
+      if (id.startsWith('ani.')) {
+          const key = id.replace(/^ani\./, '');
+          defItem = window.data.defs.ani?.[key];
+          if (defItem) { name = defItem.name; emoji = defItem.emoji || '🐾'; }
+      } else { // Antager res.*
+          const key = id.replace(/^res\./, '');
+          defItem = window.data.defs.res?.[key];
+          if (defItem) { name = defItem.name; emoji = defItem.emoji || '❔'; }
+      }
+      return `${amount} ${emoji} ${name}`;
   };
-  const resEmoji = (rid) => {
-    const key = String(rid || '').replace(/^res\./,'');
-    return window.data?.defs?.res?.[key]?.emoji || '';
-  };
 
-  // Inputs (cost)
-  const inputs = [];
-  for (const [rid, spec] of Object.entries(priceObj || {})) {
-    const id = spec?.id || rid;
-    const amt = +(spec?.amount ?? spec ?? 0);
-    if (!id || !amt) continue;
-    inputs.push(`${resEmoji(id)} ${amt} ${resName(id)}`);
-  }
+  // Inputs (cost) - bruger din eksisterende _animalsNormalizePrice
+  const inputs = (def.cost || []).map(formatItem).join(" + ");
 
-  // Outputs (yield)
-  const outs = [];
-  const yarr = Array.isArray(def?.yield) ? def.yield : [];
-  for (const y of yarr) {
-    const id = y?.id || y?.rid || y?.resource;
-    const amt = +(y?.amount ?? y?.value ?? 0);
-    if (!id || !amt) continue;
-    outs.push(`${resEmoji(id)} ${amt} ${resName(id)}`);
-  }
-
-  // Tid (fra defs)
+  // Outputs (yield) - bruger din eksisterende _animalsNormalizePrice
+  const outputs = (def.yield || []).map(formatItem).join(" + ");
+  
   const timeStr = def?.time_str || (def?.duration_s ? `${def.duration_s}s` : "");
-
-  // Linje 1: Recipe: inputs → outputs / TIME
-  const recipeIO = (inputs.length || outs.length)
-    ? `<div class="sub">🧪 <strong>Recipe:</strong> ${inputs.join(" + ")} → ${outs.join(" + ")}${timeStr ? " / " + timeStr : ""}</div>`
-    : "";
-
-  // ---------------------------------------------------------------------
+  
+  const recipeIO = `<div class="sub">🧪 <strong>Recipe:</strong> ${inputs} → ${outputs}${timeStr ? " / " + timeStr : ""}</div>`;
+  
+  // =====================================================================
+  // SLUT PÅ RETTELSE
+  // =====================================================================
 
   return `
     <div class="item" data-recipe-row="${fullId}">
@@ -809,7 +810,7 @@ function recipeRow(rcpKey, def, curStage, familyForBuilding) {
         <div class="title">${def.name || rcpKey}</div>
         ${def.desc ? `<div class="sub">🛈 ${def.desc}</div>` : ""}
         ${recipeIO}
-        ${parts.bothInline ? `<div class="sub">${parts.bothInline}</div>` : ""}
+        ${parts.bothInline ? `<div class="sub" style="margin-top: 4px;">${parts.bothInline}</div>` : ""}
       </div>
       <div class="right">${right}</div>
     </div>

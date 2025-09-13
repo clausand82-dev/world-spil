@@ -16,7 +16,15 @@ På to do liste ligger ting som (bliver inddelt i stages senere):
 
 Change/update History
 
+3.5:
+- active recipes added
+- animal can now be slaughtered to yield one time yield
+- animal no longer yield slaughter resources like rawmeat, hide and so on
 
+TO-DO IN SAME BRANCH
+- buff system
+- animal on inventory list
+- passive yield stops when cap is filled
 
 3.4:
 - added build time for buildings (preparations for addons, research and production/recipes)<br>
@@ -45,7 +53,7 @@ Change/update History
 - third attempt and approved
 
 2.0:
-- second attempt - also abondoned
+- second attempt - also abandoned
 
 1.0:
-- 1 attempt but abondoned
+- 1 attempt but abandoned

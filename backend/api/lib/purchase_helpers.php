@@ -55,41 +55,26 @@ function parse_bld_id(string $id): array {
    Inventory / resource locks
 ================================= */
 
-/** Læs hvor meget der er i inventory for et givent res-id
- *  - Tolerant ift. "res.wood" og "wood"
- *  - Vælg evt. tabel efter din egen konvention (her simpel heuristic)
+/**
+ * Læser en spillers beholdning fra den korrekte tabel (inventory eller animals).
  */
 function read_inventory_amount(PDO $db, int $userId, string $resId): float {
-  $rid1 = canonical_res_id($resId);
-  $rid2 = alt_res_id($resId);
-
-  /*
-  // Tilpas evt. din egen heuristic for "liquid" vs "solid"
-  $isLiquid = str_starts_with($rid1, 'res.water') || str_starts_with($rid1, 'res.liquid');*/
-
-$stmt = $db->prepare(
-      "SELECT COALESCE(SUM(amount),0) AS s
-         FROM inventory
-        WHERE user_id = ?
-          AND res_id IN (?, ?)");
-
-  /*if ($isLiquid) {
-    $stmt = $db->prepare(
-      "SELECT COALESCE(SUM(amount),0) AS s
-         FROM inventory_liquid
-        WHERE user_id = ?
-          AND res_id IN (?, ?)"
-    );
-  } else {
-    $stmt = $db->prepare(
-      "SELECT COALESCE(SUM(amount),0) AS s
-         FROM inventory_solid
-        WHERE user_id = ?
-          AND res_id IN (?, ?)"
-    );
-  }*/
-  $stmt->execute([$userId, $rid1, $rid2]);
-  return (float)$stmt->fetchColumn();
+    // Hvis det er et dyr, tjek `animals`-tabellen
+    if (str_starts_with($resId, 'ani.')) {
+        $stmt = $db->prepare("SELECT quantity FROM animals WHERE user_id = ? AND ani_id = ?");
+        $stmt->execute([$userId, $resId]);
+        return (float)($stmt->fetchColumn() ?: 0.0);
+    }
+    
+    // Ellers, brug den eksisterende logik for ressourcer (solid/liquid)
+    $rid1 = canonical_res_id($resId);
+    $rid2 = alt_res_id($resId);
+    $isLiquid = str_starts_with($rid1, 'res.water') || str_starts_with($rid1, 'res.liquid');
+    $table = $isLiquid ? 'inventory_liquid' : 'inventory_solid';
+    
+    $stmt = $db->prepare("SELECT COALESCE(SUM(amount), 0) AS s FROM inventory WHERE user_id = ? AND res_id IN (?, ?)");
+    $stmt->execute([$userId, $rid1, $rid2]);
+    return (float)$stmt->fetchColumn();
 }
 
 /** Summér låst mængde for et res-id (aktiv lås = hverken released eller consumed) */
@@ -109,34 +94,44 @@ function sum_locked(PDO $db, int $userId, string $resId): float {
   return (float)$stmt->fetchColumn();
 }
 
-/** Lås (escrow) costs — fejler hvis der ikke er nok frie ressourcer
- *  - Validerer først alle linjer; hvis OK, opretter låse med canonical res-id'er
+/**
+ * Låser ressourcer/dyr. Bruger nu den opdaterede `read_inventory_amount`.
  */
 function lock_costs_or_throw(PDO $db, int $userId, array $costs, string $scope, string $scopeId): void {
-  // Validér alle linjer først
-  foreach ($costs as $c) {
-    $rawId = (string)($c['res_id'] ?? $c['id'] ?? '');
-    $amt   = (float)($c['amount'] ?? $c['qty'] ?? 0);
-    if ($rawId === '' || $amt <= 0) throw new Exception('Bad cost row');
+    if (empty($costs)) return;
 
-    $have   = read_inventory_amount($db, $userId, $rawId);
-    $locked = sum_locked($db, $userId, $rawId);
+    // Trin 1: Valider alle omkostninger FØR vi indsætter noget.
+    foreach ($costs as $c) {
+        $rawId = (string)($c['res_id'] ?? '');
+        $amt   = (float)($c['amount'] ?? 0);
+        if ($rawId === '' || $amt <= 0) continue;
 
-    if ( ($have - $locked) < $amt ) {
-      throw new Exception("Not enough resources for " . canonical_res_id($rawId));
+        // Denne funktion kan håndtere både `res.*` og `ani.*` korrekt.
+        $have   = read_inventory_amount($db, $userId, $rawId);
+        
+        // Dyr kan ikke være låst af ANDRE jobs, men vi tjekker for en sikkerheds skyld.
+        // `sum_locked` virker kun for `res.*`, hvilket er OK, da dyr ikke bør være låst.
+        $locked = sum_locked($db, $userId, $rawId);
+
+        if (($have - $locked) < $amt) {
+            throw new Exception("Not enough of {$rawId}. Required: {$amt}, Have: {$have}");
+        }
     }
-  }
 
-  // Opret låse (canonical res-id)
-  $ins = $db->prepare(
-    "INSERT INTO resource_locks (user_id, scope, scope_id, res_id, amount, locked_at)
-     VALUES (?,?,?,?,?,CURRENT_TIMESTAMP)"
-  );
-  foreach ($costs as $c) {
-    $rawId = (string)($c['res_id'] ?? $c['id'] ?? '');
-    $amt   = (float)($c['amount'] ?? $c['qty'] ?? 0);
-    $ins->execute([$userId, $scope, $scopeId, canonical_res_id($rawId), $amt]);
-  }
+    // Trin 2: Opret låse for ALLE omkostningstyper (både res.* og ani.*)
+    $ins = $db->prepare(
+        "INSERT INTO resource_locks (user_id, scope, scope_id, res_id, amount, locked_at)
+         VALUES (?,?,?,?,?,UTC_TIMESTAMP())"
+    );
+    foreach ($costs as $c) {
+        $rawId = (string)($c['res_id'] ?? '');
+        $amt   = (float)($c['amount'] ?? 0);
+        
+        if ($rawId !== '' && $amt > 0) {
+            // Vi bruger $rawId direkte (f.eks. "ani.cow"), da det er det, vi validerer mod.
+            $ins->execute([$userId, $scope, $scopeId, $rawId, $amt]);
+        }
+    }
 }
 
 /** Frigør alle aktive låse for dette scope/scopeId (100% refund ved cancel) */
@@ -165,101 +160,33 @@ function release_locked_costs(PDO $db, int $userId, string $scope, string $scope
  *                            (typisk json_decoded fra build_jobs.locked_costs_json)
  */
 function spend_locked_costs(PDO $db, int $userId, array $lockedCosts, string $scope, string $scopeId): void {
-  // 1) Markér alle relevante låse som consumed (samme scope/scopeId)
+    if (empty($lockedCosts)) return;
 
-  $stmt = $db->prepare(
-    "UPDATE resource_locks
-        SET consumed_at = CURRENT_TIMESTAMP
-      WHERE user_id = ?
-        AND scope    = ?
-        AND scope_id = ?
-        AND released_at IS NULL
-        AND consumed_at IS NULL"
-  );
-  $stmt->execute([$userId, $scope, $scopeId]);
+    // Trin 1: Træk de forbrugte items fra de korrekte tabeller
+    $stmtInventory = $db->prepare("UPDATE inventory SET amount = GREATEST(0, amount - ?) WHERE user_id = ? AND res_id = ?");
+    $stmtAnimals = $db->prepare("UPDATE animals SET quantity = GREATEST(0, quantity - ?) WHERE user_id = ? AND ani_id = ?");
 
-  // Hvis listen er tom (fx ved ældre jobs), kan vi falde tilbage til at samle fra locks.
-  // Men *helst* brug den medfølgende $lockedCosts (det matcher præcis det, der blev låst).
-  if (empty($lockedCosts)) {
-    $q = $db->prepare(
-      "SELECT res_id, SUM(amount) AS amount
-         FROM resource_locks
-        WHERE user_id = ?
-          AND scope    = ?
-          AND scope_id = ?
-          AND released_at IS NULL
-          AND consumed_at IS NOT NULL
-        GROUP BY res_id"
+    foreach ($lockedCosts as $cost) {
+        $resId = $cost['res_id'] ?? null;
+        $amountToSpend = (float)($cost['amount'] ?? 0);
+        if (!$resId || $amountToSpend <= 0) continue;
+
+        if (str_starts_with($resId, 'ani.')) {
+            $stmtAnimals->execute([$amountToSpend, $userId, $resId]);
+        } else {
+            // Sørg for at ID'et er kanonisk for inventory-tabellen
+            $canonicalId = str_starts_with($resId, 'res.') ? $resId : 'res.' . $resId;
+            $stmtInventory->execute([$amountToSpend, $userId, $canonicalId]);
+        }
+    }
+
+    // Trin 2: Marker låsene som 'consumed'
+    $stmtLocks = $db->prepare(
+        "UPDATE resource_locks
+         SET consumed_at = UTC_TIMESTAMP()
+         WHERE user_id = ? AND scope = ? AND scope_id = ? AND consumed_at IS NULL"
     );
-    $q->execute([$userId, $scope, $scopeId]);
-    $lockedCosts = $q->fetchAll(PDO::FETCH_ASSOC) ?: [];
-  }
-
-  // 2) Bogfør minus i inventory
-  //    Brug samme heuristik som read_inventory_amount:
-  //    Liquid hvis id starter med 'res.water' eller 'res.liquid', ellers solid.
-  $updRes = $db->prepare(
-    "UPDATE inventory
-        SET amount = GREATEST(0, amount - ?)
-      WHERE user_id = ? AND res_id IN (?, ?)");
-  
-  /*$updSolid = $db->prepare(
-    "UPDATE inventory_solid
-        SET amount = GREATEST(0, amount - ?)
-      WHERE user_id = ? AND res_id IN (?, ?)"
-  );
-  $updLiquid = $db->prepare(
-    "UPDATE inventory_liquid
-        SET amount = GREATEST(0, amount - ?)
-      WHERE user_id = ? AND res_id IN (?, ?)"
-  );*/
-
-  // Evt. opret 0-rækker, hvis de ikke findes (burde normalt ikke være nødvendigt,
-  // fordi lock_costs_or_throw har valideret beholdning, men det gør funktionen robust).
-  $insRes = $db->prepare(
-    "INSERT INTO inventory (user_id, res_id, amount) VALUES (?, ?, 0)"
-  );
-  
-  /*
-  $insSolid = $db->prepare(
-    "INSERT INTO inventory_solid (user_id, res_id, amount) VALUES (?, ?, 0)"
-  );
-  $insLiquid = $db->prepare(
-    "INSERT INTO inventory_liquid (user_id, res_id, amount) VALUES (?, ?, 0)"
-  );*/
-
-  foreach ($lockedCosts as $row) {
-    $ridRaw = (string)($row['res_id'] ?? $row['id'] ?? '');
-    $amt    = (float)($row['amount'] ?? $row['qty'] ?? 0);
-    if ($ridRaw === '' || $amt <= 0) continue;
-
-    $rid1 = canonical_res_id($ridRaw);
-    $rid2 = alt_res_id($ridRaw);
-
-    //$isLiquid = str_starts_with($rid1, 'res.water') || str_starts_with($rid1, 'res.liquid');
-
-    $updRes->execute([$amt, $userId, $rid1, $rid2]);
-      if ($updRes->rowCount() === 0) {
-        // Forsøg at oprette en 0-række og prøv igen
-        try { $insRes->execute([$userId, $rid1]); } catch (\Throwable $e) {  }
-        $updRes->execute([$amt, $userId, $rid1, $rid2]);}
-
-    /*
-    if ($isLiquid) {
-      $updLiquid->execute([$amt, $userId, $rid1, $rid2]);
-      if ($updLiquid->rowCount() === 0) {
-        // Forsøg at oprette en 0-række og prøv igen
-        try { $insLiquid->execute([$userId, $rid1]); } catch (\Throwable $e) {  }
-        $updLiquid->execute([$amt, $userId, $rid1, $rid2]);
-      }
-    } else {
-      $updSolid->execute([$amt, $userId, $rid1, $rid2]);
-      if ($updSolid->rowCount() === 0) {
-        try { $insSolid->execute([$userId, $rid1]); } catch (\Throwable $e) {  }
-        $updSolid->execute([$amt, $userId, $rid1, $rid2]);
-      }
-    }*/
-  }
+    $stmtLocks->execute([$userId, $scope, $scopeId]);
 }
 
 
@@ -270,14 +197,32 @@ function spend_locked_costs(PDO $db, int $userId, array $lockedCosts, string $sc
 ================================= */
 
 /** Normaliser en pris-liste til [{res_id, amount}, ...] */
-function normalize_costs(array $in): array {
-  $out = [];
-  foreach ($in as $row) {
-    $rid = $row['res_id'] ?? $row['id'] ?? $row['resource'] ?? null;
-    $amt = $row['amount'] ?? $row['qty'] ?? $row['value'] ?? null;
-    if ($rid && $amt !== null) $out[] = ['res_id' => canonical_res_id((string)$rid), 'amount' => (float)$amt];
-  }
-  return $out;
+function normalize_costs($raw): array {
+    if (!$raw) return [];
+    $out = [];
+    if (is_array($raw)) {
+        foreach ($raw as $row) {
+            if (!is_array($row)) continue;
+            
+            $rid = $row['res_id'] ?? $row['id'] ?? $row['res'] ?? null;
+            $amt = $row['amount'] ?? $row['qty'] ?? null;
+            if ($rid === null || $amt === null) continue;
+            
+            $idStr = strtolower((string)$rid);
+
+            // Her er den vigtige logik:
+            // Hvis ID'et allerede starter med 'ani.', lad det være.
+            // Ellers, sørg for at det starter med 'res.'.
+            if (str_starts_with($idStr, 'ani.')) {
+                // Gør ingenting, det er allerede korrekt
+            } else if (!str_starts_with($idStr, 'res.')) {
+                $idStr = 'res.' . $idStr;
+            }
+
+            $out[] = ['res_id' => $idStr, 'amount' => (float)$amt];
+        }
+    }
+    return $out;
 }
 
 /* ================================
@@ -475,57 +420,65 @@ function backend_complete_recipe(PDO $db, int $userId, string $rcpIdFull, array 
 }
 
 /**
- * Krediterer ressourcer til den SAMLEDE inventory-tabel.
+ * Krediterer ressourcer til den korrekte tabel (inventory eller animals).
  */
 function credit_resources(PDO $db, int $userId, array $list): void {
     if (empty($list)) return;
-    $stmt = $db->prepare("INSERT INTO inventory (user_id, res_id, amount) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE amount = amount + VALUES(amount)");
+
+    $stmtInventory = $db->prepare("INSERT INTO inventory (user_id, res_id, amount) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE amount = amount + ?");
+    $stmtAnimals = $db->prepare("INSERT INTO animals (user_id, ani_id, quantity) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE quantity = quantity + ?");
+
     foreach ($list as $row) {
         $resId = $row['res_id'] ?? null;
         $amount = (float)($row['amount'] ?? 0);
-        if ($resId && $amount > 0) {
-            $stmt->execute([$userId, canonical_res_id($resId), $amount]);
+        if (!$resId || $amount <= 0) continue;
+        
+        if (str_starts_with($resId, 'ani.')) {
+            $stmtAnimals->execute([$userId, $resId, $amount, $amount]);
+        } else {
+            // Sørg for at ID'et er kanonisk (starter med res.)
+            $canonicalId = str_starts_with($resId, 'res.') ? $resId : 'res.' . $resId;
+            $stmtInventory->execute([$userId, $canonicalId, $amount, $amount]);
         }
     }
 }
 
-
 /**
- * Fjerner ressourcer fra spillerens beholdning.
- * Nu med korrekt SQL og validering.
+ * Fjerner ressourcer fra den korrekte tabel (inventory eller animals) efter validering.
  */
 function spend_resources(PDO $db, int $userId, array $costs): void {
     if (empty($costs)) return;
 
-    if (!function_exists('load_all_defs')) {
-        require_once __DIR__ . '/../api/alldata.php';
-    }
-    $defs = load_all_defs();
-    
-    // Valider først
     foreach ($costs as $cost) {
         $resId = $cost['res_id'] ?? null;
         $amountNeeded = (float)($cost['amount'] ?? 0);
         if (!$resId || $amountNeeded <= 0) continue;
-        
-        $currentAmount = read_inventory_amount($db, $userId, $resId); // Bruger din eksisterende, robuste funktion
+
+        if (str_starts_with($resId, 'ani.')) {
+            $stmtCheck = $db->prepare("SELECT quantity FROM animals WHERE user_id = ? AND ani_id = ?");
+            $stmtCheck->execute([$userId, $resId]);
+            $currentAmount = (float)($stmtCheck->fetchColumn() ?: 0.0);
+        } else {
+            $currentAmount = read_inventory_amount($db, $userId, $resId);
+        }
+
         if ($currentAmount < $amountNeeded) {
-            throw new Exception("Not enough resources for {$resId}. Required: {$amountNeeded}, Have: {$currentAmount}");
+            throw new Exception("Not enough of {$resId}. Required: {$amountNeeded}, Have: {$currentAmount}");
         }
     }
 
-    // Træk ressourcer fra bagefter
     foreach ($costs as $cost) {
         $resId = $cost['res_id'] ?? null;
         $amountToSpend = (float)($cost['amount'] ?? 0);
         if (!$resId || $amountToSpend <= 0) continue;
-        
-        $key = preg_replace('/^res\./', '', $resId);
-        $unit = strtolower((string)($defs['res'][$key]['unit'] ?? ''));
-        $table = ($unit === 'l') ? 'inventory_liquid' : 'inventory_solid';
 
-        $stmtUpdate = $db->prepare("UPDATE {$table} SET amount = GREATEST(0, amount - ?) WHERE user_id = ? AND res_id = ?");
-        $stmtUpdate->execute([$amountToSpend, $userId, $resId]);
+        if (str_starts_with($resId, 'ani.')) {
+            $stmtUpdate = $db->prepare("UPDATE animals SET quantity = GREATEST(0, quantity - ?) WHERE user_id = ? AND ani_id = ?");
+            $stmtUpdate->execute([$amountToSpend, $userId, $resId]);
+        } else {
+            $stmtUpdate = $db->prepare("UPDATE inventory SET amount = GREATEST(0, amount - ?) WHERE user_id = ? AND res_id = ?");
+            $stmtUpdate->execute([$amountToSpend, $userId, $resId]);
+        }
     }
 }
 

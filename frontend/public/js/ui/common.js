@@ -80,59 +80,97 @@ window.openConfirm = ({ title, body, confirmText = "OK", cancelText = "Annullér
 };
 window.closeModal = closeModal;
 
-// --- Pris/krav helpers ---
+/**
+ * RETTET: Viser nu både ressourcer og dyr korrekt,
+ * og henter "have"-antallet fra den korrekte state.
+ */
 window.renderCostColored = (map, inline = false) => {
-  if (!map) return "";
-  const parts = Object.entries(map).map(([rid, needData]) => {
-    const id = needData.id || rid;
-    const needAmount = needData.amount || 0;
-    const resShort = String(id).replace(/^res\./, '');
-    const def = window.data?.defs?.res?.[resShort] ?? { emoji: '❓', name: resShort };
-    const haveAmount = window.data?.state?.inv?.solid?.[resShort] ?? window.data?.state?.inv?.liquid?.[resShort] ?? 0;
-    const ok = haveAmount >= needAmount;
-    const haveHtml = `<span class="${ok ? 'price-ok' : 'price-bad'}">${def.emoji} ${fmt(haveAmount)}</span>`;
-    const needHtml = `<span class="sub" style="opacity:.8">/ ${fmt(needAmount)}</span>`;
-    return haveHtml + needHtml;
-  });
-  return inline ? parts.join(" • ") : parts.join(" ");
+    if (!map || Object.keys(map).length === 0) return "";
+
+    const parts = Object.values(map).map(needData => {
+        const id = needData.id;
+        const needAmount = needData.amount;
+        let haveAmount = 0;
+        let def = null;
+
+        // =====================================================================
+        // START PÅ RETTELSE: Tjekker nu for 'ani.'-præfikset
+        // =====================================================================
+        if (id.startsWith('ani.')) {
+            const key = id.replace(/^ani\./, '');
+            def = window.data?.defs?.ani?.[key] ?? { emoji: '🐾', name: key };
+            haveAmount = window.data?.state?.ani?.[id]?.quantity ?? 0;
+        } else {
+            // Eksisterende, fungerende logik for ressourcer
+            const key = id.replace(/^res\./, '');
+            def = window.data?.defs?.res?.[key] ?? { emoji: '❓', name: key };
+            haveAmount = window.data?.state?.inv?.solid?.[key] ?? window.data?.state?.inv?.liquid?.[key] ?? 0;
+        }
+        // =====================================================================
+        // SLUT PÅ RETTELSE
+        // =====================================================================
+        
+        const ok = haveAmount >= needAmount;
+        // Vi viser nu navnet sammen med emojien for klarhed, ligesom på dit screenshot
+        const haveHtml = `<span class="${ok ? 'price-ok' : 'price-bad'}">${def.emoji || ''} ${fmt(haveAmount)}</span>`;
+        const needHtml = `<span class="sub" style="opacity:.8">/ ${fmt(needAmount)} ${def.name}</span>`;
+        
+        // Specielt tilfælde for at matche dit screenshot præcist
+        if (id.startsWith('ani.')) {
+            return `<span class="${ok ? 'price-ok' : 'price-bad'}" title="${def.name}">${fmt(haveAmount)} / ${fmt(needAmount)} ${def.emoji || ''}</span>`;
+        }
+
+        return haveHtml + needHtml;
+    });
+
+    return inline ? parts.join(" • ") : parts.join(" ");
 };
 
-window.canAfford = (price) => {
-  const miss = [];
-  const inv = window?.data?.state?.inv ?? {};
-  const liquid = inv.liquid ?? {};
-  const solid = inv.solid ?? {};
-  const haveOf = (rid) => {
-    const ridNoPrefix = String(rid).replace(/^res\./, "");
-    const lastSeg = String(rid).split(".").pop();
-    const v = liquid[rid] ?? solid[rid] ?? liquid[ridNoPrefix] ?? solid[ridNoPrefix] ?? liquid[lastSeg] ?? solid[lastSeg] ?? 0;
-    return (typeof v === "object" && v !== null) ? +(v.amount ?? 0) : +v;
-  };
-  if (!price) return { ok: true, miss };
-  if (Array.isArray(price)) {
-    for (const item of price) {
-      const rid = item?.id ?? item?.rid ?? item?.resource ?? "";
-      const need = +(item?.amount ?? item?.value ?? 0);
-      if (!rid || !String(rid).startsWith("res.")) continue;
-      const have = haveOf(rid);
-      if (have < need) miss.push({ rid, need, have });
-    }
-  } else {
-    for (const [rid, spec] of Object.entries(price)) {
-      if (!String(rid).startsWith("res.")) continue;
-      const need = (typeof spec === "object" && spec !== null) ? +(spec.amount ?? 0) : +spec;
-      const have = haveOf(rid);
-      if (have < need) miss.push({ rid, need, have });
-    }
-  }
-  return { ok: miss.length === 0, miss };
-};
+/**
+ * RETTET: Har nu sin egen, private normaliserings-logik for at være 100% uafhængig.
+ */
+function canAfford(price) {
+    const miss = [];
+    
+    // --- Privat normaliserings-logik (kopi af window.helpers.normalizePrice) ---
+    const normalize = (cost) => {
+        if (!cost) return {};
+        const out = {};
+        if (Array.isArray(cost)) {
+            cost.forEach((row) => {
+                const id = row.id ?? row.rid ?? row.resource ?? row.type;
+                const amount = row.amount ?? row.qty ?? row.value;
+                if (id && Number(amount)) out[id] = { id: String(id), amount: Number(amount) };
+            });
+        } else if (typeof cost === 'object') {
+            for (const [key, spec] of Object.entries(cost)) {
+                const amount = (typeof spec === 'object' && spec !== null) ? Number(spec.amount ?? 0) : Number(spec ?? 0);
+                if (amount) out[key] = { id: key, amount };
+            }
+        }
+        return out;
+    };
 
-window.spend = (price) => {
-  for (const [rid, need] of Object.entries(price || {})) {
-    if (rid.startsWith("res.")) state.res[rid] = (state.res[rid] || 0) - need;
-  }
-};
+    const normalizedPrice = normalize(price);
+
+    for (const item of Object.values(normalizedPrice)) {
+        const id = item.id;
+        const need = item.amount;
+        let have = 0;
+
+        if (id.startsWith('ani.')) {
+            have = window.data?.state?.ani?.[id]?.quantity ?? 0;
+        } else {
+            const key = id.replace(/^res\./, '');
+            have = window.data?.state?.inv?.solid?.[key] ?? window.data?.state?.inv?.liquid?.[key] ?? 0;
+        }
+
+        if (have < need) {
+            miss.push({ rid: id, need, have });
+        }
+    }
+    return { ok: miss.length === 0, miss };
+}
 
 window.renderReqLine = (bld, opts = {}) => {
   const CFG = window.UI_REQLINE || {};
