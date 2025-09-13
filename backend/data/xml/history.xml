@@ -1,9 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
+ <history ver="version 3.5">
+    <change> 
+
+    </change>
+  </history>  
   <history ver="version 3.4">
     <change>- added build time for buildings (preparations for addons, research and production/recipes)<br>
     - visuel changes and additions for building list page and building detail pages <br>
     - added passive yields from buildings and addons
     - adding animal system
+    - fixed errors
+    - dashboard now have overview over build jobs and research 
+    - building jobs and research can now be canceled from dashboard
+    - dashboard have overview over all passive yields and where they come from
+    - Animal system know works and produce yields
     </change>
   </history>
     <history ver="version 3.3">

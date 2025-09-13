@@ -235,10 +235,61 @@ window.renderReqLine = (bld, opts = {}) => {
     allOk = allOk && !!ok;
     chips.push(`<a class="${ok ? 'price-ok' : 'price-bad'}" href="${href}" title="${tip}">${label}</a>`);
   }
+ 
   globalThis.data.extra.reqok = allOk ? "price-ok" : (reqIds.length ? "price-bad" : "price-ok");
-
+  
+  
+  
   // --- NYT: TID (time_str eller fallback fra duration_s) ---
   const id = String(bld?.id || "");
+
+  // --- NY, INTELLIGENT FOOTPRINT LOGIK ---
+  let footprintOk = true;
+  let footprintCost = 0;
+  let footprintChange = 0;
+ 
+// Find footprint-ændringen (kan være positiv eller negativ)
+if (id.startsWith("bld.")) {
+    const key = id.replace(/^bld\./, '');
+    footprintChange = D.bld?.[key]?.stats?.footprint || bld?.footprintDelta || 0;
+} else if (id.startsWith("add.")) {
+    const key = id.replace(/^add\./, '');
+    footprintChange = D.add?.[key]?.stats?.footprint || 0;
+}
+
+// Kun hvis footprintChange er NEGATIV, er det en omkostning/krav
+if (footprintChange < 0) {
+    const footprintCost = Math.abs(footprintChange); // Omkostningen er den positive værdi
+    const cap = S.cap?.footprint || { base: 0, bonus: 0, used: 0 };
+    const totalCap = (cap.base || 0) + (cap.bonus || 0);
+    const usedCap = Math.abs(cap.used || 0);
+    const availableCap = totalCap - usedCap;
+
+    footprintOk = availableCap >= footprintCost;
+      
+      const footprintChip = `
+        <span class="${footprintOk ? 'price-ok' : 'price-bad'}" title="Kræver ${footprintCost} Byggepoint. Du har ${availableCap} ledige.">
+            ⬛ ${footprintCost} BP
+        </span>
+    `;
+    chips.push(footprintChip);
+} 
+// Hvis footprintChange er POSITIV, er det en bonus, ikke et krav
+else if (footprintChange > 0) {
+    const footprintChip = `
+        <span class="price-ok" title="Giver ${footprintChange} Byggepoint.">
+            ⬛ +${footprintChange} BP
+        </span>
+    `;
+    chips.push(footprintChip);
+}
+  
+  if (!footprintOk) {
+    reqOk = false; // Opdater kun den overordnede status, hvis der er et krav, der ikke er opfyldt
+}
+ 
+
+
   const emoji = "⏱";
   let timeStr = "";
   let timeLabel = "";
