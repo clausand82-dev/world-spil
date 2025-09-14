@@ -42,7 +42,30 @@ try {
         // Trin 1: Forbrug dyr med det samme. `spend_resources` validerer og trækker fra.
         if (!empty($animalCosts)) {
             spend_resources($db, $userId, $animalCosts);
+                // =====================================================================
+        // Manuel indsættelse i resource_locks for at logge dyre-forbruget.
+        // Kun dyr køres herigennem - dyr, der canceles forbliver bare i db'en uden yderliger
+        // consumed_at betyder at dyr er slagtet med succes
+        // ingen consumed_at betyder dyret er slagtet, men uden succes (aka canceled)
+        // =====================================================================
+        $insLock = $db->prepare(
+            "INSERT INTO resource_locks (user_id, scope, scope_id, res_id, amount, locked_at)
+             VALUES (?, ?, ?, ?, ?, UTC_TIMESTAMP())"
+        );
+        foreach ($animalCosts as $animalCost) {
+            $insLock->execute([
+                $userId,
+                'recipe',      // Scope
+                $reqId,        // Scope ID (recipe ID)
+                $animalCost['res_id'],
+                $animalCost['amount']
+            ]);
         }
+        // =====================================================================
+        // SLUT PÅ DEN NYE KODE
+        // =====================================================================
+        }
+    
 
         // Trin 2: Lås de almindelige ressourcer som normalt.
         if (!empty($resourceCosts)) {

@@ -80,11 +80,22 @@ function _animalsGetAnimalCap() {
 
 function renderOwnedAnimals() {
     const owned = window.data?.state?.ani || {};
-    if (Object.keys(owned).length === 0) return `<div class="sub">Du ejer ingen dyr endnu!</div>`;
-    return Object.entries(owned).map(([aniId, data]) => {
+
+    // =====================================================================
+    // START PÅ DEN ENESTE, KORREKTE RETTELSE
+    // Vi filtrerer listen, FØR vi bygger HTML.
+    // =====================================================================
+    const ownedAnimalsWithQuantity = Object.entries(owned)
+        .filter(([aniId, data]) => data.quantity > 0);
+
+    if (ownedAnimalsWithQuantity.length === 0) {
+        return `<div class="sub">Du ejer ingen dyr endnu!</div>`;
+    }
+
+    return ownedAnimalsWithQuantity.map(([aniId, data]) => {
         const key = aniId.replace(/^ani\./, '');
         const def = window.data.defs.ani?.[key];
-        if (!def) return '';
+        if (!def) return ''; // Sikkerhedscheck, hvis en def skulle mangle
         return `
             <div class="item">
                 <div class="icon">${def.emoji || '🐾'}</div>

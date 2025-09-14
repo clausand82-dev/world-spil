@@ -20,6 +20,7 @@ Change/update History
 - active recipes added
 - animal can now be slaughtered to yield one time yield
 - animal no longer yield slaughter resources like rawmeat, hide and so on
+- animal you have any more of, won't show an own status
 
 TO-DO IN SAME BRANCH
 - buff system
