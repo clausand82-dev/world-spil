@@ -44,6 +44,7 @@ window.renderBuildingsPage = () => {
     const displayName   = (ownedDef?.name) || (l1Def?.name) || (target?.def?.name) || family;
     const displayDesc   = (ownedDef?.desc) || (l1Def?.desc) || "";
     const displayLinkId = ownedMax > 0 ? `bld.${family}.l${ownedMax}` : `bld.${family}.l1`;
+    
 
     const nextDefKey    = `${family}.l${(ownedMax || 0) + 1}`;
     const nextDefAll    = WD.bld[nextDefKey];

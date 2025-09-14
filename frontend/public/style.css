@@ -65,6 +65,7 @@ body{padding-bottom:72px} /* plads til quickbar */
 .price-pill{color:var(--muted);font-weight:700}
 .price-ok{color:var(--ok);font-weight:700}
 .price-bad{color:var(--bad);font-weight:700}
+.price-output{color:var(--accent);font-weight:700}
 
 /* ====== Sidebar ====== */
 .res-panel .row{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-radius:8px;}

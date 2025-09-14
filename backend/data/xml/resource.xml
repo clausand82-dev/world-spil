@@ -46,7 +46,7 @@
   <resource id="res.wool" family="rawproduct" type="animalProduct" lvl="1" stage="1.0">
     <unit>pcs</unit>
     <unitSpace>0.2</unitSpace>
-    <emoji>🐑</emoji >
+    <emoji>🔷</emoji >
     <stats>origin_animal=sheep</stats>
   </resource>
   <resource id="res.wheat" family="food" type="grain" lvl="1" stage="1.0">

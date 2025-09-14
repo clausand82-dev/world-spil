@@ -48,6 +48,8 @@
     <require>add.tailorspot.l1</require>
   </recipe>
 
+<!-- ANIMALS-->
+  <!-- SLAUGHTER ANIMALS-->
   <recipe id="rcp.slaughtercow.l1" family="farm" type="recipe" lvl="1" stage="1" mode="active">
     <yield>
       <res id="res.rawhide" amount="2"/>
@@ -143,6 +145,16 @@
       <res id="res.rawcommonfish" amount="5"/>
     </cost>
     <require></require>
+  </recipe>
+  
+  <!-- OTHER ANIMALS RECIPE-->
+
+    <recipe id="rcp.trimsheep.l1" family="farm" type="recipe" lvl="1" stage="1" mode="active">
+    <yield period="1h">
+      <res id="res.wool" amount="4"/>
+    </yield>
+    <time>15s</time>
+    <require>add.barn_shearingshed.l1</require>
   </recipe>
 
 

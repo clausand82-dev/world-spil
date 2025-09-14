@@ -39,6 +39,7 @@
 
   <entry key="ui.animals.h1">Dyr</entry>
   <entry key="ui.fills.h1"></entry>
+  <entry key="ui.text_main.h1">Hoved</entry>
 
 
 <!--BUILDINGS-->
@@ -95,13 +96,15 @@
   <entry key="add.barn.l1.desc">Lille stald af simpelt træ, bruges til at holde dyr</entry>
   <entry key="add.barn.l2.name">Stor stald </entry>
   <entry key="add.barn.l2.desc">Stor stald af simpelt træ, bruges til at holde dyr</entry>
+  <entry key="add.barn.l3.name">Stor stald - STAGE 2</entry>
+  <entry key="add.barn.l3.desc">Stor stald af simpelt træ, bruges til at holde dyr</entry>
 
-  <entry key="add.slaughterspot.l1.name">Lille Slagterbord</entry>
-  <entry key="add.slaughterspot.l1.desc">Muliggør slagteri af mindre dyr som høns og ænder</entry>
-  <entry key="add.slaughterspot.l2.name">Størrere Slagterbord</entry>
-  <entry key="add.slaughterspot.l2.desc">Muliggør slagteri af mellem store dyr som grise, geder og får</entry>
-  <entry key="add.slaughterspot.l3.name">Stor Slagterbord</entry>
-  <entry key="add.slaughterspot.l3.desc">Muliggør slagteri af store dyr som køer og hjorte</entry>
+  <entry key="add.barn_slaughterspot.l1.name">Lille Slagterbord</entry>
+  <entry key="add.barn_slaughterspot.l1.desc">Muliggør slagteri af mindre dyr som høns og ænder</entry>
+  <entry key="add.barn_slaughterspot.l2.name">Medium Slagterbord</entry>
+  <entry key="add.barn_slaughterspot.l2.desc">Muliggør slagteri af mellem store dyr som grise, geder og får</entry>
+  <entry key="add.barn_slaughterspot.l3.name">Stor Slagterbord</entry>
+  <entry key="add.barn_slaughterspot.l3.desc">Muliggør slagteri af store dyr som køer og hjorte</entry>
 
   <entry key="add.barn_yard.l1.name">Lille indhegning</entry>
   <entry key="add.barn_yard.l1.desc">Lille indhegning, der øger plads til dyr</entry>

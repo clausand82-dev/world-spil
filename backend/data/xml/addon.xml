@@ -116,7 +116,7 @@
 <!-- sub addons for barn -->
 
   <!--sub addon vandtrug - formål er at øge animal_cap -->
-    <addon id="add.barn_waterthough.l1" family="farm" group="barn" type="addons" lvl="1" stage="1">
+    <addon id="add.barn_watertrough.l1" family="farm" group="barn" type="addons" lvl="1" stage="1">
       <stats>animal_cap=10</stats>
       <cost>
         <res id="res.money" amount="140"/>
@@ -125,7 +125,7 @@
       <upgradesTo>add.barn_waterthough.l2</upgradesTo>
     </addon>
 
-      <addon id="add.barn_waterthough.l2" family="farm" group="barn" type="addons" lvl="2" stage="1">
+      <addon id="add.barn_watertrough.l2" family="farm" group="barn" type="addons" lvl="2" stage="1">
         <stats>animal_cap=25</stats>
     <cost>
       <res id="res.money" amount="140"/>
@@ -212,27 +212,27 @@
     <cost>
       <res id="res.money" amount="150"/>
     </cost>
-    <yield>
+    <yield period="1h">
       <res id="res.wool" amount="1"/>
     </yield>
   </addon>
 
   <!--sub addon slagtebord - formål er at aktiverer slagtning-->
-  <addon id="add.barn_slaughterspot.l1" family="basecamp" group="barn" type="addons" lvl="1" stage="1">
+  <addon id="add.barn_slaughterspot.l1" family="farm" group="barn" type="addons" lvl="1" stage="1">
     <cost>
       <res id="res.money" amount="100"/>
     </cost>
     <require></require>
   </addon>
 
-    <addon id="add.barn_slaughterspot.l2" family="basecamp" group="barn" type="addons" lvl="2" stage="1">
+    <addon id="add.barn_slaughterspot.l2" family="farm" group="barn" type="addons" lvl="2" stage="1">
     <cost>
       <res id="res.money" amount="100"/>
     </cost>
     <require></require>
   </addon>
 
-      <addon id="add.barn_slaughterspot.l3" family="basecamp" group="barn" type="addons" lvl="3" stage="1">
+      <addon id="add.barn_slaughterspot.l3" family="farm" group="barn" type="addons" lvl="3" stage="1">
     <cost>
       <res id="res.money" amount="100"/>
     </cost>

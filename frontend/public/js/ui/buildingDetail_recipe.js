@@ -43,8 +43,31 @@
 
     const inputs = renderCostColored(def.cost, true);
     const outputs = renderCostColored(def.yield, true);
+    outputsColorized = outputs.replace(/price-bad/g, "price-ok"); // For at farven ikke er RØD
+    
     const timeStr = def?.time_str || (def?.duration_s ? `${def.duration_s}s` : "");
-    const recipeIO = `<div class=\"sub\">🧪 <strong>Recipe:</strong> ${inputs} → ${outputs}${timeStr ? " / " + timeStr : ""}</div>`;
+    // OVERRIDE: render output as produced amounts only (no "have/need")
+    try {
+      outputsColorized = (function(yld){
+        const map = window.helpers.normalizePrice(yld);
+        const parts = [];
+        for (const item of Object.values(map)) {
+          const id = String(item.id || "");
+          const amount = Number(item.amount || 0);
+          let emoji = '';
+          if (id.startsWith('res.')) {
+            const key = id.replace(/^res\./,'');
+            emoji = window.data?.defs?.res?.[key]?.emoji || '';
+          } else if (id.startsWith('ani.')) {
+            const key = id.replace(/^ani\./,'');
+            emoji = window.data?.defs?.ani?.[key]?.emoji || '';
+          }
+          parts.push(`+${amount}${emoji}`);
+        }
+        return parts.join(' • ');
+      })(def.yield);
+    } catch {}
+    const recipeIO = `<div class=\"sub\">🧪 <strong>Recipe:</strong> ${inputs} → ${outputsColorized}${timeStr ? " / " + timeStr : ""}</div>`;
 
     return `
       <div class="item" data-recipe-row="${fullId}\">

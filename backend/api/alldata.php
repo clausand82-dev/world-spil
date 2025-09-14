@@ -582,6 +582,8 @@ if (!empty($_GET['debug']) && $capWarns) {
 
 // === SLUT CAP-BEREGNING ===
 
+// Remove duplicated name/desc for defs (add., res., rcp., ani., bld.)
+
 
     /* 7) Output */
     $out = ['defs' => $defs, 'state' => $state, 'lang' => $langMap, 'config' => $cfg];

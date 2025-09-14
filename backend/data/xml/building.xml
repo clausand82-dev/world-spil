@@ -80,7 +80,7 @@
       <res id="res.wood" amount="4" />
     </cost>
     <yield period="1h">
-      <res res="res.money" amount="15" time="1d" />
+      <res id="res.money" amount="15"/>
     </yield >
     <time>1h</time>
     <durability>15.0</durability>
