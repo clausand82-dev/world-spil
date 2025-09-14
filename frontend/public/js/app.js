@@ -210,6 +210,7 @@ function route(){
     case "research":   renderResearchPage(); break;
     case "inventory":  renderInventoryPage(); break;
     case "animals":    renderAnimalsPage(); break;
+    case "recipes":    renderRecipesPage(); break; // <-- NY LINJE
     case "stats":      renderStatsPage(); break;
     case "logs":       renderLogsPage(); break;
     case "user":       renderUserPage(); break;

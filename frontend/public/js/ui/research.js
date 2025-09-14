@@ -11,6 +11,7 @@ function createResearchRow(key, def) {
     const completed = window.hasResearch(id);
     const active = window.ActiveBuilds?.[id];
     const reqLineParts = renderReqLine({ id, price: def.cost, req: def.require, duration_s: def.duration_s }, { returnParts: true });
+    const priceOk = (window.data?.extra?.priceok !== 'price-bad');
     
     let rightHtml = '';
 
@@ -28,7 +29,7 @@ function createResearchRow(key, def) {
         `;
     } else if (completed) {
         rightHtml = `<span class="badge owned">✓ Fuldført</span>`;
-    } else if (reqLineParts.allOk) {
+    } else if (reqLineParts.allOk && priceOk) {
         // Hvis man har råd: Vis "Research"-knap og en SKJULT progress bar
         rightHtml = `
             <button class="btn primary" data-start-research-id="${id}">Research</button>

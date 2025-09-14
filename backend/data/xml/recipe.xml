@@ -72,6 +72,7 @@
       <res id="ani.deer" amount="1"/>
     </cost>
     <time>15m</time>
+    <require>add.slaughterspot.l1</require>
   </recipe>
 
   <recipe id="rcp.slaughterpig.l1" family="barn" type="recipe" lvl="1" stage="1" mode="active">
@@ -83,6 +84,7 @@
       <res id="ani.pig" amount="1"/>
     </cost>
     <time>15m</time>
+    <require>add.slaughterspot.l1</require>
   </recipe>
 
   <recipe id="rcp.slaughtergoat.l1" family="barn" type="recipe" lvl="1" stage="1" mode="active">
@@ -95,6 +97,7 @@
       <res id="ani.goat" amount="1"/>
     </cost>
     <time>15m</time>
+    <require>add.slaughterspot.l1</require>
   </recipe>
 
   <recipe id="rcp.slaughtersheep.l1" family="barn" type="recipe" lvl="1" stage="1" mode="active">
@@ -107,6 +110,7 @@
       <res id="ani.sheep" amount="1"/>
     </cost>
     <time>15s</time>
+    <require>add.slaughterspot.l1</require>
   </recipe>
 
   <recipe id="rcp.slaughterchicken.l1" family="barn" type="recipe" lvl="1" stage="1" mode="active">
@@ -119,6 +123,7 @@
       <res id="ani.chicken" amount="1"/>
     </cost>
     <time>15s</time>
+    <require>add.slaughterspot.l1</require>
   </recipe>
 
 </recipes>

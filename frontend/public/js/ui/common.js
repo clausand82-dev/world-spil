@@ -559,6 +559,7 @@ function refreshUIAfter(type) {
     const hash = String(location.hash || "");
     if (hash.startsWith("#/research") && typeof window.renderResearchPage === "function") { window.renderResearchPage(); return; }
     if (hash.startsWith("#/buildings") && typeof window.renderBuildingsPage === "function") { window.renderBuildingsPage(); return; }
+    if (hash.startsWith("#/recipes") && typeof window.renderBuildingsPage === "function") { window.renderRecipesPage(); return; }
     if (typeof window.renderDashboard === "function") { window.renderDashboard(); } // Fallback
   } catch {}
 }

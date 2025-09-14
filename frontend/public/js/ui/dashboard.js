@@ -5,7 +5,31 @@
 
 let dashboardTimer = null;
 
-function dashboardTick() { /* ... din eksisterende tick-funktion er uændret ... */ }
+function dashboardTick() { /* ... din eksisterende tick-funktion er uændret ... */ }function dashboardTick() {
+    const now = Date.now();
+    for (const jobId in (window.ActiveBuilds || {})) {
+        const job = window.ActiveBuilds[jobId];
+        const elementId = jobId.replace(/\./g, '-');
+        
+        // Opdater tid
+        const timeElement = document.getElementById(`time-remaining-${elementId}`);
+        if (timeElement) {
+            timeElement.textContent = formatTimeRemaining((job.endTs - now) / 1000);
+        }
+
+        // Opdater progress bar
+        const progressWrapper = document.querySelector(`.build-progress[data-pb-for="${jobId}"]`);
+        if (progressWrapper) {
+            const fill = progressWrapper.querySelector(".pb-fill");
+            const label = progressWrapper.parentElement.querySelector(".pb-label"); // Label er nu ved siden af
+            if (fill && label) {
+                const pct = Math.min(100, Math.round(Math.max(0, (now - job.startTs) / (job.endTs - job.startTs)) * 100));
+                fill.style.width = `${pct}%`;
+                label.textContent = `${pct}%`;
+            }
+        }
+    }
+}
 
 window.renderDashboard = () => {
     if (dashboardTimer) clearInterval(dashboardTimer);
@@ -16,34 +40,33 @@ window.renderDashboard = () => {
         return;
     }
 
+    // Kald de eksisterende funktioner for at få HTML-indholdet
     const activeBuildingsHTML = renderActiveJobs('bld');
     const activeAddonsHTML = renderActiveJobs('add');
     const activeResearchHTML = renderActiveJobs('rsd');
-    
-    // Kald den nye, interaktive funktion
-    const interactiveYieldsHTML = renderInteractiveYields();
+    const activeRecipesHTML = renderActiveJobs('rcp'); // <-- NYT KALD
+    const passiveYieldsHTML = renderPassiveYields();
 
     main.innerHTML = `
         <section class="panel section"><div class="section-head">🏗️ Aktive Bygge-jobs</div><div class="section-body">${activeBuildingsHTML}</div></section>
         <section class="panel section"><div class="section-head">➕ Aktive Addon-jobs</div><div class="section-body">${activeAddonsHTML}</div></section>
         <section class="panel section"><div class="section-head">🔬 Igangværende Forskning</div><div class="section-body">${activeResearchHTML}</div></section>
+        
+        <!-- ======================================================== -->
+        <!-- NY SEKTION: Viser igangværende opskrifter                -->
+        <!-- ======================================================== -->
         <section class="panel section">
-            <div class="section-head">📊 Passiv Produktion</div>
+            <div class="section-head">🍲 Aktive Opskrifter</div>
             <div class="section-body">
-                ${interactiveYieldsHTML}
+                ${activeRecipesHTML}
             </div>
-        </section>`;
+        </section>
+
+        <section class="panel section"><div class="section-head">📊 Passiv Produktion</div><div class="section-body">${passiveYieldsHTML}</div></section>`;
 
     dashboardTick();
     dashboardTimer = setInterval(dashboardTick, 1000);
 };
-
-window.addEventListener('hashchange', () => {
-    if (location.hash !== '#/dashboard' && dashboardTimer) {
-        clearInterval(dashboardTimer);
-        dashboardTimer = null;
-    }
-});
 
 // =========================================================
 // NY EVENT LISTENER for "fold-ud" funktionalitet
