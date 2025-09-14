@@ -6,6 +6,21 @@
     </cost>
     <time>15s</time>
   </research>
+
+  <research id="rsd.tools.l2" family="basecamp" type="tools" lvl="2" stage="1">
+    <cost>
+      <res id="res.money" amount="25"/>
+    </cost>
+    <time>15s</time>
+  </research>
+
+    <research id="rsd.tools.l3" family="basecamp" type="tools" lvl="3" stage="2">
+    <cost>
+      <res id="res.money" amount="25"/>
+    </cost>
+    <time>15s</time>
+  </research>
+
   <research id="rsd.flintstone.l1" family="basecamp" type="ressource" lvl="1" stage="1">
     <cost>
       <res id="res.money" amount="50"/>

@@ -122,6 +122,10 @@
   <entry key="add.stacking.l1.desc">Forbedre opbevarings muligheder</entry>
   <entry key="rsd.tools.l1.name">Basis værktøjs kendskab</entry>
   <entry key="rsd.tools.l1.desc">Giver evnen til at benytte helt basale værktøjer</entry>
+    <entry key="rsd.tools.l2.name">Udvidet værktøjs kendskab</entry>
+  <entry key="rsd.tools.l2.desc">Giver evnen til at benytte helt basale værktøjer</entry>
+    <entry key="rsd.tools.l3.name">Grundig værktøjs kendskab</entry>
+  <entry key="rsd.tools.l3.desc">Giver evnen til at benytte helt basale værktøjer</entry>
   <entry key="rsd.flintstone.l1.name">Flintesten</entry>
   <entry key="rsd.flintstone.l1.desc">Giver evnen til at benytte flintesten i sin værktøjer (økse, hakke osv.)</entry>
   <entry key="rsd.animalhusbandry.l1.name">Dyrehold</entry>

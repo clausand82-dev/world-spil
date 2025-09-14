@@ -8,7 +8,7 @@ window.__activeResearchFilter = 'all';
 
 function createResearchRow(key, def) {
     const id = `rsd.${key}`;
-    const completed = window.hasResearch(id);
+    const completed = window.helpers.hasResearch(id);
     const active = window.ActiveBuilds?.[id];
     const reqLineParts = renderReqLine({ id, price: def.cost, req: def.require, duration_s: def.duration_s }, { returnParts: true });
     const priceOk = (window.data?.extra?.priceok !== 'price-bad');

@@ -21,10 +21,13 @@ Change/update History
 - animal can now be slaughtered to yield one time yield
 - animal no longer yield slaughter resources like rawmeat, hide and so on
 - animal you have any more of, won't show an own status
+- animal is now part of inventory tap and added to side bar
+- small fixes and tweaks
+- can't buy addons and start jobs and research in buildings you don't own
+- optimized some javascript code
 
 TO-DO IN SAME BRANCH
 - buff system
-- animal on inventory list
 - passive yield stops when cap is filled
 
 3.4:

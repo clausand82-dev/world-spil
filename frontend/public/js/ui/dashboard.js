@@ -45,7 +45,10 @@ window.renderDashboard = () => {
     const activeAddonsHTML = renderActiveJobs('add');
     const activeResearchHTML = renderActiveJobs('rsd');
     const activeRecipesHTML = renderActiveJobs('rcp'); // <-- NYT KALD
-    const passiveYieldsHTML = renderPassiveYields();
+    // Brug interaktiv/klap-ud version af yield-oversigten
+    const passiveYieldsHTML = (typeof renderInteractiveYields === 'function')
+        ? renderInteractiveYields()
+        : renderPassiveYields();
 
     main.innerHTML = `
         <section class="panel section"><div class="section-head">🏗️ Aktive Bygge-jobs</div><div class="section-body">${activeBuildingsHTML}</div></section>

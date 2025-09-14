@@ -3,6 +3,8 @@
    - Fælles UI-hjælpere: modal, pris-render, små komponenter
 ========================================================= */
 
+// ----- INDSTILLINGS SWITCHES
+
 /* ===== UI switches for krav/pris-linje (nem on/off) ===== */
 window.UI_REQLINE = {
   // Byggeliste:
@@ -19,6 +21,129 @@ window.ArtManifest = {
   ready: false,
   files: new Set(),
   _loading: false
+};
+
+// ----- window.helpers
+window.helpers = window.helpers || {};
+
+window.helpers = {
+    
+  /** Parse et building-id til { series, family, level }
+ *  - State-id:  "bld.barn.l1"         -> series="bld.barn",   family="barn",       level=1
+ *  - Defs-key:  "barn.l2"             -> series="bld.barn",   family="barn",       level=2
+ *  - Defs-key:  "mark.wheat.l3"       -> series="bld.mark.wheat", family="mark.wheat", level=3*/
+  parseBldKey(key) {
+        const re = /^(?:bld\.)?(.+)\.l(\d+)$/i;
+        const m = re.exec(String(key || ""));
+        if (!m) return null;
+        
+        const family = m[1];
+        const level  = Number(m[2]);
+        const series = `bld.${family}`;
+        
+        return { series, family, level };
+    },
+
+    normalizePrice(cost) {
+    if (!cost) return {};
+    const out = {};
+
+    if (Array.isArray(cost)) {
+        // Håndterer formatet: [{ id: 'res.wood', amount: 5 }]
+        cost.forEach((row, i) => {
+            const id = row.id ?? row.rid ?? row.resource ?? row.type;
+            const amount = row.amount ?? row.qty ?? row.value;
+            if (id && Number(amount)) {
+                // Bruger `id` som nøgle for at undgå duplikater
+                out[String(id)] = { id: String(id), amount: Number(amount) };
+            }
+        });
+    } else if (typeof cost === 'object') {
+        // Håndterer formatet: { "res.wood": 5, "res.money": { amount: 100 } }
+        for (const [key, spec] of Object.entries(cost)) {
+            const amount = (typeof spec === 'object' && spec !== null) 
+                ? Number(spec.amount ?? 0) 
+                : Number(spec ?? 0);
+            if (amount) {
+                out[key] = { id: key, amount };
+            }
+        }
+    }
+    return out;
+},
+computeOwnedMaxBySeries(stateKey = 'bld') {
+    const bySeries = {};
+    const prefix = stateKey; // f.eks. 'bld' eller 'add'
+    const source = window.data?.state?.[stateKey] || {};
+    
+    for (const key of Object.keys(source)) {
+        // Vi antager, at nøglerne er i formatet "prefix.family.lN"
+        const m = key.match(new RegExp(`^${prefix}\\.(.+)\\.l(\\d+)$`));
+        if (m) {
+            const series = `${prefix}.${m[1]}`;
+            const level = Number(m[2]);
+            bySeries[series] = Math.max(bySeries[series] || 0, level);
+        }
+    }
+    return bySeries;
+},
+
+groupDefsBySeriesInStage(defs, currentStage, prefix) {
+    const out = {};
+    for (const [key, def] of Object.entries(defs || {})) {
+        const stage = Number(def?.stage ?? 0);
+        if (stage > currentStage) continue;
+        
+        const m = key.match(/^(.+)\.l(\d+)$/i);
+        if (m) {
+            const series = `${prefix}.${m[1]}`;
+            (out[series] ||= []).push({ key, def, level: Number(m[2]) });
+        }
+    }
+    for (const s in out) {
+        out[s].sort((a, b) => a.level - b.level);
+    }
+    return out;
+},
+
+pickNextTargetInSeries(seriesItems, ownedMaxLevel) {
+    if (!Array.isArray(seriesItems) || seriesItems.length === 0) return null;
+    const targetLevel = (ownedMaxLevel || 0) + 1;
+    return seriesItems.find(x => x.level === targetLevel) || null;
+},
+hasResearch(rsdIdFull) {
+    if (!rsdIdFull) return false;
+    const key = String(rsdIdFull).replace(/^rsd\./, '');
+    const state = window.data?.state;
+    // Tjekker både den nye `research`-struktur og den gamle `rsd` for fuld kompatibilitet
+    return !!(state?.research?.[key] || state?.rsd?.[key] || state?.rsd?.[rsdIdFull]);
+},
+ownedResearchMax(seriesFull) {
+  const S = window.data?.state || window.state || {};
+  let max = 0;
+  if (S.rsd && typeof S.rsd === "object") {
+    for (const k of Object.keys(S.rsd)) {
+      if (!String(k).startsWith(seriesFull + ".l")) continue;
+      const m = String(k).match(/\.l(\d+)$/);
+      const lvl = m ? +m[1] : 0;
+      if (lvl > max) max = lvl;
+    }
+  }
+  const R = S.research || {};
+  const iter = R.completed?.has ? Array.from(R.completed) : Object.keys(R.completed || {});
+  for (const k of iter) {
+    if (!String(k).startsWith(seriesFull + ".l")) continue;
+    const m = String(k).match(/\.l(\d+)$/);
+    const lvl = m ? +m[1] : 0;
+    if (lvl > max) max = lvl;
+  }
+  return max;
+},
+isOwnedBuilding(id) {
+    const S = window.data?.state || window.state || {};
+    return !!S?.bld?.[id];
+},
+    // ... (her vil vi tilføje flere funktioner senere)
 };
 
 window.loadArtManifest = async function() {
@@ -86,40 +211,40 @@ window.closeModal = closeModal;
  */
 window.renderCostColored = (map, inline = false) => {
     if (!map || Object.keys(map).length === 0) return "";
+    
+    // Vi bruger den normaliserede pris for at sikre et ensartet format
+    const normalizedMap = window.helpers.normalizePrice(map);
 
-    const parts = Object.values(map).map(needData => {
+    const parts = Object.values(normalizedMap).map(needData => {
         const id = needData.id;
         const needAmount = needData.amount;
         let haveAmount = 0;
         let def = null;
+        let nameForSub = '';
 
-        // =====================================================================
-        // START PÅ RETTELSE: Tjekker nu for 'ani.'-præfikset
-        // =====================================================================
+        // Tjek om det er et dyr eller en ressource
         if (id.startsWith('ani.')) {
             const key = id.replace(/^ani\./, '');
             def = window.data?.defs?.ani?.[key] ?? { emoji: '🐾', name: key };
             haveAmount = window.data?.state?.ani?.[id]?.quantity ?? 0;
+            nameForSub = ''; // For dyr viser vi kun emoji i sub-teksten
         } else {
-            // Eksisterende, fungerende logik for ressourcer
             const key = id.replace(/^res\./, '');
             def = window.data?.defs?.res?.[key] ?? { emoji: '❓', name: key };
             haveAmount = window.data?.state?.inv?.solid?.[key] ?? window.data?.state?.inv?.liquid?.[key] ?? 0;
+            nameForSub = def.name;
         }
-        // =====================================================================
-        // SLUT PÅ RETTELSE
-        // =====================================================================
         
         const ok = haveAmount >= needAmount;
-        // Vi viser nu navnet sammen med emojien for klarhed, ligesom på dit screenshot
-        const haveHtml = `<span class="${ok ? 'price-ok' : 'price-bad'}">${def.emoji || ''} ${fmt(haveAmount)}</span>`;
-        const needHtml = `<span class="sub" style="opacity:.8">/ ${fmt(needAmount)} ${def.name}</span>`;
-        
-        // Specielt tilfælde for at matche dit screenshot præcist
+
+        // Speciel formatering for dyr for at matche `Slagt Ko`-billedet
         if (id.startsWith('ani.')) {
             return `<span class="${ok ? 'price-ok' : 'price-bad'}" title="${def.name}">${fmt(haveAmount)} / ${fmt(needAmount)} ${def.emoji || ''}</span>`;
         }
 
+        // Standard formatering for ressourcer
+        const haveHtml = `<span class="${ok ? 'price-ok' : 'price-bad'}">${def.emoji} ${fmt(haveAmount)}</span>`;
+        const needHtml = `<span class="sub" style="opacity:.8">/ ${fmt(needAmount)}</span>`;
         return haveHtml + needHtml;
     });
 
@@ -129,38 +254,20 @@ window.renderCostColored = (map, inline = false) => {
 /**
  * RETTET: Har nu sin egen, private normaliserings-logik for at være 100% uafhængig.
  */
-function canAfford(price) {
+window.canAfford = (price) => {
     const miss = [];
-    
-    // --- Privat normaliserings-logik (kopi af window.helpers.normalizePrice) ---
-    const normalize = (cost) => {
-        if (!cost) return {};
-        const out = {};
-        if (Array.isArray(cost)) {
-            cost.forEach((row) => {
-                const id = row.id ?? row.rid ?? row.resource ?? row.type;
-                const amount = row.amount ?? row.qty ?? row.value;
-                if (id && Number(amount)) out[id] = { id: String(id), amount: Number(amount) };
-            });
-        } else if (typeof cost === 'object') {
-            for (const [key, spec] of Object.entries(cost)) {
-                const amount = (typeof spec === 'object' && spec !== null) ? Number(spec.amount ?? 0) : Number(spec ?? 0);
-                if (amount) out[key] = { id: key, amount };
-            }
-        }
-        return out;
-    };
-
-    const normalizedPrice = normalize(price);
+    const normalizedPrice = window.helpers.normalizePrice(price);
 
     for (const item of Object.values(normalizedPrice)) {
         const id = item.id;
         const need = item.amount;
         let have = 0;
 
+        // Tjek om det er et dyr eller en ressource
         if (id.startsWith('ani.')) {
             have = window.data?.state?.ani?.[id]?.quantity ?? 0;
         } else {
+            // Din eksisterende, robuste logik for ressourcer
             const key = id.replace(/^res\./, '');
             have = window.data?.state?.inv?.solid?.[key] ?? window.data?.state?.inv?.liquid?.[key] ?? 0;
         }
@@ -170,7 +277,7 @@ function canAfford(price) {
         }
     }
     return { ok: miss.length === 0, miss };
-}
+};
 
 window.renderReqLine = (bld, opts = {}) => {
   const CFG = window.UI_REQLINE || {};
@@ -211,12 +318,6 @@ window.renderReqLine = (bld, opts = {}) => {
   };
 
   const RS = S?.rsd || {};
-  const hasRsd = (rid) => {
-    const alt = rid.replace(/^rsd\./, "");
-    return !!((RS && typeof RS.has === "function" && RS.has(rid))
-      || (Array.isArray(RS) && (RS.includes(rid) || RS.includes(alt)))
-      || (!!RS[rid]) || (!!RS[alt]));
-  };
 
   const chips = [];
   let allOk = true;
@@ -228,7 +329,7 @@ window.renderReqLine = (bld, opts = {}) => {
       const base = rDef?.name || key.replace(/\.[^\.]+$/, "");
       const lvl = (rDef?.lvl ?? (key.match(/\.l(\d+)$/)?.[1])) || "";
       label = `${base}${lvl ? " L" + lvl : ""}`;
-      ok = hasRsd(rid);
+      ok = window.helpers.hasResearch(rid)
       href = '#/research';
       tip = ok ? `Du har allerede forsket i ${label}` : `Kræver at du forsker i ${label}`;
     } else if (rid.startsWith("bld.")) {

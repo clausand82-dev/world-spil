@@ -10,122 +10,8 @@
    Små helpers (ingen DOM her)
 ---------------------------- */
 
-/** Parse et building-id til { series, family, level }
- *  - State-id:  "bld.barn.l1"         -> series="bld.barn",   family="barn",       level=1
- *  - Defs-key:  "barn.l2"             -> series="bld.barn",   family="barn",       level=2
- *  - Defs-key:  "mark.wheat.l3"       -> series="bld.mark.wheat", family="mark.wheat", level=3
- */
-function parseBldKey(key, fromState=false) {
-  // fromState = true betyder vi forventer 'bld.' prefix
-  const reState = /^bld\.(.+)\.l(\d+)$/i; // matcher hele family før .lN
-  const reDefs  = /^(.+)\.l(\d+)$/i;      // uden 'bld.' prefix
-  const m = (fromState ? reState : reDefs).exec(String(key || ""));
-  if (!m) return null;
-  const family = m[1];                       // fx "barn" eller "mark.wheat"
-  const level  = Number(m[2]);
-  const series = fromState ? `bld.${family}` : `bld.${family}`;
-  return { series, family, level };
-}
 
-/** Returnér spillerens højeste ejede level pr. serie, ud fra window.data.state.bld
- *  - state.bld kan være map med nøgler "bld.xxx.lN" -> data/obj (vi kigger kun på nøglen)
- */
-function computeOwnedMaxBySeries() {
-  const S = window.data?.state || window.state || {};
-  const bySeries = Object.create(null);
-  const bldMap = S.bld || {};
-  for (const key of Object.keys(bldMap)) {
-    const p = parseBldKey(key, /*fromState*/ true);
-    if (!p) continue;
-    bySeries[p.series] = Math.max(bySeries[p.series] || 0, p.level || 0);
-  }
-  return bySeries; // fx { "bld.barn": 1, "bld.mark.wheat": 2 }
-}
 
-/** Byg et overblik over defs i currentstage, grupperet pr. serie
- *  - WD.bld er typisk { "barn.l1": {stage:1,...}, "barn.l2": {...}, ... }
- *  - Vi filtrerer på def.stage === currentStage, og grupperer pr. series
- *  - Returnerer: map series -> array af { key:"barn.l1", def, level }
- */
-function groupDefsBySeriesInStage(WD, currentStage) {
-  const out = Object.create(null);
-  for (const [defsKey, def] of Object.entries(WD?.bld || {})) {
-    const stage = Number(def?.stage ?? def?.stage_required ?? 0);
-    if (stage > Number(currentStage)) continue; // spring over kun hvis stage er højere end current
-    const p = parseBldKey(defsKey, /*fromState*/ false);
-    if (!p) continue;
-    const arr = (out[p.series] ||= []);
-    arr.push({ key: defsKey, def, level: p.level });
-  }
-  // Sortér levels inde i hver serie, så l1, l2, ... er i stigende orden
-  for (const s of Object.keys(out)) {
-    out[s].sort((a,b) => a.level - b.level);
-  }
-  return out;
-}
-
-/** Vælg target for en serie, givet spillerens højeste ejede level i serien
- *  - Hvis intet ejet: target = l1 i currentstage (hvis findes)
- *  - Hvis ejet lK:   target = l(K+1) i currentstage (hvis findes)
- *  - Ellers: ingen target (null) => Owned i denne stage
- */
-function pickTargetForSeries(seriesItems, ownedMaxLevel) {
-  if (!Array.isArray(seriesItems) || seriesItems.length === 0) return null;
-  // Find l1 hvis intet ejet
-  if (!ownedMaxLevel || ownedMaxLevel <= 0) {
-    const first = seriesItems.find(x => x.level === 1);
-    return first || null;
-  }
-  // Find l(K+1) som næste
-  const next = seriesItems.find(x => x.level === (ownedMaxLevel + 1));
-  return next || null;
-}
-
-/** Normalisér en def-cost til det objekt-format din renderCostColored forventer
- *  - renderCostColored itererer Object.entries(map) og slår op på value.id og value.amount
- *  - Denne helper accepterer både array [{id,amount}, ...] og plain objekt
- *    og returnerer fx: { c0:{id:'res.wood', amount:5}, c1:{id:'res.money', amount:100} }
- */
-function normalizePriceToObject(cost) {
-  if (!cost) return {};
-  // Allerede i forventet objekt-format? (tjek én vilkårlig value)
-  const vals = Object.values(cost);
-  if (vals.length && typeof vals[0] === "object" && vals[0] && ('id' in vals[0] || 'rid' in vals[0] || 'resource' in vals[0])) {
-    return cost; // ligner allerede {*, {id, amount}}
-  }
-  // Array-format [{id,amount}] → lav til objekt
-  if (Array.isArray(cost)) {
-    const out = {};
-    cost.forEach((row, i) => {
-      if (!row) return;
-      const id  = row.id ?? row.rid ?? row.resource;
-      const amt = row.amount ?? row.qty ?? row.value;
-      if (!id || !Number(amt)) return;
-      out[`c${i}`] = { id: String(id), amount: Number(amt) };
-    });
-    return out;
-  }
-  // Key-value map { "res.wood": 5, "res.money": 100 } → objekt med id/amount
-  const out = {};
-  for (const [rid, spec] of Object.entries(cost)) {
-    if (spec && typeof spec === "object") {
-      const amt = Number(spec.amount ?? spec.qty ?? spec.value ?? 0);
-      if (!amt) continue;
-      out[rid] = { id: rid, amount: amt };
-    } else {
-      const amt = Number(spec ?? 0);
-      if (!amt) continue;
-      out[rid] = { id: rid, amount: amt };
-    }
-  }
-  return out;
-}
-
-/** Ejer spiller denne KONKRETE building-id? (én sandhed: state.bld) */
-function isOwnedBuilding(id) {
-  const S = window.data?.state || window.state || {};
-  return !!S?.bld?.[id];
-}
 
 
 window.renderBuildingsPage = () => {
@@ -140,14 +26,14 @@ window.renderBuildingsPage = () => {
 
   const currentStage = Number(WS.user?.currentstage || WS.user?.stage || 0);
 
-  const ownedMaxBySeries = computeOwnedMaxBySeries();
-  const groups = groupDefsBySeriesInStage(WD, currentStage);
+  const ownedMaxBySeries = window.helpers.computeOwnedMaxBySeries('bld');
+  const groups = window.helpers.groupDefsBySeriesInStage(WD.bld, currentStage, 'bld');
 
   const bldList = [];
 
   for (const [series, items] of Object.entries(groups)) {
     const ownedMax = ownedMaxBySeries[series] || 0;
-    const target   = pickTargetForSeries(items, ownedMax);
+    const target = window.helpers.pickNextTargetInSeries(items, ownedMax);
     const family   = series.replace(/^bld\./, "");
 
     const ownedDef = ownedMax > 0
@@ -208,7 +94,7 @@ window.renderBuildingsPage = () => {
     }
 
     const fullId = `bld.${target.key}`;
-    const price  = normalizePriceToObject(target.def?.cost || target.def?.price || {});
+    const price  = window.helpers.normalizePrice(target.def?.cost || target.def?.price || {});
     const stageOk = !nextReqStage || nextReqStage <= currentStage;
 
     bldList.push({
@@ -238,7 +124,7 @@ window.renderBuildingsPage = () => {
   }
 
   const list = bldList.map(bld => {
-    const owned  = isOwnedBuilding(bld.id);
+    const owned  = window.helpers.isOwnedBuilding(bld.id);
 
     // Req/pris-linje (kompakt i liste)
     const reqLine = window.renderReqLine

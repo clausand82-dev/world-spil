@@ -13,58 +13,6 @@ let animalsToBuy = {};
 // =========================================================
 
 /**
- * Privat, lokal hjælpefunktion til at parse bygnings-ID'er.
- */
-function _animalsParseBldKey(key) {
-    if (!key) return null;
-    const re = /^bld\.(.+)\.l(\d+)$/i;
-    const m = re.exec(String(key));
-    if (!m) return null;
-    return { family: m[1], level: Number(m[2]) };
-}
-
-/**
- * Privat, lokal hjælpefunktion til at normalisere et cost/price objekt.
- */
-function _animalsNormalizePrice(cost) {
-    if (!cost) return {};
-    const out = {};
-    if (Array.isArray(cost)) {
-        cost.forEach((row, i) => {
-            const id = row.id ?? row.rid ?? row.resource ?? row.type;
-            const amount = row.amount ?? row.qty ?? row.value;
-            if (id && Number(amount)) out[id] = { id: String(id), amount: Number(amount) };
-        });
-    } else if (typeof cost === 'object') {
-        for (const [key, spec] of Object.entries(cost)) {
-            const amount = (typeof spec === 'object' && spec !== null) ? Number(spec.amount ?? 0) : Number(spec ?? 0);
-            if (amount) out[key] = { id: key, amount };
-        }
-    }
-    return out;
-}
-
-/**
- * Privat, lokal version af renderCostColored.
- */
-function _animalsRenderCostColored(map, inline = false) {
-    if (!map || Object.keys(map).length === 0) return "";
-    const parts = Object.values(map).map(needData => {
-        const id = needData.id;
-        const needAmount = needData.amount;
-        const resShort = String(id).replace(/^res\./, '');
-        const def = window.data?.defs?.res?.[resShort] ?? { emoji: '❓', name: resShort };
-        const haveAmount = window.data?.state?.inv?.solid?.[resShort] ?? window.data?.state?.inv?.liquid?.[resShort] ?? 0;
-        const ok = haveAmount >= needAmount;
-        // Bruger den globale `fmt`, da den er defineret tidligt i state.js og er sikker at bruge
-        const haveHtml = `<span class="${ok ? 'price-ok' : 'price-bad'}">${def.emoji} ${fmt(haveAmount)}</span>`;
-        const needHtml = `<span class="sub" style="opacity:.8">/ ${fmt(needAmount)}</span>`;
-        return haveHtml + needHtml;
-    });
-    return inline ? parts.join(" • ") : parts.join(" ");
-}
-
-/**
  * Hent samlet staldkapacitet fra state og udled total/used/available.
  */
 function _animalsGetAnimalCap() {
@@ -117,7 +65,7 @@ function renderAvailableAnimals() {
     const currentStage = Number(state.user?.currentstage || 0);
 
     const ownedBuildingFamilies = new Set(
-        Object.keys(state.bld || {}).map(bldId => _animalsParseBldKey(bldId)?.family).filter(Boolean)
+        Object.keys(state.bld || {}).map(bldId => window.helpers.parseBldKey(bldId)?.family).filter(Boolean)
     );
 
     const availableAnimals = Object.entries(defs.ani || {})
@@ -147,7 +95,7 @@ function renderAvailableAnimals() {
                 <div class="icon">${def.emoji || '🐾'}</div>
                 <div class="grow">
                     <div class="title">${def.name}</div>
-                    <div class="sub">${_animalsRenderCostColored(_animalsNormalizePrice(def.cost), true)}</div>
+                    <div class="sub">${renderCostColored(def.cost, true)}</div>
                     <div class="sub">Kræver ${capCost} staldplads</div>
                     <div style="display: flex; align-items: center; gap: 10px; margin-top: 8px;">
                         <input type="range" class="slider" data-animal-slider-id="${aniId}" min="0" max="${maxVal}" value="0" style="flex-grow: 1;">
@@ -175,7 +123,7 @@ function updatePurchaseUI() {
             if (def) {
                 const capCost = Math.abs(def.stats?.animal_cap ?? 1) || 1;
                 capToUse += capCost * qty;
-                const costs = _animalsNormalizePrice(def.cost);
+                const costs = window.helpers.normalizePrice(def.cost);
                 for (const c of Object.values(costs)) {
                     if (!totalCost[c.id]) totalCost[c.id] = { id: c.id, amount: 0 };
                     totalCost[c.id].amount += (c.amount * qty);
@@ -186,7 +134,7 @@ function updatePurchaseUI() {
 
     const summaryEl = document.getElementById('animal-purchase-summary');
     if (summaryEl) {
-        const costStr = _animalsRenderCostColored(totalCost, true) || '0';
+        const costStr = renderCostColored(totalCost, true) || '0';
         
         // =====================================================================
         // RETTELSE 1: Tilføj rød farve, hvis staldpladsen overskrides.
@@ -200,7 +148,7 @@ function updatePurchaseUI() {
     const buyBtn = document.getElementById('buy-animals-btn');
     if (buyBtn) {
         // Tjekker nu også, om spilleren har råd.
-        const affordCheck = _animalsCanAfford(totalCost);
+        const affordCheck = canAfford(totalCost);
         buyBtn.disabled = (capToUse === 0 || (usedCap + capToUse) > totalCap || !affordCheck.ok);
     }
 }
@@ -259,7 +207,7 @@ if (!window.__AnimalPageWired__) {
             const def = window.data?.defs?.ani?.[key];
             if (!def || !def.cost) return { text: '(Ukendt værdi)' };
             
-            const costs = _animalsNormalizePrice(def.cost);
+            const costs = window.helpers.normalizePrice(def.cost);
             const refundValue = {};
             for (const c of Object.values(costs)) {
                 refundValue[c.id] = {
@@ -269,7 +217,7 @@ if (!window.__AnimalPageWired__) {
             }
             
             // Brug den lokale _animalsRenderCostColored til at formatere teksten
-            const refundText = _animalsRenderCostColored(refundValue, true);
+            const refundText = renderCostColored(refundValue, true);
             return { text: refundText };
         };
 
@@ -331,25 +279,3 @@ if (!window.__AnimalPageWired__) {
     });
 }
 
-// Check if player can afford a given aggregated price map: { rid: { id, amount } }
-function _animalsCanAfford(map) {
-    if (!map || Object.keys(map).length === 0) return { ok: true, miss: [] };
-    const inv = window?.data?.state?.inv ?? {};
-    const liquid = inv.liquid ?? {};
-    const solid = inv.solid ?? {};
-    const haveOf = (rid) => {
-        const ridNoPrefix = String(rid).replace(/^res\./, "");
-        const lastSeg = String(rid).split(".").pop();
-        const v = liquid[rid] ?? solid[rid] ?? liquid[ridNoPrefix] ?? solid[ridNoPrefix] ?? liquid[lastSeg] ?? solid[lastSeg] ?? 0;
-        return (typeof v === "object" && v !== null) ? +(v.amount ?? 0) : +v;
-    };
-    const miss = [];
-    for (const row of Object.values(map)) {
-        const rid = row?.id ?? "";
-        const need = +(row?.amount ?? 0);
-        if (!rid || need <= 0) continue;
-        const have = haveOf(rid);
-        if (have < need) miss.push({ rid, need, have });
-    }
-    return { ok: miss.length === 0, miss };
-}

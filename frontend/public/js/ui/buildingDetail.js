@@ -50,44 +50,7 @@ const activeTab = window.__ActiveBuildingTab[id];
   const family = mm ? mm[1] : id.replace(/\.l\d+$/,'');
   const series = "bld."+family;
 
-  function computeOwnedMax(series){
-    const all = Object.keys(window.data?.state?.bld || {}).filter(k => k.startsWith(series + ".l"));
-    return all.length ? Math.max(...all.map(k => Number(k.split(".l")[1]||0))) : 0;
-  }
-  function normalizePriceToObject(cost) {
-    if (!cost) return {};
-    const vals = Object.values(cost);
-    if (vals.length && typeof vals[0] === "object" && vals[0] && ('id' in vals[0] || 'rid' in vals[0] || 'resource' in vals[0])) {
-      return cost;
-    }
-    if (Array.isArray(cost)) {
-      const out = {};
-      cost.forEach((row, i) => {
-        if (!row) return;
-        const rid = row.id ?? row.rid ?? row.resource;
-        const amt = row.amount ?? row.qty ?? row.value;
-        if (!rid || !Number(amt)) return;
-        out[`c${i}`] = { id: String(rid), amount: Number(amt) };
-      });
-      return out;
-    }
-    const out = {};
-    for (const [rid, spec] of Object.entries(cost)) {
-      if (spec && typeof spec === "object") {
-        const id = spec.id ?? spec.rid ?? spec.resource ?? rid;
-        const amt = Number(spec.amount ?? spec.qty ?? spec.value ?? 0);
-        if (!amt) continue;
-        out[rid] = { id: String(id), amount: amt };
-      } else {
-        const amt = Number(spec ?? 0);
-        if (!amt) continue;
-        out[rid] = { id: rid, amount: amt };
-      }
-    }
-    return out;
-  }
-
-  const ownedMax = computeOwnedMax(series);
+  const ownedMax = window.helpers.computeOwnedMaxBySeries('bld')[series] || 0;
   const curStage = Number(window.data?.state?.user?.currentstage ?? window.data?.state?.user?.stage ?? 0);
 
   let targetKey = null, targetDef = null, targetLevel = 0;
@@ -128,7 +91,7 @@ const activeTab = window.__ActiveBuildingTab[id];
   let canBuyScanOk = false;
 
   if (targetDef) {
-    const fake = { id: targetFullId, price: normalizePriceToObject(targetDef.cost), req: (targetDef.require||""), isUpgrade: ownedMax>0 };
+    const fake = { id: targetFullId, price: window.helpers.normalizePrice(targetDef.cost), req: (targetDef.require||""), isUpgrade: ownedMax>0 };
     const p = (typeof renderReqLine === "function")
       ? renderReqLine(fake, { context:"detail", returnParts:true, split:true, showLabels:false })
       : null;
@@ -211,7 +174,7 @@ const activeTab = window.__ActiveBuildingTab[id];
         <div class="actions-bar">
           ${(() => {
             const afford = (targetPriceObj && window.canAfford) ? window.canAfford(targetPriceObj).ok : false;
-            const ownedAny = computeOwnedMax(series) > 0;
+            const ownedAny = (window.helpers.computeOwnedMaxBySeries('bld')[series] || 0) > 0;
 
             const stageBadge = (!stageOk && targetDef)
               ? `<span class="badge stage-locked price-bad" title="Kræver Stage ${stageReq}">Stage locked</span>`
@@ -340,7 +303,7 @@ const activeTab = window.__ActiveBuildingTab[id];
         renderReqLine(
           {
             id: addId,
-            price: normalizeCostObj(def.cost),
+            price: window.helpers.normalizePrice(def.cost),
             req: def.require || def.req || "",
             isUpgrade: (display.level > 1)
           },
@@ -553,74 +516,11 @@ if (!window.__RecipeStartWired__) {
 // =====================================================================
 
 
-window.hasResearch = function(rsdIdFull) {
-  const S = window.data?.state || window.state || {};
-  if (S.rsd && (S.rsd[rsdIdFull] || S.rsd[rsdIdFull?.replace(/^rsd\./, "")])) return true;
-  const R = S.research || {};
-  if (R.completed?.has && R.completed.has(rsdIdFull)) return true;
-  if (R.completed && R.completed[rsdIdFull]) return true;
-  return false;
-}
-
-function ownedResearchMax(seriesFull) {
-  const S = window.data?.state || window.state || {};
-  let max = 0;
-  if (S.rsd && typeof S.rsd === "object") {
-    for (const k of Object.keys(S.rsd)) {
-      if (!String(k).startsWith(seriesFull + ".l")) continue;
-      const m = String(k).match(/\.l(\d+)$/);
-      const lvl = m ? +m[1] : 0;
-      if (lvl > max) max = lvl;
-    }
-  }
-  const R = S.research || {};
-  const iter = R.completed?.has ? Array.from(R.completed) : Object.keys(R.completed || {});
-  for (const k of iter) {
-    if (!String(k).startsWith(seriesFull + ".l")) continue;
-    const m = String(k).match(/\.l(\d+)$/);
-    const lvl = m ? +m[1] : 0;
-    if (lvl > max) max = lvl;
-  }
-  return max;
-}
-
-function normalizeCostObj(cost) {
-  if (!cost) return {};
-  const vals = Object.values(cost);
-  if (vals.length && typeof vals[0] === "object" && vals[0] && ('id' in vals[0] || 'rid' in vals[0] || 'resource' in vals[0])) {
-    return cost;
-  }
-  if (Array.isArray(cost)) {
-    const out = {};
-    cost.forEach((row, i) => {
-      if (!row) return;
-      const id  = row.id ?? row.rid ?? row.resource;
-      const amt = row.amount ?? row.qty ?? row.value;
-      if (!id || !Number(amt)) return;
-      out[`c${i}`] = { id: String(id), amount: Number(amt) };
-    });
-    return out;
-  }
-  const out = {};
-  for (const [k, spec] of Object.entries(cost)) {
-    if (spec && typeof spec === "object") {
-      const amt = Number(spec.amount ?? spec.qty ?? spec.value ?? 0);
-      if (!amt) continue;
-      out[k] = { id: k, amount: amt };
-    } else {
-      const amt = Number(spec ?? 0);
-      if (!amt) continue;
-      out[k] = { id: k, amount: amt };
-    }
-  }
-  return out;
-}
-
 function researchRow(rsdKey, def, backId, curStage, ownedLvlForSeries, playerOwnsBaseBuilding) {
   const fullId = "rsd." + rsdKey;
   const myLvl  = Number(rsdKey.match(/\.l(\d+)$/)?.[1] || 1);
 
-  const priceObj = normalizeCostObj(def.cost);
+  const priceObj = window.helpers.normalizePrice(def.cost);
   const parts = (typeof renderReqLine === "function")
     ? renderReqLine(
         { id: fullId, price: priceObj, req: def.require || def.req || "", isUpgrade: (myLvl > 1) },
@@ -632,7 +532,7 @@ function researchRow(rsdKey, def, backId, curStage, ownedLvlForSeries, playerOwn
   const stageReq   = Number(def?.stage ?? def?.stage_required ?? 0) || 0;
   const curStageNum= Number(curStage || 0);
   const stageOk    = stageReq <= curStageNum;
-  const ownedThis  = hasResearch(fullId);
+  const ownedThis  = window.helpers.hasResearch(fullId);
   const active     = !!(window.ActiveBuilds && window.ActiveBuilds[fullId]);
 
   const showStageLock = !stageOk && ownedLvlForSeries > 0;
@@ -705,7 +605,7 @@ function renderResearchListForBuilding(family, backId, playerOwnsBaseBuilding) {
   for (const arr of bySeries.values()) arr.sort((a,b)=>a.lvl-b.lvl);
   const rows = [];
   for (const [series, items] of bySeries.entries()) {
-    const ownedMax = ownedResearchMax(series);
+    const ownedMax = window.helpers.ownedResearchMax(series);
     const next = (ownedMax <= 0) ? items.find(x=>x.lvl===1) || items[0] : items.find(x=>x.lvl===ownedMax+1) || items[items.length-1];
     if (!next) continue;
     const stageReq = Number(next.def?.stage ?? next.def?.stage_required ?? 0);
@@ -732,7 +632,7 @@ function recipeRow(rcpKey, def, curStage, familyForBuilding, playerOwnsBaseBuild
   if (!stageOk)  return "";
 
   // Pris/krav (genbrug – nu med context:"recipe", så label hedder Production cost)
-  const priceObj = normalizeCostObj(def.cost);
+  const priceObj = window.helpers.normalizePrice(def.cost);
   const parts = (typeof renderReqLine === "function")
     ? renderReqLine(
         { id: fullId, price: priceObj, req: def.require || def.req || "", isUpgrade: (myLvl > 1) , duration_s: def.duration_s},
@@ -796,15 +696,12 @@ function recipeRow(rcpKey, def, curStage, familyForBuilding, playerOwnsBaseBuild
       return `${amount} ${emoji} ${name}`;
   };
 
-  // Inputs (cost) - bruger din eksisterende _animalsNormalizePrice
-  const inputs = (def.cost || []).map(formatItem).join(" + ");
+const inputs = renderCostColored(def.cost, true);
+const outputs = renderCostColored(def.yield, true); // Antager at yield har samme format som cost
 
-  // Outputs (yield) - bruger din eksisterende _animalsNormalizePrice
-  const outputs = (def.yield || []).map(formatItem).join(" + ");
-  
-  const timeStr = def?.time_str || (def?.duration_s ? `${def.duration_s}s` : "");
-  
-  const recipeIO = `<div class="sub">🧪 <strong>Recipe:</strong> ${inputs} → ${outputs}${timeStr ? " / " + timeStr : ""}</div>`;
+const timeStr = def?.time_str || (def?.duration_s ? `${def.duration_s}s` : "");
+
+const recipeIO = `<div class="sub">🧪 <strong>Recipe:</strong> ${inputs} → ${outputs}${timeStr ? " / " + timeStr : ""}</div>`;
   
   // =====================================================================
   // SLUT PÅ RETTELSE
