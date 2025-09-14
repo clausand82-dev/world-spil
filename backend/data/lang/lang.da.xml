@@ -12,6 +12,8 @@
   <unknown_instance>Bygningsinstans ikke fundet.</unknown_instance>
   <error>Der opstod en fejl.</error>
 </err>
+
+<!--UI-->
   <entry key="ui.liquid.h1">Flydende Ressourcer</entry>
   <entry key="ui.solid.h1">Faste Ressourcer</entry>
   <entry key="ui.building.h1">Bygning</entry>
@@ -39,7 +41,7 @@
   <entry key="ui.fills.h1"></entry>
 
 
-
+<!--BUILDINGS-->
   <entry key="bld.basecamp.l1.name">Lejrbål</entry>
   <entry key="bld.basecamp.l1.desc">Spillets starter base</entry>
   <entry key="bld.basecamp.l2.name">Lille lejrplads</entry>
@@ -56,10 +58,10 @@
   <entry key="bld.tent.l3.desc">Giver plads til 25 indbygger pr. telt</entry>
   <entry key="bld.tent.l4.name">Store telte</entry>
   <entry key="bld.tent.l4.desc">Giver plads til 50 indbygger pr. telt</entry>
-  <entry key="bld.farm.l1.name">Stald</entry>
-  <entry key="bld.farm.l1.desc">Stald til dyr. Højere niveau giver plads til flere dyr.</entry>
-  <entry key="bld.farm.l2.name">Større stald</entry>
-  <entry key="bld.farm.l2.desc">Stald til dyr. Højere niveau giver plads til flere dyr.</entry>
+  <entry key="bld.farm.l1.name">Gård</entry>
+  <entry key="bld.farm.l1.desc">Gård til dyr og marker. Højere niveau giver plads til flere dyr.</entry>
+  <entry key="bld.farm.l2.name">Større Gård</entry>
+  <entry key="bld.farm.l2.desc">Gård til dyr og marker. Højere niveau giver plads til flere dyr.</entry>
   <entry key="bld.field.l1.name">Lille kornmark</entry>
   <entry key="bld.field.l1.desc">Mark til at dyrke hvede. Højere niveau giver større udbytte.</entry>
   <entry key="bld.field.l2.name">Stor kornmark</entry>
@@ -76,55 +78,85 @@
   <entry key="bld.storagesolid.l1.desc">Øger lager plads på solide varer</entry>
   <entry key="bld.storageliquid.l1.name">Opbevaringstelt (flydende varer)</entry>
   <entry key="bld.storageliquid.l1.desc">Øger lager plads på flydende varer</entry>
+
+<!--ADDONS BASECAMP-->  
   <entry key="add.choppingblock.l1.name">Økseblok</entry>
   <entry key="add.choppingblock.l1.desc">Økseblok bruges til at hugge brænde på</entry>
-  <entry key="add.slaughterspot.l1.name">Slagterbord</entry>
-  <entry key="add.slaughterspot.l1.desc">Muliggør slagteri</entry>
-    <entry key="add.slaughterspot.l2.name">Slagterbord</entry>
-  <entry key="add.slaughterspot.l2.desc">Muliggør slagteri</entry>
-    <entry key="add.slaughterspot.l3.name">Slagterbord</entry>
-  <entry key="add.slaughterspot.l3.desc">Muliggør slagteri</entry>
   <entry key="add.bigfireplace.l1.name">Stor bål</entry>
   <entry key="add.bigfireplace.l1.desc">Øger lejrens føde en smule.</entry>
   <entry key="add.saltbowl.l1.name">Saltkar</entry>
   <entry key="add.saltbowl.l1.desc">Giver en smule salt hele tiden</entry>
   <entry key="add.well.l1.name">Brønd</entry>
   <entry key="add.well.l1.desc">Tilføjer en brønd til lejren</entry>
+
+
+<!--ADDONS FARM-->  
+  <entry key="add.barn.l1.name">Lille stald</entry>
+  <entry key="add.barn.l1.desc">Lille stald af simpelt træ, bruges til at holde dyr</entry>
+  <entry key="add.barn.l2.name">Stor stald </entry>
+  <entry key="add.barn.l2.desc">Stor stald af simpelt træ, bruges til at holde dyr</entry>
+
+  <entry key="add.slaughterspot.l1.name">Lille Slagterbord</entry>
+  <entry key="add.slaughterspot.l1.desc">Muliggør slagteri af mindre dyr som høns og ænder</entry>
+  <entry key="add.slaughterspot.l2.name">Størrere Slagterbord</entry>
+  <entry key="add.slaughterspot.l2.desc">Muliggør slagteri af mellem store dyr som grise, geder og får</entry>
+  <entry key="add.slaughterspot.l3.name">Stor Slagterbord</entry>
+  <entry key="add.slaughterspot.l3.desc">Muliggør slagteri af store dyr som køer og hjorte</entry>
+
+  <entry key="add.barn_yard.l1.name">Lille indhegning</entry>
+  <entry key="add.barn_yard.l1.desc">Lille indhegning, der øger plads til dyr</entry>
+  <entry key="add.barn_yard.l2.name">Mellem indhegning</entry>
+  <entry key="add.barn_yard.l2.desc">Plads til lidt flere dyr; opgradering til lille indhegning.</entry>
+  <entry key="add.barn_yard.l3.name">Stor indhegning</entry>
+  <entry key="add.barn_yard.l3.desc">Plads til en del flere dyr; opgradering til mellem indhegning.</entry>
+
+  <entry key="add.barn_fence.l1.name">Simpelt hegn af træ</entry>
+  <entry key="add.barn_fence.l1.desc">Bedre hegn til ens indhegning</entry>
+  <entry key="add.barn_fence.l2.name">Solid hegn af træ</entry>
+  <entry key="add.barn_fence.l2.desc">Jo bedre indhegning jo flere dyr</entry>
+
+  <entry key="add.barn_feedingtrough.l1.name">Foder trug (lille)</entry>
+  <entry key="add.barn_feedingtrough.l1.desc">Øger mulig antal dyr lidt</entry>
+  <entry key="add.barn_feedingtrough.l2.name">Foder trug (stor)</entry>
+  <entry key="add.barn_feedingtrough.l2.desc">Øger mulig antal dyr lidt end lille foder trug</entry>
+
+  <entry key="add.barn_watertrough.l1.name">Vand trug (lille)</entry>
+  <entry key="add.barn_watertrough.l1.desc">Øger mulige antal dyr lidt</entry>
+  <entry key="add.barn_watertrough.l2.name">Vand trug (stor)</entry>
+  <entry key="add.barn_watertrough.l2.desc">Øger mulige antal dyr lidt end lille vandtrug</entry>
+
+  <entry key="add.barn_manurepit.l1.name">Gødning</entry>
+  <entry key="add.barn_manurepit.l1.desc">Dyrerne giver gødning, der blandt andet kan spredes på markerne og forbedre udbytte</entry>
+
+  <entry key="add.barn_bedding.l1.name">Strøelse</entry>
+  <entry key="add.barn_bedding.l1.desc">Øger max antal af dyr minimalt</entry>
+
+  <entry key="add.barn_milkingshed.l1.name">Malkestol</entry>
+  <entry key="add.barn_milkingshed.l1.desc">Giver mulighed for at malke køer og geder</entry>
+
+  <entry key="add.barn_shearingshed.l1.name">Klippebås</entry>
+  <entry key="add.barn_shearingshed.l1.desc">Giver mulighed for at få uld fra får</entry>
+
+
+
+
   <entry key="add.tailorspot.l1.name">Skrædderbord</entry>
   <entry key="add.tailorspot.l1.desc">Tilføjer mulighed for at bearbejde skind og læder</entry>
   <entry key="add.barrel.l1.name">Lille opbevaringstønde til flydende ressourcer</entry>
   <entry key="add.barrel.l1.desc">Øger opbevarings for flydende ressourcer</entry>
   <entry key="add.barrel.l2.name">Stor opbevaringstønde til flydende ressourcer</entry>
   <entry key="add.barrel.l2.desc">Øger opbevarings for flydende ressourcer yderligere</entry>
-  <entry key="add.yard.l1.name">Lille Stald</entry>
-  <entry key="add.yard.l1.desc">Lille stald med pldass til få dyr</entry>
-  <entry key="add.yard.l2.name">Mellem Stald</entry>
-  <entry key="add.yard.l2.desc">Plads til lidt flere dyr; opgradering til Lille Stald</entry>
-  <entry key="add.yard.l3.name">Stor Stald</entry>
-  <entry key="add.yard.l3.desc">Palds til en del dyr; opgradering til Mellem Stald</entry>
-  <entry key="add.fence.l1.name">Simpelt hegn af træ</entry>
-  <entry key="add.fence.l1.desc">[Beskrivelse mangler for add.barn.fence.l1]</entry>
-  <entry key="add.fence.l2.name">Solid hegn af træ</entry>
-  <entry key="add.fence.l2.desc">[Beskrivelse mangler for add.barn.fence.l2]</entry>
-  <entry key="add.feedingtrough.l1.name">Foder trug</entry>
-  <entry key="add.feedingtrough.l1.desc">Øger mulig antal dyr lidt</entry>
-  <entry key="add.watertrough.l1.name">Vand trug</entry>
-  <entry key="add.watertrough.l1.desc">Reducerer stalddyrs vand forbrug med 10%</entry>
-  <entry key="add.manurepit.l1.name">Gødning</entry>
-  <entry key="add.manurepit.l1.desc">Dyrerne giver gødning, der blandt andet kan spredes på markerne og forbedre udbytte</entry>
-  <entry key="add.bedding.l1.name">Strøelse</entry>
-  <entry key="add.bedding.l1.desc">Øger max antal af dyr minimalt</entry>
-  <entry key="add.milkingshed.l1.name">Malkestol</entry>
-  <entry key="add.milkingshed.l1.desc">Giver mulighed for at malke køer og geder</entry>
-  <entry key="add.shearingshed.l1.name">Klippebås</entry>
-  <entry key="add.shearingshed.l1.desc">Giver mulighed for at få uld fra får</entry>
+
   <entry key="add.stacking.l1.name">Bedre pakning</entry>
   <entry key="add.stacking.l1.desc">Forbedre opbevarings muligheder</entry>
+  
+
+<!--RESEARCH-->
   <entry key="rsd.tools.l1.name">Basis værktøjs kendskab</entry>
   <entry key="rsd.tools.l1.desc">Giver evnen til at benytte helt basale værktøjer</entry>
-    <entry key="rsd.tools.l2.name">Udvidet værktøjs kendskab</entry>
+  <entry key="rsd.tools.l2.name">Udvidet værktøjs kendskab</entry>
   <entry key="rsd.tools.l2.desc">Giver evnen til at benytte helt basale værktøjer</entry>
-    <entry key="rsd.tools.l3.name">Grundig værktøjs kendskab</entry>
+  <entry key="rsd.tools.l3.name">Grundig værktøjs kendskab</entry>
   <entry key="rsd.tools.l3.desc">Giver evnen til at benytte helt basale værktøjer</entry>
   <entry key="rsd.flintstone.l1.name">Flintesten</entry>
   <entry key="rsd.flintstone.l1.desc">Giver evnen til at benytte flintesten i sin værktøjer (økse, hakke osv.)</entry>
@@ -142,6 +174,8 @@
   <entry key="rsd.storage.l1.desc">Giver muligheder for at bygge og udvide storage</entry>
   <entry key="rsd.construction.l1.name">Øget konstruktions evne</entry>
   <entry key="rsd.construction.l1.desc">Giver bedre konstruktions evner</entry>
+
+<!--RECIPES-->
   <entry key="rcp.firewood.l1.name">Lav brænde</entry>
   <entry key="rcp.firewood.l1.desc">Producer brænde</entry>
   <entry key="rcp.cockedmeat.l1.name">Lav mad</entry>
@@ -164,6 +198,8 @@
   <entry key="rcp.slaughterchicken.l1.desc">Giver kød og fjer ved slagtning</entry>
   <entry key="rcp.slaughterrabbit.l1.name">Slagt kanin</entry>
   <entry key="rcp.slaughterrabbit.l1.desc">Giver kød og skind ved slagtning</entry>
+
+<!--RESOURCES--> 
   <entry key="res.wood.name">Træ</entry>
   <entry key="res.wood.desc">Bruges til at bygge med; kan bearbejdes</entry>
   <entry key="res.stone.name">Sten</entry>
@@ -222,6 +258,8 @@
   <entry key="res.firewood.desc">Kan bruges til øge varmen i din by</entry>
   <entry key="res.rawfish.name">Rå fisk</entry>
   <entry key="res.rawfish.desc">Kan bruges som foder eller forarbejdes til mad</entry>
+
+<!--ANIMALS-->
   <entry key="ani.cow.name">Kalv</entry>
   <entry key="ani.cow.desc">Kalve vokser op og blive mælke aktive</entry>
   <entry key="ani.chicken.name">Kylling</entry>

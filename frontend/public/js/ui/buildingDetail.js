@@ -283,6 +283,11 @@ const activeTab = window.__ActiveBuildingTab[id];
   const currentStage = curStage;
 
   if (name === "addons") {
+    if (window.BuildingDetailTabs?.addons) {
+      window.BuildingDetailTabs.addons(tc, id, playerOwnsBaseBuilding);
+      window.BuildingsProgress?.rehydrate?.(tc);
+      return;
+    }
     const familyOnly = String(id).replace(/\.l\d+$/,'');
     const groups = {};
     for (const [k, def] of Object.entries(addDefs)) {
@@ -291,8 +296,9 @@ const activeTab = window.__ActiveBuildingTab[id];
       if (!matchFamily) continue;
       const aStage = Number(def?.stage ?? def?.stage_required ?? 0) || 0;
       if (aStage > currentStage) continue;
-      const m = /^(.*)\.l(\d+)$/i.exec(k); if (!m) continue;
-      const series = m[1], lvl = Number(m[2]);
+      const series = (typeof familyOf === 'function') ? familyOf(k) : String(k).replace(/\.l\d+$/, '');
+      const lvl    = (typeof levelOf === 'function')  ? levelOf(k)    : (Number(k.match(/\.l(\d+)$/)?.[1] || 0));
+      if (!series || !lvl) continue;
       (groups[series] ||= []).push({ key:k, def, level:lvl });
     }
     for (const s of Object.keys(groups)) groups[s].sort((a,b)=>a.level-b.level);
@@ -301,8 +307,8 @@ const activeTab = window.__ActiveBuildingTab[id];
       let max=0;
       for (const key of Object.keys(window.data?.state?.add || {})) {
         if (!key.startsWith(`add.${seriesName}.l`)) continue;
-        const m = /\.l(\d+)$/i.exec(key); if (!m) continue;
-        max = Math.max(max, Number(m[1]));
+        const lvl = (typeof levelOf === 'function') ? levelOf(key) : (Number(key.match(/\.l(\d+)$/)?.[1] || 0));
+        if (lvl > max) max = lvl;
       }
       return max;
     };
@@ -386,15 +392,23 @@ const activeTab = window.__ActiveBuildingTab[id];
 
   if (name === "research") {
     const familyOnly = familyOf(id);
-    tc.innerHTML = renderResearchListForBuilding(familyOnly, id, playerOwnsBaseBuilding);
-    window.BuildingsProgress?.rehydrate?.(tc);
+    if (window.BuildingDetailTabs?.research) {
+      window.BuildingDetailTabs.research(tc, familyOnly, id, playerOwnsBaseBuilding);
+    } else {
+      tc.innerHTML = renderResearchListForBuilding(familyOnly, id, playerOwnsBaseBuilding);
+      window.BuildingsProgress?.rehydrate?.(tc);
+    }
     return;
   }
 
   if (name === "recipes") {
     const familyOnly = familyOf(id);
-    tc.innerHTML = renderRecipesListForBuilding(familyOnly, playerOwnsBaseBuilding);
-    window.BuildingsProgress?.rehydrate?.(tc);
+    if (window.BuildingDetailTabs?.recipes) {
+      window.BuildingDetailTabs.recipes(tc, familyOnly, playerOwnsBaseBuilding);
+    } else {
+      tc.innerHTML = renderRecipesListForBuilding(familyOnly, playerOwnsBaseBuilding);
+      window.BuildingsProgress?.rehydrate?.(tc);
+    }
     return;
   }
 
@@ -414,338 +428,3 @@ const activeTab = window.__ActiveBuildingTab[id];
 });
 switchTab(activeTab); // <- behold valgt tab efter opdatering
 };
-
-if (!window.__AddonStartWired__) {
-  window.__AddonStartWired__ = true;
-  document.addEventListener("click", async (ev) => {
-    const btn = ev.target.closest('[data-fakebuild-id][data-buildmode="timer"][data-buildscope="addon"]');
-    if (!btn) return;
-    ev.preventDefault();
-    ev.stopPropagation();
-    const addId = btn.getAttribute("data-fakebuild-id");
-    const def = window.data?.defs?.add?.[addId.replace(/^add\./,"")];
-    const dur = Number(def?.duration_s ?? 10);
-    btn.disabled = true;
-    try {
-      await window.BuildJobs.start(addId, dur);
-    } catch (e) {
-      console.error("Addon start failed", e);
-      btn.disabled = false;
-      return;
-    }
-    const wrap = document.querySelector(`.build-progress[data-pb-for="${addId}"]`);
-    if (wrap) wrap.style.display = "";
-    const cancel = document.createElement("button");
-    cancel.className = "btn";
-    cancel.textContent = "Cancel";
-    cancel.setAttribute("data-cancel-build", addId);
-    btn.replaceWith(cancel);
-  });
-}
-
-// =====================================================================
-// START PÅ RETTELSE: Dedikeret event listener for research jobs
-// =====================================================================
-if (!window.__ResearchStartWired__) {
-  window.__ResearchStartWired__ = true;
-  document.addEventListener("click", async (ev) => {
-    const btn = ev.target.closest('[data-fakebuild-id][data-buildmode="timer"][data-buildscope="research"]');
-    if (!btn) return;
-
-    ev.preventDefault();
-    ev.stopPropagation();
-
-    const rsdId = btn.getAttribute("data-fakebuild-id"); // fx "rsd.construction.l1"
-    const def = window.data?.defs?.rsd?.[rsdId.replace(/^rsd\./, "")];
-    if (!def) {
-      console.error("Research definition not found for:", rsdId);
-      return;
-    }
-    const dur = Number(def?.duration_s ?? 10);
-
-    btn.disabled = true;
-    try {
-      await window.BuildJobs.start(rsdId, dur);
-    } catch (e) {
-      console.error("Research start failed", e);
-      btn.disabled = false;
-      return;
-    }
-
-    const wrap = document.querySelector(`.build-progress[data-pb-for="${rsdId}"]`);
-    if (wrap) wrap.style.display = "";
-    const cancel = document.createElement("button");
-    cancel.className = "btn";
-    cancel.textContent = "Cancel";
-    cancel.setAttribute("data-cancel-build", rsdId);
-    btn.replaceWith(cancel);
-  });
-}
-// =====================================================================
-// SLUT PÅ RETTELSE
-// =====================================================================
-
-// =====================================================================
-// START: Dedikeret event listener for recipe jobs
-// =====================================================================
-if (!window.__RecipeStartWired__) {
-  window.__RecipeStartWired__ = true;
-  document.addEventListener("click", async (ev) => {
-    const btn = ev.target.closest('[data-fakebuild-id][data-buildmode="timer"][data-buildscope="recipe"]');
-    if (!btn) return;
-
-    ev.preventDefault();
-    ev.stopPropagation();
-
-    const rcpId = btn.getAttribute("data-fakebuild-id"); // fx "rcp.firewood.l1"
-    const def = window.data?.defs?.rcp?.[rcpId.replace(/^rcp\./, "")];
-    if (!def) {
-      console.error("Recipe definition not found for:", rcpId);
-      return;
-    }
-
-    // Varighed: vi følger samme praksis som research/addons (duration_s, fallback 10)
-    const dur = Number(def?.duration_s ?? 10);
-
-    btn.disabled = true;
-    try {
-      await window.BuildJobs.start(rcpId, dur);
-    } catch (e) {
-      console.error("Recipe start failed", e);
-      btn.disabled = false;
-      return;
-    }
-
-    // Vis progress og erstat knap med Cancel (samme UI-mønster)
-    const wrap = document.querySelector(`.build-progress[data-pb-for="${rcpId}"]`);
-    if (wrap) wrap.style.display = "";
-    const cancel = document.createElement("button");
-    cancel.className = "btn";
-    cancel.textContent = "Cancel";
-    cancel.setAttribute("data-cancel-build", rcpId);
-    btn.replaceWith(cancel);
-  });
-}
-// =====================================================================
-// SLUT: Dedikeret event listener for recipe jobs
-// =====================================================================
-
-
-function researchRow(rsdKey, def, backId, curStage, ownedLvlForSeries, playerOwnsBaseBuilding) {
-  const fullId = "rsd." + rsdKey;
-  const myLvl  = levelOf(rsdKey);
-
-  const priceObj = window.helpers.normalizePrice(def.cost);
-  const parts = (typeof renderReqLine === "function")
-    ? renderReqLine(
-        { id: fullId, price: priceObj, req: def.require || def.req || "", isUpgrade: (myLvl > 1) },
-        { context: "research", showLabels: true, split: false, compact: true, returnParts: true }
-      )
-    : { bothInline: "", allOk: true };
-
-  const afford     = (typeof canAfford === "function") ? (canAfford(priceObj) || { ok:false }) : { ok:true };
-  const stageReq   = Number(def?.stage ?? def?.stage_required ?? 0) || 0;
-  const curStageNum= Number(curStage || 0);
-  const stageOk    = stageReq <= curStageNum;
-  const ownedThis  = window.helpers.hasResearch(fullId);
-  const active     = !!(window.ActiveBuilds && window.ActiveBuilds[fullId]);
-
-  const showStageLock = !stageOk && ownedLvlForSeries > 0;
-  const stageBadge = showStageLock
-    ? `<span class="badge stage-locked price-bad" title="Kræver Stage ${stageReq}">Stage locked</span>`
-    : "";
-
-  let right = '';
-  if (!playerOwnsBaseBuilding) {
-      right = `<button class="btn" disabled>Kræver Bygning</button>`;
-  } else if (active) {
-    right = cancelWithProgress(fullId, '160px', 12);
-  } else if (ownedThis) {
-    right = `<span class="badge owned">Owned</span>`;
-  } else if (showStageLock) {
-    right = `<span class="badge stage-locked price-bad" title="Kræver Stage ${stageReq}">Stage locked</span>`;
-  } else {
-    const ok = !!afford.ok && !!parts.allOk && stageOk;
-    const needsMore = !ok; // ← NYT: ensartet check
-    const label = (myLvl === 1) ? "Research" : "Upgrade";
-
-    right = needsMore
-      ? `<button class="btn" disabled>Need more</button>`
-      : `<button class="btn primary" data-fakebuild-id="${fullId}" data-buildmode="timer" data-buildscope="research">${label}</button>`;
-
-    // Progress-bar placeholder (vises når jobbet starter)
-    right += progressPlaceholder(fullId, '160px', 12);
-  }
-
-  return `
-    <div class="item" data-research-row="${fullId}">
-      <div class="icon">🔬</div>
-      <div class="grow">
-        <div class="title">${def.name || rsdKey} ${stageBadge}</div>
-        ${def.desc ? `<div class="sub">🛈 ${def.desc}</div>` : ""}
-        ${parts.bothInline ? `<div class="sub">${parts.bothInline}</div>` : ""}
-      </div>
-      <div class="right">${right}</div>
-    </div>
-  `;
-}
-
-function renderResearchListForBuilding(family, backId, playerOwnsBaseBuilding) {
-  const defs = window?.data?.defs || {};
-  const rsdDefs = defs?.rsd || {};
-  const curStage = Number(window.data?.state?.user?.currentstage ?? window.data?.state?.user?.stage ?? 0);
-  const bySeries = new Map();
-  for (const [key, def] of Object.entries(rsdDefs)) {
-    const fam = String(def?.family || "");
-    if (!fam) continue;
-    const belongs = (fam === family) || fam.split(",").includes(family);
-    if (!belongs) continue;
-    const famKey = familyOf(key);
-    const lvl = levelOf(key);
-    if (!famKey || !lvl) continue;
-    const serieKey = "rsd." + famKey;
-    if (!bySeries.has(serieKey)) bySeries.set(serieKey, []);
-    bySeries.get(serieKey).push({ key, def, lvl });
-  }
-  for (const arr of bySeries.values()) arr.sort((a,b)=>a.lvl-b.lvl);
-  const rows = [];
-  for (const [series, items] of bySeries.entries()) {
-    const ownedMax = window.helpers.ownedResearchMax(series);
-    const next = (ownedMax <= 0) ? items.find(x=>x.lvl===1) || items[0] : items.find(x=>x.lvl===ownedMax+1) || items[items.length-1];
-    if (!next) continue;
-    const stageReq = Number(next.def?.stage ?? next.def?.stage_required ?? 0);
-    const stageOk  = !stageReq || stageReq <= curStage;
-    if (!stageOk && ownedMax<=0) {
-      continue;
-    }
-    rows.push(researchRow(next.key, next.def, backId, curStage, ownedMax, playerOwnsBaseBuilding));
-  }
-  return `<section class="panel section"><div class="section-head">🔬 Related Research</div><div class="section-body">${rows.join("") || "<div class='sub'>Ingen</div>"}</div></section>`;
-}
-
-// buildingDetail.js
-
-function recipeRow(rcpKey, def, curStage, familyForBuilding, playerOwnsBaseBuilding) {
-  const fullId = "rcp." + rcpKey;
-  const myLvl  = levelOf(rcpKey);
-  const mode   = String(def?.mode || "active"); // active | passive
-  const fam    = String(def?.family || "");
-  const stageReq = Number(def?.stage ?? def?.stage_required ?? 0) || 0;
-  const stageOk  = stageReq <= Number(curStage || 0);
-  const belongs  = (fam === familyForBuilding) || fam.split(",").includes(familyForBuilding);
-  if (!belongs) return "";
-  if (!stageOk)  return "";
-
-  // Pris/krav (genbrug – nu med context:"recipe", så label hedder Production cost)
-  const priceObj = window.helpers.normalizePrice(def.cost);
-  const parts = (typeof renderReqLine === "function")
-    ? renderReqLine(
-        { id: fullId, price: priceObj, req: def.require || def.req || "", isUpgrade: (myLvl > 1) , duration_s: def.duration_s},
-        { context: "recipe", showLabels: true, split: false, compact: true, returnParts: true }
-      )
-    : { bothInline: "", allOk: true };
-
-  // Kan vi betale?
-  const afford = (typeof canAfford === "function") ? (canAfford(priceObj) || { ok:false }) : { ok:true };
-
-  // Aktivt job?
-  const active = !!(window.ActiveBuilds && window.ActiveBuilds[fullId]);
-
-  // Højre side (knapper)
-  let right = '';
-  if (!playerOwnsBaseBuilding) {
-      right = `<button class="btn" disabled>Kræver Bygning</button>`;
-  } else if (active) {
-    right = cancelWithProgress(fullId, '160px', 8, (mode === 'passive' ? 'Pause' : 'Cancel'));
-  } else {
-    const ok  = !!afford.ok && !!parts.allOk && stageOk;
-    const label = (mode === "passive") ? "Start" : "Build 1x";
-    right = !ok
-      ? `<button class="btn" disabled>Need more</button>`
-      : `<button class="btn primary" data-fakebuild-id="${fullId}" data-buildmode="timer" data-buildscope="recipe">${label}</button>`;
-    right += progressPlaceholder(fullId, '160px', 8);
-  }
-
-  // =====================================================================
-  // START PÅ DEN ENESTE, KORREKTE RETTELSE
-  // =====================================================================
-  
-  // Helper til at formatere et enkelt item (ressource eller dyr)
-  const formatItem = (item) => {
-      const id = item.id ?? item.res_id ?? item.resource ?? item.type;
-      const amount = item.amount ?? item.qty ?? item.value;
-      let defItem = null;
-      let name = id;
-      let emoji = '❔';
-
-      if (id.startsWith('ani.')) {
-          const key = id.replace(/^ani\./, '');
-          defItem = window.data.defs.ani?.[key];
-          if (defItem) { name = defItem.name; emoji = defItem.emoji || '🐾'; }
-      } else { // Antager res.*
-          const key = id.replace(/^res\./, '');
-          defItem = window.data.defs.res?.[key];
-          if (defItem) { name = defItem.name; emoji = defItem.emoji || '❔'; }
-      }
-      return `${amount} ${emoji} ${name}`;
-  };
-
-const inputs = renderCostColored(def.cost, true);
-const outputs = renderCostColored(def.yield, true); // Antager at yield har samme format som cost
-
-const timeStr = def?.time_str || (def?.duration_s ? `${def.duration_s}s` : "");
-
-const recipeIO = `<div class="sub">🧪 <strong>Recipe:</strong> ${inputs} → ${outputs}${timeStr ? " / " + timeStr : ""}</div>`;
-  
-  // =====================================================================
-  // SLUT PÅ RETTELSE
-  // =====================================================================
-
-  return `
-    <div class="item" data-recipe-row="${fullId}">
-      <div class="icon">🍲</div>
-      <div class="grow">
-        <div class="title">${def.name || rcpKey}</div>
-        ${def.desc ? `<div class="sub">🛈 ${def.desc}</div>` : ""}
-        ${recipeIO}
-        ${parts.bothInline ? `<div class="sub" style="margin-top: 4px;">${parts.bothInline}</div>` : ""}
-      </div>
-      <div class="right">${right}</div>
-    </div>
-  `;
-}
-
-
-function renderRecipesListForBuilding(family, playerOwnsBaseBuilding) {
-  const defs = window?.data?.defs || {};
-  const rcpDefs = defs?.rcp || {};
-  const curStage = Number(window.data?.state?.user?.currentstage ?? window.data?.state?.user?.stage ?? 0);
-
-  // Filtrer: kun recipes for denne building-family og stage ≤ current
-  const items = [];
-  for (const [key, def] of Object.entries(rcpDefs)) {
-    const fam = String(def?.family || "");
-    if (!fam) continue;
-    const belongs = (fam === family) || fam.split(",").includes(family);
-    if (!belongs) continue;
-
-    const stageReq = Number(def?.stage ?? def?.stage_required ?? 0) || 0;
-    if (stageReq > curStage) continue; // højere stages vises slet ikke
-
-    // Sorteringsnøgler: stage → lvl → id
-    const lvl = Number(key.match(/\.l(\d+)$/)?.[1] || def?.lvl || 0);
-    items.push({ key, def, stage: stageReq, lvl });
-  }
-
-  // Sortér: stage, lvl, id
-  items.sort((a,b) =>
-    (a.stage - b.stage) ||
-    (a.lvl - b.lvl) ||
-    String(a.key).localeCompare(String(b.key))
-  );
-
-  const rows = items.map(x => recipeRow(x.key, x.def, curStage, family, playerOwnsBaseBuilding)).filter(Boolean);
-  return `<section class="panel section"><div class="section-head">⚒ Jobs / Recipes</div><div class="section-body">${rows.join("") || "<div class='sub'>Ingen</div>"}</div></section>`;
-}
-
-

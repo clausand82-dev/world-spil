@@ -111,7 +111,7 @@
     <unitSpace>0.1</unitSpace>
     <emoji>🪵</emoji  >
   </resource>
-  <resource id="res.rawfish" family="product" type="product" lvl="1" stage="1.0">
+  <resource id="res.rawcommonfish" family="product" type="product" lvl="1" stage="1.0">
     <unit>pcs</unit>
     <unitSpace>0.1</unitSpace>
     <emoji>🐟</emoji>

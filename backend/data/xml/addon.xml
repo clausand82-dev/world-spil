@@ -4,30 +4,16 @@
   <!-- addons for basecamp -->
   
   <addon id="add.choppingblock.l1" family="basecamp" group="main" type="addons" lvl="1" stage="1">
+  <stats>footprint=-1;provision_cap=+5</stats>
     <cost>
       <res id="res.money" amount="100"/>
       <res id="res.wood" amount="5"/>
     </cost>
-    <yield period="1h">
-      <res id="res.water" amount="1"/>
-      <res id="res.salt" amount="1"/>
-    </yield>
     <require>rsd.flintstone.l1</require>
-  </addon>
-
-  <addon id="add.slaughterspot.l1" family="basecamp" type="addons" lvl="1" stage="1">
-    <cost>
-      <res id="res.money" amount="100"/>
-    </cost>
-    <require>rsd.flintstone.l1, rsd.tools.l1, bld.tent.l1</require>
   </addon>
 
   <addon id="add.bigfireplace.l1" family="basecamp" type="addons" lvl="1" stage="1">
     <stats>footprint=-1;provision_cap=+5</stats>
-    <effects>
-      <effect id="provision_cap" op="add" value="5"/>
-      <effect id="footprint" op="add" value="-1"/>
-    </effects>
     <cost>
       <res id="res.money" amount="150"/>
     </cost>
@@ -38,7 +24,7 @@
       <res id="res.money" amount="25"/>
     </cost>
     <yield>
-      <produce res="res.salt" amount="0.2" time="6h"/>
+      <res  id="res.salt" amount="1"/>
     </yield>
   </addon>
 
@@ -48,9 +34,9 @@
       <res id="res.wood" amount="2"/>
       <res id="res.stone" amount="35"/>
     </cost>
-    <yield>
-      <produce res="res.water" amount="1" time="6h"/>
-      <produce res="res.salt" amount="0.2" time="6h"/>
+    <yield period="1h">
+      <res id="res.water" amount="10"/>
+      <res id="res.salt" amount="1"/>
     </yield>
   </addon>
 
@@ -129,16 +115,15 @@
 
 <!-- sub addons for barn -->
 
-  <addon id="add.barn_waterthough.l1" family="farm" group="barn" type="addons" lvl="1" stage="1">
-    <stats>animal_cap=10</stats>
-    <cost>
-      <res id="res.money" amount="140"/>
-      <res id="res.wood" amount="45"/>
-    </cost>
-        <upgradesTo>
-      <target id="add.barn_waterthoug.l1"/>
-    </upgradesTo>
-  </addon>
+  <!--sub addon vandtrug - formål er at øge animal_cap -->
+    <addon id="add.barn_waterthough.l1" family="farm" group="barn" type="addons" lvl="1" stage="1">
+      <stats>animal_cap=10</stats>
+      <cost>
+        <res id="res.money" amount="140"/>
+        <res id="res.wood" amount="45"/>
+      </cost>
+      <upgradesTo>add.barn_waterthough.l2</upgradesTo>
+    </addon>
 
       <addon id="add.barn_waterthough.l2" family="farm" group="barn" type="addons" lvl="2" stage="1">
         <stats>animal_cap=25</stats>
@@ -149,6 +134,7 @@
         <require>add.barn_waterthough.l1</require>
   </addon>
 
+  <!--sub addon yard/gård - formål er at øge animal_cap -->
     <addon id="add.barn_yard.l1" family="farm" group="barn" type="addons" lvl="1" stage="1">
     <stats>animal_cap=75</stats>
     <cost>
@@ -157,14 +143,26 @@
     </cost>
   </addon>
 
-  <addon id="add.bar_fence.l1" family="farm" group="barn" type="addons" lvl="1" stage="1">
+  <!--sub addon hegn til yard - formål er at øge animal_cap -->
+  <addon id="add.barn_fence.l1" family="farm" group="barn" type="addons" lvl="1" stage="1">
+  <stats>animal_cap=75</stats>
     <cost>
       <res id="res.money" amount="5"/>
       <res id="res.wood" amount="25"/>
     </cost>
-    <require>add.yard.l2</require>
+    <require>add.yard.l1</require>
+  </addon>
+
+    <addon id="add.barn_fence.l2" family="farm" group="barn" type="addons" lvl="2" stage="1">
+  <stats>animal_cap=75</stats>
+    <cost>
+      <res id="res.money" amount="5"/>
+      <res id="res.wood" amount="25"/>
+    </cost>
+    <require>add.barn_fence.l1</require>
   </addon>
   
+  <!--sub addon fodertrug - formål er at øge animal_cap  - på sigt kan det måske miske mad indtag-->
   <addon id="add.barn_feedingtrough.l1" family="farm" group="barn" type="addons" lvl="1" stage="1">
     <cost>
       <res id="res.money" amount="25"/>
@@ -173,7 +171,7 @@
     <require></require>
   </addon>
 
-
+  <!--sub addon gødning pit - formål er at øge gødning output -->
   <addon id="add.barn_manurepit.l1" family="farm" group="barn" type="addons" lvl="1" stage="1">
     <cost>
       <res id="res.money" amount="145"/>
@@ -183,74 +181,94 @@
     <yield period="1h">
       <res id="res.fertilizer" amount="1"/>
     </yield>
-    <require></require>
+    <require>rsd.usefertilizer.l1</require>
   </addon>
 
+  <!--sub addon strøelse - formål er at øge gødning output, og på sigt øge dyre velvære -->
   <addon id="add.barn_bedding.l1" family="farm" ground="barn" type="addons" lvl="1" stage="1">
     <cost>
       <res id="res.straw" amount="50"/>
       <res id="res.wood" amount="125"/>
       <res id="res.money" amount="145"/>
     </cost>
+    <yield period="1h">
+    <res id="res.fertilizer" amount="1"/>
+    </yield>
+    <require>rsd.animalhealth.l1</require>
   </addon>
 
+  <!--sub addon malke stol - formål er at øge mælke output / gerne en miltiplier på sigt-->
   <addon id="add.barn_milkingshed.l1" family="farm" group="barn" type="addons" lvl="1" stage="1">
     <cost>
       <res id="res.money" amount="150"/>
     </cost>
     <yield periode="1h">
-      <res id="res.cowmilk" amount="1"/>
-      <res id="res.goatmilk" amount="1"/>
+      <res id="res.cowmilk" amount="2"/>
     </yield>
   </addon>
 
+  <!--sub addon klippebås - formål er at aktiverer klipning af får-->
   <addon id="add.barn_shearingshed.l1" family="farm" group="barn" type="addons" lvl="1" stage="1">
     <cost>
       <res id="res.money" amount="150"/>
     </cost>
     <yield>
-      <res id="res.wool" amount="3"/>
+      <res id="res.wool" amount="1"/>
     </yield>
   </addon>
 
-<!-- Storage addons -->
+  <!--sub addon slagtebord - formål er at aktiverer slagtning-->
+  <addon id="add.barn_slaughterspot.l1" family="basecamp" group="barn" type="addons" lvl="1" stage="1">
+    <cost>
+      <res id="res.money" amount="100"/>
+    </cost>
+    <require></require>
+  </addon>
+
+    <addon id="add.barn_slaughterspot.l2" family="basecamp" group="barn" type="addons" lvl="2" stage="1">
+    <cost>
+      <res id="res.money" amount="100"/>
+    </cost>
+    <require></require>
+  </addon>
+
+      <addon id="add.barn_slaughterspot.l3" family="basecamp" group="barn" type="addons" lvl="3" stage="1">
+    <cost>
+      <res id="res.money" amount="100"/>
+    </cost>
+    <require></require>
+  </addon>
+
+<!-- Storage addons 
   <addon id="add.stacking.l1" family="storage" type="addons" lvl="1" stage="1">
-    <effects>
-      <effect key="storage_cap" op="add" value="100"/>
-    </effects>
+    <cost>
+      <res id="res.money" amount="100"/>
+      <res id="res.wood" amount="100"/>
+    </cost>
+  </addon>-->
+
+  <!--addon fiske mole - åbner op for fiskeri -->
+      <addon id="add.fishingmole.l1" family="lake" type="addons" lvl="1" stage="1">
     <cost>
       <res id="res.money" amount="100"/>
       <res id="res.wood" amount="100"/>
     </cost>
   </addon>
 
-    <addon id="add.slaughterspot.l2" family="basecamp" type="addons" lvl="1" stage="1">
-    <effects>
-      <effect key="storage_cap" op="add" value="100"/>
-    </effects>
+    <!--addon fiske net af tynd tråd - åbner op for fiskeri -->
+        <addon id="add.fishingmole_net.l1" family="lake" group="fishingmole" type="addons" lvl="1" stage="1">
     <cost>
       <res id="res.money" amount="100"/>
       <res id="res.wood" amount="100"/>
     </cost>
   </addon>
 
-      <addon id="add.lakehouse.l1" family="lake" type="addons" lvl="1" stage="1">
-    <effects>
-      <effect key="storage_cap" op="add" value="100"/>
-    </effects>
+      <!--addon fiske net af tykkere tråd - åbner op for fiskeri -->
+        <addon id="add.fishingmole_net.l2" family="lake" group="fishingmole" type="addons" lvl="2" stage="1">
     <cost>
       <res id="res.money" amount="100"/>
       <res id="res.wood" amount="100"/>
     </cost>
   </addon>
 
-      <addon id="add.slaughterspot.l3" family="basecamp" type="addons" lvl="1" stage="2">
-    <effects>
-      <effect key="storage_cap" op="add" value="100"/>
-    </effects>
-    <cost>
-      <res id="res.money" amount="100"/>
-      <res id="res.wood" amount="100"/>
-    </cost>
-  </addon>
 </addons>

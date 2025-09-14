@@ -59,7 +59,7 @@
       <res id="res.water" amount="1"/>
     </cost>
     <time>20s</time>
-    <require>add.slaughterspot.l1</require>
+    <require>add.barn_slaughterspot.l3</require>
   </recipe>
 
   <recipe id="rcp.slaughterdeer.l1" family="forest" type="recipe" lvl="1" stage="1" mode="active">
@@ -72,7 +72,7 @@
       <res id="ani.deer" amount="1"/>
     </cost>
     <time>15m</time>
-    <require>add.slaughterspot.l1</require>
+    <require>add.barn_slaughterspot.l3</require>
   </recipe>
 
   <recipe id="rcp.slaughterpig.l1" family="farm" type="recipe" lvl="1" stage="1" mode="active">
@@ -84,7 +84,7 @@
       <res id="ani.pig" amount="1"/>
     </cost>
     <time>15m</time>
-    <require>add.slaughterspot.l1</require>
+    <require>add.barn_slaughterspot.l2</require>
   </recipe>
 
   <recipe id="rcp.slaughtergoat.l1" family="farm" type="recipe" lvl="1" stage="1" mode="active">
@@ -97,7 +97,7 @@
       <res id="ani.goat" amount="1"/>
     </cost>
     <time>15m</time>
-    <require>add.slaughterspot.l1</require>
+    <require>add.barn_slaughterspot.l2</require>
   </recipe>
 
   <recipe id="rcp.slaughtersheep.l1" family="farm" type="recipe" lvl="1" stage="1" mode="active">
@@ -110,7 +110,7 @@
       <res id="ani.sheep" amount="1"/>
     </cost>
     <time>15s</time>
-    <require>add.slaughterspot.l1</require>
+    <require>add.barn_slaughterspot.l2</require>
   </recipe>
 
   <recipe id="rcp.slaughterchicken.l1" family="farm" type="recipe" lvl="1" stage="1" mode="active">
@@ -123,7 +123,29 @@
       <res id="ani.chicken" amount="1"/>
     </cost>
     <time>15s</time>
-    <require>add.slaughterspot.l1</require>
+    <require>add.barn_slaughterspot.l1</require>
   </recipe>
+
+    <recipe id="rcp.fishing.l1" family="lake" type="recipe" lvl="1" stage="1" mode="active">
+    <yield period="1h">
+      <res id="res.rawcommonfish" amount="10"/>
+    </yield>
+    <time>15s</time>
+    <require>add.fishingmole_net.l1</require>
+  </recipe>
+
+  <recipe id="rcp.fishtofood.l1" family="lake" type="recipe" lvl="1" stage="1" mode="active">
+    <yield period="1h">
+      <res id="res.food" amount="2"/>
+    </yield>
+    <time>15s</time>
+    <cost>
+      <res id="res.rawcommonfish" amount="5"/>
+    </cost>
+    <require></require>
+  </recipe>
+
+
+
 
 </recipes>

@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <research source="World 2025.xlsx" sheet="Research">
+  
+<!-- Genrel research -->
+  
+  <!-- Basic tools -->
   <research id="rsd.tools.l1" family="basecamp" type="tools" lvl="1" stage="1">
     <cost>
       <res id="res.money" amount="25"/>
@@ -28,7 +32,27 @@
     <time>20s</time>
     <require>rsd.tools.l1</require>
   </research>
-  <research id="rsd.animalhusbandry.l1" family="basecamp" type="animal" lvl="1" stage="1">
+
+    <research id="rsd.irrigation.l1" family="basecamp" type="agri" lvl="1" stage="1">
+    <cost>
+      <res id="res.money" amount="200"/>
+      <res id="res.stone" amount="40"/>
+    </cost>
+    <time>30s</time>
+  </research>
+  
+  <research id="rsd.prospecting.l1" family="basecamp" type="production" lvl="1" stage="1">
+    <cost>
+      <res id="res.money" amount="250"/>
+      <res id="res.wood" amount="10"/>
+      <res id="res.stone" amount="10"/>
+    </cost>
+    <time>1h</time>
+  </research>
+  
+ <!-- Farmin related resarch--> 
+  
+    <research id="rsd.animalhusbandry.l1" family="basecamp" type="animal" lvl="1" stage="1">
     <cost>
       <res id="res.money" amount="100"/>
       <res id="res.water" amount="25"/>
@@ -42,6 +66,9 @@
     </cost>
     <time>25s</time>
   </research>
+  
+  
+  
   <research id="rsd.forestry.l1" family="basecamp" type="agri" lvl="1" stage="1">
     <cost>
       <res id="res.money" amount="100"/>
@@ -49,27 +76,15 @@
     </cost>
     <time>25s</time>
   </research>
-  <research id="rsd.irrigation.l1" family="basecamp" type="agri" lvl="1" stage="1">
-    <cost>
-      <res id="res.money" amount="200"/>
-      <res id="res.stone" amount="40"/>
-    </cost>
-    <time>30s</time>
-  </research>
-  <research id="rsd.prospecting.l1" family="basecamp" type="production" lvl="1" stage="1">
-    <cost>
-      <res id="res.money" amount="250"/>
-      <res id="res.wood" amount="10"/>
-      <res id="res.stone" amount="10"/>
-    </cost>
-    <time>1h</time>
-  </research>
+  
+
   <research id="rsd.storage.l1" family="basecamp" type="storage" lvl="1" stage="1">
     <cost>
       <res id="res.money" amount="100"/>
     </cost>
     <time>10m</time>
   </research>
+  
   <research id="rsd.construction.l1" family="basecamp" type="ability" lvl="1" stage="1">
     <cost>
       <res id="res.money" amount="125"/>

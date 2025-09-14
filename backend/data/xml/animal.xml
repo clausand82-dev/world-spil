@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <animals source="World 2025.xlsx" sheet="Addon">
-  
+
+ <!-- BASIS GÅRD DYR--> 
   <animal id="ani.cow"  family="farm" stage="1">
   <stats>animal_cap=-10</stats>
     <cost>
@@ -8,25 +9,14 @@
       <res id="res.food" amount="6"/>
     </cost>
     <yield period="1h">
-        <res id="res.fertilizer" amount="2"/>
-        <res id="res.cowmilk" amount="2"/>
+        <res id="res.fertilizer" amount="1"/>
+        <res id="res.cowmilk" amount="1"/>
     </yield>
     <emoji>🐄</emoji>
   </animal>
 
-    <animal id="ani.deer" family="forest" stage="1">
-    <stats>animal_cap=-10</stats>
-    <cost>
-      <res id="res.money" amount="10"/>
-      <res id="res.food" amount="2"/>
-    </cost>
-    <yield period="1h">
-    </yield>
-    <emoji>🦌</emoji>
-  </animal>
-
-      <animal id="ani.pig" family="farm" stage="1">
-      <stats>animal_cap=-4</stats>
+  <animal id="ani.pig" family="farm" stage="1">
+    <stats>animal_cap=-4</stats>
     <cost>
       <res id="res.money" amount="10"/>
       <res id="res.food" amount="2"/>
@@ -37,7 +27,7 @@
     <emoji>🐖</emoji>
   </animal>
 
-    <animal id="ani.goat" family="farm" stage="1">
+  <animal id="ani.goat" family="farm" stage="1">
     <stats>animal_cap=-5</stats>
     <cost>
       <res id="res.money" amount="10"/>
@@ -50,7 +40,7 @@
     <emoji>🐐</emoji>
   </animal>
 
-   <animal id="ani.sheep" family="farm" stage="1">
+  <animal id="ani.sheep" family="farm" stage="1">
    <stats>animal_cap=-5</stats>
     <cost>
       <res id="res.money" amount="10"/>
@@ -61,23 +51,36 @@
         <res id="res.fertilizer" amount="1"/>
     </yield>
     <emoji>🐏</emoji>
-  </animal>
-
-   <animal id="ani.chicken" family="farm" stage="1">
+  </animal> 
+    
+  <animal id="ani.chicken" family="farm" stage="1">
    <stats>animal_cap=-1</stats>
     <cost>
       <res id="res.money" amount="10"/>
       <res id="res.food" amount="2"/>
     </cost>
     <yield period="1h">
-        <res id="res.egg" amount="2"/>
+        <res id="res.egg" amount="1"/>
         <res id="res.feather" amount="1"/>
         <res id="res.fertilizer" amount="1"/>
     </yield>
     <emoji>🐔</emoji>
   </animal>
 
-   <animal id="ani.duck" family="lake" stage="1">
+<!-- BASIS SKOV DYR -->  
+    
+  <animal id="ani.deer" family="forest" stage="1">
+    <stats>animal_cap=-10</stats>
+    <cost>
+      <res id="res.money" amount="10"/>
+      <res id="res.food" amount="2"/>
+    </cost>
+    <yield period="1h">
+    </yield>
+    <emoji>🦌</emoji>
+  </animal>
+
+  <animal id="ani.duck" family="lake" stage="1">
    <stats>animal_cap=-1</stats>
     <cost>
       <res id="res.money" amount="10"/>
@@ -89,6 +92,14 @@
     </yield>
     <emoji>🦆</emoji>
   </animal>
+
+<!--
+TO DO DYR SENERE
+
+RÆV: pels
+HVAL: kød 
+
+-->
 
 
 

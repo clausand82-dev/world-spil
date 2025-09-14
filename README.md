@@ -24,12 +24,14 @@ Change/update History
 - animal is now part of inventory tap and added to side bar
 - small fixes and tweaks
 - can't buy addons and start jobs and research in buildings you don't own
-- optimized some javascript code
+- optimized some javascript code all around
 - fold-out is back on dashboard for passiv yield reosurces
+- splitting up files for easy code fixing
 
 TO-DO IN SAME BRANCH
 - buff system
 - passive yield stops when cap is filled
+- added a extra addon system (addon to addons) - Think equment
 
 3.4:
 - added build time for buildings (preparations for addons, research and production/recipes)<br>
