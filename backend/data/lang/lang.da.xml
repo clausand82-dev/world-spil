@@ -56,10 +56,10 @@
   <entry key="bld.tent.l3.desc">Giver plads til 25 indbygger pr. telt</entry>
   <entry key="bld.tent.l4.name">Store telte</entry>
   <entry key="bld.tent.l4.desc">Giver plads til 50 indbygger pr. telt</entry>
-  <entry key="bld.barn.l1.name">Stald</entry>
-  <entry key="bld.barn.l1.desc">Stald til dyr. Højere niveau giver plads til flere dyr.</entry>
-  <entry key="bld.barn.l2.name">Større stald</entry>
-  <entry key="bld.barn.l2.desc">Stald til dyr. Højere niveau giver plads til flere dyr.</entry>
+  <entry key="bld.farm.l1.name">Stald</entry>
+  <entry key="bld.farm.l1.desc">Stald til dyr. Højere niveau giver plads til flere dyr.</entry>
+  <entry key="bld.farm.l2.name">Større stald</entry>
+  <entry key="bld.farm.l2.desc">Stald til dyr. Højere niveau giver plads til flere dyr.</entry>
   <entry key="bld.field.l1.name">Lille kornmark</entry>
   <entry key="bld.field.l1.desc">Mark til at dyrke hvede. Højere niveau giver større udbytte.</entry>
   <entry key="bld.field.l2.name">Stor kornmark</entry>

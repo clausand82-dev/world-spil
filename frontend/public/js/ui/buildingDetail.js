@@ -7,11 +7,42 @@
              Addon-progressbar står ved knappen i højre side.
 ========================================================= */
 
+// Shared progress bar HTML helper (module-level)
+function progressBar(forId, visible, width = '160px', height = 12) {
+  return `
+    <div class="build-progress" data-pb-for="${forId}" style="display:${visible ? 'block' : 'none'}; margin-top:8px; width:${width};">
+      <div class="pb-track" style="position:relative; height:${height}px; background:var(--border,#ddd); border-radius:6px; overflow:hidden;">
+        <div class="pb-fill" style="height:100%; width:0%; background:var(--primary,#4aa);"></div>
+      </div>
+      <div class="pb-label" style="font-size:12px; margin-top:4px; opacity:0.8;">0%</div>
+    </div>`;
+}
+
+// Tiny utils to reduce repetition
+function levelOf(key) {
+  const m = String(key || '').match(/\.l(\d+)$/);
+  return m ? +m[1] : 1;
+}
+function familyOf(idOrKey) {
+  const s = String(idOrKey || '').replace(/^(?:bld|add|rsd|rcp)\./, '');
+  return s.replace(/\.l\d+$/, '');
+}
+function cancelWithProgress(id, width = '160px', height = 12, label = 'Cancel') {
+  return `<button class="btn" data-cancel-build="${id}">${label}</button>` +
+         progressBar(id, true, width, height);
+}
+function progressPlaceholder(id, width = '160px', height = 12) {
+  return progressBar(id, false, width, height);
+}
+
 window.renderBuildingDetail = (id) => {
+  const D = window.data?.defs || {};
+  const S = window.data?.state || {};
+  const L = window.data?.lang || {};
   // Normalisér id (vi vil bruge fuldt id til billede: "bld.<family>.lN.big.png")
   const rawId = String(id ?? '');
   id = rawId.replace(/^bld\./, '');
-  const d = window.data?.defs?.bld?.[id];
+  const d = D.bld?.[id];
   
   // Husk valgt tab pr bygning
 window.__ActiveBuildingTab = window.__ActiveBuildingTab || {};
@@ -31,27 +62,20 @@ const activeTab = window.__ActiveBuildingTab[id];
     </div>`;
 
   // Production tekst
-  const resName = (rid) => {
-    const k = String(rid || '').replace(/^res\./,'');
-    return window.data?.defs?.res?.[k]?.name || k;
-  };
-    const resEmoji = (rid) => {
-    const k = String(rid || '').replace(/^res\./,'');
-    return window.data?.defs?.res?.[k]?.emoji || k;
-  };
+  const resName = (rid) => { const k = String(rid||'').replace(/^res\./,''); return D.res?.[k]?.name || k; };
+  const resEmoji = (rid) => { const k = String(rid||'').replace(/^res\./,''); return D.res?.[k]?.emoji || k; };
   //const prod = (d.yield || []).map(y => `+${y.amount} ${resEmoji(y.id)}`).join(" • ") + " / " + d.yield_period_str || "-" ;
   const prod = (d.yield || []).length
   ? (d.yield.map(y => `+${y.amount}${resEmoji(y.id)}`).join(" • ")
      + (d.yield_period_str ? ` / ${d.yield_period_str}` : ""))
   : "-";
   
-  // Parse family/level
-  const mm = id.match(/^(.+)\.l(\d+)$/);
-  const family = mm ? mm[1] : id.replace(/\.l\d+$/,'');
-  const series = "bld."+family;
+  // Parse family/level using utils
+  const family = familyOf(id);
+  const series = "bld." + family;
 
   const ownedMax = window.helpers.computeOwnedMaxBySeries('bld')[series] || 0;
-  const curStage = Number(window.data?.state?.user?.currentstage ?? window.data?.state?.user?.stage ?? 0);
+  const curStage = Number(S?.user?.currentstage ?? S?.user?.stage ?? 0);
 
   let targetKey = null, targetDef = null, targetLevel = 0;
   if (ownedMax <= 0) {
@@ -72,7 +96,7 @@ const activeTab = window.__ActiveBuildingTab[id];
 
   // Durability/progress
   const maxDur = Number(d?.durability ?? 0);
-  const curDur = (ownedMax > 0) ? (Number(window.data?.state?.bld?.[currentFullId]?.durability) || 0) : 0;
+  const curDur = (ownedMax > 0) ? (Number(S?.bld?.[currentFullId]?.durability) || 0) : 0;
   const durPct = maxDur > 0 ? Math.max(0, Math.min(100, Math.round((curDur / maxDur) * 100))) : 0;
 
   const jobActiveOnTarget = !!(targetFullId && window.ActiveBuilds && window.ActiveBuilds[targetFullId]);
@@ -84,6 +108,8 @@ const activeTab = window.__ActiveBuildingTab[id];
   // Stats
   const fpTxt = ((d?.stats?.footprint||0)>=0?"+":"")+(d?.stats?.footprint||0)+" Byggepoint";
   const acTxt = ((d?.stats?.animal_cap||0)>=0?"+":"")+(d?.stats?.animal_cap||0)+" Staldplads";
+
+  // progressBar helper is now defined at module-level
 
   // Pris + krav (dele) fra renderReqLine – uden labels (vi har egne sektioner)
   let parts = { priceHTML: "", reqHTML: "", bothInline: "" };
@@ -316,13 +342,7 @@ const activeTab = window.__ActiveBuildingTab[id];
       if (!playerOwnsBaseBuilding) {
           right = `<button class="btn" disabled>Kræver Bygning</button>`;
       } else if (activeAddon) {
-        right = `<button class="btn" data-cancel-build="${addId}">Cancel</button>
-                 <div class="build-progress" data-pb-for="${addId}" style="display:block; margin-top:8px; width:160px;">
-                   <div class="pb-track" style="position:relative; height:12px; background:var(--border,#ddd); border-radius:6px; overflow:hidden;">
-                     <div class="pb-fill" style="height:100%; width:0%; background:var(--primary,#4aa);"></div>
-                   </div>
-                   <div class="pb-label" style="font-size:12px; margin-top:4px; opacity:0.8;">0%</div>
-                 </div>`;
+        right = cancelWithProgress(addId, '160px', 12);
       } else if (owned) {
         if (own > 0 && nextAll && !nextStageOk) {
           const tip = nextStageReq ? ` title="Kræver Stage ${nextStageReq}"` : "";
@@ -340,12 +360,7 @@ const activeTab = window.__ActiveBuildingTab[id];
           ? `<button class="btn" disabled>Need more</button>`
           : `<button class="btn primary" data-fakebuild-id="${addId}" data-buildmode="timer" data-buildscope="addon">${label}</button>`;
 
-        right += `<div class="build-progress" data-pb-for="${addId}" style="display:none; margin-top:8px; width:160px;">
-                    <div class="pb-track" style="position:relative; height:12px; background:var(--border,#ddd); border-radius:6px; overflow:hidden;">
-                      <div class="pb-fill" style="height:100%; width:0%; background:var(--primary,#4aa);"></div>
-                    </div>
-                    <div class="pb-label" style="font-size:12px; margin-top:4px; opacity:0.8;">0%</div>
-                  </div>`;
+        right += progressPlaceholder(addId, '160px', 12);
       }
 
       rows.push(
@@ -370,14 +385,14 @@ const activeTab = window.__ActiveBuildingTab[id];
   }
 
   if (name === "research") {
-    const familyOnly = String(id).replace(/\.l\d+$/,'');
+    const familyOnly = familyOf(id);
     tc.innerHTML = renderResearchListForBuilding(familyOnly, id, playerOwnsBaseBuilding);
     window.BuildingsProgress?.rehydrate?.(tc);
     return;
   }
 
   if (name === "recipes") {
-    const familyOnly = String(id).replace(/\.l\d+$/,'');
+    const familyOnly = familyOf(id);
     tc.innerHTML = renderRecipesListForBuilding(familyOnly, playerOwnsBaseBuilding);
     window.BuildingsProgress?.rehydrate?.(tc);
     return;
@@ -518,7 +533,7 @@ if (!window.__RecipeStartWired__) {
 
 function researchRow(rsdKey, def, backId, curStage, ownedLvlForSeries, playerOwnsBaseBuilding) {
   const fullId = "rsd." + rsdKey;
-  const myLvl  = Number(rsdKey.match(/\.l(\d+)$/)?.[1] || 1);
+  const myLvl  = levelOf(rsdKey);
 
   const priceObj = window.helpers.normalizePrice(def.cost);
   const parts = (typeof renderReqLine === "function")
@@ -544,13 +559,7 @@ function researchRow(rsdKey, def, backId, curStage, ownedLvlForSeries, playerOwn
   if (!playerOwnsBaseBuilding) {
       right = `<button class="btn" disabled>Kræver Bygning</button>`;
   } else if (active) {
-    right = `<button class="btn" data-cancel-build="${fullId}">Cancel</button>
-             <div class="build-progress" data-pb-for="${fullId}" style="display:block; margin-top:8px; width:160px;">
-               <div class="pb-track" style="position:relative; height:12px; background:var(--border,#ddd); border-radius:6px; overflow:hidden;">
-                 <div class="pb-fill" style="height:100%; width:0%; background:var(--primary,#4aa);"></div>
-               </div>
-               <div class="pb-label" style="font-size:12px; margin-top:4px; opacity:0.8;">0%</div>
-             </div>`;
+    right = cancelWithProgress(fullId, '160px', 12);
   } else if (ownedThis) {
     right = `<span class="badge owned">Owned</span>`;
   } else if (showStageLock) {
@@ -565,12 +574,7 @@ function researchRow(rsdKey, def, backId, curStage, ownedLvlForSeries, playerOwn
       : `<button class="btn primary" data-fakebuild-id="${fullId}" data-buildmode="timer" data-buildscope="research">${label}</button>`;
 
     // Progress-bar placeholder (vises når jobbet starter)
-    right += `<div class="build-progress" data-pb-for="${fullId}" style="display:none; margin-top:8px; width:160px;">
-                <div class="pb-track" style="position:relative; height:12px; background:var(--border,#ddd); border-radius:6px; overflow:hidden;">
-                  <div class="pb-fill" style="height:100%; width:0%; background:var(--primary,#4aa);"></div>
-                </div>
-                <div class="pb-label" style="font-size:12px; margin-top:4px; opacity:0.8;">0%</div>
-              </div>`;
+    right += progressPlaceholder(fullId, '160px', 12);
   }
 
   return `
@@ -596,11 +600,12 @@ function renderResearchListForBuilding(family, backId, playerOwnsBaseBuilding) {
     if (!fam) continue;
     const belongs = (fam === family) || fam.split(",").includes(family);
     if (!belongs) continue;
-    const m = key.match(/^(.+)\.l(\d+)$/);
-    if (!m) continue;
-    const serieKey = "rsd." + m[1];
+    const famKey = familyOf(key);
+    const lvl = levelOf(key);
+    if (!famKey || !lvl) continue;
+    const serieKey = "rsd." + famKey;
     if (!bySeries.has(serieKey)) bySeries.set(serieKey, []);
-    bySeries.get(serieKey).push({ key, def, lvl: Number(m[2]) });
+    bySeries.get(serieKey).push({ key, def, lvl });
   }
   for (const arr of bySeries.values()) arr.sort((a,b)=>a.lvl-b.lvl);
   const rows = [];
@@ -622,7 +627,7 @@ function renderResearchListForBuilding(family, backId, playerOwnsBaseBuilding) {
 
 function recipeRow(rcpKey, def, curStage, familyForBuilding, playerOwnsBaseBuilding) {
   const fullId = "rcp." + rcpKey;
-  const myLvl  = Number(rcpKey.match(/\.l(\d+)$/)?.[1] || 1);
+  const myLvl  = levelOf(rcpKey);
   const mode   = String(def?.mode || "active"); // active | passive
   const fam    = String(def?.family || "");
   const stageReq = Number(def?.stage ?? def?.stage_required ?? 0) || 0;
@@ -651,25 +656,14 @@ function recipeRow(rcpKey, def, curStage, familyForBuilding, playerOwnsBaseBuild
   if (!playerOwnsBaseBuilding) {
       right = `<button class="btn" disabled>Kræver Bygning</button>`;
   } else if (active) {
-    right = `<button class="btn" data-cancel-build="${fullId}">${mode === "passive" ? "Pause" : "Cancel"}</button>
-             <div class="build-progress" data-pb-for="${fullId}" style="display:block; margin-top:8px; width:160px;">
-               <div class="pb-track" style="position:relative; height:8px; background:var(--border,#ddd); border-radius:6px; overflow:hidden;">
-                 <div class="pb-fill" style="height:100%; width:0%; background:var(--primary,#4aa);"></div>
-               </div>
-               <div class="pb-label" style="font-size:12px; margin-top:4px; opacity:0.8;">0%</div>
-             </div>`;
+    right = cancelWithProgress(fullId, '160px', 8, (mode === 'passive' ? 'Pause' : 'Cancel'));
   } else {
     const ok  = !!afford.ok && !!parts.allOk && stageOk;
     const label = (mode === "passive") ? "Start" : "Build 1x";
     right = !ok
       ? `<button class="btn" disabled>Need more</button>`
       : `<button class="btn primary" data-fakebuild-id="${fullId}" data-buildmode="timer" data-buildscope="recipe">${label}</button>`;
-    right += `<div class="build-progress" data-pb-for="${fullId}" style="display:none; margin-top:8px; width:160px;">
-                <div class="pb-track" style="position:relative; height:8px; background:var(--border,#ddd); border-radius:6px; overflow:hidden;">
-                  <div class="pb-fill" style="height:100%; width:0%; background:var(--primary,#4aa);"></div>
-                </div>
-                <div class="pb-label" style="font-size:12px; margin-top:4px; opacity:0.8;">0%</div>
-              </div>`;
+    right += progressPlaceholder(fullId, '160px', 8);
   }
 
   // =====================================================================

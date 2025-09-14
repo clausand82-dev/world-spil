@@ -116,7 +116,7 @@
     <time>12h</time>
   </building>
 
-  <building id="bld.barn.l1" family="barn" type="animalFarm" lvl="1" stage="1">
+  <building id="bld.farm.l1" family="barn" type="animalFarm" lvl="1" stage="1">
     <stats>footprint=-2;animal_cap=50</stats>
     <cost>
       <res id="res.money" amount="50" />
@@ -129,7 +129,7 @@
     <time>10s</time>
   </building>
 
-  <building id="bld.barn.l2" family="barn" type="animalFarm" lvl="2" stage="1">
+  <building id="bld.farm.l2" family="barn" type="animalFarm" lvl="2" stage="1">
     <stats>footprint=-3;animal_cap=175</stats>
     <cost>
       <res id="res.money" amount="275" />

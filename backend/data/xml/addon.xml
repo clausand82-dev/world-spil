@@ -1,21 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <addons source="World 2025.xlsx" sheet="Addon">
-  <addon id="add.choppingblock.l1" family="basecamp" type="addons" lvl="1" stage="1">
+  
+  <!-- addons for basecamp -->
+  
+  <addon id="add.choppingblock.l1" family="basecamp" group="main" type="addons" lvl="1" stage="1">
     <cost>
       <res id="res.money" amount="100"/>
       <res id="res.wood" amount="5"/>
     </cost>
-    <recipes>
-      <recipe id="rcp.firewood.l1"/>
-    </recipes>
+    <yield period="1h">
+      <res id="res.water" amount="1"/>
+      <res id="res.salt" amount="1"/>
+    </yield>
     <require>rsd.flintstone.l1</require>
   </addon>
+
   <addon id="add.slaughterspot.l1" family="basecamp" type="addons" lvl="1" stage="1">
     <cost>
       <res id="res.money" amount="100"/>
     </cost>
     <require>rsd.flintstone.l1, rsd.tools.l1, bld.tent.l1</require>
   </addon>
+
   <addon id="add.bigfireplace.l1" family="basecamp" type="addons" lvl="1" stage="1">
     <stats>footprint=-1;provision_cap=+5</stats>
     <effects>
@@ -26,6 +32,7 @@
       <res id="res.money" amount="150"/>
     </cost>
   </addon>
+
   <addon id="add.saltbowl.l1" family="basecamp" type="addons" lvl="1" stage="1">
     <cost>
       <res id="res.money" amount="25"/>
@@ -34,6 +41,7 @@
       <produce res="res.salt" amount="0.2" time="6h"/>
     </yield>
   </addon>
+
   <addon id="add.well.l1" family="basecamp" type="addons" lvl="1" stage="1">
     <cost>
       <res id="res.money" amount="20"/>
@@ -45,18 +53,17 @@
       <produce res="res.salt" amount="0.2" time="6h"/>
     </yield>
   </addon>
+
   <addon id="add.tailorspot.l1" family="basecamp" type="addons" lvl="1" stage="1">
     <cost>
       <res id="res.money" amount="50"/>
       <res id="res.wood" amount="10"/>
     </cost>
-    <recipes>
-      <recipe id="rcp.leather.l1"/>
-    </recipes>
     <yield period="1h">
       <res id="res.rawhide" amount="1"/>
     </yield>
   </addon>
+
   <addon id="add.barrel.l1" family="basecamp" type="addons" lvl="1" stage="1">
     <effects>
       <effect key="storage_cap" op="add" value="100"/>
@@ -66,6 +73,7 @@
       <res id="res.wood" amount="10"/>
     </cost>
   </addon>
+
   <addon id="add.barrel.l2" family="basecamp" type="addons" lvl="2" stage="1">
     <effects>
       <effect key="storage_cap" op="add" value="150"/>
@@ -75,7 +83,10 @@
       <res id="res.wood" amount="25"/>
     </cost>
   </addon>
-  <addon id="add.yard.l1" family="barn" type="addons" lvl="1" stage="1">
+
+<!-- addons for farm -->
+
+  <addon id="add.barn.l1" family="farm" type="addons" lvl="1" stage="1">
     <effects>
       <effect key="barn_cap" op="add" value="100"/>
       <effect key="footprint" op="add" value="-1"/>
@@ -85,10 +96,11 @@
       <res id="res.wood" amount="25"/>
     </cost>
     <upgradesTo>
-      <target id="add.yard.l2"/>
+      <target id="add.barn.l2"/>
     </upgradesTo>
   </addon>
-  <addon id="add.yard.l2" family="barn" type="addons" lvl="2" stage="1">
+
+  <addon id="add.barn.l2" family="farm" type="addons" lvl="2" stage="1">
     <effects>
       <effect key="barn_cap" op="add" value="150"/>
       <effect key="footprint" op="add" value="-2"/>
@@ -98,10 +110,12 @@
       <res id="res.wood" amount="35"/>
     </cost>
     <upgradesTo>
-      <target id="add.yard.l3"/>
+      <target id="add.barn.l3"/>
     </upgradesTo>
+    <require>add.barn.l1</require>
   </addon>
-  <addon id="add.yard.l3" family="barn" type="addons" lvl="3" stage="1">
+
+  <addon id="add.barn.l3" family="farm" type="addons" lvl="3" stage="2">
     <effects>
       <effect key="barn_cap" op="add" value="100"/>
       <effect key="footprint" op="add" value="-3"/>
@@ -110,92 +124,96 @@
       <res id="res.money" amount="140"/>
       <res id="res.wood" amount="45"/>
     </cost>
+    <require>add.barn.l2</require>
   </addon>
-  <addon id="add.fence.l1" family="barn" type="addons" lvl="1" stage="1">
-    <effects>
-      <effect key="barn_cap" op="add" value="5"/>
-    </effects>
+
+<!-- sub addons for barn -->
+
+  <addon id="add.barn_waterthough.l1" family="farm" group="barn" type="addons" lvl="1" stage="1">
+    <stats>animal_cap=10</stats>
+    <cost>
+      <res id="res.money" amount="140"/>
+      <res id="res.wood" amount="45"/>
+    </cost>
+        <upgradesTo>
+      <target id="add.barn_waterthoug.l1"/>
+    </upgradesTo>
+  </addon>
+
+      <addon id="add.barn_waterthough.l2" family="farm" group="barn" type="addons" lvl="2" stage="1">
+        <stats>animal_cap=25</stats>
+    <cost>
+      <res id="res.money" amount="140"/>
+      <res id="res.wood" amount="45"/>
+    </cost>
+        <require>add.barn_waterthough.l1</require>
+  </addon>
+
+    <addon id="add.barn_yard.l1" family="farm" group="barn" type="addons" lvl="1" stage="1">
+    <stats>animal_cap=75</stats>
+    <cost>
+      <res id="res.money" amount="140"/>
+      <res id="res.wood" amount="45"/>
+    </cost>
+  </addon>
+
+  <addon id="add.bar_fence.l1" family="farm" group="barn" type="addons" lvl="1" stage="1">
     <cost>
       <res id="res.money" amount="5"/>
       <res id="res.wood" amount="25"/>
     </cost>
     <require>add.yard.l2</require>
-    <upgradesTo>
-      <target id="add.fence.l2"/>
-    </upgradesTo>
   </addon>
-  <addon id="add.fence.l2" family="barn" type="addons" lvl="2" stage="1">
-    <effects>
-      <effect key="barn_cap" op="add" value="10"/>
-    </effects>
-    <cost>
-      <res id="res.money" amount="10"/>
-      <res id="res.wood" amount="25"/>
-    </cost>
-    <require>add.yard.l3</require>
-  </addon>
-  <addon id="add.feedingtrough.l1" family="barn" type="addons" lvl="1" stage="1">
-    <effects>
-      <effect key="barn_cap" op="add" value="5"/>
-    </effects>
+  
+  <addon id="add.barn_feedingtrough.l1" family="farm" group="barn" type="addons" lvl="1" stage="1">
     <cost>
       <res id="res.money" amount="25"/>
       <res id="res.wood" amount="16"/>
     </cost>
-    <require>add.yard.l3</require>
+    <require></require>
   </addon>
-  <addon id="add.watertrough.l1" family="barn" type="addons" lvl="1" stage="1">
-    <effects>
-      <effect key="animal.water" op="mult" value="0.9"/>
-    </effects>
-    <cost>
-      <res id="res.money" amount="35"/>
-      <res id="res.wood" amount="16"/>
-    </cost>
-    <require>add.yard.l3</require>
-  </addon>
-  <addon id="add.manurepit.l1" family="barn" type="addons" lvl="1" stage="1">
+
+
+  <addon id="add.barn_manurepit.l1" family="farm" group="barn" type="addons" lvl="1" stage="1">
     <cost>
       <res id="res.money" amount="145"/>
       <res id="res.wood" amount="60"/>
       <res id="res.stone" amount="36"/>
     </cost>
-    <yield>
-      <produce res="res.fertilizer" amount=".02" time="1d" scale="pr_animal"/>
+    <yield period="1h">
+      <res id="res.fertilizer" amount="1"/>
     </yield>
-    <require>add.yard.l2</require>
+    <require></require>
   </addon>
-  <addon id="add.bedding.l1" family="barn" type="addons" lvl="1" stage="1">
-    <effects>
-      <effect key="barn_cap" op="add" value="10"/>
-    </effects>
+
+  <addon id="add.barn_bedding.l1" family="farm" ground="barn" type="addons" lvl="1" stage="1">
     <cost>
       <res id="res.straw" amount="50"/>
       <res id="res.wood" amount="125"/>
       <res id="res.money" amount="145"/>
     </cost>
-    <runCost>
-      <res id="res.straw" amount="0.2|time=1d"/>
-    </runCost>
-    <require>add.yard.l2</require>
   </addon>
-  <addon id="add.milkingshed.l1" family="barn" type="addons" lvl="1" stage="1">
+
+  <addon id="add.barn_milkingshed.l1" family="farm" group="barn" type="addons" lvl="1" stage="1">
+    <cost>
+      <res id="res.money" amount="150"/>
+    </cost>
+    <yield periode="1h">
+      <res id="res.cowmilk" amount="1"/>
+      <res id="res.goatmilk" amount="1"/>
+    </yield>
+  </addon>
+
+  <addon id="add.barn_shearingshed.l1" family="farm" group="barn" type="addons" lvl="1" stage="1">
     <cost>
       <res id="res.money" amount="150"/>
     </cost>
     <yield>
-      <produce res="res.cowmilk" amount="0.1" time="1d"/>
-      <produce res="res.goatmilk" amount=".01" time="1d"/>
+      <res id="res.wool" amount="3"/>
     </yield>
   </addon>
-  <addon id="add.shearingshed.l1" family="barn" type="addons" lvl="1" stage="1">
-    <cost>
-      <res id="res.money" amount="150"/>
-    </cost>
-    <yield>
-      <produce res="res.wool" amount="3" time="1d"/>
-    </yield>
-  </addon>
+
+<!-- Storage addons -->
   <addon id="add.stacking.l1" family="storage" type="addons" lvl="1" stage="1">
     <effects>
       <effect key="storage_cap" op="add" value="100"/>
@@ -205,6 +223,7 @@
       <res id="res.wood" amount="100"/>
     </cost>
   </addon>
+
     <addon id="add.slaughterspot.l2" family="basecamp" type="addons" lvl="1" stage="1">
     <effects>
       <effect key="storage_cap" op="add" value="100"/>

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <animals source="World 2025.xlsx" sheet="Addon">
   
-  <animal id="ani.cow"  family="barn" stage="1">
+  <animal id="ani.cow"  family="farm" stage="1">
   <stats>animal_cap=-10</stats>
     <cost>
       <res id="res.money" amount="10"/>
@@ -25,7 +25,7 @@
     <emoji>🦌</emoji>
   </animal>
 
-      <animal id="ani.pig" family="barn" stage="1">
+      <animal id="ani.pig" family="farm" stage="1">
       <stats>animal_cap=-4</stats>
     <cost>
       <res id="res.money" amount="10"/>
@@ -37,7 +37,7 @@
     <emoji>🐖</emoji>
   </animal>
 
-    <animal id="ani.goat" family="barn" stage="1">
+    <animal id="ani.goat" family="farm" stage="1">
     <stats>animal_cap=-5</stats>
     <cost>
       <res id="res.money" amount="10"/>
@@ -50,7 +50,7 @@
     <emoji>🐐</emoji>
   </animal>
 
-   <animal id="ani.sheep" family="barn" stage="1">
+   <animal id="ani.sheep" family="farm" stage="1">
    <stats>animal_cap=-5</stats>
     <cost>
       <res id="res.money" amount="10"/>
@@ -63,7 +63,7 @@
     <emoji>🐏</emoji>
   </animal>
 
-   <animal id="ani.chicken" family="barn" stage="1">
+   <animal id="ani.chicken" family="farm" stage="1">
    <stats>animal_cap=-1</stats>
     <cost>
       <res id="res.money" amount="10"/>

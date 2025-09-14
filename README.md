@@ -25,6 +25,7 @@ Change/update History
 - small fixes and tweaks
 - can't buy addons and start jobs and research in buildings you don't own
 - optimized some javascript code
+- fold-out is back on dashboard for passiv yield reosurces
 
 TO-DO IN SAME BRANCH
 - buff system

@@ -48,7 +48,7 @@
     <require>add.tailorspot.l1</require>
   </recipe>
 
-  <recipe id="rcp.slaughtercow.l1" family="barn" type="recipe" lvl="1" stage="1" mode="active">
+  <recipe id="rcp.slaughtercow.l1" family="farm" type="recipe" lvl="1" stage="1" mode="active">
     <yield>
       <res id="res.rawhide" amount="2"/>
       <res id="res.rawmeat" amount="6"/>
@@ -75,7 +75,7 @@
     <require>add.slaughterspot.l1</require>
   </recipe>
 
-  <recipe id="rcp.slaughterpig.l1" family="barn" type="recipe" lvl="1" stage="1" mode="active">
+  <recipe id="rcp.slaughterpig.l1" family="farm" type="recipe" lvl="1" stage="1" mode="active">
     <yield>
       <res id="res.rawmeat" amount="4"/>
       <res id="res.bone" amount="8"/>
@@ -87,7 +87,7 @@
     <require>add.slaughterspot.l1</require>
   </recipe>
 
-  <recipe id="rcp.slaughtergoat.l1" family="barn" type="recipe" lvl="1" stage="1" mode="active">
+  <recipe id="rcp.slaughtergoat.l1" family="farm" type="recipe" lvl="1" stage="1" mode="active">
     <yield>
       <res id="res.rawmeat" amount="3"/>
       <res id="res.bone" amount="5"/>
@@ -100,7 +100,7 @@
     <require>add.slaughterspot.l1</require>
   </recipe>
 
-  <recipe id="rcp.slaughtersheep.l1" family="barn" type="recipe" lvl="1" stage="1" mode="active">
+  <recipe id="rcp.slaughtersheep.l1" family="farm" type="recipe" lvl="1" stage="1" mode="active">
     <yield>
       <res id="res.rawmeat" amount="3"/>
       <res id="res.bone" amount="5"/>
@@ -113,7 +113,7 @@
     <require>add.slaughterspot.l1</require>
   </recipe>
 
-  <recipe id="rcp.slaughterchicken.l1" family="barn" type="recipe" lvl="1" stage="1" mode="active">
+  <recipe id="rcp.slaughterchicken.l1" family="farm" type="recipe" lvl="1" stage="1" mode="active">
     <yield>
       <res id="res.rawmeat" amount="1"/>
       <res id="res.bone" amount="1"/>

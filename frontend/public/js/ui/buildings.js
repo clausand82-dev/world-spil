@@ -243,7 +243,7 @@ window.renderBuildingsPage = () => {
     if (!bldId) return;
 
     // Hårde guards
-    if (isOwnedBuilding?.(bldId)) return;
+    if (window.helpers.isOwnedBuilding?.(bldId)) return;
     if (window.ActiveBuilds?.[bldId]) return;
     if (pendingStarts.has(bldId)) return;
 

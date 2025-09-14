@@ -107,7 +107,8 @@ function calculatePassiveYields() {
             const key = itemId.replace(new RegExp(`^${type}\\.`), '');
             const def = defsSource?.[key];
             if (def?.yield && def.yield_period_s > 0) {
-                const quantity = Number(state.quantity || 1);
+                // Use nullish coalescing so 0 stays 0 (skip later)
+                const quantity = Number(state?.quantity ?? 1);
                 if (quantity <= 0) continue;
                 for (const y of def.yield) {
                     const resId = y.id || y.res_id;
