@@ -193,6 +193,67 @@ window.renderSidebar = () => {
       <div class="section-body"><div class="sub">Version: ${window.data.config.game_data.version} • prototype</div></div>
     </section>
   `;
+
+  // Insert Owned Animals box between resources and version
+  try {
+    const aniState = window?.data?.state?.ani || {};
+    const aniDefs  = window?.data?.defs?.ani || {};
+    const aniCap   = window?.data?.state?.cap?.animal_cap || { used:0, total:0 };
+    
+    const ownedAnimals = Object.entries(aniState)
+        .filter(([id, a]) => (a?.quantity || 0) > 0)
+        .map(([id, a]) => {
+            const key = String(id).replace(/^ani\./, '');
+            const def = aniDefs[key] || { name: key, emoji: '🐾' };
+            return { name: def.name || key, emoji: def.emoji || '🐾', qty: Number(a.quantity || 0) };
+        });
+
+    // =====================================================================
+    // RETTELSE: Vi bygger altid sektionen, men ændrer indholdet.
+    // =====================================================================
+    const animalsBox = document.createElement('section');
+    animalsBox.className = 'panel section res-panel';
+
+    const animalsBodyHTML = ownedAnimals.length > 0
+        ? ownedAnimals.map(a => `
+            <div class="row">
+                <div class="left"><span>${a.emoji}</span><span>${a.name}</span></div>
+                <div class="right"><strong>${fmt(a.qty)}</strong></div>
+            </div>
+        `).join("")
+        : `<div class="sub" style="padding: 8px 10px;">Ingen</div>`; // Viser "Ingen" hvis listen er tom
+
+    animalsBox.innerHTML = `
+        <div class="section-head">🐾 Animals<span style="margin-left:auto;font-weight:600">${fmt(aniCap.used)}/${fmt(aniCap.total)}</span></div>
+        <div class="section-body">
+            ${animalsBodyHTML}
+        </div>
+    `;
+
+    // Indsæt den nye boks efter den sidste ressource-sektion
+    const allSections = document.querySelectorAll('#sidebar .section.res-panel');
+    const lastResourceSection = allSections[allSections.length - 1];
+    if (lastResourceSection) {
+        // Indsæt efter den sidste res-panel for at holde rækkefølgen
+        lastResourceSection.parentNode.insertBefore(animalsBox, lastResourceSection.nextSibling);
+    } else {
+        // Fallback, hvis der (af en eller anden grund) ikke er nogen ressource-sektioner
+        const sidebar = document.getElementById('sidebar');
+        // Indsæt før version-sektionen, hvis den findes
+        const versionSection = sidebar.querySelector('.section:not(.res-panel)');
+        if (versionSection) {
+            sidebar.insertBefore(animalsBox, versionSection);
+        } else {
+            sidebar.appendChild(animalsBox);
+        }
+    }
+
+    const sidebar = el;
+    // Find the version panel (the one containing 'Version:')
+    const versionPanel = Array.from(sidebar.querySelectorAll('.panel.section')).find(sec => /Version:\s*/i.test(sec.textContent || ''));
+    if (versionPanel) sidebar.insertBefore(animalsBox, versionPanel);
+    else sidebar.appendChild(animalsBox);
+  } catch {}
 };
 
 // --- Router ------------------------------------------------
