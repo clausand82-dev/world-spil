@@ -1,6 +1,6 @@
 /* =========================================================
    ui/inventory.js
-   - Inventory grupperet i Liquid / Solid / Animals (placeholder)
+   - Inventory grupperet i Liquid / Solid / Animals
    - Viser unitspace + mængde + enhed
 ========================================================= */
 
@@ -10,7 +10,7 @@ window.renderInventoryPage = () => {
 
   const defs = window?.data?.defs?.res;
   const inv  = window?.data?.state?.inv;
-  const lang  = window.data.lang;
+  const lang = window?.data?.lang || {};
 
   if (!defs || !inv) {
     main.innerHTML = `
@@ -28,11 +28,6 @@ window.renderInventoryPage = () => {
   const solidIds  = Object.keys(invSolid).filter(id  => defs[id]);
   const liquidIds = Object.keys(invLiquid).filter(id => defs[id]);
 
-  /*Brug hvis 0 værdier skal sorteres fra
-  const solidIds  = Object.keys(invSolid).filter(id  => defs[id] && Number(invSolid[id])  > 0);
-const liquidIds = Object.keys(invLiquid).filter(id => defs[id] && Number(invLiquid[id]) > 0);
-*/
-
   const block = (title, ids, bag) => `
     <section class="panel section">
       <div class="section-head">${title}</div>
@@ -40,7 +35,7 @@ const liquidIds = Object.keys(invLiquid).filter(id => defs[id] && Number(invLiqu
         ${
           ids.map(id => {
             const d   = defs[id];
-            const amt = Number(bag[id]) || 0;            // håndter "0"/null/undefined
+            const amt = Number(bag[id]) || 0;            // håndter 0/null/undefined
             const unitLabel = d.unit ? ` ${d.unit}` : "";
             const unitSpace = Number(d.unitSpace) || 0;
             const space = unitSpace * amt;
@@ -60,11 +55,39 @@ const liquidIds = Object.keys(invLiquid).filter(id => defs[id] && Number(invLiqu
     </section>
   `;
 
+  // Animals block: egen rubrik nederst, samme layout som resourcerne
+  const animalsBlock = () => {
+    const aniState = window?.data?.state?.ani || {};
+    const aniDefs  = window?.data?.defs?.ani || {};
+    const title    = lang["ui.animals.h1"] || "Animals";
+
+    const owned = Object.entries(aniState).filter(([id, a]) => Number(a?.quantity || 0) > 0);
+    const body = owned.length ? owned.map(([id, a]) => {
+      const key = String(id).replace(/^ani\./, '');
+      const def = aniDefs[key] || { name: key, emoji: '' };
+      const qty = Number(a?.quantity || 0);
+      return `
+        <div class="item">
+          <div class="icon">${def.emoji || ''}</div>
+          <div>
+            <div class="title">${def.name || key}</div>
+            <div class="sub">Fylder pr. dyr: ${Math.abs(def.stats.animal_cap)}</div>
+          </div>
+            <div class="right"><strong>${fmt(qty)} stk / Fylder: ${Math.abs(fmt(qty) * def.stats.animal_cap)}</strong></div>
+        </div>`;
+    }).join("") : `<div class="sub">Ingen</div>`;
+
+    return `
+      <section class="panel section">
+        <div class="section-head">${title}</div>
+        <div class="section-body">${body}</div>
+      </section>
+    `;
+  };
+
   main.innerHTML =
-    block("💧 " + lang["ui.liquid.h1"], liquidIds, invLiquid) +
-    block("🧱 " + lang["ui.solid.h1"],  solidIds,  invSolid) +
-    block("🐄 Animals", [], {}); // placeholder indtil du definerer dyr
-
+    block((lang["ui.liquid.h1"] || "Liquid"), liquidIds, invLiquid) +
+    block((lang["ui.solid.h1"]  || "Solid"),  solidIds,  invSolid) +
+    animalsBlock();
 };
-
 

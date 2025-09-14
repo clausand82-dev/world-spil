@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <recipes source="World 2025.xlsx" sheet="Recipe">
 
-  <recipe id="rcp.firewood.l1" family="basecamp" type="recipe" lvl="1" stage="1" mode="active" max_allowed="1">
+  <recipe id="rcp.firewood.l1" family="forest" type="recipe" lvl="1" stage="1" mode="active" max_allowed="1">
     <yield>
       <res id="res.firewood" amount="10"/>
     </yield>

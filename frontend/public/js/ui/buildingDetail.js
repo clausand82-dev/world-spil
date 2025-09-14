@@ -116,6 +116,7 @@ const activeTab = window.__ActiveBuildingTab[id];
   const jobActiveOnCurrent= !!(window.ActiveBuilds && window.ActiveBuilds[currentFullId]);
   const jobActive = jobActiveOnTarget || jobActiveOnCurrent;
   const jobIdForPB = jobActiveOnTarget ? targetFullId : currentFullId;
+  const playerOwnsBaseBuilding = ownedMax > 0;
 
   // Stats
   const fpTxt = ((d?.stats?.footprint||0)>=0?"+":"")+(d?.stats?.footprint||0)+" Byggepoint";
@@ -349,7 +350,9 @@ const activeTab = window.__ActiveBuildingTab[id];
 
       let right = '';
       const activeAddon = !!(window.ActiveBuilds && window.ActiveBuilds[addId]);
-      if (activeAddon) {
+      if (!playerOwnsBaseBuilding) {
+          right = `<button class="btn" disabled>Kræver Bygning</button>`;
+      } else if (activeAddon) {
         right = `<button class="btn" data-cancel-build="${addId}">Cancel</button>
                  <div class="build-progress" data-pb-for="${addId}" style="display:block; margin-top:8px; width:160px;">
                    <div class="pb-track" style="position:relative; height:12px; background:var(--border,#ddd); border-radius:6px; overflow:hidden;">
@@ -405,14 +408,14 @@ const activeTab = window.__ActiveBuildingTab[id];
 
   if (name === "research") {
     const familyOnly = String(id).replace(/\.l\d+$/,'');
-    tc.innerHTML = renderResearchListForBuilding(familyOnly, id);
+    tc.innerHTML = renderResearchListForBuilding(familyOnly, id, playerOwnsBaseBuilding);
     window.BuildingsProgress?.rehydrate?.(tc);
     return;
   }
 
   if (name === "recipes") {
     const familyOnly = String(id).replace(/\.l\d+$/,'');
-    tc.innerHTML = renderRecipesListForBuilding(familyOnly);
+    tc.innerHTML = renderRecipesListForBuilding(familyOnly, playerOwnsBaseBuilding);
     window.BuildingsProgress?.rehydrate?.(tc);
     return;
   }
@@ -613,7 +616,7 @@ function normalizeCostObj(cost) {
   return out;
 }
 
-function researchRow(rsdKey, def, backId, curStage, ownedLvlForSeries) {
+function researchRow(rsdKey, def, backId, curStage, ownedLvlForSeries, playerOwnsBaseBuilding) {
   const fullId = "rsd." + rsdKey;
   const myLvl  = Number(rsdKey.match(/\.l(\d+)$/)?.[1] || 1);
 
@@ -638,7 +641,9 @@ function researchRow(rsdKey, def, backId, curStage, ownedLvlForSeries) {
     : "";
 
   let right = '';
-  if (active) {
+  if (!playerOwnsBaseBuilding) {
+      right = `<button class="btn" disabled>Kræver Bygning</button>`;
+  } else if (active) {
     right = `<button class="btn" data-cancel-build="${fullId}">Cancel</button>
              <div class="build-progress" data-pb-for="${fullId}" style="display:block; margin-top:8px; width:160px;">
                <div class="pb-track" style="position:relative; height:12px; background:var(--border,#ddd); border-radius:6px; overflow:hidden;">
@@ -681,7 +686,7 @@ function researchRow(rsdKey, def, backId, curStage, ownedLvlForSeries) {
   `;
 }
 
-function renderResearchListForBuilding(family, backId) {
+function renderResearchListForBuilding(family, backId, playerOwnsBaseBuilding) {
   const defs = window?.data?.defs || {};
   const rsdDefs = defs?.rsd || {};
   const curStage = Number(window.data?.state?.user?.currentstage ?? window.data?.state?.user?.stage ?? 0);
@@ -708,14 +713,14 @@ function renderResearchListForBuilding(family, backId) {
     if (!stageOk && ownedMax<=0) {
       continue;
     }
-    rows.push(researchRow(next.key, next.def, backId, curStage, ownedMax));
+    rows.push(researchRow(next.key, next.def, backId, curStage, ownedMax, playerOwnsBaseBuilding));
   }
   return `<section class="panel section"><div class="section-head">🔬 Related Research</div><div class="section-body">${rows.join("") || "<div class='sub'>Ingen</div>"}</div></section>`;
 }
 
 // buildingDetail.js
 
-function recipeRow(rcpKey, def, curStage, familyForBuilding) {
+function recipeRow(rcpKey, def, curStage, familyForBuilding, playerOwnsBaseBuilding) {
   const fullId = "rcp." + rcpKey;
   const myLvl  = Number(rcpKey.match(/\.l(\d+)$/)?.[1] || 1);
   const mode   = String(def?.mode || "active"); // active | passive
@@ -743,7 +748,9 @@ function recipeRow(rcpKey, def, curStage, familyForBuilding) {
 
   // Højre side (knapper)
   let right = '';
-  if (active) {
+  if (!playerOwnsBaseBuilding) {
+      right = `<button class="btn" disabled>Kræver Bygning</button>`;
+  } else if (active) {
     right = `<button class="btn" data-cancel-build="${fullId}">${mode === "passive" ? "Pause" : "Cancel"}</button>
              <div class="build-progress" data-pb-for="${fullId}" style="display:block; margin-top:8px; width:160px;">
                <div class="pb-track" style="position:relative; height:8px; background:var(--border,#ddd); border-radius:6px; overflow:hidden;">
@@ -818,7 +825,7 @@ function recipeRow(rcpKey, def, curStage, familyForBuilding) {
 }
 
 
-function renderRecipesListForBuilding(family) {
+function renderRecipesListForBuilding(family, playerOwnsBaseBuilding) {
   const defs = window?.data?.defs || {};
   const rcpDefs = defs?.rcp || {};
   const curStage = Number(window.data?.state?.user?.currentstage ?? window.data?.state?.user?.stage ?? 0);
@@ -846,7 +853,7 @@ function renderRecipesListForBuilding(family) {
     String(a.key).localeCompare(String(b.key))
   );
 
-  const rows = items.map(x => recipeRow(x.key, x.def, curStage, family)).filter(Boolean);
+  const rows = items.map(x => recipeRow(x.key, x.def, curStage, family, playerOwnsBaseBuilding)).filter(Boolean);
   return `<section class="panel section"><div class="section-head">⚒ Jobs / Recipes</div><div class="section-body">${rows.join("") || "<div class='sub'>Ingen</div>"}</div></section>`;
 }
 

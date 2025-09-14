@@ -214,6 +214,17 @@
       <res id="res.wood" amount="100"/>
     </cost>
   </addon>
+
+      <addon id="add.lakehouse.l1" family="lake" type="addons" lvl="1" stage="1">
+    <effects>
+      <effect key="storage_cap" op="add" value="100"/>
+    </effects>
+    <cost>
+      <res id="res.money" amount="100"/>
+      <res id="res.wood" amount="100"/>
+    </cost>
+  </addon>
+
       <addon id="add.slaughterspot.l3" family="basecamp" type="addons" lvl="1" stage="2">
     <effects>
       <effect key="storage_cap" op="add" value="100"/>
