@@ -53,7 +53,7 @@ body{padding-bottom:72px} /* plads til quickbar */
 }
 .item:hover{border-color:var(--accent-strong)}
 .item .icon{font-size:20px}
-.item .title{font-weight:700}
+.item .title{font-weight:700;font-size:15px}
 .item .sub{color:var(--muted);font-size:13px}
 .item .right{display:flex;align-items:center;gap:8px}
 
