@@ -82,7 +82,7 @@
     <yield period="1h">
       <res id="res.money" amount="15"/>
     </yield >
-    <time>1h</time>
+    <time>10s</time>
     <durability>15.0</durability>
     <upgradesTo>bld.tent.l3</upgradesTo>
   </building>

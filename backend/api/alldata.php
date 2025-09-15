@@ -378,6 +378,60 @@ $stmt->execute([':uid' => $uid]);
 foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $r) {
     $state['ani'][$r['ani_id']] = ['quantity' => (int)$r['quantity']];
 }
+
+        // Subtract active resource locks so client sees reserved resources as spent
+        $locksStmt = $pdo->prepare("SELECT res_id, amount FROM resource_locks WHERE user_id = ? AND released_at IS NULL AND consumed_at IS NULL");
+        $locksStmt->execute([$uid]);
+        foreach ($locksStmt->fetchAll(PDO::FETCH_ASSOC) as $lock) {
+            $lockId = (string)($lock['res_id'] ?? '');
+            $lockAmt = (float)($lock['amount'] ?? 0);
+            if ($lockId === '' || $lockAmt <= 0) continue;
+            if (str_starts_with($lockId, 'ani.')) {
+                $currentAni = (float)($state['ani'][$lockId]['quantity'] ?? 0);
+                $state['ani'][$lockId]['quantity'] = max(0, $currentAni - $lockAmt);
+                continue;
+            }
+            $resourceKey = preg_replace('/^res\\./', '', $lockId);
+            $unit = strtolower((string)($defs['res'][$resourceKey]['unit'] ?? ''));
+            $bucket = ($unit === 'l') ? 'liquid' : 'solid';
+            if (!array_key_exists($resourceKey, $state['inv'][$bucket])) {
+                $otherBucket = $bucket === 'liquid' ? 'solid' : 'liquid';
+                if (array_key_exists($resourceKey, $state['inv'][$otherBucket])) {
+                    $bucket = $otherBucket;
+                } else {
+                    $state['inv'][$bucket][$resourceKey] = 0.0;
+                }
+            }
+            $current = (float)($state['inv'][$bucket][$resourceKey] ?? 0.0);
+            $state['inv'][$bucket][$resourceKey] = max(0.0, $current - $lockAmt);
+        }
+
+        // Include running build jobs so clients can hydrate progress bars
+        $jobs = [];
+        $jobsStmt = $pdo->prepare("SELECT id, bld_id, start_utc, duration_s, end_utc FROM build_jobs WHERE user_id = ? AND state = 'running'");
+        $jobsStmt->execute([$uid]);
+        foreach ($jobsStmt->fetchAll(PDO::FETCH_ASSOC) as $jobRow) {
+            $startUtc = (string)($jobRow['start_utc'] ?? '');
+            $duration = (int)($jobRow['duration_s'] ?? 0);
+            $endUtcRaw = (string)($jobRow['end_utc'] ?? '');
+            if ($endUtcRaw === '' && $startUtc !== '' && $duration > 0) {
+                try {
+                    $startDt = new DateTime($startUtc, new DateTimeZone('UTC'));
+                    $endDt = (clone $startDt)->modify('+' . $duration . ' seconds');
+                    $endUtcRaw = $endDt->format('Y-m-d H:i:s');
+                } catch (Throwable $e) {
+                    $endUtcRaw = $startUtc;
+                }
+            }
+            $jobs[] = [
+                'id' => (int)$jobRow['id'],
+                'bld_id' => (string)$jobRow['bld_id'],
+                'start_utc' => $startUtc,
+                'end_utc' => $endUtcRaw,
+                'duration_s' => $duration,
+            ];
+        }
+        $state['jobs'] = ['running' => $jobs];
     }
 
     /* 5) Normaliser og merge sprog-data */

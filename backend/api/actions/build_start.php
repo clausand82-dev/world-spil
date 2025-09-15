@@ -24,8 +24,11 @@ try {
         // =====================================================================
         $rawKey = preg_replace('~^rcp\.~i', '', $reqId);
         $def = $defs['rcp'][$rawKey] ?? null;
+        // Block duplicate running jobs for same recipe
+        $dupStmt = $db->prepare("SELECT id FROM build_jobs WHERE user_id = ? AND bld_id = ? AND state = 'running' LIMIT 1 FOR UPDATE");
+        $dupStmt->execute([$userId, $reqId]);
+        if ($dupStmt->fetchColumn()) throw new Exception('Job already running for ' . $reqId);
         if (!$def) throw new Exception('Unknown recipe: ' . $reqId);
-
         $duration_s = (int)($def['duration_s'] ?? 10);
         $allCosts = normalize_costs($def['cost'] ?? []);
         
@@ -96,6 +99,11 @@ try {
             if(!$def) throw new Exception('Unknown building: ' . $reqId);
             $itemId = canonical_bld_id($key);
         }
+        // Block duplicate running jobs for same target
+        $dupStmt = $db->prepare("SELECT id FROM build_jobs WHERE user_id = ? AND bld_id = ? AND state = 'running' LIMIT 1 FOR UPDATE");
+        $dupStmt->execute([$userId, $itemId]);
+        if ($dupStmt->fetchColumn()) throw new Exception('Job already running for ' . $itemId);
+
 
         $duration_s = (int)($def['duration_s'] ?? 10);
         $costs = normalize_costs($def['cost'] ?? []);

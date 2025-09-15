@@ -12,7 +12,10 @@ function CostItem({ id, needAmount }) {
     }
     const ok = haveAmount >= needAmount;
     const colorClass = ok ? 'price-ok' : 'price-bad';
-    return <span className={colorClass} title={`${def.name}: ${fmt(haveAmount)} / ${fmt(needAmount)}`}>{def.emoji} {fmt(needAmount)}</span>;
+    if (id.startsWith('ani.')) {
+        return <span className={colorClass} title={`${def.name}: ${fmt(haveAmount)} / ${fmt(needAmount)}`}>{fmt(haveAmount)} / {fmt(needAmount)} {def.emoji || ''}</span>;
+    }
+    return <><span className={colorClass}>{def.emoji} {fmt(haveAmount)}</span><span className="sub">/ {fmt(needAmount)}</span></>;
 }
 export default function ResourceCost({ cost }) {
     const costItems = Object.values(normalizePrice(cost));
