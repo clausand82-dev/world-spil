@@ -1,0 +1,149 @@
+/*
+===============================================================================
+BUFF SPEC – hvad du må skrive i <buff> / <buffs> og hvordan de fortolkes
+===============================================================================
+
+Container:
+  <buffs applies_to="all|<id1>,<id2>,...,buildings,addons,research"
+         start_ts="UNIX" end_ts="UNIX">
+    ...
+  </buffs>
+  - applies_to (valgfri): "all", kommaseparerede id’er (fx "bld.cornfield.l1"),
+    eller grupper: buildings, addons, research.
+    Default: gælder kun noden selv (fx addon/building/research den står under).
+  - start_ts / end_ts (valgfri): UNIX tidsstempler for tidsbegrænsede buffs.
+
+Understøttede child-noder:
+---------------------------------------------------------------------------
+1) Resource-mods (<res>)
+   <res id="all|solid|liquid|res.xxx"
+        mode="yield|cost|both"
+        type="mult|adds|subt"
+        amount="number" />
+
+   Felter:
+   - id: "all", "solid", "liquid", eller konkret res_id (fx "res.corn").
+   - mode: yield (output), cost (input/krav), both (begge). Default: both.
+   - type:
+       adds -> +X enheder
+       subt -> −X enheder
+       mult -> +X% (procent). amount="5" = +5%.
+   - amount: tal ≥ 0.
+
+   Eksempler:
+     <res id="all" type="mult" amount="5" mode="yield"/>
+     <res id="res.wheat" type="subt" amount="2" mode="cost"/>
+     <res id="solid" type="adds" amount="10" mode="both"/>
+
+---------------------------------------------------------------------------
+2) Speed-mods (<speed>)
+   <speed target="all|build|upgrade|produce|combine[, ...]"
+          type="mult"
+          amount="number" />
+
+   Felter:
+   - target: én eller flere af build, upgrade, produce, combine eller "all".
+   - type: brug mult (procentsats).
+   - amount: X% hurtigere. amount="5" = 5% hurtigere
+             (frontend: duration *= (1 - 0.05)).
+
+   Eksempler:
+     <speed target="produce" type="mult" amount="5"/>
+     <speed target="all" type="mult" amount="10"/>
+
+---------------------------------------------------------------------------
+JSON-output (normaliseret form):
+- BuffRes:
+  {
+    kind: "res",
+    scope: "all|solid|liquid|res.xxx",
+    mode: "yield|cost|both",
+    op: "adds|subt|mult",
+    amount: number,              // mult = procent
+    applies_to: "all"|[ids],
+    source_id: "add.xxx.l1",
+    start_ts?: number, end_ts?: number
+  }
+
+- BuffSpeed:
+  {
+    kind: "speed",
+    actions: "all"|["build","upgrade",...],
+    op: "mult",
+    amount: number,              // 5 = 5% hurtigere
+    applies_to: "all"|[ids],
+    source_id: "rsd.xxx.l1",
+    start_ts?: number, end_ts?: number
+  }
+
+---------------------------------------------------------------------------
+Stablingsregler (frontend):
+- Resource mods: base → +adds → −subt → *mult.
+- Speed mods: duration *= Π(1 - p). Cap fx max 80% hurtigere samlet.
+- Clamp altid: ingen negative yield/cost, ingen varighed < 0.
+===============================================================================
+*/
+
+
+
+
+<!--
+===============================================================================
+BUFF SPEC – hvad <buff> / <buffs> må indeholde
+===============================================================================
+
+Container:
+  <buffs applies_to="all|<id1>,<id2>,...,buildings,addons,research"
+         start_ts="UNIX" end_ts="UNIX">
+    ... child nodes ...
+  </buffs>
+
+  - applies_to (valgfri):
+      "all"  = gælder globalt
+      liste af id’er (fx "bld.cornfield.l1,add.field_scarecrow.l1")
+      grupper: buildings | addons | research
+      Default: gælder kun den node buffen står under
+  - start_ts / end_ts (valgfri): UNIX tidsstempler for tidsbegrænsede buffs
+
+Child-noder (tilladte):
+-------------------------------------------------------------------------------
+1) Ressource-modifier (<res>)
+   <res id="all|solid|liquid|res.xxx"
+        mode="yield|cost|both"
+        type="mult|adds|subt"
+        amount="number"/>
+
+   Felter:
+     id    : all | solid | liquid | res.id (fx res.corn)
+     mode  : yield (output), cost (input), both (begge). Default: both
+     type  : adds (+X), subt (−X), mult (+X%). amount="5" = +5%
+     amount: tal ≥ 0
+
+   Eksempler:
+     <res id="all" type="mult" amount="5" mode="yield"/>
+     <res id="res.wheat" type="subt" amount="2" mode="cost"/>
+     <res id="solid" type="adds" amount="10" mode="both"/>
+
+-------------------------------------------------------------------------------
+2) Speed-modifier (<speed>)
+   <speed target="all|build|upgrade|produce|combine[, ...]"
+          type="mult"
+          amount="number"/>
+
+   Felter:
+     target : én eller flere af build | upgrade | produce | combine | all
+     type   : mult (brug altid mult til speed)
+     amount : X% hurtigere. amount="5" = 5% hurtigere
+              (duration *= (1 - 0.05) i beregner)
+
+   Eksempler:
+     <speed target="produce" type="mult" amount="5"/>
+     <speed target="all" type="mult" amount="10"/>
+
+-------------------------------------------------------------------------------
+Stablingsregler (frontend):
+- Ressourcer: base → +adds → −subt → *mult
+- Speed: duration *= Π(1 - p). (cap fx max 80% hurtigere)
+- Clamp altid: yield/cost ≥ 0, duration ≥ 0
+===============================================================================
+-->

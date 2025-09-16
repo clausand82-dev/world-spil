@@ -166,19 +166,46 @@ function closeModal() {
   modalBody.innerHTML = "";
   modalBtns.innerHTML = "";
 }
-window.openConfirm = ({ title, body, confirmText = "OK", cancelText = "Annullér", onConfirm }) => {
-  modalBody.innerHTML = `<h3 style="margin-top:0">${title}</h3><div class="sub" style="margin-top:4px">${body}</div>`;
-  modalBtns.innerHTML = `<button type="button" class="btn" id="cancel">${cancelText}</button><button type="button" class="btn primary" id="ok">${confirmText}</button>`;
-  $("#cancel").onclick = (e) => { e.preventDefault(); closeModal(); };
-  $("#ok").onclick = async () => {
-    try {
-      if (typeof onConfirm === "function") await onConfirm();
-    } finally {
-      closeModal();
-    }
+window.openConfirm = function openConfirm({ title = 'Bekræft', body = '', confirmText = 'OK', onConfirm, onCancel }) {
+  // Sørg for container
+  let modal = document.getElementById('confirm-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'confirm-modal';
+    modal.style.position = 'fixed';
+    modal.style.inset = '0';
+    modal.style.background = 'rgba(0,0,0,0.5)';
+    modal.style.display = 'flex';
+    modal.style.alignItems = 'center';
+    modal.style.justifyContent = 'center';
+    modal.innerHTML = ''; // vigtig
+    document.body.appendChild(modal);
+  }
+
+  // Indre dialog
+  modal.innerHTML = `
+    <div style="background:#fff; padding:16px; border-radius:8px; max-width:480px; width:90%;">
+      <h3 style="margin:0 0 8px 0;">${title}</h3>
+      <div>${body || ''}</div>
+      <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:16px;">
+        <button id="confirm-cancel" class="btn">Annullér</button>
+        <button id="confirm-ok" class="btn primary">${confirmText}</button>
+      </div>
+    </div>
+  `;
+
+  const cleanup = () => {
+    if (modal && modal.parentNode) modal.parentNode.removeChild(modal);
   };
-  modal.hidden = false;
+
+  modal.querySelector('#confirm-cancel').onclick = () => {
+    try { onCancel && onCancel(); } finally { cleanup(); }
+  };
+  modal.querySelector('#confirm-ok').onclick = () => {
+    try { onConfirm && onConfirm(); } finally { cleanup(); }
+  };
 };
+
 window.closeModal = closeModal;
 
 /**
@@ -307,3 +334,31 @@ export function prettyTime(secs) {
     const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), ss = s % 60;
     return h ? `${h}h ${m}m ${ss}s` : (m ? `${m}m ${ss}s` : `${ss}s`);
 }
+
+// helpers.js
+export async function postJSON(url, body) {
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(body),
+  });
+
+  // Prøv at læse JSON-body uanset status
+  let payload = null;
+  const text = await res.text().catch(() => null);
+  try { payload = text ? JSON.parse(text) : null; } catch { payload = text; }
+
+  if (!res.ok) {
+    const msg =
+      (payload && payload.message) ||
+      (typeof payload === 'string' && payload) ||
+      `HTTP ${res.status}`;
+    const err = new Error(msg);
+    err.status = res.status;
+    err.response = payload;
+    throw err;
+  }
+  return payload;
+}
+

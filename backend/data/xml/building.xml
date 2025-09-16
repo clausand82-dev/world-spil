@@ -26,6 +26,11 @@
     <durability>20.0</durability>
     <upgradesTo>bld.basecamp.l3</upgradesTo>
     <time>1m</time>
+    <buffs applies_to="all">
+      <res id="res.money" amount="10" type="mult" mode="cost"/>
+      <speed target="all" type="mult" amount="10"/>
+    </buffs>
+    
   </building>
 
   <building id="bld.basecamp.l3" family="basecamp" type="base" lvl="3" stage="1">
@@ -85,6 +90,9 @@
     <time>10s</time>
     <durability>15.0</durability>
     <upgradesTo>bld.tent.l3</upgradesTo>
+      <buffs applies_to="all">
+      <res id="res.wool" amount="10" type="adds" mode="yield"/>
+    </buffs>
   </building>
 
   <building id="bld.tent.l3" family="tent" type="housing" lvl="3" stage="1">

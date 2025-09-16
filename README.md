@@ -16,6 +16,12 @@ På to do liste ligger ting som (bliver inddelt i stages senere):
 
 Change/update History
 
+4.0
+- moving all code to react code instead
+- code optimizing (long code split to komponent)
+- buff (current only yield, cost and speed) and only support permanent buff BACKEND STILL MISSING
+- STILL MISSING DASHBOARD, RESEARCH, RECIPES SITES, MAYBE ONE SITE WITH ALL ON
+
 3.5:
 - active recipes added
 - animal can now be slaughtered to yield one time yield
@@ -27,11 +33,7 @@ Change/update History
 - optimized some javascript code all around
 - fold-out is back on dashboard for passiv yield reosurces
 - splitting up files for easy code fixing
-
-TO-DO IN SAME BRANCH
-- buff system
-- passive yield stops when cap is filled
-- added a extra addon system (addon to addons) - Think equment
+- added a extra addon system (sub addons to addons, but in same system)
 
 3.4:
 - added build time for buildings (preparations for addons, research and production/recipes)<br>

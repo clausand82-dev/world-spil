@@ -154,6 +154,9 @@
       <res id="res.wool" amount="4"/>
     </yield>
     <time>15s</time>
+        <cost>
+      <res id="ani.sheep" amount="1"/>
+    </cost>
     <require>add.barn_shearingshed.l1</require>
   </recipe>
 

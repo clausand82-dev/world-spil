@@ -166,6 +166,91 @@ function strip_prefix(string $id, string $prefix): string {
   return (strncmp($id, $p, strlen($p)) === 0) ? substr($id, strlen($p)) : $id;
 }
 
+// --- BUFF HELPERS ------------------------------------------------------------
+
+/** Safe attr read */
+function _xml_attr($node, $name, $default=null) {
+  return isset($node[$name]) ? (string)$node[$name] : $default;
+}
+
+/** Map XML type -> op */
+function _buff_map_op($typeAttr) {
+  $t = strtolower(trim((string)$typeAttr));
+  if ($t === 'adds' || $t === 'add') return 'adds';
+  if ($t === 'subt' || $t === 'sub') return 'subt';
+  return 'mult';
+}
+
+/** Parse <res .../> -> BuffRes */
+function _buff_parse_res($resNode, string $sourceId, $appliesTo='all') {
+  return [
+    'kind'       => 'res',
+    'scope'      => _xml_attr($resNode, 'id', 'all'),
+    'mode'       => _xml_attr($resNode, 'mode', 'both'),
+    'op'         => _buff_map_op(_xml_attr($resNode, 'type', 'mult')),
+    'amount'     => (float) _xml_attr($resNode, 'amount', 0),
+    'applies_to' => $appliesTo,      // "all" eller liste af id’er
+    'source_id'  => $sourceId,
+  ];
+}
+
+/** Parse <speed .../> -> BuffSpeed */
+function _buff_parse_speed($speedNode, string $sourceId, $appliesTo='all') {
+  $target = strtolower(trim((string) _xml_attr($speedNode, 'target', 'all')));
+  $actions = ($target === 'all')
+    ? 'all'
+    : array_values(array_filter(array_map('trim', explode(',', $target))));
+  return [
+    'kind'       => 'speed',
+    'actions'    => $actions,        // "all" eller liste: build,upgrade,produce,combine
+    'op'         => _buff_map_op(_xml_attr($speedNode, 'type', 'mult')),
+    'amount'     => (float) _xml_attr($speedNode, 'amount', 0), // 5 => 5%
+    'applies_to' => $appliesTo,
+    'source_id'  => $sourceId,
+  ];
+}
+
+/** Saml buffs fra <buff> og/eller <buffs> under en vilkårlig node */
+// ERSTAT din _buff_collect_from(...) med denne
+function _buff_collect_from($xmlNode, string $sourceId, $defaultAppliesTo='all'): array {
+  $out = [];
+  if (!$xmlNode) return $out;
+
+  // find alle buff-containere (<buffs> og/eller <buff>)
+  $containers = $xmlNode->xpath('buff|buffs') ?: [];
+
+  foreach ($containers as $container) {
+    // læs applies_to fra container (fallback til default)
+    $appliesAttr = null;
+    if (isset($container['applies_to'])) {
+      $appliesAttr = (string)$container['applies_to'];
+    } elseif (isset($container['applies-to'])) {
+      $appliesAttr = (string)$container['applies-to']; // tolerant over for bindestreg
+    }
+
+    if ($appliesAttr === null || $appliesAttr === '') {
+      $appliesTo = $defaultAppliesTo;
+    } else {
+      $v = strtolower(trim($appliesAttr));
+      if ($v === 'all') {
+        $appliesTo = 'all';
+      } else {
+        // split kommasepareret liste og trim
+        $appliesTo = array_values(array_filter(array_map('trim', explode(',', $appliesAttr))));
+      }
+    }
+
+    // child-noder: <res/> og <speed/>
+    foreach ($container->xpath('res') ?: [] as $resNode) {
+      $out[] = _buff_parse_res($resNode, $sourceId, $appliesTo);
+    }
+    foreach ($container->xpath('speed') ?: [] as $speedNode) {
+      $out[] = _buff_parse_speed($speedNode, $sourceId, $appliesTo);
+    }
+  }
+
+  return $out;
+}
 
 /**
  * Privat "Super-Parser", der kan parse enhver type <node> (building, addon, etc.)
@@ -220,6 +305,18 @@ function _parse_generic_xml_node(SimpleXMLElement $node, string $idPrefix): arra
             $yields[] = $row;
         }
         if ($yields) $item['yield'] = $yields;
+    }
+
+        // --- BUFFS: parse <buff> og/eller <buffs> for denne node ---------------
+    // fuldt sourceId inkl. prefix (fx "add.barn_manurepit.l1")
+    $fullId = $idPrefix . '.' . $id;
+    $appliesTo = [$fullId]; // som udgangspunkt gælder en nodes buffs den selv
+    $buffs = _buff_collect_from($node, $fullId, $appliesTo);
+    if ($buffs) {
+        $item['buffs'] = $buffs;
+    } else {
+        // for konsistens kan du også vælge altid at have feltet:
+        // $item['buffs'] = [];
     }
 
     if (isset($node->durability)) $item['durability'] = (float)$node->durability;

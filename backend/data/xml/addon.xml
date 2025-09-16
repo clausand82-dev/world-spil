@@ -178,9 +178,9 @@
       <res id="res.wood" amount="60"/>
       <res id="res.stone" amount="36"/>
     </cost>
-    <yield period="1h">
-      <res id="res.fertilizer" amount="1"/>
-    </yield>
+    <buff applies_to="bld.cornfield.l1,bld.wheatfield.l1,addons">
+      <res id="res.fertilizer" amount="2" type="mult" mode="yield"/>
+    </buff>
     <require>rsd.usefertilizer.l1</require>
   </addon>
 
