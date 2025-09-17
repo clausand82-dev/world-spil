@@ -13,7 +13,7 @@ import ResourceAutoRefresh from './components/ResourceAutoRefresh.jsx';
 // Importer dine nye sider
 import DashboardPage from './pages/DashboardPage.jsx';
 import AnimalsPage from './pages/AnimalsPage.jsx';
-import ResearchPage from './pages/ResearchPAge.jsx';
+import ResearchPage from './pages/ResearchPage.jsx';
 import InventoryPage from './pages/InventoryPage.jsx';
 import BuildingsPage from './pages/BuildingsPage.jsx';
 import BuildingDetailPage from './components/building/BuildingDetailPage.jsx';
