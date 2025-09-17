@@ -1,19 +1,19 @@
-import React, { useMemo } from 'react';
-import ReactFlow, { ReactFlowProvider, Background } from 'reactflow';
+// src/pages/ResearchTreePage.jsx
+
+import React, { useMemo } from 'react'; // <-- TRIN 1: Importer `useMemo`
+import ReactFlow, { ReactFlowProvider, Background, Controls } from 'reactflow';
 import { useGameData } from '../context/GameDataContext.jsx';
 import { buildResearchTree } from '../services/researchTreeHelper.js';
 import ResearchNode from '../components/ResearchNode.jsx';
 
-// Importer React Flow's CSS
 import 'reactflow/dist/style.css';
-
-// Fortæl React Flow om vores custom node-type
-const nodeTypes = { researchNode: ResearchNode };
 
 export default function ResearchTreePage() {
     const { data, isLoading, error } = useGameData();
+    
+    // Vi bruger useMemo her også for at være sikre
+    const memoizedNodeTypes = useMemo(() => ({ researchNode: ResearchNode }), []);
 
-    // useMemo er afgørende her for at undgå at genberegne træet på hver render
     const { initialNodes, initialEdges } = useMemo(() => {
         if (!data) return { initialNodes: [], initialEdges: [] };
         return buildResearchTree(data.defs, data.state);
@@ -23,15 +23,19 @@ export default function ResearchTreePage() {
     if (error) return <div className="sub">Fejl.</div>;
 
     return (
-        <div style={{ height: 'calc(100vh - 100px)', width: '100%' }}>
-            <ReactFlow
-                nodes={initialNodes}
-                edges={initialEdges}
-                nodeTypes={nodeTypes}
-                fitView // Zoomer automatisk ud, så hele træet kan ses
-            >
-                <Background />
-            </ReactFlow>
+        <div style={{ height: 'calc(100vh - 50px)', width: '100%' }}>
+            <ReactFlowProvider>
+                <ReactFlow
+                    nodes={initialNodes}
+                    edges={initialEdges}
+                    nodeTypes={memoizedNodeTypes}
+                    fitView
+                    proOptions={{ hideAttribution: true }}
+                >
+                    <Background />
+                    <Controls />
+                </ReactFlow>
+            </ReactFlowProvider>
         </div>
     );
 }

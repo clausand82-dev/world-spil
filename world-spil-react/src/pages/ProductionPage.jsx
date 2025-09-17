@@ -6,6 +6,7 @@ import BuildProgress from "../components/BuildProgress.jsx";
 import ActionButton from "../components/ActionButton.jsx";
 import { computeOwnedMap } from "../services/requirements.js";
 import PassiveYieldList from '../components/dashboard/PassiveYieldList.jsx';
+import ActiveRecipes from '../components/production/ActiveRecipes.jsx';
 
 // Passive sektion: finder igangværende jobs for opskrifter med mode="passive"
             <section className="panel section">
@@ -53,7 +54,7 @@ export default function ProductionPage() {
 
           <section className="panel section">
             <div className="section-head">🏗️ Aktive Opskrifter</div>
-            <div className="section-body"><ActiveRecipeList /></div>
+            <div className="section-body"><ActiveRecipes /></div>
         </section>
 
    </div>
