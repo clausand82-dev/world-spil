@@ -64,32 +64,47 @@ export const computeOwnedMaxBySeries = (stateKey = 'bld', state) => {
 export const ownedResearchMax = (seriesFull, state) => {
     if (!state?.research) return 0;
     let max = 0;
-    
     const seriesKey = seriesFull.replace(/^rsd\./, '');
-
     for (const key in state.research) {
         if (key.startsWith(seriesKey + ".l")) {
             const m = key.match(/\.l(\d+)$/);
-            if (m) {
-                max = Math.max(max, Number(m[1]));
-            }
+            if (m) max = Math.max(max, Number(m[1]));
         }
     }
     return max;
 };
 
+// =====================================================================
+// RETTELSE: Denne funktion er nu simplificeret og korrekt.
+// Den kigger kun i `state.research` og håndterer levels korrekt.
+// =====================================================================
 export const hasResearch = (rsdIdFull, state) => {
-  // Accepts all lower levels as done if highest is done
-  const m = /^(.+)\.l(\d+)$/.exec(rsdIdFull);
-  if (m) {
-    const base = m[1];
-    const lvl = parseInt(m[2], 10);
-    for (let i = lvl; i <= 20; i++) { // 20 = max possible level, adjust if needed
-      if (state.research[`${base}.l${i}`]) return true;
+    if (!rsdIdFull || !state?.research) return false;
+
+    // Først, tjek for et eksakt match i `state.research`
+    const key = String(rsdIdFull).replace(/^rsd\./, '');
+    if (state.research[key]) {
+        return true;
     }
-    return false;
-  }
-  return !!state.research[rsdIdFull];
+    
+    // Dernæst, håndter level-baseret logik:
+    // Hvis man ejer et højere level, ejer man også de lavere.
+    const m = String(rsdIdFull).match(/^rsd\.(.+)\.l(\d+)$/);
+    if (!m) {
+        // Hvis der ikke er et level i ID'et, og den ikke blev fundet ovenfor,
+        // så ejer spilleren den ikke.
+        return false;
+    }
+    
+    const seriesName = m[1];
+    const requiredLevel = Number(m[2]);
+    const seriesFull = `rsd.${seriesName}`;
+
+    // Find det højeste level, spilleren ejer i denne serie
+    const ownedMax = ownedResearchMax(seriesFull, state);
+
+    // Kravet er opfyldt, hvis spillerens højeste ejede level er >= det krævede.
+    return ownedMax >= requiredLevel;
 };
 
 // --- Defs-relaterede funktioner ---

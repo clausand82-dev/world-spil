@@ -2,7 +2,7 @@
 import { parseBldKey, normalizePrice } from './helpers.js';
 import { applySpeedBuffsToDuration } from './calcEngine-lite.js';
 
-// G+ªt action ud fra item
+// G+ï¿½t action ud fra item
 function inferAction(item) {
   const id = String(item?.id || '');
   if (id.startsWith('rsd.')) return 'produce';            // research behandles som produce
@@ -197,7 +197,7 @@ export function formatProduction(def, defs) {
     return `${sign}${amount}${emoji}`;
   });
   const period = def?.yield_period_str;
-  return period ? `${parts.join(' ÔÇó ')} / ${period}` : parts.join(' ÔÇó ');
+  return period ? `${parts.join(' ï¿½ï¿½ï¿½ ')} / ${period}` : parts.join(' ï¿½ï¿½ï¿½ ');
 }
 
 export function formatCost(cost, defs, sign) {
@@ -210,7 +210,7 @@ export function formatCost(cost, defs, sign) {
       const prefix = sign === '+' ? '+' : '-';
       return `${prefix}${amount}${emoji}`;
     })
-    .join(' ÔÇó ');
+    .join(' ï¿½ï¿½ï¿½ ');
 }
 
 
