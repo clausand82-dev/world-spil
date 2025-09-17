@@ -18,9 +18,21 @@ Change/update History
 
 4.0
 - moving all code to react code instead
-- code optimizing (long code split to komponent)
-- buff (current only yield, cost and speed) and only support permanent buff BACKEND STILL MISSING
-- STILL MISSING DASHBOARD, RESEARCH, RECIPES SITES, MAYBE ONE SITE WITH ALL ON
+- code optimizing (long code split to component)
+- complete buff system (current only yield, cost and speed) and only support permanent buff - works frontend and backend
+- dashboard works
+- beginning simple research tech tree with React Flow
+- behind the scenes: no more dublicate of name and desc
+- animal on inventory list AND sidebar
+- more lang put in (still missing alot)
+- 
+- MISSING:
+- yield have to have a cap (passive and active)
+- durability and repair functions
+- login system and new player startup (maps)
+- still missing active production on production sites
+- log system
+- build more than one active production (or maybe let it's production scale up when time goes up???)
 
 3.5:
 - active recipes added

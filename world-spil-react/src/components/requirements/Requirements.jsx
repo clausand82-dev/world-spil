@@ -7,25 +7,6 @@ import StatRequirement from './StatRequirement.jsx';
 import { normalizePrice, parseBldKey, prettyTime, computeOwnedMaxBySeries, hasResearch } from '../../services/helpers.js';
 import { applySpeedBuffsToDuration } from '../../services/calcEngine-lite.js';
 
-function computeOwnedMaxBySeriesFromState(state, stateKey = 'bld') {
-  const bySeries = {};
-  const source = state?.[stateKey] || {};
-  for (const key of Object.keys(source)) {
-    const m = key.match(new RegExp(`^${stateKey}\\.(.+)\\.l(\\d+)$`));
-    if (!m) continue;
-    const series = `${stateKey}.${m[1]}`;
-    const level = Number(m[2]);
-    bySeries[series] = Math.max(bySeries[series] || 0, level);
-  }
-  return bySeries;
-}
-
-function hasResearchInState(state, rsdIdFull) {
-  if (!rsdIdFull) return false;
-  const key = String(rsdIdFull).replace(/^rsd\./, '');
-  return !!(state?.research?.[key] || state?.rsd?.[key] || state?.rsd?.[rsdIdFull]);
-}
-
 function inferAction(item) {
   const id = String(item?.id || '');
   if (id.startsWith('rsd.')) return 'produce';

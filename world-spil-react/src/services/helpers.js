@@ -62,50 +62,87 @@ export const computeOwnedMaxBySeries = (stateKey = 'bld', state) => {
 };
 
 export const ownedResearchMax = (seriesFull, state) => {
-    if (!state?.research) return 0;
-    let max = 0;
-    const seriesKey = seriesFull.replace(/^rsd\./, '');
-    for (const key in state.research) {
-        if (key.startsWith(seriesKey + ".l")) {
-            const m = key.match(/\.l(\d+)$/);
-            if (m) max = Math.max(max, Number(m[1]));
-        }
+  if (!state) return 0;
+
+  let max = 0;
+  const seriesNoPrefix = String(seriesFull).replace(/^rsd\./, '');
+
+  const considerKey = (key) => {
+    const s = String(key);
+    // Tillad både 'rsd.tools.lN' og 'tools.lN'
+    const prefixes = [`${seriesFull}.l`, `${seriesNoPrefix}.l`];
+    for (const pref of prefixes) {
+      if (s.startsWith(pref)) {
+        const m = s.match(/\.l(\d+)$/);
+        const lvl = m ? Number(m[1]) : 0;
+        if (lvl > max) max = lvl;
+        return;
+      }
     }
-    return max;
+  };
+
+  // Legacy: state.rsd kan have nøgler som 'rsd.tools.l2'
+  if (state.rsd && typeof state.rsd === 'object') {
+    for (const k of Object.keys(state.rsd)) considerKey(k);
+  }
+
+  // Modern: state.research kan have top-level nøgler (fx 'tools.l2')
+  const R = state.research || {};
+  for (const k of Object.keys(R)) {
+    if (k === 'completed') continue;
+    considerKey(k);
+  }
+
+  // Modern: state.research.completed kan være Set eller map-objekt
+  const comp = R.completed;
+  if (comp) {
+    const iter = comp instanceof Set ? Array.from(comp) : Object.keys(comp);
+    for (const k of iter) considerKey(k);
+  }
+
+  return max;
 };
 
-// =====================================================================
-// RETTELSE: Denne funktion er nu simplificeret og korrekt.
-// Den kigger kun i `state.research` og håndterer levels korrekt.
-// =====================================================================
+// Tjek om et research-krav er opfyldt. Håndterer:
+// - eksakt match i state.rsd eller state.research(.completed)
+// - level-krav (højere level dækker lavere)
+// - med/uden 'rsd.' prefix i både krav og state
 export const hasResearch = (rsdIdFull, state) => {
-    if (!rsdIdFull || !state?.research) return false;
+  if (!rsdIdFull || !state) return false;
 
-    // Først, tjek for et eksakt match i `state.research`
-    const key = String(rsdIdFull).replace(/^rsd\./, '');
-    if (state.research[key]) {
-        return true;
-    }
-    
-    // Dernæst, håndter level-baseret logik:
-    // Hvis man ejer et højere level, ejer man også de lavere.
-    const m = String(rsdIdFull).match(/^rsd\.(.+)\.l(\d+)$/);
-    if (!m) {
-        // Hvis der ikke er et level i ID'et, og den ikke blev fundet ovenfor,
-        // så ejer spilleren den ikke.
-        return false;
-    }
-    
-    const seriesName = m[1];
-    const requiredLevel = Number(m[2]);
-    const seriesFull = `rsd.${seriesName}`;
+  const id = String(rsdIdFull);
+  const idNoPrefix = id.replace(/^rsd\./, '');
 
-    // Find det højeste level, spilleren ejer i denne serie
-    const ownedMax = ownedResearchMax(seriesFull, state);
+  // Hurtig eksakt match mod state.rsd eller state.research(.completed)
+  const RS = state.rsd || {};
+  const R = state.research || {};
+  const inCompleted = (k) => {
+    const c = R.completed;
+    if (!c) return false;
+    return c instanceof Set ? c.has(k) : !!c[k];
+  };
+  const exactHit =
+    RS[id] || RS[idNoPrefix] ||
+    R[id] || R[idNoPrefix] ||
+    inCompleted(id) || inCompleted(idNoPrefix);
+  if (exactHit) return true;
 
-    // Kravet er opfyldt, hvis spillerens højeste ejede level er >= det krævede.
-    return ownedMax >= requiredLevel;
+  // Level-baseret: rsd.<series>.lN
+  const m = id.match(/^rsd\.(.+)\.l(\d+)$/);
+  if (!m) {
+    // Hvis der ikke er level i kravet, anser vi kravet for opfyldt,
+    // hvis spilleren ejer et eller andet level i serien.
+    const seriesFull = id.startsWith('rsd.') ? id : `rsd.${id}`;
+    return ownedResearchMax(seriesFull, state) > 0;
+  }
+
+  const seriesName = m[1];
+  const need = Number(m[2]);
+  const seriesFull = `rsd.${seriesName}`;
+  const ownedMax = ownedResearchMax(seriesFull, state);
+  return ownedMax >= need;
 };
+
 
 // --- Defs-relaterede funktioner ---
 export const groupDefsBySeriesInStage = (defs, currentStage, prefix) => {

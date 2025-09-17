@@ -232,5 +232,68 @@ body{padding-bottom:72px} /* plads til quickbar */
 .research-node__footer { text-align: right; }
 .btn.small { padding: 4px 8px; font-size: 12px; }
 
+/* ====== Universal Node for Dependency Tree ====== */
+.universal-node {
+    width: 180px;
+    height: 60px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg-panel);
+    display: flex;
+    flex-direction: column;
+    padding: 8px;
+    font-size: 14px;
+    transition: all 0.2s ease-in-out;
+}
+/* Farver baseret på status */
+.universal-node--owned {
+    border-color: var(--ok);
+    background: #2a3a2a; /* Mørkegrøn baggrund */
+}
+.universal-node--unowned {
+    /* Standard udseende */
+}
+.universal-node--neutral { /* For ressourcer/dyr */
+    background: #2a2a3a; /* Lidt blålig */
+    border-color: #4a4a6a;
+}
+.universal-node__header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: bold;
+}
+.universal-node__header .icon {
+    font-size: 18px;
+}
+.universal-node__type {
+    margin-top: auto; /* Skubber typen til bunden */
+    font-size: 11px;
+    opacity: 0.6;
+    text-align: right;
+    text-transform: capitalize;
+}
+/* Styling af pile */
+.react-flow__edge-path {
+    stroke: #555;
+    stroke-width: 2;
+}
+
+/* Styling for de store gruppe-bokse i React Flow */
+.react-flow__node-group {
+    border-radius: 8px;
+    border: 1px dashed var(--border);
+    pointer-events: none; /* Gør så man ikke kan interagere med selve boksen */
+}
+
+/* Styling for labelen inde i gruppe-boksen */
+.react-flow__node-group .group-label {
+    position: absolute;
+    top: -25px;
+    left: 10px;
+    font-size: 16px;
+    font-weight: bold;
+    color: var(--text-secondary);
+}
 
 

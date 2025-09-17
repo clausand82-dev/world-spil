@@ -88,7 +88,6 @@ function apply_cost_buffs(array $baseCost, string $ctx_id, array $buffs): array 
 
   // afrund / normaliser
   foreach ($result as $rid => $amt) {
-    // hvis du bruger heltal i DB:
     $result[$rid] = (int)round($amt);
   }
   return $result;
@@ -98,29 +97,29 @@ function res_scope_matches($scope, $res_id) {
   if ($scope === 'all') return true;
   if ($scope === $res_id) return true;
   if ($scope === 'solid' || $scope === 'liquid') {
-    // TODO: hvis du kan skelne solid/liquid pr res_id, indsæt din logik her.
+    // TODO: Hvis du kan skelne solid/liquid pr res_id, indsæt din logik her.
     return true; // midlertidigt: accepter
   }
   return false;
 }
 
 // ---- SPEED (duration) ----
-function apply_speed_buffs($baseS, string $action, string $ctx_id, array $buffs) {
+// action: 'build' | 'upgrade' | 'produce' | 'combine' | 'all'
+function apply_speed_buffs(int $base_s, string $action, string $ctx_id, array $buffs): int {
   $mult = 1.0;
   foreach ($buffs as $b) {
     if (($b['kind'] ?? '') !== 'speed') continue;
+    if (($b['op'] ?? '') !== 'mult') continue;
+    $actions = $b['actions'] ?? 'all';
+    $actionOk = ($actions === 'all') || (is_array($actions) && in_array($action, $actions, true));
+    if (!$actionOk) continue;
     if (!ctx_matches($b['applies_to'] ?? 'all', $ctx_id)) continue;
 
-    $acts = $b['actions'] ?? 'all';
-    $okAction = ($acts === 'all') || (is_array($acts) && in_array($action, $acts, true));
-    if (!$okAction) continue;
-
-    if (($b['op'] ?? '') === 'mult') {
-      $p = max(0.0, (float)$b['amount']) / 100.0;
-      $mult *= max(0.0, 1.0 - $p);
-    }
+    $p = max(0.0, (float)$b['amount']) / 100.0;   // 10 => 10% hurtigere
+    $mult *= (1.0 - $p);
   }
-  // cap: max 80% hurtigere → mult >= 0.2
+  // cap: max 80% hurtigere => min multiplier 0.2
   $mult = max(0.2, $mult);
-  return max(0, (int)round($baseS * $mult));
+  $out = (int)round($base_s * $mult);
+  return max(0, $out);
 }
