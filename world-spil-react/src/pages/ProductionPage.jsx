@@ -46,17 +46,16 @@ function ActiveRecipeList() {
 export default function ProductionPage() {
   return (
     <div className="page">
-      <h1>Production</h1>
+             <section className="panel section">
+            <div className="section-head">🏗️ Passive Yields</div>
+            <div className="section-body"><PassiveYieldList /></div>
+        </section>
 
-      <section>
-        <h2>Passive Yields</h2>
-        <PassiveYieldList />
-      </section>
+          <section className="panel section">
+            <div className="section-head">🏗️ Aktive Opskrifter</div>
+            <div className="section-body"><ActiveRecipeList /></div>
+        </section>
 
-      <section>
-        <h2>Aktive Opskrifter</h2>
-        <ActiveRecipeList />
-      </section>
-    </div>
+   </div>
   );
 }

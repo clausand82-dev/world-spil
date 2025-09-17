@@ -6,7 +6,7 @@ function computeOwnedMaxBySeriesFromState(state, stateKey = 'bld') {
   const bySeries = {};
   const source = state?.[stateKey] || {};
   for (const key of Object.keys(source)) {
-    const m = key.match(new RegExp(`^${stateKey}\\.(.+)\\.l(\\d+)$`));
+    const m = key.match(new RegExp(`^${stateKey}\\.(.+)\\.l(\\\d+)$`));
     if (!m) continue;
     const series = `${stateKey}.${m[1]}`;
     const level = Number(m[2]);
@@ -14,39 +14,10 @@ function computeOwnedMaxBySeriesFromState(state, stateKey = 'bld') {
   }
   return bySeries;
 }
-
 function hasResearchInState(state, rsdIdFull) {
   if (!rsdIdFull) return false;
-  const id = String(rsdIdFull);
-  const cleaned = id.replace(/^rsd\./, ''); // accepter både med/uden 'rsd.' prefix
-  const m = /^(.+)\.l(\d+)$/.exec(cleaned);
-
-  const bags = [state?.research || {}, state?.rsd || {}];
-
-  if (m) {
-    const base = m[1];
-    const need = Number(m[2]);
-    // Højere level dækker lavere: tjek alle niveauer >= need
-    for (let lvl = need; lvl <= 99; lvl++) {
-      const k1 = `${base}.l${lvl}`;
-      const k2 = `rsd.${base}.l${lvl}`;
-      for (const bag of bags) {
-        if (bag[k1] || bag[k2]) return true;
-      }
-    }
-    return false;
-  }
-
-  // Ikke-level-specifik: opfyldt hvis der findes en level i serien
-  const series = cleaned.replace(/\.l\d+$/, '');
-  for (const bag of bags) {
-    if (bag[series]) return true;
-    const hasAny = Object.keys(bag).some(
-      (k) => k.startsWith(`${series}.l`) || k.startsWith(`rsd.${series}.l`)
-    );
-    if (hasAny) return true;
-  }
-  return false;
+  const key = String(rsdIdFull).replace(/^rsd\./, '');
+  return !!(state?.research?.[key] || state?.rsd?.[key] || state?.rsd?.[rsdIdFull]);
 }
 
 function DemandChip({ reqId }) {
@@ -58,7 +29,7 @@ function DemandChip({ reqId }) {
     const k = reqId.slice(4);
     const d = defs?.rsd?.[k];
     label = d?.name || k;
-    ok = hasResearchInState(state, reqId);
+    ok = H.hasResearch(reqId, state);
     href = '#/research';
     tip = ok ? `Fuldført: ${label}` : `Kræver: ${label}`;
   } else if (reqId.startsWith('bld.')) {
@@ -66,7 +37,7 @@ function DemandChip({ reqId }) {
     if (p) {
       const d = defs?.bld?.[`${p.family}.l${p.level}`];
       label = `${d?.name || p.family} L${p.level}`;
-      const ownedBySeries = computeOwnedMaxBySeriesFromState(state, 'bld');
+      const ownedBySeries = H.computeOwnedMaxBySeries('bld', state);
       ok = (ownedBySeries[p.series] || 0) >= p.level;
       href = '#/buildings';
       tip = ok ? `Ejet: ${label}` : `Kræver: ${label}`;
@@ -77,7 +48,7 @@ function DemandChip({ reqId }) {
       const [s, l] = [m[1], +m[2]];
       const d = defs?.add?.[reqId.replace(/^add\./, '')];
       label = `${d?.name || s} L${l}`;
-      const ownedAdd = computeOwnedMaxBySeriesFromState(state, 'add');
+      const ownedAdd = H.computeOwnedMaxBySeries('add', state);
       ok = (ownedAdd[`add.${s}`] || 0) >= l;
       href = '#/building';
       tip = ok ? `Ejet: ${label}` : `Kræver: ${label}`;

@@ -8,6 +8,7 @@ export default function Quickbar({ activePage }) {
         { page: 'animals', title: 'Animals', icon: '🐄' },
         { page: 'inventory', title: 'Inventory', icon: '📦' },
         { page: 'production', title: 'Productions', icon: '🔬' },
+        { page: 'overview', title: 'Overview', icon: '🔬' },
     ];
 
     return (

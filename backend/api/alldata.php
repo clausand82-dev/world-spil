@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 if (!defined('WS_RUN_MODE')) define('WS_RUN_MODE', 'run');
+require_once __DIR__ . '/lib/lang_utils.php';
 if (WS_RUN_MODE === 'run') {
     header('Content-Type: application/json; charset=utf-8');
     if (session_status() !== PHP_SESSION_ACTIVE) session_start();
@@ -434,6 +435,7 @@ if (WS_RUN_MODE === 'run') {
   /* 3) lang */
   $langMap = load_lang_xml($langDir, $langCode);
 
+
 /* 4) state fra DB (din nye, korrekte logik er bevaret) */
     $state = [];
     if (isset($_SESSION['uid'])) {
@@ -544,6 +546,16 @@ foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $r) {
         }
         unset($item);
     }
+
+    // FJERNER NAME OG DESC FRA LANG, DA DE ALLEREDE LIGGER I DEFS
+    $defaultLangCode = (string)($cfg['game_data']['lang'] ?? 'lang.da');
+    // tillad enten "lang.da" eller "da"
+    $langCode = preg_replace('~^lang\.~i', '', $defaultLangCode);
+    $langRaw  = load_lang_xml($langDir, $langCode);
+    // FJERNER NAME OG DESC FRA LANG, DA DE ALLEREDE LIGGER I DEFS
+
+// filtrér (fjern bld./add./rcp./ani./res./rsd. – behold ui.* og øvrige generelle)
+$langMap  = filter_lang_for_ui($langRaw);
 
 // === CAP-BEREGNING (PLACÉR SENT I alldata.php, FØR json_encode/jout) ===
 // ---- CAPS: beregn used (vægtet med unitSpace) + base/bonus/total ----
