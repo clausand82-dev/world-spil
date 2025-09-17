@@ -7,7 +7,7 @@ import BuildProgress from '../components/BuildProgress.jsx';
 import LevelStatus from '../components/requirements/LevelStatus.jsx';
 import { useRequirements as useReqAgg } from '../components/requirements/Requirements.jsx';
 
-function _page_canAfford(price, state) {
+/*function _page_canAfford(price, state) {
     for (const item of Object.values(H.normalizePrice(price))) {
         let have = 0;
         if (item.id.startsWith('ani.')) have = state.ani?.[item.id]?.quantity ?? 0;
@@ -15,18 +15,18 @@ function _page_canAfford(price, state) {
         if (have < item.amount) return { ok: false };
     }
     return { ok: true };
-}
+}*/
 function hasResearchInState(state, rsdIdFull) {
     if (!rsdIdFull) return false;
     const key = String(rsdIdFull).replace(/^rsd\./, '');
     return !!(state?.research?.[key] || state?.rsd?.[key] || state?.rsd?.[rsdIdFull]);
 }
-function _page_isReqSatisfied(reqId, state) {
+/*function _page_isReqSatisfied(reqId, state) {
     if (reqId.startsWith('bld.')) { const p = H.parseBldKey(reqId); return p ? (computeOwnedMaxBySeriesFromState(state, 'bld')[p.series] || 0) >= p.level : false; }
     if (reqId.startsWith('rsd.')) return hasResearchInState(state, reqId);
     if (reqId.startsWith('add.')) { const m = reqId.match(/^add\.(.+)\.l(\d+)$/); return m ? (computeOwnedMaxBySeriesFromState(state, 'add')[`add.${m[1]}`] || 0) >= Number(m[2]) : false; }
     return false;
-}
+}*/
 
 // Compute owned max per series from provided state (not window)
 function computeOwnedMaxBySeriesFromState(state, stateKey = 'bld') {

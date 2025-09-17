@@ -2,7 +2,7 @@
 import { parseBldKey, normalizePrice } from './helpers.js';
 import { applySpeedBuffsToDuration } from './calcEngine-lite.js';
 
-// GÃ¦t action ud fra item
+// G+ªt action ud fra item
 function inferAction(item) {
   const id = String(item?.id || '');
   if (id.startsWith('rsd.')) return 'produce';            // research behandles som produce
@@ -106,11 +106,24 @@ export function requirementInfo(item, state, caches = {}) {
   const { array: reqIds, text: reqString } = normalizeReq(item.req);
   const ownedBuildings = caches.ownedBuildings || computeOwnedMap(state.bld);
   const ownedAddons = caches.ownedAddons || computeOwnedMap(state.add);
+  const ownedResearch = caches.ownedResearch || computeResearchOwned(state);
 
-  const hasResearch = caches.hasResearch || ((rid) => {
-    const key = String(rid).replace(/^rsd\./, '');
-    return !!(state?.research?.[key] || state?.rsd?.[key] || state?.rsd?.[rid]);
-  });
+  const hasResearch =
+    caches.hasResearch ||
+    ((rid) => {
+      const ridStr = String(rid);
+      const match = ridStr.match(/^rsd\.(.+)\.l(\d+)$/);
+      if (match) {
+        const [, family, level] = match;
+        const series = `rsd.${family}`;
+        if ((ownedResearch[series] || 0) >= Number(level)) return true;
+      } else {
+        const series = `rsd.${ridStr.replace(/^rsd\./, '')}`;
+        if ((ownedResearch[series] || 0) > 0) return true;
+      }
+      const key = ridStr.replace(/^rsd\./, '');
+      return !!(state?.research?.[key] || state?.rsd?.[key] || state?.rsd?.[ridStr]);
+    });
 
   let reqOk = true;
   for (const reqId of reqIds) {
@@ -184,7 +197,7 @@ export function formatProduction(def, defs) {
     return `${sign}${amount}${emoji}`;
   });
   const period = def?.yield_period_str;
-  return period ? `${parts.join(' â€¢ ')} / ${period}` : parts.join(' â€¢ ');
+  return period ? `${parts.join(' ÔÇó ')} / ${period}` : parts.join(' ÔÇó ');
 }
 
 export function formatCost(cost, defs, sign) {
@@ -197,8 +210,7 @@ export function formatCost(cost, defs, sign) {
       const prefix = sign === '+' ? '+' : '-';
       return `${prefix}${amount}${emoji}`;
     })
-    .join(' â€¢ ');
+    .join(' ÔÇó ');
 }
-
 
 

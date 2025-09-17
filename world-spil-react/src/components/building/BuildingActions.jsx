@@ -1,8 +1,10 @@
 import React from 'react';
 import ActionButton from '../ActionButton.jsx';
 import BuildProgress from '../BuildProgress.jsx';
+import { useT } from "../../services/i18n.js";
 
 function BuildingActions({ actionItem, canStart, jobActiveId }) {
+  const t = useT();
   const progressTarget = jobActiveId || actionItem?.id;
   return (
     <div className="actions-bar">
@@ -12,10 +14,10 @@ function BuildingActions({ actionItem, canStart, jobActiveId }) {
           {progressTarget ? <BuildProgress bldId={progressTarget} /> : null}
         </>
       ) : (
-        <span className="badge owned">Owned</span>
+        <span className="badge owned">{t("ui.btn.owned.h1")}</span>
       )}
-      <button className="btn" disabled>Repair</button>
-      <button className="btn" disabled>Demolish</button>
+      <button className="btn" disabled>{t("ui.btn.repair.h1")}</button>
+      <button className="btn" disabled>{t("ui.btn.demolish.h1")}</button>
     </div>
   );
 }

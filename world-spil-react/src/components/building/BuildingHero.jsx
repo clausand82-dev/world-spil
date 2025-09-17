@@ -5,6 +5,7 @@ import ResourceCost from '../requirements/ResourceCost.jsx';
 import DemandList from '../requirements/DemandList.jsx';
 import StatRequirement from '../requirements/StatRequirement.jsx';
 import { prettyTime } from '../../services/helpers.js';
+import { useT } from "../../services/i18n.js";
 
 function BuildingHero({ heroDef, heroId, durabilityPct, jobActiveId, footprintText, animalCapText, actionTarget, requirementState }) {
   const jobActive = !!jobActiveId;
@@ -13,7 +14,7 @@ function BuildingHero({ heroDef, heroId, durabilityPct, jobActiveId, footprintTe
     : false;
   const timeValue = actionTarget?.duration != null ? prettyTime(actionTarget.duration) : '-';
   const timeTitle = hasBuffedTime ? `Normal: ${prettyTime(actionTarget.durationBase ?? 0)}` : undefined;
-
+const t = useT(); // bruges til sprog
   return (
     <div className="detail-hero">
       <div className="photo">
@@ -33,7 +34,7 @@ function BuildingHero({ heroDef, heroId, durabilityPct, jobActiveId, footprintTe
         {heroDef?.desc ? <div className="sub" style={{ marginBottom: 10 }}>{heroDef.desc}</div> : null}
         <div className="statgrid">
           <div className="statitem">
-            <div className="label">Production</div>
+            <div className="label">{t("ui.production.h1")}</div>
             <div className="value">-</div>
           </div>
           <div className="statitem">
@@ -50,28 +51,28 @@ function BuildingHero({ heroDef, heroId, durabilityPct, jobActiveId, footprintTe
             </div>
           </div>
           <div className="statitem">
-            <div className="label">Capacity</div>
-            <div className="value">{footprintText} • {animalCapText}</div>
+            <div className="label">{t("ui.capacity.h1")}</div>
+            <div className="value">{footprintText} ï¿½ {animalCapText}</div>
           </div>
           <div className="statitem">
-            <div className="label">Build cost</div>
+            <div className="label">{t("ui.buildcost.h1")}</div>
             <div className="value">{actionTarget ? (Object.keys(actionTarget.price || {}).length ? <ResourceCost cost={actionTarget.price} /> : '-') : '-'}</div>
           </div>
           <div className="statitem">
-            <div className="label">Demands</div>
+            <div className="label">{t("ui.demands.h1")}</div>
             <div className="value">{actionTarget?.reqString ? <DemandList req={actionTarget.reqString} /> : '-'}</div>
           </div>
           <div className="statitem">
-            <div className="label">Time</div>
+            <div className="label">{t("ui.time.h1")}</div>
             <div className="value" title={timeTitle}>
               {timeValue}
             </div>
           </div>
           {actionTarget?.footprint > 0 ? (
             <div className="statitem">
-              <div className="label">Byggepoint</div>
+              <div className="label">{t("ui.footprint.h1")}</div>
               <div className="value">
-                <StatRequirement icon="?" label="" value={`${actionTarget.footprint} BP`} isOk={requirementState.footprintOk} />
+                <StatRequirement icon={t("ui.emoji.footprint.h1")} label="" value={`${actionTarget.footprint} BP`} isOk={requirementState.footprintOk} />
               </div>
             </div>
           ) : null}

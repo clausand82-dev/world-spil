@@ -166,6 +166,10 @@ body{padding-bottom:72px} /* plads til quickbar */
     border-top: none;
 }
 
+.collapsible-content.expanded {
+    max-height: 500px; /* Eller et andet tal, der er højere end dit indhold nogensinde vil blive */
+}
+
 .yield-source-item {
     display: flex;
     justify-content: space-between;
@@ -177,6 +181,56 @@ body{padding-bottom:72px} /* plads til quickbar */
 .yield-source-item:last-child {
     border-bottom: none;
 }
+
+.collapsible-item {
+    cursor: pointer;
+}
+.collapsible-item .chevron {
+    transition: transform 0.2s ease-in-out;
+    display: inline-block;
+}
+.collapsible-item .chevron.expanded {
+    transform: rotate(90deg);
+}
+.collapsible-content {
+    background-color: rgba(0,0,0,0.15);
+    border-top: 1px solid var(--border);
+}
+.yield-source-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 12px;
+    font-size: 14px;
+    border-bottom: 1px solid var(--border);
+}
+.yield-source-item:last-child {
+    border-bottom: none;
+}
+
+.research-node {
+    width: 250px;
+    height: 120px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg-panel);
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+}
+.research-node.research-node--completed {
+    border-color: var(--ok);
+    background: #2a3a2a;
+}
+.research-node.research-node--available {
+    border-color: var(--primary);
+}
+.research-node.research-node--locked {
+    opacity: 0.5;
+}
+.research-node__header { display: flex; align-items: center; gap: 8px; font-weight: bold; }
+.research-node__body { flex-grow: 1; font-size: 13px; opacity: 0.8; padding-top: 5px; }
+.research-node__footer { text-align: right; }
+.btn.small { padding: 4px 8px; font-size: 12px; }
 
 
 

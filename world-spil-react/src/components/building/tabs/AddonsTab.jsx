@@ -1,11 +1,12 @@
 import React, { useEffect, useMemo } from 'react';
 import { computeOwnedMap } from '../../../services/requirements.js';
 import AddonRow from '../rows/AddonRow.jsx';
+import { useT } from "../../../services/i18n.js";
 
 function AddonsTab({ family, defs, state, stage, baseOwned, requirementCaches, filter, onFilterChange }) {
   const addonDefs = defs.add || {};
   const ownedAddons = requirementCaches.ownedAddons || {};
-
+const t = useT();
   const entries = useMemo(() => {
     const grouped = new Map();
     for (const [key, def] of Object.entries(addonDefs)) {
@@ -91,7 +92,7 @@ function AddonsTab({ family, defs, state, stage, baseOwned, requirementCaches, f
   return (
     <section className="panel section">
       <div className="section-head">
-        🧩 Building Addons
+        {t("ui.emoji.addon.h1")} {t("ui.headers.addons.h1")}
         {childTabs.length > 0 ? (
           <div className="tabs secondary-tabs">
             <button

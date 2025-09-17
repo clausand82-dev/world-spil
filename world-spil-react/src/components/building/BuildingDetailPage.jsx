@@ -8,10 +8,11 @@ import AddonsTab from './tabs/AddonsTab.jsx';
 import ResearchTab from './tabs/ResearchTab.jsx';
 import RecipesTab from './tabs/RecipesTab.jsx';
 import SpecialTab from './tabs/SpecialTab.jsx';
+import { useT } from "../../services/i18n.js"; // bruges til sprog
 
-import { computeOwnedMap, requirementInfo, collectActiveBuffs } from '../../services/requirements.js';
+import { computeOwnedMap, requirementInfo, collectActiveBuffs, computeResearchOwned } from '../../services/requirements.js';
 
-const DETAIL_TABS = ['addons', 'research', 'recipes', 'special'];
+const DETAIL_TABS = ['addons', 'research', 'recipes', 'special']; // kan jeg ikke få oversat
 
 function canonicalizeBuildingId(param) {
   if (!param) return null;
@@ -21,7 +22,7 @@ function canonicalizeBuildingId(param) {
 function BuildingDetailPage({ buildingId }) {
   const { data } = useGameData();
   const { defs, state } = data;
-
+const t = useT(); // bruges til sprog
   const canonicalId = canonicalizeBuildingId(buildingId);
   const defKey = canonicalId ? canonicalId.replace(/^bld\./, '') : null;
   const heroDef = defKey ? defs.bld?.[defKey] : null;
@@ -29,13 +30,13 @@ function BuildingDetailPage({ buildingId }) {
   const parsed = canonicalId ? parseBldKey(canonicalId) : null;
   const family = parsed?.family ?? defKey?.replace(/\.l\d+$/, '');
   const series = parsed?.series ?? (family ? `bld.${family}` : null);
-
   const ownedBuildings = useMemo(() => computeOwnedMap(state.bld), [state.bld]);
   const ownedAddons = useMemo(() => computeOwnedMap(state.add), [state.add]);
+  const ownedResearch = useMemo(() => computeResearchOwned(state), [state]);
   const activeBuffs = useMemo(() => collectActiveBuffs(defs), [defs]);
   const requirementCaches = useMemo(
-    () => ({ ownedBuildings, ownedAddons, activeBuffs }),
-    [ownedBuildings, ownedAddons, activeBuffs]
+    () => ({ ownedBuildings, ownedAddons, ownedResearch, activeBuffs }),
+    [ownedBuildings, ownedAddons, ownedResearch, activeBuffs]
   );
 
   const activeJobs = useMemo(() => {
@@ -144,7 +145,7 @@ function BuildingDetailPage({ buildingId }) {
     <section className="panel section">
       <div className="section-head">
         <a href="#/buildings" className="back">&larr;</a>
-        Building
+        {t("ui.building.h1")}
       </div>
       <div className="section-body">
         <BuildingHero
@@ -179,5 +180,7 @@ function BuildingDetailPage({ buildingId }) {
 }
 
 export default BuildingDetailPage;
+
+
 
 

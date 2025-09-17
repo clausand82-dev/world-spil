@@ -1,9 +1,10 @@
 import React, { useMemo } from 'react';
 import RecipeRow from '../rows/RecipeRow.jsx';
+import { useT } from "../../../services/i18n.js";
 
 function RecipesTab({ family, defs, state, stage, baseOwned, requirementCaches }) {
   const recipeDefs = defs.rcp || {};
-
+const t = useT();
   const entries = useMemo(() => {
     const result = [];
     for (const [key, def] of Object.entries(recipeDefs)) {
@@ -24,7 +25,7 @@ function RecipesTab({ family, defs, state, stage, baseOwned, requirementCaches }
   if (!entries.length) {
     return (
       <section className="panel section">
-        <div className="section-head">🧪 Jobs / Recipes</div>
+        <div className="section-head">{t("ui.emoji.research.h1")} {t("ui.headers.recipe.h1")}</div>
         <div className="section-body"><div className="sub">Ingen</div></div>
       </section>
     );
@@ -32,7 +33,7 @@ function RecipesTab({ family, defs, state, stage, baseOwned, requirementCaches }
 
   return (
     <section className="panel section">
-      <div className="section-head">🧪 Jobs / Recipes</div>
+      <div className="section-head">{t("ui.emoji.research.h1")} {t("ui.headers.recipe.h1")}</div>
       <div className="section-body">
         {entries.map((entry) => (
           <RecipeRow

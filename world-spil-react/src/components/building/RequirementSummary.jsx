@@ -3,9 +3,11 @@ import ResourceCost from '../requirements/ResourceCost.jsx';
 import DemandList from '../requirements/DemandList.jsx';
 import StatRequirement from '../requirements/StatRequirement.jsx';
 import { prettyTime } from '../../services/helpers.js';
+import { useT } from "../../services/i18n.js";
 
 function RequirementSummary({ price, reqString, duration, durationBase, durationText, footprint, footprintOk }) {
   const nodes = [];
+  const t = useT(); // bruges til sprog;
 
   if (price && Object.keys(price).length) {
     nodes.push(<ResourceCost key="price" cost={price} />);
@@ -22,7 +24,7 @@ function RequirementSummary({ price, reqString, duration, durationBase, duration
     nodes.push(
       <StatRequirement
         key="footprint"
-        icon="⬛"
+        icon={t("ui.emoji.footprint.h1")}
         label=""
         value={displayValue}
         isOk={isBonus || footprintOk}
@@ -37,7 +39,7 @@ function RequirementSummary({ price, reqString, duration, durationBase, duration
     nodes.push(
       <span key="time" title={timeTitle}>
         <StatRequirement
-          icon="🕐"
+          icon={t("ui.emoji.time.h1")}
           label=""
           value={resolvedDuration}
           isOk

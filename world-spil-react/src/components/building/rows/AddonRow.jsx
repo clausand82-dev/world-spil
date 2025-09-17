@@ -3,10 +3,11 @@ import ActionButton from '../../ActionButton.jsx';
 import BuildProgress from '../../BuildProgress.jsx';
 import RequirementSummary from '../RequirementSummary.jsx';
 import { requirementInfo } from '../../../services/requirements.js';
+import { useT } from "../../../services/i18n.js";
 
 function AddonRow({ entry, state, baseOwned, requirementCaches }) {
   const { def, fullId, stageReq, stageOk, ownedLevel, displayLevel } = entry;
-
+const t = useT();
   const requirement = requirementInfo(
     {
       id: fullId,
@@ -41,17 +42,17 @@ function AddonRow({ entry, state, baseOwned, requirementCaches }) {
 
   return (
     <div className="item" data-addon-row={fullId}>
-      <div className="icon">{def.icon || '🧩'}</div>
+      <div className="icon">{t("ui.emoji.addon.h1")}</div>
       <div className="grow">
         <div className="title">
           {def.name || fullId}
           {!stageOk && (
-            <span className="badge stage-locked price-bad" title={`Kræver Stage ${stageReq}`} style={{ marginLeft: 8 }}>
-              Stage locked
+            <span className="badge stage-locked price-bad" title={`${t("ui.text.demandingstage.h1")} ${stageReq}`} style={{ marginLeft: 8 }}>
+              {t("ui.text.stagelocked.h1")}
             </span>
           )}
         </div>
-        {def.desc ? <div className="sub">🔍 {def.desc}</div> : null}
+        {def.desc ? <div className="sub">{t("ui.emoji.desc.h1")} {def.desc}</div> : null}
         <RequirementSummary
           price={def.cost || {}}
           reqString={requirement.reqString}
@@ -64,7 +65,7 @@ function AddonRow({ entry, state, baseOwned, requirementCaches }) {
       </div>
       <div className="right">
         {!baseOwned ? (
-          <button className="btn" disabled>Kræver bygning</button>
+          <button className="btn" disabled>{t("ui.btn.demandbuilding.h1")}</button>
         ) : (
           <>
             <ActionButton item={actionItem} allOk={requirement.allOk && stageOk} />

@@ -22,11 +22,15 @@
   <entry key="ui.capacity.h1">Kapacitet</entry>
   <entry key="ui.durability.h1">Holdbarhed</entry>
   <entry key="ui.requirements.h1">Krav</entry>
+  <entry key="ui.time.h1">Tid</entry>
   <entry key="ui.btn.build.h1">Byg</entry>
   <entry key="ui.btn.upgrade.h1">Opgrader</entry>
   <entry key="ui.btn.needmore.h1">Mangler</entry>
   <entry key="ui.btn.owned.h1">Ejet</entry>
   <entry key="ui.btn.cancel.h1">Annuller</entry>
+  <entry key="ui.btn.repair.h1">Reparer</entry>
+  <entry key="ui.btn.demolish.h1">Ødelæg</entry>
+  <entry key="ui.btn.demandbuilding.h1">Kræver bygning</entry>
   <entry key="ui.tip.researchdone.h1">Du har allerede forsket i</entry>
   <entry key="ui.tip.builddone.h1">Du har allerede bygget</entry>
 
@@ -37,10 +41,39 @@
   <entry key="ui.footprint.h1">Byggepoint</entry>
   <entry key="ui.bar.upgrade.h1">Opgraderer</entry>
 
+  <entry key="ui.tabs.addons.h1">Addons</entry>
+  <entry key="ui.tabs.research.h1">Forskning</entry>
+  <entry key="ui.tabs.recipes.h1">Recipes</entry>
+  <entry key="ui.tabs.speciel.h1">Special</entry>
+
   <entry key="ui.animals.h1">Dyr</entry>
   <entry key="ui.fills.h1"></entry>
-  <entry key="ui.text_main.h1">Hoved</entry>
 
+  <entry key="ui.text.main.h1">Hoved</entry>
+
+  <entry key="ui.text.demandingstage.h1">Kræver Stage</entry>
+<entry key="ui.text.stagelocked.h1">Stage låst</entry>
+<entry key="ui.text.demandingstage.h1">Kræver Stage</entry>
+<entry key="ui.text.recipe.h1">Opskrift</entry>
+<entry key="ui.text.demandingstage.h1">Kræver Stage</entry>
+
+<entry key="ui.headers.recipe.h1">Jobs / Recipes</entry>
+<entry key="ui.headers.addons.h1">Bygnings Addons</entry>
+<entry key="ui.headers.research.h1">Relateret Forskning</entry>
+
+
+  
+
+  <entry key="ui.emoji.buildcost.h1">🔨</entry>
+  <entry key="ui.emoji.demands.h1">📜</entry>
+  <entry key="ui.emoji.time.h1">⏱</entry>
+  <entry key="ui.emoji.research.h1">🧪</entry>
+  <entry key="ui.emoji.recipe.h1">🧾</entry>
+  <entry key="ui.emoji.addon.h1">🧩</entry>
+  <entry key="ui.emoji.desc.h1">🔍</entry>
+  <entry key="ui.emoji.animalcap.h1">🐾</entry>
+  <entry key="ui.emoji.footprint.h1">⬛</entry>
+  
 
 <!--BUILDINGS-->
   <entry key="bld.basecamp.l1.name">Lejrbål</entry>

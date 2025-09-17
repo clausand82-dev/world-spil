@@ -1,11 +1,12 @@
 import React, { useMemo } from 'react';
 import { computeResearchOwned } from '../../../services/requirements.js';
 import ResearchRow from '../rows/ResearchRow.jsx';
+import { useT } from "../../../services/i18n.js";
 
 function ResearchTab({ family, defs, state, stage, baseOwned, requirementCaches }) {
   const researchDefs = defs.rsd || {};
   const researchOwned = useMemo(() => computeResearchOwned(state), [state]);
-
+const t = useT();
   const entries = useMemo(() => {
     const bySeries = new Map();
     for (const [key, def] of Object.entries(researchDefs)) {
@@ -47,7 +48,7 @@ function ResearchTab({ family, defs, state, stage, baseOwned, requirementCaches 
   if (!entries.length) {
     return (
       <section className="panel section">
-        <div className="section-head">🔬 Related Research</div>
+        <div className="section-head">{t("ui.emoji.research.h1")} {t("ui.headers.research.h1")}</div>
         <div className="section-body"><div className="sub">Ingen</div></div>
       </section>
     );
@@ -55,7 +56,7 @@ function ResearchTab({ family, defs, state, stage, baseOwned, requirementCaches 
 
   return (
     <section className="panel section">
-      <div className="section-head">🔬 Related Research</div>
+      <div className="section-head">{t("ui.emoji.research.h1")} {t("ui.headers.research.h1")}</div>
       <div className="section-body">
         {entries.map((entry) => (
           <ResearchRow
