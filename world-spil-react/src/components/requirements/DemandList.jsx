@@ -6,7 +6,7 @@ function computeOwnedMaxBySeriesFromState(state, stateKey = 'bld') {
   const bySeries = {};
   const source = state?.[stateKey] || {};
   for (const key of Object.keys(source)) {
-    const m = key.match(new RegExp(`^${stateKey}\\.(.+)\\.l(\\\d+)$`));
+    const m = key.match(new RegExp(`^${stateKey}\\.(.+)\\.l(\\d+)$`));
     if (!m) continue;
     const series = `${stateKey}.${m[1]}`;
     const level = Number(m[2]);
@@ -14,16 +14,46 @@ function computeOwnedMaxBySeriesFromState(state, stateKey = 'bld') {
   }
   return bySeries;
 }
+
 function hasResearchInState(state, rsdIdFull) {
   if (!rsdIdFull) return false;
-  const key = String(rsdIdFull).replace(/^rsd\./, '');
-  return !!(state?.research?.[key] || state?.rsd?.[key] || state?.rsd?.[rsdIdFull]);
+  const id = String(rsdIdFull);
+  const cleaned = id.replace(/^rsd\./, ''); // accepter både med/uden 'rsd.' prefix
+  const m = /^(.+)\.l(\d+)$/.exec(cleaned);
+
+  const bags = [state?.research || {}, state?.rsd || {}];
+
+  if (m) {
+    const base = m[1];
+    const need = Number(m[2]);
+    // Højere level dækker lavere: tjek alle niveauer >= need
+    for (let lvl = need; lvl <= 99; lvl++) {
+      const k1 = `${base}.l${lvl}`;
+      const k2 = `rsd.${base}.l${lvl}`;
+      for (const bag of bags) {
+        if (bag[k1] || bag[k2]) return true;
+      }
+    }
+    return false;
+  }
+
+  // Ikke-level-specifik: opfyldt hvis der findes en level i serien
+  const series = cleaned.replace(/\.l\d+$/, '');
+  for (const bag of bags) {
+    if (bag[series]) return true;
+    const hasAny = Object.keys(bag).some(
+      (k) => k.startsWith(`${series}.l`) || k.startsWith(`rsd.${series}.l`)
+    );
+    if (hasAny) return true;
+  }
+  return false;
 }
 
 function DemandChip({ reqId }) {
   const { data } = useGameData();
   const state = data?.state; const defs = data?.defs;
   let ok = false, label = reqId, href = '#', tip = reqId;
+
   if (reqId.startsWith('rsd.')) {
     const k = reqId.slice(4);
     const d = defs?.rsd?.[k];
@@ -59,6 +89,5 @@ function DemandChip({ reqId }) {
 export default function DemandList({ req }) {
   const reqIds = String(req || '').split(/[,;]/).map(s => s.trim()).filter(Boolean);
   if (reqIds.length === 0) return null;
-  return <>{reqIds.map((id, i) => <React.Fragment key={id}>{i > 0 && ' • '}<DemandChip reqId={id} /></React.Fragment>)}</>;
+  return <>{reqIds.map((id, i) => <React.Fragment key={`${id}-${i}`}>{i > 0 && ' • '}<DemandChip reqId={id} /></React.Fragment>)}</>;
 }
-

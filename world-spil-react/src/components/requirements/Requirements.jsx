@@ -22,8 +22,33 @@ function computeOwnedMaxBySeriesFromState(state, stateKey = 'bld') {
 
 function hasResearchInState(state, rsdIdFull) {
   if (!rsdIdFull) return false;
-  const key = String(rsdIdFull).replace(/^rsd\./, '');
-  return !!(state?.research?.[key] || state?.rsd?.[key] || state?.rsd?.[rsdIdFull]);
+  const id = String(rsdIdFull);
+  const cleaned = id.replace(/^rsd\./, '');
+  const m = /^(.+)\.l(\d+)$/.exec(cleaned);
+  const bags = [state?.research || {}, state?.rsd || {}];
+
+  if (m) {
+    const base = m[1];
+    const need = Number(m[2]);
+    for (let lvl = need; lvl <= 99; lvl++) {
+      const k1 = `${base}.l${lvl}`;
+      const k2 = `rsd.${base}.l${lvl}`;
+      for (const bag of bags) {
+        if (bag[k1] || bag[k2]) return true;
+      }
+    }
+    return false;
+  }
+
+  const series = cleaned.replace(/\.l\d+$/, '');
+  for (const bag of bags) {
+    if (bag[series]) return true;
+    const hasAny = Object.keys(bag).some(
+      (k) => k.startsWith(`${series}.l`) || k.startsWith(`rsd.${series}.l`)
+    );
+    if (hasAny) return true;
+  }
+  return false;
 }
 
 function inferAction(item) {
