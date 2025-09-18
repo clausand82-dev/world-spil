@@ -96,6 +96,8 @@ if (!function_exists('db')) {
       PDO::ATTR_EMULATE_PREPARES   => false,
     ];
     $pdo = new PDO($dsn, $user, $pass, $opt);
+    $pdo->exec("SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci");
+$pdo->exec("SET collation_connection = 'utf8mb4_unicode_ci'");
     return $pdo;
   }
 }

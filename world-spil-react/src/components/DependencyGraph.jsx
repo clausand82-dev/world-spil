@@ -1,16 +1,18 @@
-import React from 'react';
+// src/components/DependencyGraph.jsx
+
+import React, { useMemo } from 'react'; // <-- TRIN 1: Importer `useMemo`
 import ReactFlow, { Background, Controls } from 'reactflow';
 import { useCategoryTree } from '../hooks/useCategoryTree.js';
 import UniversalNode from './UniversalNode.jsx';
 
 import 'reactflow/dist/style.css';
 
-const nodeTypes = { universalNode: UniversalNode };
-
-/**
- * En genbrugelig komponent, der kan vise et afhængighedstræ for en given kategori.
- */
 export default function DependencyGraph({ type }) {
+    // =====================================================================
+    // TRIN 2: Brug `useMemo` til at "låse" nodeTypes-objektet
+    // =====================================================================
+    const nodeTypes = useMemo(() => ({ universalNode: UniversalNode }), []);
+
     const { nodes, edges } = useCategoryTree(type);
 
     if (nodes.length === 0) {

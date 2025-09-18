@@ -234,6 +234,10 @@
   <entry key="rcp.slaughterchicken.l1.desc">Giver kød og fjer ved slagtning</entry>
   <entry key="rcp.slaughterrabbit.l1.name">Slagt kanin</entry>
   <entry key="rcp.slaughterrabbit.l1.desc">Giver kød og skind ved slagtning</entry>
+  <entry key="rcp.trimsheep.l1.name">Klip får</entry>
+  <entry key="rcp.trimsheep.l1.desc">Giver uld fra får</entry>
+  <entry key="rcp.fishtofood.l1.name">Lav fiskemad</entry>
+  <entry key="rcp.fishtofood.l1.desc">Producerer mad fra fisk</entry>
 
 <!--RESOURCES--> 
   <entry key="res.wood.name">Træ</entry>

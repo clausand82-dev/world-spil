@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../_init.php';
 require_once __DIR__ . '/purchase_helpers.php';
+require_once __DIR__ . '/event_log.php';
 
 // =====================================================================
 // SECTION: LOKALE HJÆLPEFUNKTIONER (for at gøre filen selvstændig)
@@ -129,6 +130,11 @@ function apply_passive_yields_for_user(int $userId): array {
           $credited[] = ['res_id' => $resIdCanon, 'amount' => $out];
         }
       }
+
+      if (!empty($credited)) {
+      // Log én hændelse pr. item med alle ressource-linjer i payload
+      log_yield_paid($db, $userId, $itemId, $credited);
+}
 
       if (!empty($credited)) {
         $advanceS = $cycles * $periodS;
