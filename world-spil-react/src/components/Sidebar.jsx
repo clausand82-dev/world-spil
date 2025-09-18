@@ -2,6 +2,7 @@ import React from 'react';
 import { useGameData } from '../context/GameDataContext.jsx';
 import ResourceList from './ResourceList.jsx'; // Importerer den opgraderede komponent
 import AnimalList from './AnimalList.jsx';
+import SidebarLog from './SidebarLog.jsx';
 
 export default function Sidebar() {
     const { data } = useGameData();
@@ -27,6 +28,12 @@ export default function Sidebar() {
                 <div className="section-head">🐾 Dyr</div>
                 <div className="section-body">
                     <AnimalList format="simple" />
+                </div>
+            </section>
+                        <section className="panel section res-panel">
+                <div className="section-head">🐾 Log</div>
+                <div className="section-body">
+                    <SidebarLog />
                 </div>
             </section>
         </aside>
