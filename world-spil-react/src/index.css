@@ -250,9 +250,8 @@ body{padding-bottom:72px} /* plads til quickbar */
     border-color: var(--ok);
     background: #2a3a2a; /* Mørkegrøn baggrund */
 }
-.universal-node--unowned {
-    /* Standard udseende */
-}
+
+
 .universal-node--neutral { /* For ressourcer/dyr */
     background: #2a2a3a; /* Lidt blålig */
     border-color: #4a4a6a;
