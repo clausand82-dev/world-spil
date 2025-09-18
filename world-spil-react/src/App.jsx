@@ -17,6 +17,7 @@ import BuildingsPage from './pages/BuildingsPage.jsx';
 import BuildingDetailPage from './components/building/BuildingDetailPage.jsx';
 import ProductionPage from "./pages/ProductionPage.jsx";
 import OverviewPage from "./pages/OverviewPage.jsx";
+import UserPage from './components/user/UserPage.jsx';
 
 function App() {
   const { isLoading, data, error } = useGameData();
@@ -32,6 +33,7 @@ function App() {
       case 'building': return <BuildingDetailPage buildingId={param} />;
       case 'production': return <ProductionPage />;
       case 'overview': return <OverviewPage />;
+      case 'userpage': return <UserPage />;
       default: return <h1>Side ikke fundet: {page}</h1>;
     }
   };

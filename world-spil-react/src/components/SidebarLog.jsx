@@ -55,12 +55,12 @@ function isUpgrade(mode) {
 
 export default function SidebarLog({
   endpoint = '/world-spil/backend/api/user_log.php',
-  initialSinceMs = 24 * 3600 * 1000, // 24 timer
-  pollMs = 30000,                    // auto-refresh hver 30s
+  initialSinceMs = 24 * 3600 * 1000,
+  pollMs = 30000,
   limit = 200,
   maxRender = 60,
   showTypes = DEFAULT_SHOW_TYPES,
-  timesAreUTC = false,                // event_time fra API er UTC
+  timesAreUTC = true,               // API returnerer nu altid UTC
 }) {
   const { data } = useGameData();
   const defs = data?.defs || null;

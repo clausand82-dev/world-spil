@@ -20,13 +20,15 @@ function log_yield_paid(PDO $db, int $userId, string $itemId, array $creditedRow
     // Tillad kun kendte scopes
     $scope = in_array($scope, ['bld','add','rcp','rsd','ani','buildings','addon','animals'], true) ? $scope : null;
 
-    // Normaliser animals/buildings/addon scopes til 'ani','bld','add' hvis du vil:
+    // Normaliser animals/buildings/addon scopes til 'ani','bld','add'
     if ($scope === 'buildings') $scope = 'bld';
     if ($scope === 'addon') $scope = 'add';
     if ($scope === 'animals') $scope = 'ani';
 
     $payload = json_encode(array_values($creditedRows), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-    $sql = "INSERT INTO user_event_log (user_id, event_type, subject_scope, subject_key, payload_json)
-            VALUES (?, 'yield_paid', ?, ?, ?)";
+
+    // Skriv event_time som UTC for fremtidige rækker
+    $sql = "INSERT INTO user_event_log (user_id, event_type, subject_scope, subject_key, payload_json, event_time)
+            VALUES (?, 'yield_paid', ?, ?, ?, UTC_TIMESTAMP())";
     $db->prepare($sql)->execute([$userId, $scope, $key ? $scope.'.'.$key : $itemId, $payload]);
 }

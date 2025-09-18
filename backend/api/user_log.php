@@ -8,30 +8,24 @@ try {
     $uid = auth_require_user_id();
     $pdo = db();
 
-    $from   = $_GET['from']  ?? null;      // 'YYYY-MM-DD HH:MM:SS' (samme timezone som dine tider)
+    $from   = $_GET['from']  ?? null;      // 'YYYY-MM-DD HH:MM:SS' (UTC)
     $to     = $_GET['to']    ?? null;
-    $type   = $_GET['type']  ?? null;      // resource_used|resource_locked|resource_released|build_completed|build_canceled
+    $type   = $_GET['type']  ?? null;      // resource_used|resource_locked|resource_released|build_completed|build_canceled|yield_paid
     $limit  = max(1, (int)($_GET['limit']  ?? 500));
     $offset = max(0, (int)($_GET['offset'] ?? 0));
 
-    // For at undgå JSON-funktioner bruger vi GROUP_CONCAT til at bygge en JSON-array-tekst ("payload_json")
-    // 1) Resource events (låst/brugt/refunderet) pr (job, event_time)
-    // 2) Build job status events (færdig/annulleret)
-    // UNION ALL og filtrer/ordre/paginer i yderste SELECT.
-
-    // NB: Øg group_concat_max_len hvis det er nødvendigt for store payloads.
+    // For store payloads i GROUP_CONCAT
     $pdo->query("SET SESSION group_concat_max_len = 1048576");
 
-    
     $sql = "
 SELECT * FROM (
-  /* Resource events */
+  /* Resource events (låst/brugt/refunderet) grupperet pr (job,event_time) */
   SELECT
     t.user_id,
     t.event_time,
     t.event_type,
     t.subject_scope,
-    t.subject_key,
+    t.subject_key,   -- nu med fuld nøgle (fx 'bld.basecamp.l1')
     t.mode,
     CONCAT('[', GROUP_CONCAT(t.line ORDER BY t.res_id SEPARATOR ','), ']') AS payload_json
   FROM (
@@ -44,7 +38,8 @@ SELECT * FROM (
         ELSE 'resource_locked'
       END AS event_type,
       j.bj_scope AS subject_scope,
-      CONCAT(j.bj_scope, '.', j.bj_key) AS subject_key,
+      /* Returnér den fulde nøgle efter første punktum i bld_id */
+      CONCAT(j.bj_scope, '.', j.bj_fullkey) AS subject_key,
       j.mode,
       rl.res_id,
       ROUND(SUM(rl.amount), 6) AS total_amount,
@@ -61,7 +56,9 @@ SELECT * FROM (
         user_id,
         bld_id,
         SUBSTRING_INDEX(bld_id, '.', 1)  AS bj_scope,
-        SUBSTRING_INDEX(bld_id, '.', -1) AS bj_key,
+        SUBSTRING_INDEX(bld_id, '.', -1) AS bj_key,      -- bevares til JOIN med resource_locks.scope_id
+        /* Fuld nøgle: alt efter første '.' i bld_id, fx 'basecamp.l1' */
+        SUBSTRING(bld_id, LOCATE('.', bld_id) + 1) AS bj_fullkey,
         mode,
         state,
         start_utc,
@@ -91,7 +88,7 @@ SELECT * FROM (
 
   UNION ALL
 
-  /* Build job status events */
+  /* Build job status events (færdig/annulleret) */
   SELECT
     j.user_id,
     COALESCE(j.end_utc, j.updated_at_utc, j.start_utc) AS event_time,
@@ -101,7 +98,8 @@ SELECT * FROM (
       ELSE NULL
     END AS event_type,
     j.bj_scope AS subject_scope,
-    CONCAT(j.bj_scope, '.', j.bj_key) AS subject_key,
+    /* Brug fuld nøgle i output */
+    CONCAT(j.bj_scope, '.', j.bj_fullkey) AS subject_key,
     j.mode,
     '{}' COLLATE utf8mb4_unicode_ci AS payload_json
   FROM (
@@ -109,7 +107,8 @@ SELECT * FROM (
       user_id,
       bld_id,
       SUBSTRING_INDEX(bld_id, '.', 1)  AS bj_scope,
-      SUBSTRING_INDEX(bld_id, '.', -1) AS bj_key,
+      SUBSTRING_INDEX(bld_id, '.', -1) AS bj_key,        -- bruges ikke her, men holder konsistens
+      SUBSTRING(bld_id, LOCATE('.', bld_id) + 1) AS bj_fullkey,
       mode,
       state,
       start_utc,
@@ -124,7 +123,7 @@ SELECT * FROM (
 
   UNION ALL
 
-  /* Yield events (fra user_event_log) */
+  /* Yield events (allerede med fuld subject_key fra insert) */
   SELECT
     uel.user_id,
     uel.event_time,
@@ -163,15 +162,8 @@ LIMIT :limit OFFSET :offset
     }
     unset($r);
 
-    echo json_encode([
-        'ok'      => true,
-        'user_id' => $uid,
-        'count'   => count($rows),
-        'items'   => $rows,
-        // Frontend kan mappe subject_scope/subject_key og res_id til navne via defs.
-    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-
+    echo json_encode(['ok' => true, 'items' => $rows], JSON_UNESCAPED_UNICODE);
 } catch (Throwable $e) {
     http_response_code(500);
-    echo json_encode(['ok' => false, 'error' => $e->getMessage()]);
+    echo json_encode(['ok' => false, 'error' => ['code' => 'E_SERVER', 'message' => $e->getMessage()]]);
 }

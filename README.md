@@ -11,6 +11,9 @@ På to do liste ligger ting som (bliver inddelt i stages senere):
 - Handels system - NPC (snarligt)
 - Handels system - Online med andre bruger (sent)
 
+NY BRUGER IDE:
+Efter oprettelse, kort hvor man vælger start position på. Start position definerer et +1 eller -1 i money, wood, stone, eller food. Derefter vælger man måske en specialisering (landmand +1 food, producent +1 i money, )
+
 Change/update History
 
 4.0
@@ -22,14 +25,17 @@ Change/update History
 - behind the scenes: no more dublicate of name and desc
 - animal on inventory list AND sidebar
 - more lang put in (still missing alot)
+- log system added
+- login and out works again
+- make new use works again
+- active productions can now be seen on production site
+- still missing active production on production sites
 - 
 - MISSING:
 - yield have to have a cap (passive and active)
 - durability and repair functions
-- login system and new player startup (maps)
-- still missing active production on production sites
-- log system
 - build more than one active production (or maybe let it's production scale up when time goes up???)
+- maybe a new user system, where you do some selection there have influenze on you yield and so on
 
 3.5:
 - active recipes added
