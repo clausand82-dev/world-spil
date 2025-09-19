@@ -10,22 +10,21 @@ try {
 
     $from   = $_GET['from']  ?? null;      // 'YYYY-MM-DD HH:MM:SS' (UTC)
     $to     = $_GET['to']    ?? null;
-    $type   = $_GET['type']  ?? null;      // resource_used|resource_locked|resource_released|build_completed|build_canceled|yield_paid
+    $type   = $_GET['type']  ?? null;      // resource_used|resource_locked|resource_released|build_completed|build_canceled|yield_paid|yield_lost
     $limit  = max(1, (int)($_GET['limit']  ?? 500));
     $offset = max(0, (int)($_GET['offset'] ?? 0));
 
-    // For store payloads i GROUP_CONCAT
     $pdo->query("SET SESSION group_concat_max_len = 1048576");
 
     $sql = "
 SELECT * FROM (
-  /* Resource events (låst/brugt/refunderet) grupperet pr (job,event_time) */
+  /* Resource events */
   SELECT
     t.user_id,
     t.event_time,
     t.event_type,
     t.subject_scope,
-    t.subject_key,   -- nu med fuld nøgle (fx 'bld.basecamp.l1')
+    t.subject_key,
     t.mode,
     CONCAT('[', GROUP_CONCAT(t.line ORDER BY t.res_id SEPARATOR ','), ']') AS payload_json
   FROM (
@@ -38,7 +37,6 @@ SELECT * FROM (
         ELSE 'resource_locked'
       END AS event_type,
       j.bj_scope AS subject_scope,
-      /* Returnér den fulde nøgle efter første punktum i bld_id */
       CONCAT(j.bj_scope, '.', j.bj_fullkey) AS subject_key,
       j.mode,
       rl.res_id,
@@ -56,8 +54,7 @@ SELECT * FROM (
         user_id,
         bld_id,
         SUBSTRING_INDEX(bld_id, '.', 1)  AS bj_scope,
-        SUBSTRING_INDEX(bld_id, '.', -1) AS bj_key,      -- bevares til JOIN med resource_locks.scope_id
-        /* Fuld nøgle: alt efter første '.' i bld_id, fx 'basecamp.l1' */
+        SUBSTRING_INDEX(bld_id, '.', -1) AS bj_key,
         SUBSTRING(bld_id, LOCATE('.', bld_id) + 1) AS bj_fullkey,
         mode,
         state,
@@ -98,7 +95,6 @@ SELECT * FROM (
       ELSE NULL
     END AS event_type,
     j.bj_scope AS subject_scope,
-    /* Brug fuld nøgle i output */
     CONCAT(j.bj_scope, '.', j.bj_fullkey) AS subject_key,
     j.mode,
     '{}' COLLATE utf8mb4_unicode_ci AS payload_json
@@ -107,7 +103,7 @@ SELECT * FROM (
       user_id,
       bld_id,
       SUBSTRING_INDEX(bld_id, '.', 1)  AS bj_scope,
-      SUBSTRING_INDEX(bld_id, '.', -1) AS bj_key,        -- bruges ikke her, men holder konsistens
+      SUBSTRING_INDEX(bld_id, '.', -1) AS bj_key,
       SUBSTRING(bld_id, LOCATE('.', bld_id) + 1) AS bj_fullkey,
       mode,
       state,
@@ -123,7 +119,7 @@ SELECT * FROM (
 
   UNION ALL
 
-  /* Yield events (allerede med fuld subject_key fra insert) */
+  /* Yield events: paid */
   SELECT
     uel.user_id,
     uel.event_time,
@@ -135,6 +131,21 @@ SELECT * FROM (
   FROM user_event_log uel
   WHERE uel.user_id = :uid
     AND uel.event_type = 'yield_paid'
+
+  UNION ALL
+
+  /* Yield events: lost */
+  SELECT
+    uel.user_id,
+    uel.event_time,
+    'yield_lost' COLLATE utf8mb4_unicode_ci AS event_type,
+    uel.subject_scope COLLATE utf8mb4_unicode_ci AS subject_scope,
+    uel.subject_key   COLLATE utf8mb4_unicode_ci AS subject_key,
+    NULL AS mode,
+    uel.payload_json  COLLATE utf8mb4_unicode_ci AS payload_json
+  FROM user_event_log uel
+  WHERE uel.user_id = :uid
+    AND uel.event_type = 'yield_lost'
 ) AS all_events
 WHERE 1=1
 " . ($from ? " AND all_events.event_time >= :from" : "") . "
@@ -155,7 +166,7 @@ LIMIT :limit OFFSET :offset
     $stmt->execute();
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // Pars payload_json til array for nem front-end brug
+    // Pars payload_json til array
     foreach ($rows as &$r) {
         $r['payload'] = $r['payload_json'] ? json_decode((string)$r['payload_json'], true) : null;
         unset($r['payload_json']);
@@ -165,5 +176,5 @@ LIMIT :limit OFFSET :offset
     echo json_encode(['ok' => true, 'items' => $rows], JSON_UNESCAPED_UNICODE);
 } catch (Throwable $e) {
     http_response_code(500);
-    echo json_encode(['ok' => false, 'error' => ['code' => 'E_SERVER', 'message' => $e->getMessage()]]);
+    echo json_encode(['ok' => false, 'error' => ['code' => 'E_SERVER', 'message' => $e->getMessage()]], JSON_UNESCAPED_UNICODE);
 }

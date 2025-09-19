@@ -128,6 +128,19 @@
     <require>add.barn_slaughterspot.l1</require>
   </recipe>
 
+    <recipe id="rcp.slaughterdeer.l1" family="basecamp" type="recipe" lvl="1" stage="1" mode="active">
+    <yield>
+      <res id="res.rawmeat" amount="1"/>
+      <res id="res.bone" amount="1"/>
+      <res id="res.feather" amount="10"/>
+    </yield>
+    <cost>
+      <res id="ani.deer" amount="1"/>
+    </cost>
+    <time>10s</time>
+    <require></require>
+  </recipe>
+
     <recipe id="rcp.fishing.l1" family="lake" type="recipe" lvl="1" stage="1" mode="active">
     <yield period="1h">
       <res id="res.rawcommonfish" amount="10"/>
