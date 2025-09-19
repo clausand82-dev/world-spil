@@ -6,6 +6,7 @@ import DemandList from './DemandList.jsx';
 import StatRequirement from './StatRequirement.jsx';
 import { normalizePrice, parseBldKey, prettyTime, computeOwnedMaxBySeries, hasResearch } from '../../services/helpers.js';
 import { applySpeedBuffsToDuration } from '../../services/calcEngine-lite.js';
+import { useT } from "../../services/i18n.js";
 
 function inferAction(item) {
   const id = String(item?.id || '');
@@ -20,6 +21,7 @@ export function useRequirements(item) {
 
   const { price, req, duration_s, footprintDelta } = item;
   const { state } = data;
+  const t = useT();
 
   const activeBuffs = React.useMemo(() => {
     const out = [];
@@ -106,13 +108,13 @@ export function useRequirements(item) {
 
       {footprintCost > 0 && (inline ? <span className="sep">|</span> : <br />)}
       {footprintCost > 0 && (
-        <StatRequirement icon="BP:" value={`${footprintCost} BP`} isOk={footprintOk} />
+        <StatRequirement icon={t('ui.emoji.footprint.h1')} value={`${footprintCost} BP`} isOk={footprintOk} />
       )}
 
       {durationLabel && (inline ? <span className="sep">|</span> : <br />)}
       {durationLabel && (
         <StatRequirement
-          icon="Time:"
+          icon={t('ui.emoji.time.h1')}
           value={durationLabel}
           title={durationTitle}
         />

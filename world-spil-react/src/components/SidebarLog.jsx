@@ -2,7 +2,8 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useGameData } from '../context/GameDataContext.jsx';
 //import './sidebar-log.css';
 
-const DEFAULT_SHOW_TYPES = ['yield_paid', 'build_completed', 'build_canceled'];
+// Inkluder yield_lost, så tabte linjer vises i loggen
+const DEFAULT_SHOW_TYPES = ['yield_paid', 'yield_lost', 'build_completed', 'build_canceled'];
 
 function z(n) { return n < 10 ? '0' + n : '' + n; }
 
@@ -124,11 +125,25 @@ export default function SidebarLog({
       const rows = Array.isArray(ev.payload) ? ev.payload : [];
       const parts = rows.map(r => {
         const rn = resName(defs, r.res_id);
-        const amt = (Number(r.amount) % 1 === 0) ? Number(r.amount) : Number(r.amount).toFixed(2);
+        const amtNum = Number(r.amount);
+        const amt = (amtNum % 1 === 0) ? amtNum : amtNum.toFixed(2);
         return `${amt}× ${rn}`;
       });
       const who = (scope === 'ani') ? `Dit ${name}` : name;
       return { text: `${who} gav ${parts.join(', ')} i udbytte`, className: 'sl-yield' };
+    }
+
+    // NY: vis hvilke ressourcer og mængder der gik tabt
+    if (ev.event_type === 'yield_lost') {
+      const rows = Array.isArray(ev.payload) ? ev.payload : [];
+      const parts = rows.map(r => {
+        const rn = resName(defs, r.res_id);
+        const amtNum = Number(r.amount);
+        const amt = (amtNum % 1 === 0) ? amtNum : amtNum.toFixed(2);
+        return `${amt}× ${rn}`;
+      });
+      const who = (scope === 'ani') ? `Dit ${name}` : name;
+      return { text: `${who} tabte ${parts.join(', ')} (ingen plads)`, className: 'sl-yield-lost' };
     }
 
     if (ev.event_type === 'build_completed') {

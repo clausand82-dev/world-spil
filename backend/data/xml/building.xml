@@ -2,7 +2,7 @@
 <buildings source="World 2025.xlsx" sheet="Building">
   <building id="bld.basecamp.l1" family="basecamp" type="base" lvl="1" stage="1" maxInstance="1">
     <stats>footprint=25; housing=10; provision_cap=25</stats>
-    <yield period="5s">
+    <yield period="1h">
       <res id="res.money" amount="5" />
       <res id="res.wood" amount="2" />
       <res id="res.stone" amount="2" />

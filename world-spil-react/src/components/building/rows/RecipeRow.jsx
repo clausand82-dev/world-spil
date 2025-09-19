@@ -50,7 +50,7 @@ function RecipeRow({ entry, defs, state, baseOwned, requirementCaches }) {
           )}
         </div>
         {def.desc ? <div className="sub">🔍 {def.desc}</div> : null}
-        <div className="sub">{t("ui.emoji.recipe.h1")} {t("ui.text.recipe.h1")}: {inputs || '-'} ? {outputs || '-'}</div>
+        <div className="sub">{t("ui.emoji.recipe.h1")} {t("ui.text.recipe.h1")}: {inputs || '-'} → {outputs || '-'}</div>
         <RequirementSummary
           price={def.cost || {}}
           reqString={requirement.reqString}
