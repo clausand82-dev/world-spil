@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useGameData } from './context/GameDataContext.jsx';
 import { useRouter } from './services/useRouter.jsx';
 
@@ -18,12 +18,34 @@ import BuildingDetailPage from './components/building/BuildingDetailPage.jsx';
 import ProductionPage from "./pages/ProductionPage.jsx";
 import OverviewPage from "./pages/OverviewPage.jsx";
 import UserPage from './components/user/UserPage.jsx';
+import MapPage from './pages/MapPage.jsx';
 import { BoardProvider } from './components/ui/BoardProvider.jsx';
 
 function App() {
-  
   const { isLoading, data, error } = useGameData();
   const { page, param } = useRouter();
+
+  // Redirect-regler:
+  // 1) Hvis x/y mangler => tving til #/map
+  // 2) Hvis x/y findes, men "map" ikke er set før => vis #/map én gang
+  useEffect(() => {
+    if (!data) return;
+
+    const user = data?.state?.user || {};
+    const coordsMissing = (user?.x == null) || (user?.y == null);
+    const seenMapOnce = (() => {
+      try { return localStorage.getItem('ws.map.seen') === '1'; } catch { return false; }
+    })();
+
+    if (coordsMissing) {
+      if (page !== 'map') window.location.hash = '#/map';
+      return;
+    }
+
+    if (!seenMapOnce && page !== 'map') {
+      window.location.hash = '#/map';
+    }
+  }, [data, page]);
 
   const renderPage = () => {
     switch (page) {
@@ -36,6 +58,7 @@ function App() {
       case 'production': return <ProductionPage />;
       case 'overview': return <OverviewPage />;
       case 'userpage': return <UserPage />;
+      case 'map': return <MapPage />;
       default: return <h1>Side ikke fundet: {page}</h1>;
     }
   };
@@ -55,29 +78,28 @@ function App() {
 
   return (
     <BoardProvider>
-    <>
-      {/* Data-afhængige baggrundsprocesser kun når data er indlæst */}
-      {data && (
-        <>
-          <JobsRehydrator />
-          <GlobalJobsTicker />
-          <ResourceAutoRefresh intervalMs={5000} />
-        </>
-      )}
+      <>
+        {data && (
+          <>
+            <JobsRehydrator />
+            <GlobalJobsTicker />
+            <ResourceAutoRefresh intervalMs={5000} />
+          </>
+        )}
 
-      <Header />
+        <Header />
 
-      <div className="content">
-        <main id="main">
-          {mainContent}
-        </main>
+        <div className="content">
+          <main id="main">
+            {mainContent}
+          </main>
 
-        {/* Sidebar kan også være data-afhængig */}
-        {data && <Sidebar />}
-      </div>
+          {data && <Sidebar />}
+        </div>
 
-      <Quickbar activePage={page} />
-    </></BoardProvider>
+        <Quickbar activePage={page} />
+      </>
+    </BoardProvider>
   )
 }
 
