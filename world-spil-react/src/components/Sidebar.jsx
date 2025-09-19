@@ -38,7 +38,7 @@ export default function Sidebar() {
                 </div>
             </section>
                         <section className="panel section res-panel">
-                <div className="section-head">🐾 Log</div>
+                <div className="section-head">📰 Log</div>
                 <div className="section-body">
                     <SidebarLog />
                 </div>

@@ -1,20 +1,27 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { useGameData } from '../context/GameDataContext.jsx';
+import { useActiveBuildFlag, updateActiveBuilds } from '../services/activeBuildsStore.js';
 
 export default function ActionButton({ item, allOk }) {
   const { refreshData, applyLockedCostsDelta } = useGameData() || {};
-  const [localActive, setLocalActive] = useState(false);
 
   if (!item) return null;
   const { id, isUpgrade, isOwned, stageLocked, def } = item;
   const owned = (isOwned ?? item.owned) || false;
   const stageReq = item.stageReq ?? def?.stage ?? def?.stage_required;
-  const isActive = localActive || !!window.ActiveBuilds?.[id];
 
+  // Abonner på global aktiv-status for dette id
+  const isActiveExternal = useActiveBuildFlag(id);
+
+  // Lokal optimisme i det tilfælde ekstern starter ikke opdaterer ActiveBuilds med det samme
+  const [localActive, setLocalActive] = useState(false);
+
+  // Hvis ekstern status slukker (job færdigt/annulleret), ryd lokal optimisme
   useEffect(() => {
-    // Sync down from window.ActiveBuilds if present
-    if (window.ActiveBuilds && window.ActiveBuilds[id]) setLocalActive(true);
-  }, [id]);
+    if (!isActiveExternal && localActive) setLocalActive(false);
+  }, [isActiveExternal, localActive]);
+
+  const isActive = isActiveExternal || localActive;
 
   const scope = useMemo(() => (
     String(id).startsWith('rsd.') ? 'research'
@@ -23,10 +30,38 @@ export default function ActionButton({ item, allOk }) {
     : 'building'
   ), [id]);
 
+  const parseUTC = (s) => {
+    if(!s) return Date.now();
+    const m = String(s).match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2}):(\d{2})$/);
+    if (!m) return Date.now();
+    const [_, Y, M, D, h, mn, sc] = m.map(Number);
+    return Date.UTC(Y, M - 1, D, h, mn, sc);
+  };
+
   const handleStart = async () => {
     try {
       if (window.BuildJobs?.start) {
-        await window.BuildJobs.start(id);
+        // Hvis din eksterne starter returnerer job-data, brug dem til at opdatere ActiveBuilds
+        const maybeJob = await window.BuildJobs.start(id);
+        if (maybeJob && maybeJob.job_id) {
+          const job = maybeJob;
+          updateActiveBuilds((map) => {
+            map[id] = {
+              jobId: job.job_id,
+              start_utc: job.start_utc,
+              end_utc: job.end_utc,
+              durationS: job.duration_s,
+              startTs: parseUTC(job.start_utc),
+              endTs: parseUTC(job.end_utc)
+            };
+          });
+          if (Array.isArray(job.locked_costs) && job.locked_costs.length) {
+            applyLockedCostsDelta && applyLockedCostsDelta(job.locked_costs, -1);
+          }
+        } else {
+          // Ukendt returværdi -> vis optimistisk indtil ActiveBuilds opdateres andetsteds
+          setLocalActive(true);
+        }
       } else {
         const resp = await fetch('/world-spil/backend/api/actions/build_start.php', {
           method: 'POST',
@@ -37,28 +72,22 @@ export default function ActionButton({ item, allOk }) {
         const json = await resp.json();
         if (!json.ok || !json.job_id) throw new Error(json.message || 'Start failed');
         const job = json;
-        window.ActiveBuilds = window.ActiveBuilds || {};
-        const parseUTC = (s) => {
-          if(!s) return Date.now();
-          const m = String(s).match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2}):(\d{2})$/);
-          if (!m) return Date.now();
-          const [_, Y, M, D, h, mn, sc] = m.map(Number);
-          return Date.UTC(Y, M - 1, D, h, mn, sc);
-        };
-        window.ActiveBuilds[id] = {
-          jobId: job.job_id,
-          start_utc: job.start_utc,
-          end_utc: job.end_utc,
-          durationS: job.duration_s,
-          startTs: parseUTC(job.start_utc),
-          endTs: parseUTC(job.end_utc)
-        };
-        try { localStorage.setItem('ActiveBuilds_v1', JSON.stringify(window.ActiveBuilds)); } catch {}
+
+        updateActiveBuilds((map) => {
+          map[id] = {
+            jobId: job.job_id,
+            start_utc: job.start_utc,
+            end_utc: job.end_utc,
+            durationS: job.duration_s,
+            startTs: parseUTC(job.start_utc),
+            endTs: parseUTC(job.end_utc)
+          };
+        });
+
         if (Array.isArray(job.locked_costs) && job.locked_costs.length) {
           applyLockedCostsDelta && applyLockedCostsDelta(job.locked_costs, -1);
         }
       }
-      setLocalActive(true);
       refreshData && refreshData();
     } catch (e) {
       console.error('Start build failed', e);
@@ -70,6 +99,8 @@ export default function ActionButton({ item, allOk }) {
     try {
       if (window.BuildJobs?.cancel) {
         await window.BuildJobs.cancel(id);
+        // Sørg for at rydde ActiveBuilds for dette id
+        updateActiveBuilds((map) => { delete map[id]; });
       } else {
         const jobId = window.ActiveBuilds?.[id]?.jobId;
         if (!jobId) {
@@ -98,6 +129,8 @@ export default function ActionButton({ item, allOk }) {
               applyLockedCostsDelta && applyLockedCostsDelta(payload.locked_costs, +1);
             }
           }
+          // Uanset hvad, prøv at rydde ActiveBuilds for dette id lokalt
+          updateActiveBuilds((map) => { delete map[id]; });
         }
       }
     } catch (e) {
@@ -106,12 +139,15 @@ export default function ActionButton({ item, allOk }) {
         return;
       }
     }
-    if (window.ActiveBuilds) delete window.ActiveBuilds[id];
-    try { localStorage.setItem('ActiveBuilds_v1', JSON.stringify(window.ActiveBuilds)); } catch {}
+    // Defensive cleanup hvis det allerede var væk
+    if (alreadyGone) {
+      updateActiveBuilds((map) => { delete map[id]; });
+    }
     setLocalActive(false);
     refreshData && refreshData();
   };
 
+  // Samme labels/tekster som før
   // Order mirrors legacy: active -> stageLocked -> owned -> can buy -> disabled
   if (isActive) return <button className="btn" onClick={handleCancel} data-cancel-build={id}>Cancel</button>;
   if (stageLocked) return <span className="badge stage-locked price-bad" title={stageReq ? `Kræver Stage ${stageReq}` : undefined}>Stage locked</span>;
@@ -122,5 +158,3 @@ export default function ActionButton({ item, allOk }) {
   }
   return <button className="btn" disabled>Need more</button>;
 }
-
-

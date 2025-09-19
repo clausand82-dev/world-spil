@@ -1,117 +1,117 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources source="World 2025.xlsx" sheet="Ressource">
-  <resource id="res.wood" family="basic" type="basicRessource" lvl="1" stage="1.0">
+  <resource id="res.wood" family="basic" type="basicRessource" lvl="1" stage="1">
     <unit>pcs</unit>
     <unitSpace>0.5</unitSpace>
     <emoji>🌲</emoji>
   </resource>
-  <resource id="res.stone" family="basic" type="minning" lvl="1" stage="1.0">
+  <resource id="res.stone" family="basic" type="minning" lvl="1" stage="1">
     <unit>pcs</unit>
     <unitSpace>0.2</unitSpace>
     <emoji>🪨</emoji>
   </resource>
-  <resource id="res.water" family="basic" type="basicRessource" lvl="1" stage="1.0">
+  <resource id="res.water" family="basic" type="basicRessource" lvl="1" stage="1">
     <unit>l</unit>
     <unitSpace>0.1</unitSpace>
     <emoji>💧</emoji>
   </resource>
-  <resource id="res.money" family="basic" type="economy" lvl="1" stage="1.0">
+  <resource id="res.money" family="basic" type="economy" lvl="1" stage="1">
     <unit>pcs</unit>
     <unitSpace>0.0</unitSpace>
     <emoji>💰</emoji>
   </resource>
-  <resource id="res.food" family="food" type="product" lvl="1" stage="1.0">
+  <resource id="res.food" family="food" type="product" lvl="1" stage="1">
     <unit>kg</unit>
     <unitSpace>0.1</unitSpace>
     <emoji>🍖</emoji>
   </resource>
-  <resource id="res.cowmilk" family="food" type="animalProduct" lvl="1" stage="1.0">
+  <resource id="res.cowmilk" family="food" type="animalProduct" lvl="1" stage="1">
     <unit>l</unit>
     <unitSpace>0.1</unitSpace>
     <emoji>🥛</emoji>
     <stats>origin_animal=cow</stats>
   </resource>
-  <resource id="res.goatmilk" family="food" type="animalProduct" lvl="1" stage="1.0">
+  <resource id="res.goatmilk" family="food" type="animalProduct" lvl="1" stage="1">
     <unit>l</unit>
     <unitSpace>0.1</unitSpace>
     <emoji>🥛</emoji>
     <stats>origin_animal=goat</stats>
   </resource>
-  <resource id="res.egg" family="food" type="animalProduct" lvl="1" stage="1.0">
+  <resource id="res.egg" family="food" type="animalProduct" lvl="1" stage="1">
     <unit>pcs</unit>
     <unitSpace>0.1</unitSpace>
     <emoji>🥚</emoji>
     <stats>origin_animal=chicken</stats>
   </resource>
-  <resource id="res.wool" family="rawproduct" type="animalProduct" lvl="1" stage="1.0">
+  <resource id="res.wool" family="rawproduct" type="animalProduct" lvl="1" stage="1">
     <unit>pcs</unit>
     <unitSpace>0.2</unitSpace>
     <emoji>🔷</emoji >
     <stats>origin_animal=sheep</stats>
   </resource>
-  <resource id="res.wheat" family="food" type="grain" lvl="1" stage="1.0">
+  <resource id="res.wheat" family="food" type="grain" lvl="1" stage="1">
     <unit>kg</unit>
     <unitSpace>0.5</unitSpace>
     <emoji>🌾</emoji >
   </resource>
-  <resource id="res.oats" family="food" type="grain" lvl="1" stage="1.0">
+  <resource id="res.oats" family="food" type="grain" lvl="1" stage="1">
     <unit>kg</unit>
     <unitSpace>0.5</unitSpace>
     <emoji>🌾</emoji >
   </resource>
-  <resource id="res.salt" family="basic" type="basicRessource" lvl="1" stage="1.0">
+  <resource id="res.salt" family="basic" type="basicRessource" lvl="1" stage="1">
     <unit>kg</unit>
     <unitSpace>0.4</unitSpace>
     <emoji>🧂</emoji >
   </resource>
-  <resource id="res.straw" family="byproduct" type="fieldCrop" lvl="1" stage="1.0">
+  <resource id="res.straw" family="byproduct" type="fieldCrop" lvl="1" stage="1">
     <unit>kg</unit>
     <unitSpace>0.5</unitSpace>
     <emoji>🌾</emoji >
   </resource>
-  <resource id="res.fertilizer" family="byproduct" type="fertilizer" lvl="1" stage="1.0">
+  <resource id="res.fertilizer" family="byproduct" type="fertilizer" lvl="1" stage="1">
     <unit>kg</unit>
     <unitSpace>0.5</unitSpace>
     <emoji>💩</emoji >
   </resource>
-  <resource id="res.rawhide" family="rawproduct" type="animalProduct" lvl="1" stage="1.0">
+  <resource id="res.rawhide" family="rawproduct" type="animalProduct" lvl="1" stage="1">
     <unit>pcs</unit>
     <unitSpace>0.1</unitSpace>
     <emoji>🔶</emoji >    
   </resource>
-  <resource id="res.rawmeat" family="rawproduct" type="animalProduct" lvl="1" stage="1.0">
+  <resource id="res.rawmeat" family="rawproduct" type="animalProduct" lvl="1" stage="1">
     <unit>pcs</unit>
     <unitSpace>0.1</unitSpace>
     <emoji>🥩</emoji >
   </resource>
-  <resource id="res.feather" family="rawproduct" type="animalProduct" lvl="1" stage="1.0">
+  <resource id="res.feather" family="rawproduct" type="animalProduct" lvl="1" stage="1">
     <unit>pcs</unit>
     <unitSpace>0.1</unitSpace>
     <emoji>🪶</emoji >
   </resource>
-  <resource id="res.bone" family="byproduct" type="animalProduct" lvl="1" stage="1.0">
+  <resource id="res.bone" family="byproduct" type="animalProduct" lvl="1" stage="1">
     <unit>pcs</unit>
     <unitSpace>0.1</unitSpace>
     <emoji>🦴</emoji >
   </resource>
 
 
-  <resource id="res.hide" family="product" type="animalProduct" lvl="1" stage="1.0">
+  <resource id="res.hide" family="product" type="animalProduct" lvl="1" stage="1">
     <unit>pcs</unit>
     <unitSpace>0.2</unitSpace>
     <emoji>🔶</emoji >
   </resource>
-  <resource id="res.leather" family="product" type="animalProduct" lvl="1" stage="1.0">
+  <resource id="res.leather" family="product" type="animalProduct" lvl="1" stage="1">
     <unit>pcs</unit>
     <unitSpace>0.2</unitSpace>
     <emoji>🦴</emoji  >
   </resource>
-    <resource id="res.firewood" family="product" type="product" lvl="1" stage="1.0">
+    <resource id="res.firewood" family="product" type="product" lvl="1" stage="1">
     <unit>pcs</unit>
     <unitSpace>0.1</unitSpace>
     <emoji>🪵</emoji  >
   </resource>
-  <resource id="res.rawcommonfish" family="product" type="product" lvl="1" stage="1.0">
+  <resource id="res.rawcommonfish" family="product" type="product" lvl="1" stage="1">
     <unit>pcs</unit>
     <unitSpace>0.1</unitSpace>
     <emoji>🐟</emoji>

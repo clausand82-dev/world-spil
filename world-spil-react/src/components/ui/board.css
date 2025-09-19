@@ -1,0 +1,93 @@
+.board {
+  position: relative;
+}
+
+.board-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  user-select: none; /* bedre drag-oplevelse */
+}
+
+.board-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.board-icon {
+  opacity: 0.9;
+}
+
+.board-toggle {
+  padding: 2px 8px;
+  line-height: 1;
+  min-height: 24px;
+}
+
+.board-toggle .chevron {
+  display: inline-block;
+  font-size: 14px;
+}
+
+.board-body {
+  transition: opacity 120ms ease;
+}
+.board.is-closed .board-body {
+  opacity: 0.0;
+}
+
+/* Portal-lag inde i containeren */
+.board-portal-layer {
+  position: relative;      /* vigtigt: positionere child-boards absolut i container */
+  inset: 0;
+  pointer-events: none;    /* så klik "går igennem" uden for boards */
+}
+
+/* Popup-styling og positionering */
+.board.is-popup {
+  position: absolute;
+  pointer-events: auto;       /* gen-aktiver pointer events for selve boardet */
+  max-height: calc(100vh - 32px);
+  overflow: auto;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+  border-radius: 10px;
+  background: var(--panel-bg, #fff);
+}
+
+/* Resizers */
+.board-resize-handle {
+  position: absolute;
+  background: transparent;
+}
+
+.board-resize-right {
+  top: 0;
+  right: 0;
+  width: 8px;
+  height: 100%;
+  cursor: ew-resize;
+}
+
+.board-resize-bottom {
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 8px;
+  cursor: ns-resize;
+}
+
+.board-resize-corner {
+  right: 0;
+  bottom: 0;
+  width: 14px;
+  height: 14px;
+  cursor: nwse-resize;
+}
+
+/* Valgfrit overlay for modal-agtig effekt */
+.board-overlay {
+  position: absolute; /* overlay tegnes inde i containeren nu */
+  inset: 0;
+  background: rgba(0,0,0,0.35);
+}

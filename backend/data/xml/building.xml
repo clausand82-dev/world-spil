@@ -191,7 +191,7 @@
   </building>
 
   <building id="bld.forest.l2" family="forest" type="nature" lvl="2" stage="1">
-    <stats>footprint=-4;animal_cap=250</stats>
+    <stats>footprint=-4;animal_cap=100</stats>
     <cost>
       <res id="res.money" amount="460" />
       <res id="res.wood" amount="25" />

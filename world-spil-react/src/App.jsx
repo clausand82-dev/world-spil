@@ -18,8 +18,10 @@ import BuildingDetailPage from './components/building/BuildingDetailPage.jsx';
 import ProductionPage from "./pages/ProductionPage.jsx";
 import OverviewPage from "./pages/OverviewPage.jsx";
 import UserPage from './components/user/UserPage.jsx';
+import { BoardProvider } from './components/ui/BoardProvider.jsx';
 
 function App() {
+  
   const { isLoading, data, error } = useGameData();
   const { page, param } = useRouter();
 
@@ -52,6 +54,7 @@ function App() {
   }
 
   return (
+    <BoardProvider>
     <>
       {/* Data-afhængige baggrundsprocesser kun når data er indlæst */}
       {data && (
@@ -74,8 +77,8 @@ function App() {
       </div>
 
       <Quickbar activePage={page} />
-    </>
-  );
+    </></BoardProvider>
+  )
 }
 
 export default App;

@@ -1,18 +1,22 @@
 World Spil handler om at bygge et samfund op; bygge de rigtige ting, prioterer og forske for at nå til næste stage. Hver stage tilføjet nye muligheder, og planen er at udvikle nye funktioner hele tiden. Hvert valg har betydning for funktionalitet i spillet, og er afgørende for hvad man kan eller ikke kan, samtidig med at man skal samle og prioriterer resource for næste store gennembrud.
 
 På to do liste ligger ting som (bliver inddelt i stages senere):
-- Bystyre
+- Bystyre (nye systemer som økonomi styring, sundhed, befolkning mm)
 - Mark system (via addons, snarligt)
-- Militær (sent)
+- Militær (sent) (opgradering af soldater, forskellige køretøjer, fly osv)
 - Rumudforskning (meget sent)
 - Map funktion i opret bruger sektionen (kommer snart)
-- Recipe - som aktiv produktion (kommer snart)
-- Karriere valg - skal vælges ved oprettelse, eller for eksisterende bruger når det kommer (senere)
 - Handels system - NPC (snarligt)
 - Handels system - Online med andre bruger (sent)
+- Katastrofer/Events (lav en xml)
+- Vejrsystem
+
+- Karriere valg - skal vælges ved oprettelse, eller for eksisterende bruger når det kommer - måske via valg i noget research - en gren blokerer for noget andet - kan være et nyt filter system, der bruges ved alle (bld, rsd, rcp, add mm)
+
+Et sådant system kræver en info i xml - måske noget ala at lvl 1 blokeres - måske RSD 1 har "blocked by=RSD 2" og RSD 2 har "blocked by=RSD 1"
 
 NY BRUGER IDE:
-Efter oprettelse, kort hvor man vælger start position på. Start position definerer et +1 eller -1 i money, wood, stone, eller food. Derefter vælger man måske en specialisering (landmand +1 food, producent +1 i money, )
+Efter oprettelse, kort hvor man vælger start position på (afgørende for katastrofer/events). Start position definerer et +1 eller -1 i money, wood, stone, eller food. Derefter vælger man måske en specialisering (landmand +1 food, producent +1 i money)
 
 Change/update History
 
@@ -30,12 +34,15 @@ Change/update History
 - make new use works again
 - active productions can now be seen on production site
 - still missing active production on production sites
+- experimentel fold up/down boards and moveable and resizeable boards (not use yet, just tested)
 - 
 - MISSING:
 - yield have to have a cap (passive and active)
 - durability and repair functions
 - build more than one active production (or maybe let it's production scale up when time goes up???)
 - maybe a new user system, where you do some selection there have influenze on you yield and so on
+- is destroy an options (or shall there be a tag in xml to deside - aka a "canBeDemolished" false/true)
+- new user system, old user tjek system (tjeck if old user have correct needed info or else make new user chose)
 
 3.5:
 - active recipes added

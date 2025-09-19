@@ -1,20 +1,19 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from "react";
+import { useGameData } from "../context/GameDataContext.jsx";
+import { notifyActiveBuildsChanged, updateActiveBuilds } from "../services/activeBuildsStore.js";
 
-function toTs(utcStr) {
-  if (!utcStr) return 0;
-  const m = String(utcStr).match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2}):(\d{2})$/);
-  if (!m) return 0;
-  const [_, Y, M, D, h, mn, sc] = m.map(Number);
-  return Date.UTC(Y, M - 1, D, h, mn, sc);
+function toTs(v) {
+  if (!v) return 0;
+  if (typeof v === "number") return v;
+  const d = Date.parse(v);
+  return Number.isFinite(d) ? d : 0;
 }
-
-import { useGameData } from '../context/GameDataContext.jsx';
 
 export default function BuildProgress({ bldId, style }) {
   const { refreshData, applyResourceDeltaMap } = useGameData() || {};
   const [pct, setPct] = useState(0);
   const [active, setActive] = useState(false);
-  const [label, setLabel] = useState('0%');
+  const [label, setLabel] = useState("0%");
   const intervalRef = useRef(null);
   const [completedOnce, setCompletedOnce] = useState(false);
   const completingRef = useRef(false);
@@ -26,7 +25,6 @@ export default function BuildProgress({ bldId, style }) {
     let startTs = job.startTs ?? toTs(job.start_utc);
     let endTs = job.endTs ?? toTs(job.end_utc);
     if ((!startTs || !endTs) && job.durationS) {
-      // derive end from duration if only start is present
       if (startTs) endTs = startTs + job.durationS * 1000;
     }
     return { startTs, endTs };
@@ -38,7 +36,7 @@ export default function BuildProgress({ bldId, style }) {
       if (!a || !a.startTs || !a.endTs) {
         setActive(false);
         setPct(0);
-        setLabel('0%');
+        setLabel("0%");
         return;
       }
       const now = Date.now();
@@ -47,62 +45,79 @@ export default function BuildProgress({ bldId, style }) {
       setActive(true);
       setPct(p * 100);
       setLabel(`${Math.round(p * 100)}%`);
+
       if (p >= 1 && !completedOnce) {
         const overMs = now - a.endTs;
-        // Grace period to align with server's TIMESTAMPDIFF logic and clock skew
+        // Lidt slack for clocks skew/server diff
         if (overMs < 2000) return;
         if (completingRef.current) return;
         if (now - lastAttemptRef.current < 1500) return;
+
         completingRef.current = true;
         lastAttemptRef.current = now;
         try {
           const jobId = window.ActiveBuilds?.[bldId]?.jobId;
           if (jobId) {
-            const resp = await fetch('/world-spil/backend/api/actions/build_complete.php', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ job_id: jobId })
+            const resp = await fetch("/world-spil/backend/api/actions/build_complete.php", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ job_id: jobId }),
             });
             if (resp.ok) {
               const json = await resp.json();
               if (json.ok) {
                 setCompletedOnce(true);
-                if (window.ActiveBuilds) delete window.ActiveBuilds[bldId];
-                try { localStorage.setItem('ActiveBuilds_v1', JSON.stringify(window.ActiveBuilds)); } catch {}
+
+                // VIGTIGT: undgå in-place mutation og notifér subscribers
+                updateActiveBuilds((map) => {
+                  delete map[bldId];
+                });
+
                 if (json.delta && json.delta.resources) {
                   applyResourceDeltaMap && applyResourceDeltaMap(json.delta.resources);
                 }
                 refreshData && refreshData();
               } else {
-                // Not finished yet or other server-side deferral; try later
+                // Server siger "endnu ikke færdig" -> prøv igen senere
                 completingRef.current = false;
               }
             } else {
-              // 400 Not finished yet -> back off and retry later
+              // fx 400 = ikke færdig endnu
               completingRef.current = false;
             }
           } else {
             completingRef.current = false;
           }
-        } catch (e) {
-          // transient errors; allow retry later
+        } catch {
           completingRef.current = false;
         }
       }
     }
+
     tick();
     intervalRef.current = setInterval(tick, 250);
-    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
-  }, [bldId]);
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [bldId, completedOnce, applyResourceDeltaMap, refreshData]);
 
   if (!active) return null;
 
   return (
-    <div className="build-progress" data-pb-for={bldId} style={{ display: '', marginTop: 8, width: 160, ...(style || {}) }}>
-      <div className="pb-track" style={{ position: 'relative', height: 10, background: 'var(--border,#ddd)', borderRadius: 6, overflow: 'hidden' }}>
-        <div className="pb-fill" style={{ height: '100%', width: `${pct}%`, background: 'var(--primary,#4aa)' }} />
+    <div className="build-progress" style={{ minWidth: 120, ...style }}>
+      <div className="bar-wrap" style={{ background: "#eee", borderRadius: 6, height: 10 }}>
+        <div
+          className="bar"
+          style={{
+            height: "100%",
+            width: `${pct}%`,
+            background: "#2c7be5",
+            borderRadius: 6,
+            transition: "width 150ms linear",
+          }}
+        />
       </div>
-      <div className="pb-label" style={{ fontSize: 12, marginTop: 4, opacity: 0.8 }}>{label}</div>
+      <div className="label" style={{ fontSize: 12, marginTop: 4, textAlign: "right" }}>{label}</div>
     </div>
   );
 }
