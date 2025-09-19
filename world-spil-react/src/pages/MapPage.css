@@ -1,7 +1,7 @@
 .map-wrapper {
   position: relative;
   width: 100%;
-  max-width: 1200px; /* kan justeres */
+  max-width: 1200px;
   margin: 0 auto;
   user-select: none;
 }
@@ -9,7 +9,7 @@
 .map-image {
   display: block;
   width: 100%;
-  height: auto; /* bevarer aspect ratio */
+  height: auto;
   position: relative;
   z-index: 1;
 }
@@ -27,11 +27,24 @@
   box-sizing: border-box;
   outline: 1px solid rgba(255, 255, 255, 0.08);
   background: transparent;
-  transition: background-color 120ms ease;
+  transition: background-color 120ms ease, outline-color 120ms ease;
+  cursor: pointer;
 }
 
 .grid-cell:hover {
   background: rgba(255, 255, 0, 0.15);
+}
+
+.grid-cell.selected {
+  background: rgba(0, 187, 255, 0.2);
+  outline: 2px solid #0bbfff;
+}
+
+/* Optaget: gennemsigtig rød og ikke-klikbar cursor */
+.grid-cell.occupied {
+  background: rgba(255, 0, 0, 0.18);
+  outline-color: rgba(255, 0, 0, 0.35);
+  cursor: not-allowed;
 }
 
 /* Hover HUD */
@@ -44,7 +57,51 @@
   border-radius: 6px;
   font-size: 12px;
   line-height: 1.2;
-  pointer-events: none; /* så den ikke blokerer hover */
+  pointer-events: none;
   white-space: nowrap;
   box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+}
+
+/* Modal */
+.modal-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  background: rgba(0,0,0,0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal {
+  background: var(--panel);
+  color: var(--text);
+  min-width: 280px;
+  max-width: 420px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+  padding: 12px 12px 10px;
+}
+
+.modal-title {
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.modal-body {
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.btn-primary {
+  background: var(--btn-primary-bg, #2d7ef7);
+  color: #fff;
+  border: none;
 }

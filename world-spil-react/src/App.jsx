@@ -97,7 +97,7 @@ function App() {
           {data && <Sidebar />}
         </div>
 
-        <Quickbar activePage={page} />
+        {data && page !== 'map' && <Quickbar activePage={page} />}
       </>
     </BoardProvider>
   )
