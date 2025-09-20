@@ -67,6 +67,10 @@ if (!function_exists('yield__db')) {
 
 // ================= stage-bonus regler =================
 if (!function_exists('yield__parse_stage_bonus_rules_from_xml')) {
+  /**
+   * Returnerer:
+   * [ stageId => ['forest'=>['res.wood',...], 'mining'=>[], 'field'=>[], 'water'=>[]], ... ]
+   */
   function yield__parse_stage_bonus_rules_from_xml(SimpleXMLElement $xml): array {
     $out = [];
     foreach (($xml->xpath('//stage') ?: []) as $stage) {
@@ -256,12 +260,11 @@ if (!function_exists('yield__compute_flow_for_elapsed')) {
   }
 }
 
-// ================= inventory upsert (FIX: ON DUPLICATE KEY) =================
+// ================= inventory upsert (UPSERT) =================
 if (!function_exists('yield__inventory_upsert_batch')) {
   function yield__inventory_upsert_batch(PDO $db, int $userId, array $deltaMap): void {
     if (empty($deltaMap)) return;
 
-    // Brug én UPSERT for at undgå race conditions og "Duplicate entry"
     $sql = "INSERT INTO inventory (user_id, res_id, amount)
             VALUES (:uid, :rid, :amt)
             ON DUPLICATE KEY UPDATE amount = amount + VALUES(amount)";
@@ -270,8 +273,8 @@ if (!function_exists('yield__inventory_upsert_batch')) {
     foreach ($deltaMap as $rid => $amt) {
       if (!$rid) continue;
       $a = (float)$amt;
-      if ($a == 0.0) continue; // spring no-ops over
-      $stmt->execute([':uid' => $userId, ':rid' => $rid, ':amt' => $a]);
+      if ($a == 0.0) continue;
+      $stmt->execute([':uid' => (int)$userId, ':rid' => (string)$rid, ':amt' => $a]);
     }
   }
 }
@@ -330,15 +333,12 @@ if (!function_exists('apply_passive_yields_for_user')) {
     // 3) merge og commit
     $delta = $deltaBase;
     foreach ($deltaFlow as $rid => $amt) $delta[$rid] = ($delta[$rid] ?? 0.0) + (float)$amt;
-    // Intet at skrive? Opdater “last tick” alligevel for at undgå gentagne diff
-    if (empty($delta)) {
-      yield__set_last_tick_ts_now($db, $userId);
-      return;
-    }
 
     $db->beginTransaction();
     try {
-      yield__inventory_upsert_batch($db, $userId, $delta);
+      if (!empty($delta)) {
+        yield__inventory_upsert_batch($db, $userId, $delta);
+      }
       // AVANCER til NU (sekund-precis) → undgår dobbelt-udbetaling
       yield__set_last_tick_ts_now($db, $userId);
       $db->commit();

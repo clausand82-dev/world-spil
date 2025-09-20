@@ -2,6 +2,10 @@
 declare(strict_types=1);
 if (!defined('WS_RUN_MODE')) define('WS_RUN_MODE', 'run');
 require_once __DIR__ . '/lib/lang_utils.php';
+
+// Sørg for at yield-helperne er indlæst tidligt (vi bruger wrapper nedenfor)
+require_once __DIR__ . '/lib/yield.php';
+
 if (WS_RUN_MODE === 'run') {
     header('Content-Type: application/json; charset=utf-8');
     if (session_status() !== PHP_SESSION_ACTIVE) session_start();
@@ -141,7 +145,7 @@ function strip_prefix(string $id, string $prefix): string {
   return (strncmp($id, $p, strlen($p)) === 0) ? substr($id, strlen($p)) : $id;
 }
 
-/* ======================= BUFF HELPERS ======================= */
+/* ======================= BUFF HELPERS (parsing) ======================= */
 function _xml_attr($node, $name, $default=null) { return isset($node[$name]) ? (string)$node[$name] : $default; }
 function _buff_map_op($typeAttr) {
   $t = strtolower(trim((string)$typeAttr));
@@ -174,28 +178,13 @@ function _buff_collect_from($xmlNode, string $sourceId, $defaultAppliesTo='all')
 }
 
 /**
- * Parse <stage> bonus-regler fra en XML-fil (alldata-version).
- * yield.php har sin egen helper (_parse_stage_bonus_rules_yield) for at undgå navnekonflikt.
+ * Wrapper så vi altid har en gyldig funktion – bruger yield.php’s helper.
  */
 function _parse_stage_bonus_rules(SimpleXMLElement $xml): array {
-  $out = [];
-  foreach ($xml->xpath('//stage') ?: [] as $stage) {
-    $sid = (int)($stage['id'] ?? 0);
-    if ($sid <= 0) continue;
-    $bucket = $out[$sid] ?? ['forest'=>[], 'mining'=>[], 'field'=>[], 'water'=>[]];
-    foreach ($stage->xpath('bonus') ?: [] as $b) {
-      $key = strtolower(trim((string)($b['key'] ?? '')));
-      if (!in_array($key, ['forest','mining','field','water'], true)) continue;
-      $resAttr = trim((string)($b['res'] ?? '')); if ($resAttr === '') continue;
-      foreach (explode(',', $resAttr) as $rid) {
-        $rid = trim($rid); if ($rid === '') continue;
-        $rid = str_starts_with($rid, 'res.') ? $rid : "res.$rid";
-        $bucket[$key][] = $rid;
-      }
-    }
-    $out[$sid] = $bucket;
+  if (!function_exists('yield__parse_stage_bonus_rules_from_xml')) {
+    require_once __DIR__ . '/lib/yield.php';
   }
-  return $out;
+  return yield__parse_stage_bonus_rules_from_xml($xml);
 }
 
 /* ======================= GENERIC XML PARSER HELPERS ======================= */
@@ -338,23 +327,19 @@ if (WS_RUN_MODE === 'run') {
             $uid = (int)$_SESSION['uid'];
             $pdo = db();
 
-            // Anvend passive yields (inkl. base bonus) før vi læser inventory
-            require_once __DIR__ . '/lib/yield.php';
-            apply_passive_yields_for_user($uid);
-
-            // Hent bruger – fast brug af mul_* aliaset til bonus_*
+            // 4a) Hent bruger
             $pk = _detect_users_pk_alldata($pdo);
-$sql = "SELECT $pk AS userId,
-               username, email, created_at,
-               world_id, map_id, field_id, x_coord AS x, y_coord AS y,
-               is_active, currentstage,
-               mul_forest AS bonus_forest,
-               mul_mining AS bonus_mining,
-               mul_field  AS bonus_field,
-               mul_water  AS bonus_water,
-               last_base_bonus_ts_utc
-          FROM users
-         WHERE $pk = ?";
+            $sql = "SELECT $pk AS userId,
+                           username, email, created_at,
+                           world_id, map_id, field_id, x_coord AS x, y_coord AS y,
+                           is_active, currentstage,
+                           mul_forest AS bonus_forest,
+                           mul_mining AS bonus_mining,
+                           mul_field  AS bonus_field,
+                           mul_water  AS bonus_water,
+                           last_base_bonus_ts_utc
+                      FROM users
+                     WHERE $pk = ?";
             $st = $pdo->prepare($sql);
             $st->execute([$uid]);
             if ($row = $st->fetch()) {
@@ -365,14 +350,24 @@ $sql = "SELECT $pk AS userId,
               $state['user'] = $row;
             }
 
-            // Normaliser defs['res'] FØR inventory
+            // 4b) Ejerstatus (bld/add/rsd/ani)
+            $owned_bld=[]; $stmt=$pdo->prepare("SELECT bld_id,level,durability FROM buildings WHERE user_id=?"); $stmt->execute([$uid]); foreach($stmt as $r)$owned_bld[$r['bld_id']]=$r;
+            $owned_add=[]; $stmt=$pdo->prepare("SELECT add_id,level FROM addon WHERE user_id=?"); $stmt->execute([$uid]); foreach($stmt as $r)$owned_add[$r['add_id']]=$r;
+            $owned_rsd=[]; $stmt=$pdo->prepare("SELECT rsd_id,level FROM research WHERE user_id=?"); $stmt->execute([$uid]); foreach($stmt as $r)$owned_rsd[$r['rsd_id']]=$r;
+            $owned_ani=[]; $stmt=$pdo->prepare("SELECT ani_id, quantity FROM animals WHERE user_id=?"); $stmt->execute([$uid]); foreach($stmt as $r){ $owned_ani[$r['ani_id']] = ['quantity'=>(int)$r['quantity']]; }
+
+            // 4c) Anvend passive yields (base + normale yields) FØR vi læser inventory
+            $stateMin = ['bld'=>$owned_bld,'add'=>$owned_add,'rsd'=>$owned_rsd,'ani'=>$owned_ani];
+            apply_passive_yields_for_user($uid, $defs, $stateMin);
+
+            // 4d) Normaliser defs['res'] FØR inventory
             if (!empty($defs['res'])) {
                 $norm = [];
                 foreach ($defs['res'] as $id => $row) $norm[strip_prefix($id, 'res')] = $row;
                 $defs['res'] = $norm;
             }
 
-            // Inventory
+            // 4e) Inventory (efter udbetaling)
             $invRows = $pdo->prepare("SELECT res_id, amount FROM inventory WHERE user_id = ?");
             $invRows->execute([$uid]);
             $state['inv'] = ['solid' => [], 'liquid' => []];
@@ -383,21 +378,13 @@ $sql = "SELECT $pk AS userId,
                 $state['inv'][$inv_key][$key] = ($state['inv'][$inv_key][$key] ?? 0) + (float)$r['amount'];
             }
 
-            // Bygninger/Addons/Research
-            $state['bld']=[]; $stmt=$pdo->prepare("SELECT bld_id,level,durability FROM buildings WHERE user_id=?"); $stmt->execute([$uid]); foreach($stmt as $r)$state['bld'][$r['bld_id']]=$r;
-            $state['add']=[]; $stmt=$pdo->prepare("SELECT add_id,level FROM addon WHERE user_id=?"); $stmt->execute([$uid]); foreach($stmt as $r)$state['add'][$r['add_id']]=$r;
-            $state['rsd']=[]; $stmt=$pdo->prepare("SELECT rsd_id,level FROM research WHERE user_id=?"); $stmt->execute([$uid]); foreach($stmt as $r)$state['rsd'][$r['rsd_id']]=$r;
+            // 4f) Gem ejerskab i state til klienten
+            $state['bld'] = $owned_bld;
+            $state['add'] = $owned_add;
+            $state['rsd'] = $owned_rsd;
+            $state['ani'] = $owned_ani;
 
-            // Animals
-            $state['ani'] = [];
-            $sql = "SELECT ani_id, quantity FROM animals WHERE user_id = :uid";
-            $stmt = $pdo->prepare($sql);
-            $stmt->execute([':uid' => $uid]);
-            foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $r) {
-                $state['ani'][$r['ani_id']] = ['quantity' => (int)$r['quantity']];
-            }
-
-            // Resource locks (reserverede ressourcer fraregnes i visning)
+            // 4g) Resource locks
             $locksStmt = $pdo->prepare("SELECT res_id, amount FROM resource_locks WHERE user_id = ? AND released_at IS NULL AND consumed_at IS NULL");
             $locksStmt->execute([$uid]);
             foreach ($locksStmt->fetchAll(PDO::FETCH_ASSOC) as $lock) {
@@ -424,7 +411,7 @@ $sql = "SELECT $pk AS userId,
                 $state['inv'][$bucket][$resourceKey] = max(0.0, $current - $lockAmt);
             }
 
-            // Aktive byggejobs
+            // 4h) Aktive byggejobs
             $jobs = [];
             $jobsStmt = $pdo->prepare("SELECT id, bld_id, start_utc, duration_s, end_utc FROM build_jobs WHERE user_id = ? AND state = 'running'");
             $jobsStmt->execute([$uid]);
@@ -471,74 +458,6 @@ $sql = "SELECT $pk AS userId,
         $langCode = preg_replace('~^lang\.~i', '', $defaultLangCode);
         $langRaw  = load_lang_xml($langDir, $langCode);
         $langMap  = filter_lang_for_ui($langRaw);
-
-        // === CAP-BEREGNING ===
-        $getResDef = function(array $defsRes, string $key) {
-          if (isset($defsRes[$key])) return $defsRes[$key];
-          $rid = (strpos($key, 'res.') === 0) ? $key : "res.$key";
-          if (isset($defsRes[$rid])) return $defsRes[$rid];
-          $bare = (strpos($key, 'res.') === 0) ? substr($key, 4) : $key;
-          return $defsRes[$bare] ?? null;
-        };
-        $invLiq = $state['inv']['liquid'] ?? [];
-        $invSol = $state['inv']['solid']  ?? [];
-        $usedLiquid = 0.0; $usedSolid  = 0.0; $capWarns=[];
-        foreach ($invLiq as $key => $amount) { $def=$getResDef($defs['res'], (string)$key); if(!$def){$capWarns[]="No defs for liquid '$key'"; continue;} if(!isset($def['unitSpace'])){$capWarns[]="No unitSpace for liquid '$key'"; continue;} $usedLiquid += ((float)$amount) * ((float)$def['unitSpace']); }
-        foreach ($invSol as $key => $amount) { $def=$getResDef($defs['res'], (string)$key); if(!$def){$capWarns[]="No defs for solid '$key'"; continue;} if(!isset($def['unitSpace'])) {$capWarns[]="No unitSpace for solid '$key'"; continue;} $usedSolid  += ((float)$amount) * ((float)$def['unitSpace']); }
-
-        // footprint
-        $availableFP=0; $usedFP=0;
-        foreach ($state['bld'] as $id => $val) { $key=preg_replace('/^bld\./','',$id); if(isset($defs['bld'][$key]['stats']['footprint'])){ $fp=(int)$defs['bld'][$key]['stats']['footprint']; if($fp>0)$availableFP+=$fp; elseif($fp<0)$usedFP+=$fp; } }
-        foreach ($state['add'] as $id => $val) { $key=preg_replace('/^add\./','',$id); if(isset($defs['add'][$key]['stats']['footprint'])){ $fp=(int)$defs['add'][$key]['stats']['footprint']; if($fp>0)$availableFP+=$fp; elseif($fp<0)$usedFP+=$fp; } }
-
-        // animal cap bonus fra bygninger/addons
-        $availableAC=0; $usedAC=0;
-        foreach ($state['bld'] as $id => $val) { $key=preg_replace('/^bld\./','',$id); if(isset($defs['bld'][$key]['stats']['animal_cap'])){ $ac=(int)$defs['bld'][$key]['stats']['animal_cap']; if($ac>0)$availableAC+=$ac; elseif($ac<0)$usedAC+=$ac; } }
-        foreach ($state['add'] as $id => $val) { $key=preg_replace('/^add\./','',$id); if(isset($defs['add'][$key]['stats']['animal_cap'])){ $ac=(int)$defs['add'][$key]['stats']['animal_cap']; if($ac>0)$availableAC+=$ac; elseif($ac<0)$usedAC+=$ac; } }
-
-        // animal used af dyr
-        $usedAnimalCapByAnimals=0;
-        if (!empty($state['ani']) && !empty($defs['ani'])) {
-          foreach ($state['ani'] as $aniId => $row) {
-            $qty = (int)($row['quantity'] ?? 0); if ($qty <= 0) continue;
-            $key = preg_replace('/^ani\./', '', (string)$aniId);
-            $def = $defs['ani'][$key] ?? null; if (!$def) continue;
-            $capPer = (int)abs((int)($def['stats']['animal_cap'] ?? 1)); if ($capPer <= 0) $capPer = 1;
-            $usedAnimalCapByAnimals += $capPer * $qty;
-          }
-        }
-
-        // storage caps
-        $availableSS=0; $usedSS=0;
-        foreach ($state['bld'] as $id => $val) { $key=preg_replace('/^bld\./','',$id); if(isset($defs['bld'][$key]['stats']['storageSolidCap'])){ $ss=(int)$defs['bld'][$key]['stats']['storageSolidCap']; if($ss>0)$availableSS+=$ss; elseif($ss<0)$usedSS+=$ss; } }
-        foreach ($state['add'] as $id => $val) { $key=preg_replace('/^add\./','',$id); if(isset($defs['add'][$key]['stats']['storageSolidCap'])){ $ss=(int)$defs['add'][$key]['stats']['storageSolidCap']; if($ss>0)$availableSS+=$ss; elseif($ss<0)$usedSS+=$ss; } }
-        $availableSL=0; $usedSL=0;
-        foreach ($state['bld'] as $id => $val) { $key=preg_replace('/^bld\./','',$id); if(isset($defs['bld'][$key]['stats']['storageLiquidCap'])){ $sl=(int)$defs['bld'][$key]['stats']['storageLiquidCap']; if($sl>0)$availableSL+=$sl; elseif($sl<0)$usedSL+=$sl; } }
-        foreach ($state['add'] as $id => $val) { $key=preg_replace('/^add\./','',$id); if(isset($defs['add'][$key]['stats']['storageLiquidCap'])){ $sl=(int)$defs['add'][$key]['stats']['storageLiquidCap']; if($sl>0)$availableSL+=$sl; elseif($sl<0)$usedSL+=$sl; } }
-
-        // Base fra config
-        $CONFIG = isset($config) ? $config : (isset($cfg) ? $cfg : []);
-        $liquidBase = (int)($CONFIG['start_limitations_cap']['storageLiquidCap'] ?? $CONFIG['start_limitations_cap']['storageLiquidBaseCap'] ?? 0);
-        $solidBase  = (int)($CONFIG['start_limitations_cap']['storageSolidCap']  ?? $CONFIG['start_limitations_cap']['storageSolidBaseCap']  ?? 0);
-        $footprintBase = (int)($CONFIG['start_limitations_cap']['footprintBaseCap'] ?? 0);
-        $animalBaseCap = (int)($CONFIG['start_limitations_cap']['animalBaseCap'] ?? 0);
-
-        // Bonus fra bygninger/addons
-        $bonusLiquid = $availableSL;
-        $bonusSolid  = $availableSS;
-        $bonusFootprint  = $availableFP;
-        $usedFootprint   = $usedFP;
-        $bonusAnimalCap  = $availableAC;
-
-        $usedAnimalCap = $usedAnimalCapByAnimals;
-
-        $state['cap'] = [
-          'liquid' => ['base'=>$liquidBase,'bonus'=>$bonusLiquid,'total'=>$liquidBase+$bonusLiquid,'used'=>$usedLiquid],
-          'solid'  => ['base'=>$solidBase, 'bonus'=>$bonusSolid, 'total'=>$solidBase +$bonusSolid, 'used'=>$usedSolid ],
-          'footprint' => ['base'=>$footprintBase,'bonus'=>$bonusFootprint,'total'=>$footprintBase+$bonusFootprint,'used'=>$usedFootprint],
-          'animal_cap'=> ['base'=>$animalBaseCap,'bonus'=>$bonusAnimalCap,'total'=>$animalBaseCap+$bonusAnimalCap,'used'=>$usedAnimalCap],
-        ];
-        if (!empty($_GET['debug']) && $capWarns) $state['__cap_warnings']=$capWarns;
 
         /* 7) Output */
         $out = ['defs' => $defs, 'state' => $state, 'lang' => $langMap, 'config' => $cfg];

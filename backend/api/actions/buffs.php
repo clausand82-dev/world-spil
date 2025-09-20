@@ -94,7 +94,7 @@ function collect_active_buffs(array $defs, array $state = [], ?int $now = null):
       if (!is_array($buffList)) continue;
       foreach ($buffList as $b) {
         if (!is_buff_in_window($b, $now)) continue;
-        $src = $b['source_id'] ?? (is_string($id) ? $id : null);
+        $src = $b['source_id'] ?? (is_string($id) ? ($bucket . '.' . $id) : null);
         if (!is_source_owned($src, $state)) continue;
         $out[] = $b;
       }
@@ -171,10 +171,10 @@ function apply_speed_buffs(int $baseSeconds, string $action, string $ctx_id, arr
   return (int)round($dur * $mul);
 }
 
-// ---------------------- YIELD (NY) ----------------------
-// $assoc: ['res.wood'=>12.5, ...] per kilde
-// $ctxId: fx 'bld.basecamp.l1'
+// ---------------------- YIELD ----------------------
 if (!function_exists('apply_yield_buffs_assoc')) {
+  // $assoc: ['res.wood'=>12.5, ...] per kilde
+  // $ctxId: fx 'bld.basecamp.l1'
   function apply_yield_buffs_assoc(array $assoc, string $ctxId, array $buffs): array {
     if (empty($buffs) || empty($assoc)) return $assoc;
     $result = $assoc;
