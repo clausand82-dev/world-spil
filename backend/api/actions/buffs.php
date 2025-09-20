@@ -3,25 +3,8 @@ declare(strict_types=1);
 
 /**
  * Buff helpers og anvendelse til cost, speed og yield.
- *
- * JSON-normaliseret buff-spec (fra XML):
- * - kind: "res" | "speed"
- * - For kind="res":
- *     scope/id: "all"|"solid"|"liquid"|"res.xxx"
- *     mode: "yield"|"cost"|"both"
- *     op/type: "adds"|"subt"|"mult"
- *     amount: number (mult = procent)
- *     applies_to: "all"|[ids]|grupper: "buildings","addons","research"
- *     source_id: fx "bld.basecamp.l1"
- *     start_ts?: int (unix), end_ts?: int (unix)
- * - For kind="speed":
- *     actions: "all"|["build","upgrade","produce","combine"]
- *     op: "mult"
- *     amount: number (5 = 5% hurtigere)
- *     applies_to, source_id, start_ts, end_ts som ovenfor
  */
 
-// ---------------------- tidsvindue ----------------------
 function is_buff_in_window(array $buff, ?int $now = null): bool {
   if ($now === null) $now = time();
   if (isset($buff['start_ts']) && $now < (int)$buff['start_ts']) return false;
@@ -29,7 +12,7 @@ function is_buff_in_window(array $buff, ?int $now = null): bool {
   return true;
 }
 
-// ---------------------- applies_to (ctx) ----------------------
+/* ------------ applies_to (ctx) ------------ */
 function ctx_matches($applies_to, string $ctx_id): bool {
   if (!$applies_to) return false;
   if ($applies_to === 'all') return true;
@@ -46,44 +29,70 @@ function ctx_matches($applies_to, string $ctx_id): bool {
   return in_array($ctx_id, $arr, true);
 }
 
-// ---------------------- res-scope ----------------------
+/* ------------ res-scope (normaliseret) ------------ */
 function res_scope_matches($scope, string $res_id): bool {
-  $scope = $scope ?? 'all';
-  if ($scope === 'all') return true;
-  $rid = (string)$res_id;
-  if ($scope === 'solid') {
+  $rid = strtolower((string)$res_id);
+  if (!str_starts_with($rid, 'res.')) $rid = 'res.' . $rid;
+
+  $sc = $scope ?? 'all';
+  if ($sc === 'all') return true;
+
+  if ($sc === 'solid') {
     return (str_starts_with($rid, 'res.') && !str_starts_with($rid, 'res.water') && !str_starts_with($rid, 'res.oil'));
   }
-  if ($scope === 'liquid') {
+  if ($sc === 'liquid') {
     return (str_starts_with($rid, 'res.water') || str_starts_with($rid, 'res.oil'));
   }
-  $sc = (string)$scope;
-  if (str_starts_with($sc, 'res.') && str_starts_with($rid, 'res.')) return $sc === $rid;
-  return false;
+
+  $scId = strtolower((string)$sc);
+  if (!str_starts_with($scId, 'res.')) $scId = 'res.' . $scId;
+  return $scId === $rid;
 }
 
-// ---------------------- ejer-check til filtrering af buffs ----------------------
+/* ------------ ejer-check (serie-match uden level) ------------ */
 function is_source_owned(?string $source_id, array $state): bool {
   if (!$source_id) return true;
+
   if (str_starts_with($source_id, 'rsd.')) {
     $k = preg_replace('~^rsd\.~','', $source_id);
     return !empty($state['rsd'][$k]) || !empty($state['research'][$k]) || !empty($state['rsd'][$source_id]);
   }
+
   if (str_starts_with($source_id, 'bld.')) {
-    return !empty($state['bld'][$source_id]);
+    // Eksakt match
+    if (!empty($state['bld'][$source_id])) return true;
+    // Serie: acceptér ethvert level i samme serie
+    foreach ($state['bld'] as $k => $_) {
+      if (str_starts_with($k, $source_id . '.l')) return true;
+    }
+    return false;
   }
+
   if (str_starts_with($source_id, 'add.')) {
-    return !empty($state['add'][$source_id]);
+    if (!empty($state['add'][$source_id])) return true;
+    foreach ($state['add'] as $k => $_) {
+      if (str_starts_with($k, $source_id . '.l')) return true;
+    }
+    return false;
   }
+
   if (str_starts_with($source_id, 'ani.')) {
     $v = $state['ani'][$source_id] ?? null;
     $qty = is_array($v) ? (float)($v['quantity'] ?? 0) : (float)$v;
-    return $qty > 0;
+    if ($qty > 0) return true;
+    foreach ($state['ani'] as $k => $v2) {
+      if (str_starts_with($k, $source_id . '.')) {
+        $qty2 = is_array($v2) ? (float)($v2['quantity'] ?? 0) : (float)$v2;
+        if ($qty2 > 0) return true;
+      }
+    }
+    return false;
   }
+
   return true;
 }
 
-// ---------------------- indsamling af aktive buffs ----------------------
+/* ------------ indsamling af aktive buffs ------------ */
 function collect_active_buffs(array $defs, array $state = [], ?int $now = null): array {
   if ($now === null) $now = time();
   $out = [];
@@ -103,17 +112,15 @@ function collect_active_buffs(array $defs, array $state = [], ?int $now = null):
   return $out;
 }
 
-// ---------------------- COST ----------------------
+/* ------------ COST/SPEED/YIELD som før, men med res_scope_matches ovenfor ------------ */
 function apply_cost_buffs(array $baseCost, string $ctx_id, array $buffs): array {
   $result = $baseCost;
 
-  // adds/subt
   foreach ($buffs as $b) {
     if (($b['kind'] ?? '') !== 'res') continue;
     $mode = $b['mode'] ?? 'both';
     if ($mode !== 'cost' && $mode !== 'both') continue;
     if (!ctx_matches($b['applies_to'] ?? 'all', $ctx_id)) continue;
-
     $scope = $b['scope'] ?? ($b['id'] ?? 'all');
     $op = $b['op'] ?? $b['type'] ?? '';
     $amt = (float)($b['amount'] ?? 0);
@@ -126,21 +133,19 @@ function apply_cost_buffs(array $baseCost, string $ctx_id, array $buffs): array 
     }
   }
 
-  // mult (positivt = billigere)
   foreach ($buffs as $b) {
     if (($b['kind'] ?? '') !== 'res') continue;
     $mode = $b['mode'] ?? 'both';
     if ($mode !== 'cost' && $mode !== 'both') continue;
     if (($b['op'] ?? $b['type'] ?? '') !== 'mult') continue;
     if (!ctx_matches($b['applies_to'] ?? 'all', $ctx_id)) continue;
-
     $scope = $b['scope'] ?? ($b['id'] ?? 'all');
     $pct = (float)($b['amount'] ?? 0);
     if (!$pct) continue;
 
     foreach ($result as $rid => $val) {
       if (!res_scope_matches($scope, $rid)) continue;
-      $mul = max(0.0, 1 - ($pct / 100)); // 5% → 0.95x
+      $mul = max(0.0, 1 - ($pct / 100));
       $result[$rid] = max(0, $val * $mul);
     }
   }
@@ -148,7 +153,6 @@ function apply_cost_buffs(array $baseCost, string $ctx_id, array $buffs): array 
   return $result;
 }
 
-// ---------------------- SPEED ----------------------
 function apply_speed_buffs(int $baseSeconds, string $action, string $ctx_id, array $buffs): int {
   $dur = max(0, $baseSeconds);
   $mul = 1.0;
@@ -163,18 +167,13 @@ function apply_speed_buffs(int $baseSeconds, string $action, string $ctx_id, arr
 
     $pct = (float)($b['amount'] ?? 0);
     if (!$pct) continue;
-    $mul *= max(0.0, 1 - ($pct / 100)); // 5% hurtigere → 0.95x tid
+    $mul *= max(0.0, 1 - ($pct / 100));
   }
-
-  // valgfri cap, fx min 20% af base
   $mul = max($mul, 0.2);
   return (int)round($dur * $mul);
 }
 
-// ---------------------- YIELD ----------------------
 if (!function_exists('apply_yield_buffs_assoc')) {
-  // $assoc: ['res.wood'=>12.5, ...] per kilde
-  // $ctxId: fx 'bld.basecamp.l1'
   function apply_yield_buffs_assoc(array $assoc, string $ctxId, array $buffs): array {
     if (empty($buffs) || empty($assoc)) return $assoc;
     $result = $assoc;

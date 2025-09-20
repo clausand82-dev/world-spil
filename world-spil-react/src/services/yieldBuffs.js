@@ -1,4 +1,10 @@
 // Frontend helper til at anvende yield-buffs på en mængde (typisk perHour/perSec)
+
+function normResId(id) {
+  const s = String(id || '').trim();
+  return s.startsWith('res.') ? s.toLowerCase() : `res.${s.toLowerCase()}`;
+}
+
 function ctxMatches(appliesTo, ctxId) {
   if (!appliesTo) return false;
   if (appliesTo === 'all') return true;
@@ -14,20 +20,27 @@ function ctxMatches(appliesTo, ctxId) {
 }
 
 function resScopeMatches(scope, resId) {
-  const id = String(resId || '');
-  const sc = scope || 'all';
+  const sc = (scope ?? 'all');
+  const rid = normResId(resId);
+
   if (sc === 'all') return true;
-  if (sc === 'solid') return id.startsWith('res.') && !id.startsWith('res.water') && !id.startsWith('res.oil');
-  if (sc === 'liquid') return id.startsWith('res.water') || id.startsWith('res.oil');
-  const s = String(sc);
-  if (s.startsWith('res.') && id.startsWith('res.')) return s === id;
-  return false;
+  if (sc === 'solid')
+    return rid.startsWith('res.') && !rid.startsWith('res.water') && !rid.startsWith('res.oil');
+  if (sc === 'liquid')
+    return rid.startsWith('res.water') || rid.startsWith('res.oil');
+
+  // Specifik ressource – tillad både "wood" og "res.wood"
+  const scoped = normResId(sc);
+  return scoped === rid;
 }
 
 export function applyYieldBuffsToAmount(baseAmount, resId, { appliesToCtx = 'all', activeBuffs = [] } = {}) {
   let result = Number(baseAmount || 0);
   if (!Number.isFinite(result) || !activeBuffs?.length) return baseAmount;
 
+  const rid = normResId(resId);
+
+  // adds/subt (respekter scope + applies_to)
   for (const b of activeBuffs) {
     if ((b?.kind || '') !== 'res') continue;
     const mode = b?.mode || 'both';
@@ -37,10 +50,13 @@ export function applyYieldBuffsToAmount(baseAmount, resId, { appliesToCtx = 'all
     const op = b?.op || b?.type;
     const amt = Number(b?.amount || 0);
     if (!Number.isFinite(amt) || amt === 0) continue;
+    if (!resScopeMatches(scope, rid)) continue;
+
     if (op === 'adds') result += amt;
     if (op === 'subt') result = Math.max(0, result - amt);
   }
 
+  // mult (respekter scope + applies_to)
   let mul = 1;
   for (const b of activeBuffs) {
     if ((b?.kind || '') !== 'res') continue;
@@ -49,7 +65,7 @@ export function applyYieldBuffsToAmount(baseAmount, resId, { appliesToCtx = 'all
     if ((b?.op || b?.type) !== 'mult') continue;
     if (!ctxMatches(b?.applies_to || 'all', appliesToCtx)) continue;
     const scope = b?.scope ?? b?.id ?? 'all';
-    if (!resScopeMatches(scope, resId)) continue;
+    if (!resScopeMatches(scope, rid)) continue;
     const pct = Number(b?.amount || 0);
     if (!Number.isFinite(pct) || pct === 0) continue;
     mul *= (1 + pct / 100);

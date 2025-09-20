@@ -356,6 +356,51 @@ if (WS_RUN_MODE === 'run') {
             $owned_rsd=[]; $stmt=$pdo->prepare("SELECT rsd_id,level FROM research WHERE user_id=?"); $stmt->execute([$uid]); foreach($stmt as $r)$owned_rsd[$r['rsd_id']]=$r;
             $owned_ani=[]; $stmt=$pdo->prepare("SELECT ani_id, quantity FROM animals WHERE user_id=?"); $stmt->execute([$uid]); foreach($stmt as $r){ $owned_ani[$r['ani_id']] = ['quantity'=>(int)$r['quantity']]; }
 
+            // Lige før I returnerer payload, efter stateMin er kendt og apply_passive_yields_for_user er kaldt:
+if (!function_exists('collect_active_buffs')) require_once __DIR__ . '/actions/buffs.php';
+$activeBuffs = collect_active_buffs($defs, ['bld'=>$owned_bld,'add'=>$owned_add,'rsd'=>$owned_rsd,'ani'=>$owned_ani], time());
+
+$yields_preview = []; // pr. entitet, efter buffs, for én fuld periode
+foreach (['bld','add','rsd','ani'] as $bucket) {
+  foreach (($defs[$bucket] ?? []) as $key => $def) {
+    $ctxId   = ($bucket === 'bld' ? 'bld.' : ($bucket === 'add' ? 'add.' : ($bucket === 'rsd' ? 'rsd.' : 'ani.'))) . $key;
+    $owned   = $bucket==='ani' ? !empty($owned_ani[$ctxId]) : (!empty($owned_bld[$ctxId]) || !empty($owned_add[$ctxId]) || !empty($owned_rsd[$key]) || !empty($owned_rsd[$ctxId]));
+    if (!$owned) continue;
+
+    $periodS = (function(array $def){
+      $stats = $def['stats'] ?? [];
+      foreach (['yield_period_s','yieldPeriodS','production_period_s','period_s'] as $k) {
+        if (!empty($def[$k])) return (int)$def[$k];
+        if (!empty($stats[$k])) return (int)$stats[$k];
+      }
+      return 3600;
+    })($def);
+
+    $rows = $def['yield'] ?? [];
+    $assoc = [];
+    foreach ($rows as $row) {
+      $rid = $row['id'] ?? $row['res'] ?? null;
+      $amt = $row['amount'] ?? $row['qty'] ?? null;
+      if ($rid === null || $amt === null) continue;
+      $rid = str_starts_with((string)$rid,'res.') ? (string)$rid : 'res.'.(string)$rid;
+      $assoc[$rid] = ($assoc[$rid] ?? 0.0) + (float)$amt; // én cyklus
+    }
+    if (!$assoc) continue;
+
+    // Anvend aktive buffs
+    if (!function_exists('apply_yield_buffs_assoc')) require_once __DIR__ . '/actions/buffs.php';
+    $assocBuffed = apply_yield_buffs_assoc($assoc, $ctxId, $activeBuffs);
+
+    $yields_preview[$ctxId] = [
+      'period_s' => $periodS,
+      'base'     => $assoc,
+      'buffed'   => $assocBuffed,
+    ];
+  }
+}
+$data['yields_preview'] = $yields_preview;
+
+
             // 4c) Anvend passive yields (base + normale yields) FØR vi læser inventory
             $stateMin = ['bld'=>$owned_bld,'add'=>$owned_add,'rsd'=>$owned_rsd,'ani'=>$owned_ani];
             apply_passive_yields_for_user($uid, $defs, $stateMin);
@@ -458,6 +503,74 @@ if (WS_RUN_MODE === 'run') {
         $langCode = preg_replace('~^lang\.~i', '', $defaultLangCode);
         $langRaw  = load_lang_xml($langDir, $langCode);
         $langMap  = filter_lang_for_ui($langRaw);
+
+                // === CAP-BEREGNING ===
+        $getResDef = function(array $defsRes, string $key) {
+          if (isset($defsRes[$key])) return $defsRes[$key];
+          $rid = (strpos($key, 'res.') === 0) ? $key : "res.$key";
+          if (isset($defsRes[$rid])) return $defsRes[$rid];
+          $bare = (strpos($key, 'res.') === 0) ? substr($key, 4) : $key;
+          return $defsRes[$bare] ?? null;
+        };
+        $invLiq = $state['inv']['liquid'] ?? [];
+        $invSol = $state['inv']['solid']  ?? [];
+        $usedLiquid = 0.0; $usedSolid  = 0.0; $capWarns=[];
+        foreach ($invLiq as $key => $amount) { $def=$getResDef($defs['res'], (string)$key); if(!$def){$capWarns[]="No defs for liquid '$key'"; continue;} if(!isset($def['unitSpace'])){$capWarns[]="No unitSpace for liquid '$key'"; continue;} $usedLiquid += ((float)$amount) * ((float)$def['unitSpace']); }
+        foreach ($invSol as $key => $amount) { $def=$getResDef($defs['res'], (string)$key); if(!$def){$capWarns[]="No defs for solid '$key'"; continue;} if(!isset($def['unitSpace'])) {$capWarns[]="No unitSpace for solid '$key'"; continue;} $usedSolid  += ((float)$amount) * ((float)$def['unitSpace']); }
+
+        // footprint
+        $availableFP=0; $usedFP=0;
+        foreach ($state['bld'] as $id => $val) { $key=preg_replace('/^bld\./','',$id); if(isset($defs['bld'][$key]['stats']['footprint'])){ $fp=(int)$defs['bld'][$key]['stats']['footprint']; if($fp>0)$availableFP+=$fp; elseif($fp<0)$usedFP+=$fp; } }
+        foreach ($state['add'] as $id => $val) { $key=preg_replace('/^add\./','',$id); if(isset($defs['add'][$key]['stats']['footprint'])){ $fp=(int)$defs['add'][$key]['stats']['footprint']; if($fp>0)$availableFP+=$fp; elseif($fp<0)$usedFP+=$fp; } }
+
+        // animal cap bonus fra bygninger/addons
+        $availableAC=0; $usedAC=0;
+        foreach ($state['bld'] as $id => $val) { $key=preg_replace('/^bld\./','',$id); if(isset($defs['bld'][$key]['stats']['animal_cap'])){ $ac=(int)$defs['bld'][$key]['stats']['animal_cap']; if($ac>0)$availableAC+=$ac; elseif($ac<0)$usedAC+=$ac; } }
+        foreach ($state['add'] as $id => $val) { $key=preg_replace('/^add\./','',$id); if(isset($defs['add'][$key]['stats']['animal_cap'])){ $ac=(int)$defs['add'][$key]['stats']['animal_cap']; if($ac>0)$availableAC+=$ac; elseif($ac<0)$usedAC+=$ac; } }
+
+        // animal used af dyr
+        $usedAnimalCapByAnimals=0;
+        if (!empty($state['ani']) && !empty($defs['ani'])) {
+          foreach ($state['ani'] as $aniId => $row) {
+            $qty = (int)($row['quantity'] ?? 0); if ($qty <= 0) continue;
+            $key = preg_replace('/^ani\./', '', (string)$aniId);
+            $def = $defs['ani'][$key] ?? null; if (!$def) continue;
+            $capPer = (int)abs((int)($def['stats']['animal_cap'] ?? 1)); if ($capPer <= 0) $capPer = 1;
+            $usedAnimalCapByAnimals += $capPer * $qty;
+          }
+        }
+
+        // storage caps
+        $availableSS=0; $usedSS=0;
+        foreach ($state['bld'] as $id => $val) { $key=preg_replace('/^bld\./','',$id); if(isset($defs['bld'][$key]['stats']['storageSolidCap'])){ $ss=(int)$defs['bld'][$key]['stats']['storageSolidCap']; if($ss>0)$availableSS+=$ss; elseif($ss<0)$usedSS+=$ss; } }
+        foreach ($state['add'] as $id => $val) { $key=preg_replace('/^add\./','',$id); if(isset($defs['add'][$key]['stats']['storageSolidCap'])){ $ss=(int)$defs['add'][$key]['stats']['storageSolidCap']; if($ss>0)$availableSS+=$ss; elseif($ss<0)$usedSS+=$ss; } }
+        $availableSL=0; $usedSL=0;
+        foreach ($state['bld'] as $id => $val) { $key=preg_replace('/^bld\./','',$id); if(isset($defs['bld'][$key]['stats']['storageLiquidCap'])){ $sl=(int)$defs['bld'][$key]['stats']['storageLiquidCap']; if($sl>0)$availableSL+=$sl; elseif($sl<0)$usedSL+=$sl; } }
+        foreach ($state['add'] as $id => $val) { $key=preg_replace('/^add\./','',$id); if(isset($defs['add'][$key]['stats']['storageLiquidCap'])){ $sl=(int)$defs['add'][$key]['stats']['storageLiquidCap']; if($sl>0)$availableSL+=$sl; elseif($sl<0)$usedSL+=$sl; } }
+
+        // Base fra config
+        $CONFIG = isset($config) ? $config : (isset($cfg) ? $cfg : []);
+        $liquidBase = (int)($CONFIG['start_limitations_cap']['storageLiquidCap'] ?? $CONFIG['start_limitations_cap']['storageLiquidBaseCap'] ?? 0);
+        $solidBase  = (int)($CONFIG['start_limitations_cap']['storageSolidCap']  ?? $CONFIG['start_limitations_cap']['storageSolidBaseCap']  ?? 0);
+        $footprintBase = (int)($CONFIG['start_limitations_cap']['footprintBaseCap'] ?? 0);
+        $animalBaseCap = (int)($CONFIG['start_limitations_cap']['animalBaseCap'] ?? 0);
+
+        // Bonus fra bygninger/addons
+        $bonusLiquid = $availableSL;
+        $bonusSolid  = $availableSS;
+        $bonusFootprint  = $availableFP;
+        $usedFootprint   = $usedFP;
+        $bonusAnimalCap  = $availableAC;
+
+        $usedAnimalCap = $usedAnimalCapByAnimals;
+
+        $state['cap'] = [
+          'liquid' => ['base'=>$liquidBase,'bonus'=>$bonusLiquid,'total'=>$liquidBase+$bonusLiquid,'used'=>$usedLiquid],
+          'solid'  => ['base'=>$solidBase, 'bonus'=>$bonusSolid, 'total'=>$solidBase +$bonusSolid, 'used'=>$usedSolid ],
+          'footprint' => ['base'=>$footprintBase,'bonus'=>$bonusFootprint,'total'=>$footprintBase+$bonusFootprint,'used'=>$usedFootprint],
+          'animal_cap'=> ['base'=>$animalBaseCap,'bonus'=>$bonusAnimalCap,'total'=>$animalBaseCap+$bonusAnimalCap,'used'=>$usedAnimalCap],
+        ];
+        if (!empty($_GET['debug']) && $capWarns) $state['__cap_warnings']=$capWarns;
 
         /* 7) Output */
         $out = ['defs' => $defs, 'state' => $state, 'lang' => $langMap, 'config' => $cfg];
