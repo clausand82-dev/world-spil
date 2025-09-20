@@ -2,44 +2,26 @@
 declare(strict_types=1);
 
 /**
- * Passive yield backend – “Base stage bonus” 1 gang pr. hele time.
+ * Passive yields (server):
+ * - Udbetaler BÅDE base stage-bonus og almindelige yields fra ejede kilder (bld/add/ani)
+ * - Respekterer <yield period="..."> pr. kilde (kontinuerlig pr. sekund)
+ * - Anvender yield-buffs (mode="yield") pr. kilde før kreditering
+ * - Ingen nye DB-felter: vi genbruger users.last_base_bonus_ts_utc som "last tick"
  *
- * Forudsætninger i DB:
- * - users: user_id (PK), currentstage (INT), mul_forest, mul_mining, mul_field, mul_water (FLOAT/INT),
- *          last_base_bonus_ts_utc (DATETIME NULL)
- * - inventory: user_id, res_id (fx 'res.wood'), amount (FLOAT)
- *
- * Forudsætninger i XML:
- * - En eller flere <stage id="..."> noder med underliggende <bonus key="forest|mining|field|water" res="res.foo,res.bar"/>
- * - XML-filer ligger under backend/data/xml eller den sti, der er sat i backend/data/config/config.ini (dirs.xml_dir).
- *
- * Offentlige funktioner:
- * - apply_passive_yields_for_user(int $userId): void
- *
- * Semantik:
- * - Ved første kald, hvis users.last_base_bonus_ts_utc er NULL, initialiseres den til UTC_TIMESTAMP()
- *   og der udbetales 0 (ur startes).
- * - Efterfølgende kald: udbetal kun hele timer: cycles = floor(elapsed_seconds / 3600).
- * - Udbetal pr. ressource: delta[resId] += mul_key * cycles, for alle resId i reglerne for brugerens currentstage.
- * - Når inventory er opdateret (commit), fremrykkes last_base_bonus_ts_utc med “cycles” timer.
- *
- * Bemærk:
- * - Denne fil krediterer KUN base stage-bonus. Hvis du har anden passiv udbetaling (bygninger, addons, dyr),
- *   kan du enten implementere dem her eller i din eksisterende pipeline.
+ * Offentlig API:
+ *   apply_passive_yields_for_user(int $userId, ?array $defs = null, ?array $state = null): void
+ *     - Hvis $defs/$state udelades, udbetales kun base stage-bonus (bagudkompatibelt).
+ *     - Hvis $defs og $state medsendes (som i alldata-flow), udbetales også almindelige yields.
  */
 
-
-/* ======================= Små utils ======================= */
-
+// ======================= små utils =======================
 if (!function_exists('yield__root_backend')) {
   function yield__root_backend(): string {
-    // Denne fil ligger i backend/api/lib → hop 2 op for backend/
     $backend = realpath(__DIR__ . '/..'); // backend/api
     $backend = $backend ? realpath($backend . '/..') : null; // backend/
     return $backend ?: (__DIR__ . '/../../');
   }
 }
-
 if (!function_exists('yield__load_config_ini')) {
   function yield__load_config_ini(): array {
     $path = yield__root_backend() . '/data/config/config.ini';
@@ -48,12 +30,10 @@ if (!function_exists('yield__load_config_ini')) {
     return is_array($cfg) ? $cfg : [];
   }
 }
-
 if (!function_exists('yield__xml_dir')) {
   function yield__xml_dir(): string {
     $cfg = yield__load_config_ini();
     $dir = (string)($cfg['dirs']['xml_dir'] ?? 'data/xml');
-    // Hvis relativ sti → relativ til backend/
     if (!preg_match('~^(?:[A-Za-z]:)?[\/\\\\]~', $dir)) {
       $dir = rtrim(yield__root_backend(), '/\\') . DIRECTORY_SEPARATOR . $dir;
     }
@@ -62,11 +42,7 @@ if (!function_exists('yield__xml_dir')) {
   }
 }
 
-/**
- * Lokal DB-helper.
- * Hvis global db() findes (defineret i alldata.php), så brug den.
- * Ellers læs backend/data/config/db.ini.
- */
+// DB helper
 if (!function_exists('yield__db')) {
   function yield__db(): PDO {
     if (function_exists('db')) return db();
@@ -89,13 +65,8 @@ if (!function_exists('yield__db')) {
   }
 }
 
-/* ======================= XML parsing af <stage> regler ======================= */
-
+// ================= stage-bonus regler =================
 if (!function_exists('yield__parse_stage_bonus_rules_from_xml')) {
-  /**
-   * Returnerer:
-   * [ stageId => ['forest'=>['res.wood',...], 'mining'=>[], 'field'=>[], 'water'=>[]], ... ]
-   */
   function yield__parse_stage_bonus_rules_from_xml(SimpleXMLElement $xml): array {
     $out = [];
     foreach (($xml->xpath('//stage') ?: []) as $stage) {
@@ -118,7 +89,6 @@ if (!function_exists('yield__parse_stage_bonus_rules_from_xml')) {
     return $out;
   }
 }
-
 if (!function_exists('yield__load_all_stage_bonus_rules')) {
   function yield__load_all_stage_bonus_rules(): array {
     $dir = yield__xml_dir();
@@ -135,61 +105,30 @@ if (!function_exists('yield__load_all_stage_bonus_rules')) {
   }
 }
 
-/* ======================= Base-bonus cycles og inventory opdatering ======================= */
-
-/**
- * Beregn delta for base stage-bonus siden sidste udbetaling.
- *
- * Returnerer array med:
- * - delta: map res_id => amountToAdd (float)
- * - cycles: helt antal timer udbetalt
- *
- * Sideeffekt:
- * - Hvis last_base_bonus_ts_utc er NULL/invalid, initialiseres den til nu og der udbetales 0.
- */
-if (!function_exists('yield__compute_base_stage_bonus_delta')) {
-  function yield__compute_base_stage_bonus_delta(PDO $db, int $userId): array {
+// ================= base-bonus (nu pr. sekund) =================
+if (!function_exists('yield__compute_base_stage_bonus_per_seconds')) {
+  /**
+   * Beregn base-bonus for et antal sekunder (kontinuerlig).
+   * Returnerer map: res_id => delta
+   */
+  function yield__compute_base_stage_bonus_per_seconds(PDO $db, int $userId, int $elapsedS): array {
+    if ($elapsedS <= 0) return [];
     $stmt = $db->prepare("
-      SELECT currentstage,
-             mul_forest, mul_mining, mul_field, mul_water,
-             last_base_bonus_ts_utc
+      SELECT currentstage, mul_forest, mul_mining, mul_field, mul_water
         FROM users
        WHERE user_id = ?
-      LIMIT 1
+       LIMIT 1
     ");
     $stmt->execute([$userId]);
     $u = $stmt->fetch(PDO::FETCH_ASSOC);
-    if (!$u) return ['delta' => [], 'cycles' => 0];
-
-    $now = new DateTime('now', new DateTimeZone('UTC'));
-    $lastStr = (string)($u['last_base_bonus_ts_utc'] ?? '');
-
-    if ($lastStr === '' || $lastStr === '0000-00-00 00:00:00') {
-      // Start uret første gang og udbetal ikke.
-      $init = $db->prepare("UPDATE users SET last_base_bonus_ts_utc = UTC_TIMESTAMP() WHERE user_id = ?");
-      $init->execute([$userId]);
-      return ['delta' => [], 'cycles' => 0];
-    }
-
-    try {
-      $last = new DateTime($lastStr, new DateTimeZone('UTC'));
-    } catch (Throwable $e) {
-      // Korrupt værdi → nulstil til nu, ingen udbetaling
-      $fix = $db->prepare("UPDATE users SET last_base_bonus_ts_utc = UTC_TIMESTAMP() WHERE user_id = ?");
-      $fix->execute([$userId]);
-      return ['delta' => [], 'cycles' => 0];
-    }
-
-    $elapsed = max(0, $now->getTimestamp() - $last->getTimestamp());
-    $cycles  = intdiv($elapsed, 3600);
-    if ($cycles <= 0) return ['delta' => [], 'cycles' => 0];
+    if (!$u) return [];
 
     $stageId = (int)($u['currentstage'] ?? 0);
-    if ($stageId <= 0) return ['delta' => [], 'cycles' => 0];
+    if ($stageId <= 0) return [];
 
     $rulesAll = yield__load_all_stage_bonus_rules();
     $rules = $rulesAll[$stageId] ?? null;
-    if (!$rules) return ['delta' => [], 'cycles' => 0];
+    if (!$rules) return [];
 
     $bonuses = [
       'forest' => (float)($u['mul_forest'] ?? 0),
@@ -199,84 +138,212 @@ if (!function_exists('yield__compute_base_stage_bonus_delta')) {
     ];
 
     $delta = [];
+    $hours = $elapsedS / 3600.0;
     foreach ($bonuses as $key => $perHour) {
       if ($perHour <= 0) continue;
       foreach (($rules[$key] ?? []) as $resId) {
-        $delta[$resId] = ($delta[$resId] ?? 0.0) + ($perHour * $cycles);
+        $delta[$resId] = ($delta[$resId] ?? 0.0) + ($perHour * $hours);
+      }
+    }
+    return $delta;
+  }
+}
+
+// ================= almindelige yields + buffs =================
+if (!function_exists('yield__read_period_seconds')) {
+  function yield__read_period_seconds(array $def): int {
+    $stats = $def['stats'] ?? [];
+    foreach (['yield_period_s','yieldPeriodS','production_period_s','period_s'] as $k) {
+      if (isset($def[$k]) && (int)$def[$k] > 0) return (int)$def[$k];
+      if (isset($stats[$k]) && (int)$stats[$k] > 0) return (int)$stats[$k];
+    }
+    return 3600;
+  }
+}
+if (!function_exists('yield__extract_yields_rows')) {
+  // returnerer liste af ['res_id'=>'res.xxx','amount'=>float] fra def['yield']-arrayet
+  function yield__extract_yields_rows(array $def): array {
+    $out = [];
+    $raw = $def['yield'] ?? null;
+    if (!$raw || !is_array($raw)) return $out;
+    foreach ($raw as $row) {
+      $rid = $row['id'] ?? $row['res'] ?? null;
+      if (!$rid) continue;
+      $amt = $row['amount'] ?? $row['qty'] ?? null;
+      if ($amt === null) continue;
+      $out[] = ['res_id' => (string)$rid, 'amount' => (float)$amt];
+    }
+    return $out;
+  }
+}
+if (!function_exists('yield__compute_ctx_id')) {
+  function yield__compute_ctx_id(string $bucket, string $defKey): string {
+    $pref = ($bucket === 'bld' ? 'bld.' : ($bucket === 'add' ? 'add.' : ($bucket === 'rsd' ? 'rsd.' : ($bucket==='ani'?'ani.':''))));
+    $naked = preg_replace('~^(?:bld\.|add\.|rsd\.|ani\.)~i', '', $defKey);
+    return $pref . $naked;
+  }
+}
+if (!function_exists('yield__is_owned')) {
+  function yield__is_owned(string $bucket, string $ctxId, array $state): bool {
+    if ($bucket === 'bld') return !empty($state['bld'][$ctxId]);
+    if ($bucket === 'add') return !empty($state['add'][$ctxId]);
+    if ($bucket === 'rsd') {
+      $k = preg_replace('~^rsd\.~', '', $ctxId);
+      return !empty($state['rsd'][$k]) || !empty($state['research'][$k] ?? null) || !empty($state['rsd'][$ctxId]);
+    }
+    if ($bucket === 'ani') {
+      $v = $state['ani'][$ctxId] ?? null;
+      $qty = is_array($v) ? (float)($v['quantity'] ?? 0) : (float)$v;
+      return $qty > 0;
+    }
+    return false;
+  }
+}
+if (!function_exists('yield__assoc_add')) {
+  function yield__assoc_add(array &$dst, array $src): void {
+    foreach ($src as $k => $v) $dst[$k] = ($dst[$k] ?? 0.0) + (float)$v;
+  }
+}
+if (!function_exists('yield__apply_yield_buffs_assoc')) {
+  function yield__apply_yield_buffs_assoc(array $assoc, string $ctxId, array $buffs): array {
+    if (!function_exists('apply_yield_buffs_assoc')) require_once __DIR__ . '/../actions/buffs.php';
+    return apply_yield_buffs_assoc($assoc, $ctxId, $buffs);
+  }
+}
+if (!function_exists('yield__collect_active_buffs')) {
+  function yield__collect_active_buffs(array $defs, array $state, ?int $now = null): array {
+    if (!function_exists('collect_active_buffs')) require_once __DIR__ . '/../actions/buffs.php';
+    return collect_active_buffs($defs, $state, $now ?? time());
+  }
+}
+if (!function_exists('yield__compute_flow_for_elapsed')) {
+  /**
+   * Beregn flow for elapsedS sekunder fra ejede kilder (bld/add/ani), inkl. yield-buffs.
+   */
+  function yield__compute_flow_for_elapsed(array $defs, array $state, int $elapsedS): array {
+    if ($elapsedS <= 0) return [];
+    $out = [];
+    $buffs = yield__collect_active_buffs($defs, $state);
+
+    foreach (['bld','add','ani'] as $bucket) {
+      $group = $defs[$bucket] ?? [];
+      foreach ($group as $defKey => $def) {
+        $ctxId = yield__compute_ctx_id($bucket, (string)$defKey);
+        if (!yield__is_owned($bucket, $ctxId, $state)) continue;
+
+        $periodS = yield__read_period_seconds($def);
+        if ($periodS <= 0) continue;
+
+        $rows = yield__extract_yields_rows($def);
+        if (!$rows) continue;
+
+        $assoc = [];
+        foreach ($rows as $r) {
+          $perSec = $r['amount'] / $periodS;
+          $delta = $perSec * $elapsedS;
+          if ($delta == 0.0) continue;
+          $assoc[$r['res_id']] = ($assoc[$r['res_id']] ?? 0.0) + $delta;
+        }
+
+        if ($assoc) {
+          $assoc = yield__apply_yield_buffs_assoc($assoc, $ctxId, $buffs);
+          yield__assoc_add($out, $assoc);
+        }
       }
     }
 
-    return ['delta' => $delta, 'cycles' => $cycles];
+    return $out;
   }
 }
 
-if (!function_exists('yield__advance_last_base_bonus')) {
-  /**
-   * Fremryk last_base_bonus_ts_utc med n hele timer.
-   * Kald KUN når inventory-commit er lykkedes.
-   */
-  function yield__advance_last_base_bonus(PDO $db, int $userId, int $cycles): void {
-    if ($cycles <= 0) return;
-    $stmt = $db->prepare("
-      UPDATE users
-         SET last_base_bonus_ts_utc = IFNULL(last_base_bonus_ts_utc, UTC_TIMESTAMP()),
-             last_base_bonus_ts_utc = DATE_ADD(last_base_bonus_ts_utc, INTERVAL :cycles HOUR)
-       WHERE user_id = :uid
-    ");
-    $stmt->execute([':cycles' => $cycles, ':uid' => $userId]);
-  }
-}
-
-/**
- * Upsert til inventory for en batch ressource-deltaer.
- * deltaMap: ['res.wood'=>3.0, 'res.water'=>1.0, ...]
- */
+// ================= inventory upsert (FIX: ON DUPLICATE KEY) =================
 if (!function_exists('yield__inventory_upsert_batch')) {
   function yield__inventory_upsert_batch(PDO $db, int $userId, array $deltaMap): void {
     if (empty($deltaMap)) return;
 
-    // Prøv at opdatere eksisterende rækker først
-    $upd = $db->prepare("UPDATE inventory SET amount = amount + :amt WHERE user_id = :uid AND res_id = :rid");
-    $ins = $db->prepare("INSERT INTO inventory (user_id, res_id, amount) VALUES (:uid, :rid, :amt)");
+    // Brug én UPSERT for at undgå race conditions og "Duplicate entry"
+    $sql = "INSERT INTO inventory (user_id, res_id, amount)
+            VALUES (:uid, :rid, :amt)
+            ON DUPLICATE KEY UPDATE amount = amount + VALUES(amount)";
+    $stmt = $db->prepare($sql);
 
     foreach ($deltaMap as $rid => $amt) {
-      if (!$rid || $amt == 0) continue;
-      $ok = $upd->execute([':amt' => $amt, ':uid' => $userId, ':rid' => $rid]);
-      if ($ok && $upd->rowCount() > 0) continue;
-      $ins->execute([':uid' => $userId, ':rid' => $rid, ':amt' => $amt]);
+      if (!$rid) continue;
+      $a = (float)$amt;
+      if ($a == 0.0) continue; // spring no-ops over
+      $stmt->execute([':uid' => $userId, ':rid' => $rid, ':amt' => $a]);
     }
   }
 }
 
-/* ======================= Offentlig API ======================= */
+// ================= tidspunkt-håndtering =================
+if (!function_exists('yield__get_last_tick_ts')) {
+  function yield__get_last_tick_ts(PDO $db, int $userId): ?string {
+    $st = $db->prepare("SELECT last_base_bonus_ts_utc FROM users WHERE user_id = ?");
+    $st->execute([$userId]);
+    $ts = $st->fetchColumn();
+    return $ts ? (string)$ts : null;
+  }
+}
+if (!function_exists('yield__set_last_tick_ts_now')) {
+  function yield__set_last_tick_ts_now(PDO $db, int $userId): void {
+    $st = $db->prepare("UPDATE users SET last_base_bonus_ts_utc = UTC_TIMESTAMP() WHERE user_id = ?");
+    $st->execute([$userId]);
+  }
+}
+if (!function_exists('yield__seconds_diff')) {
+  function yield__seconds_diff(PDO $db, string $fromTs): int {
+    $st = $db->prepare("SELECT GREATEST(0, TIMESTAMPDIFF(SECOND, ?, UTC_TIMESTAMP()))");
+    $st->execute([$fromTs]);
+    return (int)$st->fetchColumn();
+  }
+}
 
-/**
- * Kald denne fra alldata.php før du henter state, så inventory er opdateret.
- * Lige nu krediterer vi KUN base stage-bonus (1 gang pr. time).
- * Ønsker du at lægge bygninger/addons/dyr ind her, kan de merges i $candidates før commit.
- */
+// ================= offentlig API =================
 if (!function_exists('apply_passive_yields_for_user')) {
-  function apply_passive_yields_for_user(int $userId): void {
+  /**
+   * Hvis $defs/$state er null → kun base stage-bonus (bagudkompatibelt).
+   * Hvis $defs/$state er med → base + almindelige yields (kontinuerligt).
+   */
+  function apply_passive_yields_for_user(int $userId, ?array $defs = null, ?array $state = null): void {
     $db = yield__db();
 
-    // 1) Indsaml kandidater (kun base-bonus her)
-    $base = yield__compute_base_stage_bonus_delta($db, $userId);
-    $candidates = $base['delta']; // map: res_id => amount
-
-    if (empty($candidates)) {
-      // Intet at udbetale (enten første init eller < 1 time).
+    $lastTs = yield__get_last_tick_ts($db, $userId);
+    if (!$lastTs) {
+      // Første init – sæt tidspunkt og udbetal ikke
+      yield__set_last_tick_ts_now($db, $userId);
       return;
     }
 
-    // 2) Transaktion: skriv inventory og fremryk timestamp, hvis OK
+    $elapsedS = yield__seconds_diff($db, $lastTs);
+    if ($elapsedS <= 0) return;
+
+    // 1) base-bonus pr. sekund
+    $deltaBase = yield__compute_base_stage_bonus_per_seconds($db, $userId, $elapsedS);
+
+    // 2) almindelige yields (hvis defs+state findes)
+    $deltaFlow = [];
+    if ($defs !== null && $state !== null) {
+      $deltaFlow = yield__compute_flow_for_elapsed($defs, $state, $elapsedS);
+    }
+
+    // 3) merge og commit
+    $delta = $deltaBase;
+    foreach ($deltaFlow as $rid => $amt) $delta[$rid] = ($delta[$rid] ?? 0.0) + (float)$amt;
+    // Intet at skrive? Opdater “last tick” alligevel for at undgå gentagne diff
+    if (empty($delta)) {
+      yield__set_last_tick_ts_now($db, $userId);
+      return;
+    }
+
     $db->beginTransaction();
     try {
-      yield__inventory_upsert_batch($db, $userId, $candidates);
-      yield__advance_last_base_bonus($db, $userId, (int)($base['cycles'] ?? 0));
+      yield__inventory_upsert_batch($db, $userId, $delta);
+      // AVANCER til NU (sekund-precis) → undgår dobbelt-udbetaling
+      yield__set_last_tick_ts_now($db, $userId);
       $db->commit();
     } catch (Throwable $e) {
       $db->rollBack();
-      // Propager fejlen – alldata.php har try/catch
       throw $e;
     }
   }
