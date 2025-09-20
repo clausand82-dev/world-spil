@@ -211,7 +211,7 @@
       <res id="res.money" amount="125"/>
     </cost>
     <yield period="1h">
-      <res id="res.cowmilk" amount="1"/>
+      <res id="res.cowmilk" amount="10"/>
     </yield>
   </addon>
 

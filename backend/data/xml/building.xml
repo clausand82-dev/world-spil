@@ -11,6 +11,9 @@
     </yield>
     <durability>10.0</durability>
     <upgradesTo>bld.basecamp.l2</upgradesTo>
+      <buffs applies_to="all">
+      <res id="all" type="mult" amount="75" mode="yield"/>
+      </buffs>
   </building>
 
   <building id="bld.basecamp.l2" family="basecamp" type="base" lvl="2" stage="1">

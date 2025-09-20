@@ -52,14 +52,14 @@
   <entry key="ui.text.main.h1">Hoved</entry>
 
   <entry key="ui.text.demandingstage.h1">Kræver Stage</entry>
-<entry key="ui.text.stagelocked.h1">Stage låst</entry>
-<entry key="ui.text.demandingstage.h1">Kræver Stage</entry>
-<entry key="ui.text.recipe.h1">Opskrift</entry>
-<entry key="ui.text.demandingstage.h1">Kræver Stage</entry>
+  <entry key="ui.text.stagelocked.h1">Stage låst</entry>
+  <entry key="ui.text.demandingstage.h1">Kræver Stage</entry>
+  <entry key="ui.text.recipe.h1">Opskrift</entry>
+  <entry key="ui.text.demandingstage.h1">Kræver Stage</entry>
 
-<entry key="ui.headers.recipe.h1">Jobs / Recipes</entry>
-<entry key="ui.headers.addons.h1">Bygnings Addons</entry>
-<entry key="ui.headers.research.h1">Relateret Forskning</entry>
+  <entry key="ui.headers.recipe.h1">Jobs / Recipes</entry>
+  <entry key="ui.headers.addons.h1">Bygnings Addons</entry>
+  <entry key="ui.headers.research.h1">Relateret Forskning</entry>
 
 
   

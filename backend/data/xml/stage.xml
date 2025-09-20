@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+ <stages ver="version 3.5">
+
+  <!-- Stage 1: giver +1/time wood og +2/time water -->
+  <stage id="1">
+    <bonus key="forest" res="res.wood"/>
+    <bonus key="water"  res="res.water,res.milk"/>
+  </stage>
+
+  <!-- Stage 2: giver +1/time wheat og +1/time stone -->
+  <stage id="2">
+    <bonus key="field"  res="res.wheat,res.maize"/>
+    <bonus key="mining" res="res.stone"/>
+  </stage>
+</stages>

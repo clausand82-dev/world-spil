@@ -1,301 +1,283 @@
 <?php
 declare(strict_types=1);
 
-require_once __DIR__ . '/../_init.php';
-require_once __DIR__ . '/event_log.php';
+/**
+ * Passive yield backend – “Base stage bonus” 1 gang pr. hele time.
+ *
+ * Forudsætninger i DB:
+ * - users: user_id (PK), currentstage (INT), mul_forest, mul_mining, mul_field, mul_water (FLOAT/INT),
+ *          last_base_bonus_ts_utc (DATETIME NULL)
+ * - inventory: user_id, res_id (fx 'res.wood'), amount (FLOAT)
+ *
+ * Forudsætninger i XML:
+ * - En eller flere <stage id="..."> noder med underliggende <bonus key="forest|mining|field|water" res="res.foo,res.bar"/>
+ * - XML-filer ligger under backend/data/xml eller den sti, der er sat i backend/data/config/config.ini (dirs.xml_dir).
+ *
+ * Offentlige funktioner:
+ * - apply_passive_yields_for_user(int $userId): void
+ *
+ * Semantik:
+ * - Ved første kald, hvis users.last_base_bonus_ts_utc er NULL, initialiseres den til UTC_TIMESTAMP()
+ *   og der udbetales 0 (ur startes).
+ * - Efterfølgende kald: udbetal kun hele timer: cycles = floor(elapsed_seconds / 3600).
+ * - Udbetal pr. ressource: delta[resId] += mul_key * cycles, for alle resId i reglerne for brugerens currentstage.
+ * - Når inventory er opdateret (commit), fremrykkes last_base_bonus_ts_utc med “cycles” timer.
+ *
+ * Bemærk:
+ * - Denne fil krediterer KUN base stage-bonus. Hvis du har anden passiv udbetaling (bygninger, addons, dyr),
+ *   kan du enten implementere dem her eller i din eksisterende pipeline.
+ */
 
-if (!function_exists('canonical_res_id')) {
-  function canonical_res_id(string $rid): string {
-    $rid = trim($rid);
-    return str_starts_with($rid, 'res.') ? $rid : 'res.' . $rid;
+
+/* ======================= Små utils ======================= */
+
+if (!function_exists('yield__root_backend')) {
+  function yield__root_backend(): string {
+    // Denne fil ligger i backend/api/lib → hop 2 op for backend/
+    $backend = realpath(__DIR__ . '/..'); // backend/api
+    $backend = $backend ? realpath($backend . '/..') : null; // backend/
+    return $backend ?: (__DIR__ . '/../../');
+  }
+}
+
+if (!function_exists('yield__load_config_ini')) {
+  function yield__load_config_ini(): array {
+    $path = yield__root_backend() . '/data/config/config.ini';
+    if (!is_file($path)) return [];
+    $cfg = parse_ini_file($path, true, INI_SCANNER_TYPED);
+    return is_array($cfg) ? $cfg : [];
+  }
+}
+
+if (!function_exists('yield__xml_dir')) {
+  function yield__xml_dir(): string {
+    $cfg = yield__load_config_ini();
+    $dir = (string)($cfg['dirs']['xml_dir'] ?? 'data/xml');
+    // Hvis relativ sti → relativ til backend/
+    if (!preg_match('~^(?:[A-Za-z]:)?[\/\\\\]~', $dir)) {
+      $dir = rtrim(yield__root_backend(), '/\\') . DIRECTORY_SEPARATOR . $dir;
+    }
+    $real = realpath($dir);
+    return ($real && is_dir($real)) ? $real : (rtrim(yield__root_backend(), '/\\') . '/data/xml');
   }
 }
 
 /**
- * Hent alle defs (bruger samme XML-loadere som alldata).
- * Vi bevarer nøglerne som de er i XML (ofte 'res.xxx').
+ * Lokal DB-helper.
+ * Hvis global db() findes (defineret i alldata.php), så brug den.
+ * Ellers læs backend/data/config/db.ini.
  */
-function _yield_load_all_defs(): array {
-  static $defs = null;
-  if ($defs !== null) return $defs;
+if (!function_exists('yield__db')) {
+  function yield__db(): PDO {
+    if (function_exists('db')) return db();
+    $ini = yield__root_backend() . '/data/config/db.ini';
+    $cfg = is_file($ini) ? parse_ini_file($ini, true, INI_SCANNER_TYPED) : [];
+    $db  = $cfg['database'] ?? $cfg;
 
-  $cfg    = load_config_ini();
-  $xmlDir = resolve_dir((string)($cfg['dirs']['xml_dir'] ?? ''), 'data/xml');
+    $host = $db['host'] ?? '127.0.0.1';
+    $user = $db['user'] ?? 'root';
+    $pass = $db['password'] ?? ($db['pass'] ?? '');
+    $name = $db['name'] ?? ($db['dbname'] ?? ($db['database'] ?? ''));
+    $charset = $db['charset'] ?? 'utf8mb4';
+    if ($name === '') throw new RuntimeException('DB name missing in db.ini');
 
-  $defs = ['res' => [], 'bld' => [], 'rsd' => [], 'rcp' => [], 'add' => [], 'ani' => []];
-
-  $rii = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($xmlDir, FilesystemIterator::SKIP_DOTS));
-  foreach ($rii as $fileInfo) {
-    if (!$fileInfo->isFile() || strtolower($fileInfo->getExtension()) !== 'xml') continue;
-    $path = $fileInfo->getPathname();
-    $xml  = @simplexml_load_file($path);
-    if (!$xml) continue;
-
-    if ($xml->xpath('//resource')) $defs['res'] = array_merge($defs['res'], load_resources_xml($path));
-    if ($xml->xpath('//building')) $defs['bld'] = array_merge($defs['bld'], load_buildings_xml($path));
-    if ($xml->xpath('//addon'))    $defs['add'] = array_merge($defs['add'], load_addons_xml($path));
-    if ($xml->xpath('//animal'))   $defs['ani'] = array_merge($defs['ani'], load_animals_xml($path));
-    if ($xml->xpath('//recipe'))   $defs['rcp'] = array_merge($defs['rcp'], load_recipes_xml($path));
-    if ($xml->xpath('//research')) $defs['rsd'] = array_merge($defs['rsd'], load_research_xml($path));
+    $pdo = new PDO("mysql:host={$host};dbname={$name};charset={$charset}", $user, $pass, [
+      PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+      PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+    ]);
+    return $pdo;
   }
-
-  return $defs;
 }
 
-/** Returnér defs.res for et givent res-id (tåler 'water' / 'res.water'). */
-function _res_def(array $defsRes, string $idOrBare): ?array {
-  if (isset($defsRes[$idOrBare])) return $defsRes[$idOrBare];
-  $canon = str_starts_with($idOrBare, 'res.') ? $idOrBare : "res.$idOrBare";
-  if (isset($defsRes[$canon])) return $defsRes[$canon];
-  $bare  = preg_replace('/^res\./', '', $canon);
-  return $defsRes[$bare] ?? null;
-}
+/* ======================= XML parsing af <stage> regler ======================= */
 
-/** 'l' => liquid, alt andet => solid */
-function _res_type(array $defsRes, string $idOrBare): string {
-  $def = _res_def($defsRes, $idOrBare);
-  $unit = strtolower((string)($def['unit'] ?? ''));
-  return $unit === 'l' ? 'liquid' : 'solid';
-}
-
-/** unitSpace for ressource (0.0 default) */
-function _res_space(array $defsRes, string $idOrBare): float {
-  $def = _res_def($defsRes, $idOrBare);
-  return (float)($def['unitSpace'] ?? 0.0);
-}
-
-/** Udregn caps og 'used' fra inventory (samme princip som i alldata). */
-function _compute_caps_and_used(PDO $db, array $defs, int $userId): array {
-  $cfg = load_config_ini();
-
-  $liquidBase = (int)(
-    $cfg['start_limitations_cap']['storageLiquidCap']
-    ?? $cfg['start_limitations_cap']['storageLiquidBaseCap']
-    ?? 0
-  );
-  $solidBase = (int)(
-    $cfg['start_limitations_cap']['storageSolidCap']
-    ?? $cfg['start_limitations_cap']['storageSolidBaseCap']
-    ?? 0
-  );
-
-  $bonusLiquid = 0;
-  $bonusSolid  = 0;
-
-  $usedLiquid = 0.0;
-  $usedSolid  = 0.0;
-
-  $st = $db->prepare("SELECT res_id, amount FROM inventory WHERE user_id = ?");
-  $st->execute([$userId]);
-  foreach ($st->fetchAll(PDO::FETCH_ASSOC) as $row) {
-    $rid = (string)$row['res_id'];
-    $amt = (float)$row['amount'];
-    $type  = _res_type($defs['res'], $rid);
-    $space = _res_space($defs['res'], $rid);
-    if ($type === 'liquid') $usedLiquid += $amt * $space;
-    else                    $usedSolid  += $amt * $space;
+if (!function_exists('yield__parse_stage_bonus_rules_from_xml')) {
+  /**
+   * Returnerer:
+   * [ stageId => ['forest'=>['res.wood',...], 'mining'=>[], 'field'=>[], 'water'=>[]], ... ]
+   */
+  function yield__parse_stage_bonus_rules_from_xml(SimpleXMLElement $xml): array {
+    $out = [];
+    foreach (($xml->xpath('//stage') ?: []) as $stage) {
+      $sid = (int)($stage['id'] ?? 0);
+      if ($sid <= 0) continue;
+      $bucket = $out[$sid] ?? ['forest'=>[], 'mining'=>[], 'field'=>[], 'water'=>[]];
+      foreach ($stage->xpath('bonus') ?: [] as $b) {
+        $key = strtolower(trim((string)($b['key'] ?? '')));
+        if (!in_array($key, ['forest','mining','field','water'], true)) continue;
+        $resAttr = trim((string)($b['res'] ?? ''));
+        if ($resAttr === '') continue;
+        foreach (explode(',', $resAttr) as $rid) {
+          $rid = trim($rid); if ($rid === '') continue;
+          $rid = str_starts_with($rid, 'res.') ? $rid : ("res." . $rid);
+          $bucket[$key][] = $rid;
+        }
+      }
+      $out[$sid] = $bucket;
+    }
+    return $out;
   }
-
-  $totLiquid = $liquidBase + $bonusLiquid;
-  $totSolid  = $solidBase + $bonusSolid;
-
-  return [
-    'liquid' => ['base'=>$liquidBase, 'bonus'=>$bonusLiquid, 'total'=>$totLiquid, 'used'=>$usedLiquid, 'available'=>max(0.0, $totLiquid - $usedLiquid)],
-    'solid'  => ['base'=>$solidBase,  'bonus'=>$bonusSolid,  'total'=>$totSolid,  'used'=>$usedSolid,  'available'=>max(0.0, $totSolid  - $usedSolid)],
-  ];
 }
+
+if (!function_exists('yield__load_all_stage_bonus_rules')) {
+  function yield__load_all_stage_bonus_rules(): array {
+    $dir = yield__xml_dir();
+    $rules = [];
+    $rii = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($dir, FilesystemIterator::SKIP_DOTS));
+    foreach ($rii as $info) {
+      if (!$info->isFile() || strtolower($info->getExtension()) !== 'xml') continue;
+      $xml = @simplexml_load_file($info->getPathname());
+      if (!$xml) continue;
+      $one = yield__parse_stage_bonus_rules_from_xml($xml);
+      if ($one) $rules = array_replace_recursive($rules, $one);
+    }
+    return $rules;
+  }
+}
+
+/* ======================= Base-bonus cycles og inventory opdatering ======================= */
 
 /**
- * PASSIVE yields med cap-håndhævelse og logging af 'yield_lost'.
+ * Beregn delta for base stage-bonus siden sidste udbetaling.
+ *
+ * Returnerer array med:
+ * - delta: map res_id => amountToAdd (float)
+ * - cycles: helt antal timer udbetalt
+ *
+ * Sideeffekt:
+ * - Hvis last_base_bonus_ts_utc er NULL/invalid, initialiseres den til nu og der udbetales 0.
  */
-function apply_passive_yields_for_user(int $userId): array {
-  $db   = db();
-  $defs = _yield_load_all_defs();
+if (!function_exists('yield__compute_base_stage_bonus_delta')) {
+  function yield__compute_base_stage_bonus_delta(PDO $db, int $userId): array {
+    $stmt = $db->prepare("
+      SELECT currentstage,
+             mul_forest, mul_mining, mul_field, mul_water,
+             last_base_bonus_ts_utc
+        FROM users
+       WHERE user_id = ?
+      LIMIT 1
+    ");
+    $stmt->execute([$userId]);
+    $u = $stmt->fetch(PDO::FETCH_ASSOC);
+    if (!$u) return ['delta' => [], 'cycles' => 0];
 
-  $ownTxn = !$db->inTransaction();
-  if ($ownTxn) $db->beginTransaction();
+    $now = new DateTime('now', new DateTimeZone('UTC'));
+    $lastStr = (string)($u['last_base_bonus_ts_utc'] ?? '');
 
-  try {
-    $summary = [];
-    $updated = 0;
-    $nowUtc  = new DateTimeImmutable('now', new DateTimeZone('UTC'));
-
-    // 1) Lås producenter
-    $stmtB = $db->prepare("SELECT id, bld_id AS item_id, 1 AS quantity, last_yield_ts_utc, 'buildings' AS table_name FROM buildings WHERE user_id = ? AND yield_enabled = 1 FOR UPDATE");
-    $stmtA = $db->prepare("SELECT id, add_id AS item_id, 1 AS quantity, last_yield_ts_utc, 'addon'     AS table_name FROM addon     WHERE user_id = ? AND yield_enabled = 1 FOR UPDATE");
-    $stmtN = $db->prepare("SELECT id, ani_id AS item_id, quantity, last_yield_ts_utc, 'animals'   AS table_name FROM animals   WHERE user_id = ? AND yield_enabled = 1 FOR UPDATE");
-
-    $stmtB->execute([$userId]); $rowsB = $stmtB->fetchAll(PDO::FETCH_ASSOC);
-    $stmtA->execute([$userId]); $rowsA = $stmtA->fetchAll(PDO::FETCH_ASSOC);
-    $stmtN->execute([$userId]); $rowsN = $stmtN->fetchAll(PDO::FETCH_ASSOC);
-
-    $producers = array_merge($rowsB, $rowsA, $rowsN);
-    if (empty($producers)) { if ($ownTxn) $db->commit(); return ['summary'=>[], 'updated'=>0]; }
-
-    // 2) Saml potentielle yield-linjer
-    $candidates = []; // hver: itemId, table, pk, resId, units, unitSpace, type
-    $advanceMap = []; // itemId => ['table','pk','advanceS','cycles']
-
-    foreach ($producers as $r) {
-      $itemId   = (string)$r['item_id'];
-      $table    = (string)$r['table_name'];
-      $quantity = (int)$r['quantity'];
-
-      [$scope, $key] = array_pad(explode('.', $itemId, 2), 2, '');
-      $defScope = ($scope === 'animals') ? 'ani' : $scope;
-      $defItem  = $defs[$defScope][$key] ?? null;
-      if (!$defItem) continue;
-
-      $periodS = (int)($defItem['yield_period_s'] ?? 0);
-      $lines   = $defItem['yield'] ?? [];
-      if ($periodS <= 0 || empty($lines) || $quantity <= 0) continue;
-
-      $last = $r['last_yield_ts_utc'] ? new DateTimeImmutable((string)$r['last_yield_ts_utc'], new DateTimeZone('UTC')) : null;
-      if ($last === null) {
-        $db->prepare("UPDATE {$table} SET last_yield_ts_utc = UTC_TIMESTAMP() WHERE id = ?")->execute([(int)$r['id']]);
-        continue;
-      }
-      if ($nowUtc <= $last) continue;
-
-      $elapsed = $nowUtc->getTimestamp() - $last->getTimestamp();
-      $cycles  = intdiv($elapsed, $periodS);
-      if ($cycles <= 0) continue;
-      $cycles = min($cycles, 10000);
-
-      $advanceMap[$itemId] = [
-        'table'    => $table,
-        'pk'       => (int)$r['id'],
-        'advanceS' => $cycles * $periodS,
-        'cycles'   => $cycles,
-      ];
-
-      foreach ($lines as $ln) {
-        $ridRaw = (string)($ln['id'] ?? $ln['res_id'] ?? '');
-        $amt    = (float)($ln['amount'] ?? 0);
-        if ($ridRaw === '' || $amt <= 0) continue;
-
-        $units = $cycles * $amt * max(1, $quantity);
-        if ($units <= 0) continue;
-
-        $ridCanon  = canonical_res_id($ridRaw);
-        $type      = _res_type($defs['res'], $ridCanon);
-        $unitSpace = _res_space($defs['res'], $ridCanon);
-
-        $candidates[] = [
-          'itemId'     => $itemId,
-          'table'      => $table,
-          'pk'         => (int)$r['id'],
-          'resId'      => $ridCanon,
-          'units'      => (float)$units,
-          'unitSpace'  => (float)$unitSpace,
-          'type'       => $type, // 'liquid' | 'solid'
-        ];
-      }
+    if ($lastStr === '' || $lastStr === '0000-00-00 00:00:00') {
+      // Start uret første gang og udbetal ikke.
+      $init = $db->prepare("UPDATE users SET last_base_bonus_ts_utc = UTC_TIMESTAMP() WHERE user_id = ?");
+      $init->execute([$userId]);
+      return ['delta' => [], 'cycles' => 0];
     }
 
-    if (empty($advanceMap)) { if ($ownTxn) $db->commit(); return ['summary'=>[], 'updated'=>0]; }
+    try {
+      $last = new DateTime($lastStr, new DateTimeZone('UTC'));
+    } catch (Throwable $e) {
+      // Korrupt værdi → nulstil til nu, ingen udbetaling
+      $fix = $db->prepare("UPDATE users SET last_base_bonus_ts_utc = UTC_TIMESTAMP() WHERE user_id = ?");
+      $fix->execute([$userId]);
+      return ['delta' => [], 'cycles' => 0];
+    }
 
-    // 3) Udregn cap og available
-    $caps = _compute_caps_and_used($db, $defs, $userId);
-    $available = [
-      'liquid' => (float)$caps['liquid']['available'],
-      'solid'  => (float)$caps['solid']['available'],
+    $elapsed = max(0, $now->getTimestamp() - $last->getTimestamp());
+    $cycles  = intdiv($elapsed, 3600);
+    if ($cycles <= 0) return ['delta' => [], 'cycles' => 0];
+
+    $stageId = (int)($u['currentstage'] ?? 0);
+    if ($stageId <= 0) return ['delta' => [], 'cycles' => 0];
+
+    $rulesAll = yield__load_all_stage_bonus_rules();
+    $rules = $rulesAll[$stageId] ?? null;
+    if (!$rules) return ['delta' => [], 'cycles' => 0];
+
+    $bonuses = [
+      'forest' => (float)($u['mul_forest'] ?? 0),
+      'mining' => (float)($u['mul_mining'] ?? 0),
+      'field'  => (float)($u['mul_field']  ?? 0),
+      'water'  => (float)($u['mul_water']  ?? 0),
     ];
 
-    // 4) Fordel og log
-    $creditedByRes = []; // resId => units sum
-    $perItemPaid   = []; // itemId => [{res_id, amount}]
-    $perItemLost   = []; // itemId => [{res_id, amount, reason}]
-
-    // Gratis ressourcer (unitSpace <= 0) krediteres fuldt
-    foreach ($candidates as $cl) {
-      if ($cl['unitSpace'] > 0) continue;
-      $u = $cl['units'];
-      if ($u <= 0) continue;
-      $creditedByRes[$cl['resId']] = ($creditedByRes[$cl['resId']] ?? 0) + $u;
-      $perItemPaid[$cl['itemId']][] = ['res_id' => $cl['resId'], 'amount' => $u];
-    }
-
-    // Pladskrævende fordeles pr. type: sortér efter unitSpace DESC (fylder mest først), tie: units DESC
-    $spaceLines = array_values(array_filter($candidates, fn($x) => $x['unitSpace'] > 0 && in_array($x['type'], ['liquid','solid'], true)));
-    $byType = ['liquid'=>[], 'solid'=>[]];
-    foreach ($spaceLines as $cl) $byType[$cl['type']][] = $cl;
-    foreach (['liquid','solid'] as $t) {
-      usort($byType[$t], function($a,$b){
-        if ($a['unitSpace'] === $b['unitSpace']) return ($b['units'] <=> $a['units']);
-        return ($b['unitSpace'] <=> $a['unitSpace']);
-      });
-
-      $avail = $available[$t];
-      if ($avail <= 0) {
-        // alt tabes for denne type
-        foreach ($byType[$t] as $cl) {
-          if ($cl['units'] <= 0) continue;
-          $perItemLost[$cl['itemId']][] = ['res_id'=>$cl['resId'], 'amount'=>$cl['units'], 'reason'=>"Yield tabt pga. ingen plads ($t)"];
-        }
-        continue;
+    $delta = [];
+    foreach ($bonuses as $key => $perHour) {
+      if ($perHour <= 0) continue;
+      foreach (($rules[$key] ?? []) as $resId) {
+        $delta[$resId] = ($delta[$resId] ?? 0.0) + ($perHour * $cycles);
       }
-
-      foreach ($byType[$t] as $cl) {
-        $uSpace = $cl['unitSpace'];
-        $units  = $cl['units'];
-        if ($units <= 0) continue;
-
-        $maxFit = ($uSpace > 0) ? floor($avail / $uSpace) : $units;
-        $payU   = (float)max(0, min($units, $maxFit));
-        $lostU  = $units - $payU;
-
-        if ($payU > 0) {
-          $creditedByRes[$cl['resId']] = ($creditedByRes[$cl['resId']] ?? 0) + $payU;
-          $perItemPaid[$cl['itemId']][] = ['res_id' => $cl['resId'], 'amount' => $payU];
-          $avail -= $payU * $uSpace;
-        }
-        if ($lostU > 0) {
-          $perItemLost[$cl['itemId']][] = ['res_id'=>$cl['resId'], 'amount'=>$lostU, 'reason'=>"Yield tabt pga. ingen plads ($t)"];
-        }
-        if ($avail <= 0) $avail = 0.0;
-      }
-      $available[$t] = $avail;
     }
 
-    // 5) Kreditér inventory aggregeret pr. res
-    foreach ($creditedByRes as $rid => $amt) {
-      if ($amt <= 0) continue;
-      $sql = "INSERT INTO inventory (user_id, res_id, amount)
-              VALUES (?, ?, ?)
-              ON DUPLICATE KEY UPDATE amount = amount + VALUES(amount)";
-      $db->prepare($sql)->execute([$userId, $rid, $amt]);
+    return ['delta' => $delta, 'cycles' => $cycles];
+  }
+}
+
+if (!function_exists('yield__advance_last_base_bonus')) {
+  /**
+   * Fremryk last_base_bonus_ts_utc med n hele timer.
+   * Kald KUN når inventory-commit er lykkedes.
+   */
+  function yield__advance_last_base_bonus(PDO $db, int $userId, int $cycles): void {
+    if ($cycles <= 0) return;
+    $stmt = $db->prepare("
+      UPDATE users
+         SET last_base_bonus_ts_utc = IFNULL(last_base_bonus_ts_utc, UTC_TIMESTAMP()),
+             last_base_bonus_ts_utc = DATE_ADD(last_base_bonus_ts_utc, INTERVAL :cycles HOUR)
+       WHERE user_id = :uid
+    ");
+    $stmt->execute([':cycles' => $cycles, ':uid' => $userId]);
+  }
+}
+
+/**
+ * Upsert til inventory for en batch ressource-deltaer.
+ * deltaMap: ['res.wood'=>3.0, 'res.water'=>1.0, ...]
+ */
+if (!function_exists('yield__inventory_upsert_batch')) {
+  function yield__inventory_upsert_batch(PDO $db, int $userId, array $deltaMap): void {
+    if (empty($deltaMap)) return;
+
+    // Prøv at opdatere eksisterende rækker først
+    $upd = $db->prepare("UPDATE inventory SET amount = amount + :amt WHERE user_id = :uid AND res_id = :rid");
+    $ins = $db->prepare("INSERT INTO inventory (user_id, res_id, amount) VALUES (:uid, :rid, :amt)");
+
+    foreach ($deltaMap as $rid => $amt) {
+      if (!$rid || $amt == 0) continue;
+      $ok = $upd->execute([':amt' => $amt, ':uid' => $userId, ':rid' => $rid]);
+      if ($ok && $upd->rowCount() > 0) continue;
+      $ins->execute([':uid' => $userId, ':rid' => $rid, ':amt' => $amt]);
+    }
+  }
+}
+
+/* ======================= Offentlig API ======================= */
+
+/**
+ * Kald denne fra alldata.php før du henter state, så inventory er opdateret.
+ * Lige nu krediterer vi KUN base stage-bonus (1 gang pr. time).
+ * Ønsker du at lægge bygninger/addons/dyr ind her, kan de merges i $candidates før commit.
+ */
+if (!function_exists('apply_passive_yields_for_user')) {
+  function apply_passive_yields_for_user(int $userId): void {
+    $db = yield__db();
+
+    // 1) Indsaml kandidater (kun base-bonus her)
+    $base = yield__compute_base_stage_bonus_delta($db, $userId);
+    $candidates = $base['delta']; // map: res_id => amount
+
+    if (empty($candidates)) {
+      // Intet at udbetale (enten første init eller < 1 time).
+      return;
     }
 
-    // 6) Log pr. item (paid + lost) og fremryk tid ALTID
-    foreach ($advanceMap as $itemId => $p) {
-      $paid = array_values($perItemPaid[$itemId] ?? []);
-      $lost = array_values($perItemLost[$itemId] ?? []);
-
-      if (!empty($paid)) log_yield_paid($db, $userId, $itemId, $paid);
-      if (!empty($lost)) log_yield_lost($db, $userId, $itemId, $lost);
-
-      $db->prepare("
-        UPDATE {$p['table']}
-           SET last_yield_ts_utc = DATE_ADD(last_yield_ts_utc, INTERVAL ? SECOND),
-               yield_cycles_total = COALESCE(yield_cycles_total, 0) + ?
-         WHERE id = ? AND user_id = ?
-      ")->execute([$p['advanceS'], $p['cycles'], $p['pk'], $userId]);
-
-      $summary[] = [
-        'item_id' => $itemId,
-        'cycles'  => $p['cycles'],
-        'credited'=> $paid,
-        'lost'    => $lost,
-      ];
-      $updated++;
+    // 2) Transaktion: skriv inventory og fremryk timestamp, hvis OK
+    $db->beginTransaction();
+    try {
+      yield__inventory_upsert_batch($db, $userId, $candidates);
+      yield__advance_last_base_bonus($db, $userId, (int)($base['cycles'] ?? 0));
+      $db->commit();
+    } catch (Throwable $e) {
+      $db->rollBack();
+      // Propager fejlen – alldata.php har try/catch
+      throw $e;
     }
-
-    if ($ownTxn) $db->commit();
-    return ['summary'=>$summary, 'updated'=>$updated];
-
-  } catch (Throwable $e) {
-    if ($ownTxn && $db->inTransaction()) $db->rollBack();
-    throw $e;
   }
 }

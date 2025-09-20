@@ -130,14 +130,13 @@
 
     <recipe id="rcp.slaughterdeer.l1" family="basecamp" type="recipe" lvl="1" stage="1" mode="active">
     <yield>
-      <res id="res.rawmeat" amount="1"/>
-      <res id="res.bone" amount="1"/>
-      <res id="res.feather" amount="10"/>
+      <res id="res.rawmeat" amount="10"/>
+      <res id="res.bone" amount="2"/>
     </yield>
     <cost>
       <res id="ani.deer" amount="1"/>
     </cost>
-    <time>10s</time>
+    <time>1m</time>
     <require></require>
   </recipe>
 
@@ -146,7 +145,7 @@
       <res id="res.rawcommonfish" amount="10"/>
     </yield>
     <time>15s</time>
-    <require>add.fishingmole_net.l1</require>
+    <require>add.mole_net.l1</require>
   </recipe>
 
   <recipe id="rcp.fishtofood.l1" family="lake" type="recipe" lvl="1" stage="1" mode="active">

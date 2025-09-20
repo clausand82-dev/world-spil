@@ -1,5 +1,6 @@
 // Samler effekter for stats.* fra defs (bld/add/rsd) for ting spilleren ejer i state.
 // Understøtter metrics: footprint, animal (→ animal_cap), solid (→ storageSolidCap), liquid (→ storageLiquidCap)
+// Indeholder buildStatsTitle, som bygger en title-tekst med sektioner: Positiv, Negative og TOTAL.
 
 function toArray(v) {
   if (Array.isArray(v)) return v;
@@ -56,18 +57,18 @@ function isOwned(bucket, defKey, state) {
   if (!b || typeof b !== 'object') return false;
 
   const pref = bucket === 'bld' ? 'bld.' : bucket === 'add' ? 'add.' : 'rsd.';
-  const withPref = pref + defKey.replace(/^(?:bld\.|add\.|rsd\.)/i, '');
-  const withoutPref = defKey.replace(/^(?:bld\.|add\.|rsd\.)/i, '');
+  const naked = defKey.replace(/^(?:bld\.|add\.|rsd\.)/i, '');
+  const withPref = pref + naked;
 
   if (b[withPref]) return true;
-  if (b[pref + withoutPref]) return true;
+  if (b[pref + naked]) return true;
 
   // fallback scanning
   try {
     for (const [k, v] of Object.entries(b)) {
-      if (k === withPref || k === pref + withoutPref) return true;
+      if (k === withPref || k === pref + naked) return true;
       const id = v?.bld_id || v?.add_id || v?.rsd_id || v?.id;
-      if (typeof id === 'string' && (id === withPref || id === pref + withoutPref)) return true;
+      if (typeof id === 'string' && (id === withPref || id === pref + naked)) return true;
     }
   } catch {}
   return false;
@@ -92,6 +93,68 @@ function extractFromDef(def, { bucket, defKey, name }, selectedCanonMetrics) {
   return out;
 }
 
+// Læs base-cap fra state for en given canonical metric
+function readBaseCapForMetric(state, canonicalMetric) {
+  const cap = state?.cap || {};
+  const toNum = (v) => {
+    const n = Number(v);
+    return Number.isFinite(n) ? n : null;
+  };
+  switch (canonicalMetric) {
+    case 'footprint':
+      return toNum(cap?.footprint?.base);
+    case 'animal_cap':
+      return toNum(cap?.animal_cap?.base);
+    case 'storageSolidCap':
+      return toNum(cap?.solid?.base ?? cap?.storageSolidCap?.base);
+    case 'storageLiquidCap':
+      return toNum(cap?.liquid?.base ?? cap?.storageLiquidCap?.base);
+    default:
+      return null;
+  }
+}
+
+// Injektér animals-forbrug på animal_cap: state.ani[*] * defs.ani.*.stats.animal_cap
+function injectAnimalCapUsage({ defs, state, modeLc, positiveByMetric, negativeByMetric, selected }) {
+  if (!selected.includes('animal_cap')) return;
+
+  const aniBag = state?.ani || state?.animals || state?.animal;
+  if (!aniBag || typeof aniBag !== 'object') return;
+
+  for (const [rawKey, v] of Object.entries(aniBag)) {
+    // Antal dyr
+    const count = typeof v === 'number'
+      ? v
+      : Number(v?.count ?? v?.qty ?? v?.quantity ?? 0);
+    if (!Number.isFinite(count) || count <= 0) continue;
+
+    // Slå def op
+    const key = String(rawKey || '');
+    const naked = key.replace(/^ani\./i, '');
+    const def = defs?.ani?.[naked] ?? defs?.animals?.[naked];
+    const perUnit = readStat(def?.stats || {}, 'animal_cap');
+    if (perUnit == null || !Number.isFinite(perUnit) || perUnit === 0) continue;
+
+    const total = perUnit * count;
+
+    const entry = {
+      metric: 'animal_cap',
+      amount: total,
+      sourceType: 'ani',
+      sourceId: `ani.${naked}`,
+      name: def?.name || naked,
+      meta: { count, perUnit },
+    };
+
+    const sign = Math.sign(entry.amount);
+    if (sign > 0) {
+      if (modeLc !== 'take') positiveByMetric['animal_cap'].push(entry);
+    } else if (sign < 0) {
+      if (modeLc !== 'give') negativeByMetric['animal_cap'].push(entry);
+    }
+  }
+}
+
 // Hoved-API: beregn effekter
 // mode: 'give' | 'take' | 'both'
 export function computeStatsEffects({ defs, state, metrics, mode = 'both' } = {}) {
@@ -102,6 +165,7 @@ export function computeStatsEffects({ defs, state, metrics, mode = 'both' } = {}
   const negativeByMetric = {};
   for (const m of sel) { positiveByMetric[m] = []; negativeByMetric[m] = []; }
 
+  // Kilder fra bld/add/rsd
   const buckets = ['bld', 'add', 'rsd'];
   for (const bucket of buckets) {
     const group = defs?.[bucket] || {};
@@ -120,6 +184,30 @@ export function computeStatsEffects({ defs, state, metrics, mode = 'both' } = {}
     }
   }
 
+  // Injektér Base fra state.cap.*.base
+  for (const m of sel) {
+    const baseVal = readBaseCapForMetric(state, m);
+    if (baseVal != null && baseVal !== 0) {
+      const entry = {
+        metric: m,
+        amount: baseVal,
+        sourceType: 'base',
+        sourceId: `state.cap.${m === 'storageSolidCap' ? 'solid' : m === 'storageLiquidCap' ? 'liquid' : m}.base`,
+        name: 'Base',
+      };
+      const sign = Math.sign(entry.amount);
+      if (sign > 0) {
+        if (modeLc !== 'take') positiveByMetric[m].push(entry);
+      } else if (sign < 0) {
+        if (modeLc !== 'give') negativeByMetric[m].push(entry);
+      }
+    }
+  }
+
+  // Injektér dyreforbrug (animal_cap)
+  injectAnimalCapUsage({ defs, state, modeLc, positiveByMetric, negativeByMetric, selected: sel });
+
+  // Sortér efter absolut værdi
   const sortFn = (a, b) => Math.abs(b.amount) - Math.abs(a.amount);
   for (const m of sel) {
     positiveByMetric[m].sort(sortFn);
@@ -129,13 +217,50 @@ export function computeStatsEffects({ defs, state, metrics, mode = 'both' } = {}
   return { positiveByMetric, negativeByMetric, selected: sel, mode: modeLc };
 }
 
+function labelMetric(m) {
+  return ({
+    footprint: 'Footprint',
+    animal_cap: 'Animal cap',
+    storageSolidCap: 'Solid cap',
+    storageLiquidCap: 'Liquid cap',
+  }[m] || m);
+}
+
+function round2(n) {
+  const v = Number(n ?? 0);
+  return Math.round(v * 100) / 100;
+}
+function fmtSigned(n) {
+  const v = round2(n);
+  return (v > 0 ? `+${v}` : `${v}`);
+}
+
 /**
- * Lille formatter til title="" der genbruger computeStatsEffects.
- * heading: fx "Byggepoint"
- * metrics: fx "footprint" eller ["footprint","animal"]
- * mode: "give" | "take" | "both" (til din chip vil du bruge "give")
+ * Byg en title med sektioner:
+ * [Heading]
+ * (valgfrit) [Metric label]
+ * Positiv:
+ * - TYPE: Name [id] (+X)
+ * Negative:
+ * - TYPE: Name [id] (-Y)
+ * TOTAL: +P, -N, Netto: Z
+ *
+ * Options:
+ * - showId: default true (viser [sourceId])
+ * - showTotals: default true
+ * - showMetricLabels: default false (undgå “dobbeltheader” når du selv sætter heading)
+ * Animal-specifik formatter: for sourceType === "ani" vises "Name x<count>".
  */
-export function buildStatsTitle({ defs, state, metrics, mode = 'both', heading = '' }) {
+export function buildStatsTitle({
+  defs,
+  state,
+  metrics,
+  mode = 'both',
+  heading = '',
+  showId = true,
+  showTotals = true,
+  showMetricLabels = false,
+}) {
   const { positiveByMetric, negativeByMetric, selected } =
     computeStatsEffects({ defs, state, metrics, mode });
 
@@ -143,16 +268,60 @@ export function buildStatsTitle({ defs, state, metrics, mode = 'both', heading =
   if (heading) lines.push(heading);
 
   for (const m of selected) {
+    const pos = positiveByMetric[m] || [];
+    const neg = negativeByMetric[m] || [];
+
+    const addMetricLabel = !!showMetricLabels || (selected.length > 1 && !heading);
+    if (addMetricLabel) {
+      lines.push(labelMetric(m));
+    }
+
+    // Positiv
     if (mode !== 'take') {
-      for (const it of positiveByMetric[m]) {
-        lines.push(`${it.sourceType.toUpperCase()}: ${it.name} (+${it.amount})`);
+      lines.push('\n Positiv:');
+      if (pos.length === 0) {
+        lines.push('- Ingen');
+      } else {
+        for (const it of pos) {
+          const idPart = showId ? ` [${it.sourceId}]` : '';
+          const nameWithCount = it.sourceType === 'ani' && it.meta?.count
+            ? `${it.name || it.sourceId} x${it.meta.count}`
+            : (it.name || it.sourceId);
+          lines.push(`- ${it.sourceType.toUpperCase()}: ${nameWithCount} (${fmtSigned(it.amount)})`);
+        }
       }
     }
+
+    // Negative
     if (mode !== 'give') {
-      for (const it of negativeByMetric[m]) {
-        lines.push(`${it.sourceType.toUpperCase()}: ${it.name} (${it.amount})`);
+      lines.push('\n Negative:');
+      if (neg.length === 0) {
+        lines.push('- Ingen');
+      } else {
+        for (const it of neg) {
+          const idPart = showId ? ` [${it.sourceId}]` : '';
+          const nameWithCount = it.sourceType === 'ani' && it.meta?.count
+            ? `${it.name || it.sourceId} x${it.meta.count}`
+            : (it.name || it.sourceId);
+          lines.push(`- ${it.sourceType.toUpperCase()}: ${nameWithCount} (${fmtSigned(it.amount)})`);
+        }
       }
+    }
+
+    // TOTAL
+    if (showTotals) {
+      const posSum = pos.reduce((a, e) => a + (e.amount ?? 0), 0);
+      const negSum = neg.reduce((a, e) => a + (e.amount ?? 0), 0);
+      const net = posSum + negSum;
+      const posTxt = `+${round2(posSum)}`;
+      const negTxt = `-${round2(Math.abs(negSum))}`;
+      const netTxt = `${net >= 0 ? '+' : ''}${round2(net)}`;
+      const totalLine = (mode === 'both')
+        ? `\n TOTAL: ${posTxt}, ${negTxt}, Netto: ${netTxt}`
+        : `\n TOTAL: ${mode === 'give' ? posTxt : negTxt}`;
+      lines.push(totalLine);
     }
   }
-  return lines.length ? lines.join('\n') : (heading || '');
+
+  return lines.join('\n');
 }
