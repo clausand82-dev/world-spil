@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useGameData } from '../context/GameDataContext.jsx';
 import GameImage from '../components/GameImage.jsx';
 import './MapPage.css';
+import { useUserBaseClaim } from '../hooks/useUserBaseClaim.js';
 
 const COLS = 50;
 const ROWS = 50;
@@ -148,6 +149,18 @@ async function confirmChoose() {
 }
 
 export default function MapPage() {
+
+  const { hasClaim } = useUserBaseClaim();
+
+  // Hvis brugeren allerede har valgt felt, omdirigér til dashboard og stop render
+  if (hasClaim) {
+    // Brug det router-mønster du allerede anvender (her antager vi hash routing)
+    if (typeof window !== 'undefined' && window.location?.hash !== '#/dashboard') {
+      window.location.hash = '#/dashboard';
+    }
+    return null;
+  }
+
   const { refreshData } = useGameData() || {};
 
   const wrapperRef = useRef(null);
@@ -255,13 +268,17 @@ export default function MapPage() {
       if (!t) return;
 
       const payload = {
-        world_id: worldMeta.worldId ?? null,
-        map_id: worldMeta.mapId ?? null,
-        land: t.land ?? worldMeta.landId ?? null,
-        field: t.n,
-        x: t.x,
-        y: t.y,
-      };
+  world_id: worldMeta.worldId ?? 1,
+  map_id: worldMeta.mapId ?? 1,
+  field: t.n,
+  x: t.x,
+  y: t.y,
+  mul_forest: t.multipliers.forest ?? null,
+  mul_field:  t.multipliers.field  ?? null,
+  mul_mining: t.multipliers.mining ?? null,
+  mul_water:  t.multipliers.water  ?? null,
+};
+await apiChooseTile(payload);
 
       await apiChooseTile(payload);
 

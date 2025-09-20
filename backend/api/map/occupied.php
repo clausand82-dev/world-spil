@@ -13,14 +13,12 @@ function bad(string $code, string $msg, int $http = 400): never {
 }
 
 try {
-  // Kræv login (så vi holder samme sikkerhedsmodel)
   auth_require_user_id();
   $pdo = db();
 
   $worldId = isset($_GET['world_id']) ? (int)$_GET['world_id'] : 1;
   $mapId   = isset($_GET['map_id'])   ? (int)$_GET['map_id']   : 1;
 
-  // Find kolonnenavne (vi bruger de navne du viste: user_id, world_id, map_id, field_id, x_coord, y_coord, is_active)
   $cols = $pdo->query("SHOW COLUMNS FROM users")->fetchAll(PDO::FETCH_COLUMN, 0);
   $has = function(string $c) use ($cols) { return in_array($c, $cols, true); };
 
@@ -36,11 +34,16 @@ try {
   $yCol      = $has('y_coord')  ? 'y_coord'  : null;
   $activeCol = $has('is_active') ? 'is_active' : null;
 
-  // Byg WHERE: kun rækker i denne world/map + (har field_id eller x/y)
+  $mulCols = array_filter([
+    $has('mul_forest') ? 'mul_forest' : null,
+    $has('mul_field')  ? 'mul_field'  : null,
+    $has('mul_mining') ? 'mul_mining' : null,
+    $has('mul_water')  ? 'mul_water'  : null,
+  ]);
+
   $where = "WHERE {$worldCol} = ? AND {$mapCol} = ?";
   $params = [$worldId, $mapId];
-
-  if ($activeCol) { $where .= " AND {$activeCol} = 1"; }
+  if ($activeCol) $where .= " AND {$activeCol} = 1";
 
   if ($fieldCol && $xCol && $yCol) {
     $where .= " AND ( {$fieldCol} IS NOT NULL OR ({$xCol} IS NOT NULL AND {$yCol} IS NOT NULL) )";
@@ -56,6 +59,7 @@ try {
   if ($fieldCol) $selectCols .= ", {$fieldCol} AS field_id";
   if ($xCol)     $selectCols .= ", {$xCol} AS x_coord";
   if ($yCol)     $selectCols .= ", {$yCol} AS y_coord";
+  foreach ($mulCols as $m) $selectCols .= ", {$m}";
 
   $sql = "SELECT {$selectCols} FROM users {$where}";
   $st = $pdo->prepare($sql);
@@ -67,7 +71,6 @@ try {
     $x = isset($r['x_coord']) ? (int)$r['x_coord'] : null;
     $y = isset($r['y_coord']) ? (int)$r['y_coord'] : null;
 
-    // Udled manglende felt/x/y hvis muligt
     if ($field === null && $x !== null && $y !== null) {
       $field = ($y - 1) * 50 + $x;
     } elseif (($x === null || $y === null) && $field !== null) {
@@ -76,7 +79,7 @@ try {
       $y = intdiv($idx - 1, 50) + 1;
     }
 
-    $rows[] = [
+    $row = [
       'user_id'  => (int)$r['user_id'],
       'username' => (string)($r['username'] ?? ''),
       'world_id' => (int)$r['world_id'],
@@ -85,6 +88,12 @@ try {
       'y'        => $y,
       'field'    => $field,
     ];
+    if (isset($r['mul_forest'])) $row['mul_forest'] = (float)$r['mul_forest'];
+    if (isset($r['mul_field']))  $row['mul_field']  = (float)$r['mul_field'];
+    if (isset($r['mul_mining'])) $row['mul_mining'] = (float)$r['mul_mining'];
+    if (isset($r['mul_water']))  $row['mul_water']  = (float)$r['mul_water'];
+
+    $rows[] = $row;
   }
 
   respond(['ok' => true, 'data' => ['occupied' => $rows]], 200);

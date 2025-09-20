@@ -1,10 +1,14 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useGameData } from '../context/GameDataContext.jsx';
 import { fmt } from '../services/helpers.js';
 import TopbarAuth from './TopbarAuth.jsx';
+import { buildStatsTitle } from '../services/statsEffects.js';
+
 
 export default function Header() {
   const { data } = useGameData();
+    const defs = data?.defs || {};
+  const state = data?.state || {};
 
   // Safe defaults når data ikke er indlæst
   const solid = data?.state?.inv?.solid ?? {};
@@ -12,6 +16,22 @@ export default function Header() {
   const footprint = data?.state?.cap?.footprint ?? {};
   const animal_cap = data?.state?.cap?.animal_cap ?? {};
   const resDefs = data?.defs?.res ?? {};
+
+  const footprintTitle = useMemo(() => buildStatsTitle({
+    defs,
+    state,
+    metrics: 'footprint', // kun footprint
+    mode: 'give',         // kun positive kilder
+    heading: 'Byggepoint'
+  }), [defs, state]);
+
+    const animalcapTitle = useMemo(() => buildStatsTitle({
+    defs,
+    state,
+    metrics: 'animal', // kun animal
+    mode: 'give',         // kun positive kilder
+    heading: 'Staldplads'
+  }), [defs, state]);
 
   return (
     <header className="topbar">
@@ -25,8 +45,8 @@ export default function Header() {
         <span className="res-chip" title={resDefs.stone?.name}>{resDefs.stone?.emoji || '🪨'} {fmt(solid.stone || 0)}</span>
         <span className="res-chip" title={resDefs.water?.name}>{resDefs.water?.emoji || '💧'} {fmt(liquid.water || 0)}</span>
         <span className="res-chip" title="Kr">💰 {fmt(solid.money || 0)}</span>
-        <span className="res-chip" title="Staldplads">🐾 {fmt(animal_cap.used || 0)}<span className="max">/{fmt(animal_cap.total || 0)}</span></span>
-        <span className="res-chip" title="Byggepoint">⬛ {fmt(Math.abs(footprint.used) || 0)}<span className="max">/{fmt(footprint.total || 0)}</span></span>
+        <span className="res-chip" title={animalcapTitle}>🐾 {fmt(animal_cap.used || 0)}<span className="max">/{fmt(animal_cap.total || 0)}</span></span>
+        <span className="res-chip" title={footprintTitle}>⬛ {fmt(Math.abs(footprint.used) || 0)}<span className="max">/{fmt(footprint.total || 0)}</span></span>
       </div>
 
       <div className="header-tools" style={{ marginLeft: 'auto' }}>

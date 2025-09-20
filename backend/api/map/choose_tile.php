@@ -17,8 +17,7 @@ try {
   $uid = auth_require_user_id();
   $pdo = db();
 
-  $raw = file_get_contents('php://input');
-  $req = json_decode($raw, true) ?: [];
+  $req = json_decode(file_get_contents('php://input'), true) ?: [];
 
   $worldId = (int)($req['world_id'] ?? 1);
   $mapId   = (int)($req['map_id']   ?? 1);
@@ -26,7 +25,6 @@ try {
   $y       = (int)($req['y'] ?? 0);
   $field   = isset($req['field']) ? (int)$req['field'] : (($y > 0 && $x > 0) ? (($y - 1) * 50 + $x) : 0);
 
-  // Multipliers fra frontend (float, fx 1.350)
   $mulForest = isset($req['mul_forest']) ? (float)$req['mul_forest'] : null;
   $mulField  = isset($req['mul_field'])  ? (float)$req['mul_field']  : null;
   $mulMining = isset($req['mul_mining']) ? (float)$req['mul_mining'] : null;
@@ -35,7 +33,6 @@ try {
   if ($worldId <= 0 || $mapId <= 0) bad('E_INPUT', 'Invalid world/map.', 422);
   if ($field < 1 || $field > 2500)   bad('E_INPUT', 'Invalid field (1..2500).', 422);
   if ($x < 1 || $x > 50 || $y < 1 || $y > 50) {
-    // Udled x/y fra field hvis ikke sendt
     if ($x === 0 && $y === 0 && $field >= 1 && $field <= 2500) {
       $x = (($field - 1) % 50) + 1;
       $y = intdiv($field - 1, 50) + 1;
@@ -44,84 +41,92 @@ try {
     }
   }
 
-  // Find skemaet
   $cols = $pdo->query("SHOW COLUMNS FROM users")->fetchAll(PDO::FETCH_COLUMN, 0);
-  $has = function(string $c) use ($cols) { return in_array($c, $cols, true); };
+  $has  = fn(string $c) => in_array($c, $cols, true);
 
-  // Kræv de relevante kolonner
-  foreach (['world_id','map_id'] as $must) {
+  foreach (['user_id','world_id','map_id'] as $must) {
     if (!$has($must)) bad('E_SCHEMA', "Kolonne '{$must}' mangler i users-tabellen.", 500);
   }
-  $pkCol    = $has('user_id') ? 'user_id' : ($has('id') ? 'id' : ($has('userId') ? 'userId' : null));
-  if (!$pkCol) bad('E_SCHEMA', 'users mangler en kendt PK-kolonne (user_id/id/userId).', 500);
-
+  $pkCol    = 'user_id';
   $fieldCol = $has('field_id') ? 'field_id' : null;
   $xCol     = $has('x_coord')  ? 'x_coord'  : null;
   $yCol     = $has('y_coord')  ? 'y_coord'  : null;
-  $activeCol= $has('is_active')? 'is_active': null;
 
-  // Vi kræver mindst field_id ELLER x/y
   if (!$fieldCol && !($xCol && $yCol)) {
     bad('E_SCHEMA', "users mangler 'field_id' og også 'x_coord/y_coord' — kan ikke gemme feltvalg.", 500);
   }
 
-  // Bloker, hvis andre allerede har feltet (i samme world/map)
-  $pdo->beginTransaction();
+  $activeCol  = $has('is_active') ? 'is_active' : null;
+  $updatedCol = $has('updated_at') ? 'updated_at' : null;
 
-  $whereOcc = "WHERE world_id = ? AND map_id = ? AND {$pkCol} <> ?";
-  $paramsOcc = [$worldId, $mapId, $uid];
-  if ($activeCol) { $whereOcc .= " AND {$activeCol} = 1"; }
+  // Named lock for at undgå race conditions
+  $lockKey = sprintf('world:%d:map:%d:field:%d', $worldId, $mapId, $field);
+  $gotLock = $pdo->query("SELECT GET_LOCK(" . $pdo->quote($lockKey) . ", 5) AS ok")->fetchColumn();
+  if ((int)$gotLock !== 1) bad('E_LOCK', 'Kunne ikke få lås for feltet. Prøv igen.', 423);
 
-  if ($fieldCol) {
-    $whereOcc .= " AND {$fieldCol} = ?";
-    $paramsOcc[] = $field;
-  } elseif ($xCol && $yCol) {
-    $whereOcc .= " AND {$xCol} = ? AND {$yCol} = ?";
-    $paramsOcc[] = $x; $paramsOcc[] = $y;
+  try {
+    $pdo->beginTransaction();
+
+    // Er feltet allerede optaget af en anden?
+    $whereOcc = "WHERE world_id = ? AND map_id = ? AND {$pkCol} <> ?";
+    $paramsOcc = [$worldId, $mapId, $uid];
+    if ($fieldCol) {
+      $whereOcc .= " AND {$fieldCol} = ?";
+      $paramsOcc[] = $field;
+    } else {
+      $whereOcc .= " AND {$xCol} = ? AND {$yCol} = ?";
+      $paramsOcc[] = $x; $paramsOcc[] = $y;
+    }
+
+    $lockSql = "SELECT {$pkCol} FROM users {$whereOcc} LIMIT 1 FOR UPDATE";
+    $stLock = $pdo->prepare($lockSql);
+    $stLock->execute($paramsOcc);
+    if ($stLock->fetch()) {
+      $pdo->rollBack();
+      bad('E_OCCUPIED', 'Feltet er allerede optaget af en anden bruger.', 409);
+    }
+
+    // Opdater denne brugers række
+    $set = ["world_id = ?", "map_id = ?"];
+    $params = [$worldId, $mapId];
+
+    if ($fieldCol) { $set[] = "{$fieldCol} = ?"; $params[] = $field; }
+    if ($xCol)     { $set[] = "{$xCol} = ?";     $params[] = $x; }
+    if ($yCol)     { $set[] = "{$yCol} = ?";     $params[] = $y; }
+
+    $mulCols = [
+      'mul_forest' => $mulForest,
+      'mul_field'  => $mulField,
+      'mul_mining' => $mulMining,
+      'mul_water'  => $mulWater,
+    ];
+    foreach ($mulCols as $col => $val) {
+      if ($has($col) && $val !== null) { $set[] = "{$col} = ?"; $params[] = $val; }
+    }
+    if ($activeCol)  { $set[] = "{$activeCol} = 1"; }
+    if ($updatedCol) { $set[] = "{$updatedCol} = NOW()"; }
+
+    $sqlUpd = "UPDATE users SET " . implode(', ', $set) . " WHERE {$pkCol} = ?";
+    $params[] = $uid;
+
+    $stUpd = $pdo->prepare($sqlUpd);
+    $stUpd->execute($params);
+
+    $pdo->commit();
+    respond(['ok' => true, 'data' => [
+      'saved'   => true,
+      'world_id'=> $worldId, 'map_id'=>$mapId,
+      'field'   => $field, 'x'=>$x, 'y'=>$y,
+      'mul_forest'=>$mulForest, 'mul_field'=>$mulField, 'mul_mining'=>$mulMining, 'mul_water'=>$mulWater
+    ]], 200);
+  } finally {
+    // Frigiv named lock
+    try { $pdo->query("SELECT RELEASE_LOCK(" . $pdo->quote($lockKey) . ")"); } catch (Throwable $ignore) {}
   }
-
-  $lockSql = "SELECT {$pkCol} FROM users {$whereOcc} FOR UPDATE";
-  $stLock = $pdo->prepare($lockSql);
-  $stLock->execute($paramsOcc);
-  $taken = $stLock->fetch(PDO::FETCH_ASSOC);
-  if ($taken) {
-    $pdo->rollBack();
-    bad('E_OCCUPIED', 'Feltet er allerede optaget af en anden bruger.', 409);
-  }
-
-  // Sæt felter på den aktuelle bruger
-  $set = ["world_id = ?", "map_id = ?"];
-  $params = [$worldId, $mapId];
-
-  if ($fieldCol) { $set[] = "{$fieldCol} = ?"; $params[] = $field; }
-  if ($xCol)     { $set[] = "{$xCol} = ?";     $params[] = $x; }
-  if ($yCol)     { $set[] = "{$yCol} = ?";     $params[] = $y; }
-
-  // Multipliers hvis kolonner findes (din tabel har dem)
-  $mulCols = [
-    'mul_forest' => $mulForest,
-    'mul_field'  => $mulField,
-    'mul_mining' => $mulMining,
-    'mul_water'  => $mulWater,
-  ];
-  foreach ($mulCols as $col => $val) {
-    if ($has($col) && $val !== null) { $set[] = "{$col} = ?"; $params[] = $val; }
-  }
-
-  $sqlUpd = "UPDATE users SET " . implode(', ', $set) . " WHERE {$pkCol} = ?";
-  $params[] = $uid;
-
-  $stUpd = $pdo->prepare($sqlUpd);
-  $stUpd->execute($params);
-
-  $pdo->commit();
-  respond(['ok' => true, 'data' => ['saved' => true]], 200);
 
 } catch (Throwable $e) {
   try {
-    if (isset($pdo) && $pdo instanceof PDO && $pdo->inTransaction()) {
-      $pdo->rollBack();
-    }
+    if (isset($pdo) && $pdo instanceof PDO && $pdo->inTransaction()) $pdo->rollBack();
   } catch (Throwable $ignore) {}
   bad('E_SERVER', $e->getMessage(), 500);
 }

@@ -59,6 +59,11 @@
     <unitSpace>0.5</unitSpace>
     <emoji>🌾</emoji >
   </resource>
+    <resource id="res.maize" family="food" type="grain" lvl="1" stage="1">
+    <unit>kg</unit>
+    <unitSpace>0.5</unitSpace>
+    <emoji>🌾</emoji >
+  </resource>
   <resource id="res.salt" family="basic" type="basicRessource" lvl="1" stage="1">
     <unit>kg</unit>
     <unitSpace>0.4</unitSpace>

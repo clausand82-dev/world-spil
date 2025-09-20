@@ -674,6 +674,70 @@ if (!empty($state['ani']) && !empty($defs['ani'])) {
   }
 }
 
+//--- UDREGN solid cap
+$availableSS = 0; // summerer alle positive solid cap
+$usedSS     = 0; // summerer alle negative solid cap
+
+foreach ($state['bld'] as $id => $val) {
+    $key = preg_replace('/^bld\./', '', $id);
+
+    if (isset($defs['bld'][$key]['stats']['storageSolidCap'])) {
+        $ss = (int)$defs['bld'][$key]['stats']['storageSolidCap'];
+
+        if ($ss > 0) {
+            $availableSS += $ss;
+        } elseif ($ss < 0) {
+            $usedSS += $ss; // her bliver det negativt
+        }
+    }
+}
+
+foreach ($state['add'] as $id => $val) {
+    $key = preg_replace('/^add\./', '', $id);
+
+    if (isset($defs['add'][$key]['stats']['storageSolidCap'])) {
+        $ss = (int)$defs['add'][$key]['stats']['storageSolidCap'];
+
+        if ($ss > 0) {
+            $availableSS += $ss;
+        } elseif ($ss < 0) {
+            $usedSS += $ss; // her bliver det negativt
+        }
+    }
+}
+
+//--- UDREGN liquid cap
+$availableSL = 0; // summerer alle positive liquid cap
+$usedSL     = 0; // summerer alle negative liquid cap
+
+foreach ($state['bld'] as $id => $val) {
+    $key = preg_replace('/^bld\./', '', $id);
+
+    if (isset($defs['bld'][$key]['stats']['storageLiquidCap'])) {
+        $sl = (int)$defs['bld'][$key]['stats']['storageLiquidCap'];
+
+        if ($sl > 0) {
+            $availableSL += $sl;
+        } elseif ($sl < 0) {
+            $usedSL += $sl; // her bliver det negativt
+        }
+    }
+}
+
+foreach ($state['add'] as $id => $val) {
+    $key = preg_replace('/^add\./', '', $id);
+
+    if (isset($defs['add'][$key]['stats']['storageLiquidCap'])) {
+        $sl = (int)$defs['add'][$key]['stats']['storageLiquidCap'];
+
+        if ($sl > 0) {
+            $availableSL += $sl;
+        } elseif ($sl < 0) {
+            $usedSL += $sl; // her bliver det negativt
+        }
+    }
+}
+
 
 // 3) Base fra config (tolerér begge navne)
 $CONFIG = isset($config) ? $config : (isset($cfg) ? $cfg : []);
@@ -700,9 +764,9 @@ $animalBaseCap = (int)(
   ?? 0
 );
 
-// 4) Bonus (udvid senere)
-$bonusLiquid = 0;
-$bonusSolid  = 0;
+// 4) Bonus
+$bonusLiquid = $availableSL;
+$bonusSolid  = $availableSS;
 $bonusFootprint  = $availableFP;
 $usedFootprint = $usedFP;
 $bonusAnimalCap  = $availableAC;
