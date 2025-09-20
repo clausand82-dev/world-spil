@@ -108,10 +108,10 @@
   <entry key="bld.lake.l1.desc">En sø, der kan udvides med vigtige muligheder. En Sø giver vand.</entry>
   <entry key="bld.mine.l1.name">Mine</entry>
   <entry key="bld.mine.l1.desc">Mine, der automatisk giver en smule sten over tid. Kan udvides til at give mere og flere ressourcer</entry>
-  <entry key="bld.storagesolid.l1.name">Opbevarings telt (solide varer)</entry>
-  <entry key="bld.storagesolid.l1.desc">Øger lager plads på solide varer</entry>
-  <entry key="bld.storageliquid.l1.name">Opbevaringstelt (flydende varer)</entry>
-  <entry key="bld.storageliquid.l1.desc">Øger lager plads på flydende varer</entry>
+  <entry key="bld.storage.l1.name">Opbevaringstelt</entry>
+  <entry key="bld.storage.l1.desc">Øger lager plads på alle type varer</entry>
+  <entry key="bld.storage.l2.name">Stor Opbevaringstelt</entry>
+  <entry key="bld.storage.l2.desc">Øger lager plads yderligere</entry>
 
 <!--ADDONS BASECAMP-->  
   <entry key="add.choppingblock.l1.name">Økseblok</entry>
@@ -173,15 +173,16 @@
   <entry key="add.barn_shearingshed.l1.name">Klippebås</entry>
   <entry key="add.barn_shearingshed.l1.desc">Giver mulighed for at få uld fra får</entry>
 
-
-
-
   <entry key="add.tailorspot.l1.name">Skrædderbord</entry>
   <entry key="add.tailorspot.l1.desc">Tilføjer mulighed for at bearbejde skind og læder</entry>
-  <entry key="add.barrel.l1.name">Lille opbevaringstønde til flydende ressourcer</entry>
-  <entry key="add.barrel.l1.desc">Øger opbevarings for flydende ressourcer</entry>
-  <entry key="add.barrel.l2.name">Stor opbevaringstønde til flydende ressourcer</entry>
-  <entry key="add.barrel.l2.desc">Øger opbevarings for flydende ressourcer yderligere</entry>
+  <entry key="add.storageliquid.l1">Lille opbevaringstønde til flydende ressourcer</entry>
+  <entry key="add.storageliquid.l1.desc">Øger opbevarings for flydende ressourcer</entry>
+  <entry key="add.storageliquid.l2.name">Stor opbevaringstønde til flydende ressourcer</entry>
+  <entry key="add.storageliquid.l2.desc">Øger opbevarings for flydende ressourcer yderligere</entry>
+  <entry key="add.storagesolid.l1.name">Lille opbevaringstønde til solide ressourcer</entry>
+  <entry key="add.storagesolid.l1.desc">Øger opbevarings for solide ressourcer</entry>
+  <entry key="add.storagesolid.l2.name">Stor opbevaringstønde til solide ressourcer</entry>
+  <entry key="add.storagesolid.l2.desc">Øger opbevarings for solide ressourcer yderligere</entry>
 
   <entry key="add.stacking.l1.name">Bedre pakning</entry>
   <entry key="add.stacking.l1.desc">Forbedre opbevarings muligheder</entry>
@@ -198,6 +199,8 @@
   <entry key="rsd.flintstone.l1.desc">Giver evnen til at benytte flintesten i sin værktøjer (økse, hakke osv.)</entry>
   <entry key="rsd.animalhusbandry.l1.name">Dyrehold</entry>
   <entry key="rsd.animalhusbandry.l1.desc">Giver evner til at holde dyr til produktion og slagtning</entry>
+  <entry key="rsd.animalhusbandry.l1.name">Udvidet Dyrehold</entry>
+  <entry key="rsd.animalhusbandry.l1.desc">Udvider evner til at holde dyr til produktion og slagtning</entry>
   <entry key="rsd.farming.l1.name">Farming</entry>
   <entry key="rsd.farming.l1.desc">Giver evnen til at kunne bygge og dyrke  begrænser sorter korn på marker</entry>
   <entry key="rsd.forestry.l1.name">Skovbrug</entry>
@@ -210,6 +213,20 @@
   <entry key="rsd.storage.l1.desc">Giver muligheder for at bygge og udvide storage</entry>
   <entry key="rsd.construction.l1.name">Øget konstruktions evne</entry>
   <entry key="rsd.construction.l1.desc">Giver bedre konstruktions evner</entry>
+  <entry key="rsd.fertilizer.l1.name">Øget gødning evne</entry>
+  <entry key="rsd.fertilizer.l1.desc">Giver mere gødning</entry>
+  <entry key="rsd.bedding.l1.name">Strøgelse</entry>
+  <entry key="rsd.bedding.l1.desc">Strøgelse til dyr giver mere lort </entry>
+  <entry key="rsd.mining.l1.name">Forsk i basal mine</entry>
+  <entry key="rsd.mining.l1.desc">Forskning i basal mine giver mere sten</entry>
+  <entry key="rsd.fishing.l1.name">Fiskeri</entry>
+  <entry key="rsd.fishing.l1.desc">Giver evner til at fiske og udnytte vandressourcer</entry>
+  <entry key="rsd.leatherwork.l1.name">Læderarbejde</entry>
+  <entry key="rsd.leatherwork.l1.desc">Giver evner til at bearbejde skind og lave læder</entry>
+  <entry key="rsd.betterstorage.l1.name">Bedre opbevaring</entry>
+  <entry key="rsd.betterstorage.l1.desc">Giver evner til at forbedre opbevaringsmuligheder</entry>
+  <entry key="rsd.rope.l1.name">Forskning i at knytte reb</entry>
+  <entry key="rsd.rope.l1.desc">Giver evner til at benytte reb</entry>
 
 <!--RECIPES-->
   <entry key="rcp.firewood.l1.name">Lav brænde</entry>

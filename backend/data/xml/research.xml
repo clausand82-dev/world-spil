@@ -130,14 +130,6 @@
     <require>rsd.tools.l1,bld.lake.l1</require>
   </research>
 
-  <research id="rsd.fishing.l1" family="basecamp,lake" type="storage" lvl="1" stage="1">
-    <cost>
-      <res id="res.money" amount="75"/>
-    </cost>
-    <time>10m</time>
-    <require>bld.basecamp.l3,rsd.tools.l3</require>
-  </research>
-
     <research id="rsd.fertilizer.l1" family="basecamp,lake" type="storage" lvl="1" stage="1">
     <cost>
       <res id="res.money" amount="75"/>

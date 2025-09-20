@@ -275,6 +275,9 @@
     <yield period="1h">
       <res id="res.rawcommonfish" amount="2"/>
       </yield>
+      <buff applies_to="all">
+        <res id="res.rawcommonfish" amount="10" type="mult" mode="yield"/>
+      </buff>
   </addon>
 
     <!--addon fiske net af tynd tråd - åbner op for fiskeri -->
