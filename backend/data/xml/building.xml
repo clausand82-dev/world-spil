@@ -15,6 +15,11 @@
       <res id="all" type="mult" amount="0" mode="cost"/>
       <speed target="all" type="mult" amount="100"/>
     </buffs>
+    <cost>
+      <res id="res.money" amount="50" />
+      <res id="res.wood" amount="25" />
+      <res id="res.stone" amount="10" />
+    </cost>
   </building>
 
   <building id="bld.basecamp.l2" family="basecamp" type="base" lvl="2" stage="1">

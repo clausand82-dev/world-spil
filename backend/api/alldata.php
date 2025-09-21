@@ -350,11 +350,37 @@ if (WS_RUN_MODE === 'run') {
               $state['user'] = $row;
             }
 
-            // 4b) Ejerstatus (bld/add/rsd/ani)
-            $owned_bld=[]; $stmt=$pdo->prepare("SELECT bld_id,level,durability FROM buildings WHERE user_id=?"); $stmt->execute([$uid]); foreach($stmt as $r)$owned_bld[$r['bld_id']]=$r;
-            $owned_add=[]; $stmt=$pdo->prepare("SELECT add_id,level FROM addon WHERE user_id=?"); $stmt->execute([$uid]); foreach($stmt as $r)$owned_add[$r['add_id']]=$r;
-            $owned_rsd=[]; $stmt=$pdo->prepare("SELECT rsd_id,level FROM research WHERE user_id=?"); $stmt->execute([$uid]); foreach($stmt as $r)$owned_rsd[$r['rsd_id']]=$r;
-            $owned_ani=[]; $stmt=$pdo->prepare("SELECT ani_id, quantity FROM animals WHERE user_id=?"); $stmt->execute([$uid]); foreach($stmt as $r){ $owned_ani[$r['ani_id']] = ['quantity'=>(int)$r['quantity']]; }
+// 4b) Ejerstatus (bld/add/rsd/ani)
+            if (!function_exists('dur__effective_abs')) require_once __DIR__ . '/lib/durability.php';
+
+                // Byg fleksibelt SELECT afhængig af kolonner
+                $cols = ['bld_id','level','durability'];
+                if (_db_table_has_columns_alldata($pdo, 'buildings', ['created_at'])) $cols[] = 'created_at';
+                if (_db_table_has_columns_alldata($pdo, 'buildings', ['last_repair_ts_utc'])) $cols[] = 'last_repair_ts_utc';
+                $sqlB = "SELECT " . implode(',', $cols) . " FROM buildings WHERE user_id = ?";
+                $stmt = $pdo->prepare($sqlB);
+                $stmt->execute([$uid]);
+                $owned_bld = [];
+                foreach ($stmt as $r) {
+               // Beregn effektiv durability og pct baseret på defs + cfg
+               $fullId = (string)($r['bld_id'] ?? '');
+               $key    = preg_replace('/^bld\\./','', $fullId);
+               $defMax = (float)($defs['bld'][$key]['durability'] ?? 0.0);
+               $rowDur = (float)($r['durability'] ?? 0.0);
+               $createdAt = $r['created_at'] ?? null;
+               $lastRep   = $r['last_repair_ts_utc'] ?? null;
+               $effAbs = dur__effective_abs($defMax, $rowDur, $createdAt, $lastRep, time(), $cfg);
+               $pct    = dur__pct($defMax, $effAbs);
+ 
+               $r['durability_eff_abs'] = $effAbs;
+               $r['durability_pct']     = $pct;
+               $owned_bld[$fullId] = $r;
+             }
+
+        $owned_add=[]; $stmt=$pdo->prepare("SELECT add_id,level FROM addon WHERE user_id=?"); $stmt->execute([$uid]); foreach($stmt as $r)$owned_add[$r['add_id']]=$r;
+         $owned_rsd=[]; $stmt=$pdo->prepare("SELECT rsd_id,level FROM research WHERE user_id=?"); $stmt->execute([$uid]); foreach($stmt as $r)$owned_rsd[$r['rsd_id']]=$r;
+         $owned_ani=[]; $stmt=$pdo->prepare("SELECT ani_id, quantity FROM animals WHERE user_id=?"); $stmt->execute([$uid]); foreach($stmt as $r){ $owned_ani[$r['ani_id']] = ['quantity'=>(int)[$r['quantity'] ?? 0]]; 
+          }
 
             // Lige før I returnerer payload, efter stateMin er kendt og apply_passive_yields_for_user er kaldt:
 if (!function_exists('collect_active_buffs')) require_once __DIR__ . '/actions/buffs.php';
@@ -400,10 +426,28 @@ foreach (['bld','add','rsd','ani'] as $bucket) {
 }
 $data['yields_preview'] = $yields_preview;
 
+// 4b.1) Repair preview for alle ejede bygninger
+            if (!function_exists('dur__repair_preview_for_def')) require_once __DIR__ . '/lib/durability.php';
+            if (!function_exists('normalize_costs')) require_once __DIR__ . '/lib/purchase_helpers.php';
+            $repair_preview = [];
+            foreach ($owned_bld as $ctxId => $row) {
+              $defKey = preg_replace('/^bld\\./', '', (string)$ctxId);
+              $def    = $defs['bld'][$defKey] ?? null;
+              if (!$def) continue;
+              $defMax = (float)($def['durability'] ?? 0.0);
+              if ($defMax <= 0) continue;
+              $effAbs = (float)($row['durability_eff_abs'] ?? 0.0);
+              $prev   = dur__repair_preview_for_def($def, $effAbs, $defMax, $cfg);
+              $prev['def_max'] = $defMax;
+              $prev['eff_abs'] = $effAbs;
+              $prev['pct']     = isset($row['durability_pct']) ? (int)$row['durability_pct'] : dur__pct($defMax, $effAbs);
+              $repair_preview[$ctxId] = $prev;
+            }
+            $data['repair_preview'] = $repair_preview;
 
             // 4c) Anvend passive yields (base + normale yields) FØR vi læser inventory
-            $stateMin = ['bld'=>$owned_bld,'add'=>$owned_add,'rsd'=>$owned_rsd,'ani'=>$owned_ani];
-            apply_passive_yields_for_user($uid, $defs, $stateMin);
+             $stateMin = ['bld'=>$owned_bld,'add'=>$owned_add,'rsd'=>$owned_rsd,'ani'=>$owned_ani];
+             apply_passive_yields_for_user($uid, $defs, $stateMin);
 
             // 4d) Normaliser defs['res'] FØR inventory
             if (!empty($defs['res'])) {

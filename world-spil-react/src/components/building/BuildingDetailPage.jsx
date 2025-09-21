@@ -8,11 +8,11 @@ import AddonsTab from './tabs/AddonsTab.jsx';
 import ResearchTab from './tabs/ResearchTab.jsx';
 import RecipesTab from './tabs/RecipesTab.jsx';
 import SpecialTab from './tabs/SpecialTab.jsx';
-import { useT } from "../../services/i18n.js"; // bruges til sprog
+import { useT } from "../../services/i18n.js";
 
 import { computeOwnedMap, requirementInfo, collectActiveBuffs, computeResearchOwned } from '../../services/requirements.js';
 
-const DETAIL_TABS = ['addons', 'research', 'recipes', 'special']; // kan jeg ikke få oversat
+const DETAIL_TABS = ['addons', 'research', 'recipes', 'special'];
 
 function canonicalizeBuildingId(param) {
   if (!param) return null;
@@ -21,8 +21,14 @@ function canonicalizeBuildingId(param) {
 
 function BuildingDetailPage({ buildingId }) {
   const { data } = useGameData();
+  const t = useT();
+
+  if (!data) {
+    return <div className="panel section"><div className="section-body"><div className="sub">Loading…</div></div></div>;
+  }
+
   const { defs, state } = data;
-const t = useT(); // bruges til sprog
+
   const canonicalId = canonicalizeBuildingId(buildingId);
   const defKey = canonicalId ? canonicalId.replace(/^bld\./, '') : null;
   const heroDef = defKey ? defs.bld?.[defKey] : null;
@@ -30,10 +36,12 @@ const t = useT(); // bruges til sprog
   const parsed = canonicalId ? parseBldKey(canonicalId) : null;
   const family = parsed?.family ?? defKey?.replace(/\.l\d+$/, '');
   const series = parsed?.series ?? (family ? `bld.${family}` : null);
-  const ownedBuildings = useMemo(() => computeOwnedMap(state.bld), [state.bld]);
-  const ownedAddons = useMemo(() => computeOwnedMap(state.add), [state.add]);
+
+  const ownedBuildings = useMemo(() => computeOwnedMap(state.bld || {}), [state.bld]);
+  const ownedAddons = useMemo(() => computeOwnedMap(state.add || {}), [state.add]);
   const ownedResearch = useMemo(() => computeResearchOwned(state), [state]);
   const activeBuffs = useMemo(() => collectActiveBuffs(defs), [defs]);
+
   const requirementCaches = useMemo(
     () => ({ ownedBuildings, ownedAddons, ownedResearch, activeBuffs }),
     [ownedBuildings, ownedAddons, ownedResearch, activeBuffs]
@@ -48,7 +56,7 @@ const t = useT(); // bruges til sprog
 
   const currentStage = Number(state.user?.currentstage ?? state.user?.stage ?? 0);
 
-  const ownedMax = series ? ownedBuildings[series] || 0 : 0;
+  const ownedMax = series ? (ownedBuildings[series] || 0) : 0;
   const baseOwned = ownedMax > 0;
 
   const firstLevelKey = family ? `${family}.l1` : null;
@@ -58,18 +66,19 @@ const t = useT(); // bruges til sprog
   const actionStageReq = Number(actionDef?.stage ?? actionDef?.stage_required ?? 0);
   const actionStageOk = !actionDef || actionStageReq <= currentStage;
 
+  // VIGTIGT: requirementInfo(item, state, caches)
   const actionRequirement = requirementInfo(
     actionDef
       ? {
           id: `bld.${actionKey}`,
           price: actionDef.cost || actionDef.price || {},
           req: actionDef.require || actionDef.req || '',
-          duration_s: Number(actionDef.duration_s ?? 0),
+          duration_s: Number(actionDef.duration_s ?? actionDef.build_time_s ?? actionDef.stats?.build_time_s ?? 0),
           footprintDelta: Number(actionDef.stats?.footprint ?? 0),
         }
       : null,
     state,
-    requirementCaches,
+    requirementCaches
   );
 
   const actionItem = actionDef
@@ -77,7 +86,7 @@ const t = useT(); // bruges til sprog
         id: `bld.${actionKey}`,
         price: actionDef.cost || actionDef.price || {},
         req: actionDef.require || actionDef.req || '',
-        duration_s: Number(actionDef.duration_s ?? 0),
+        duration_s: Number(actionDef.duration_s ?? actionDef.build_time_s ?? actionDef.stats?.build_time_s ?? 0),
         footprintDelta: Number(actionDef.stats?.footprint ?? 0),
         isUpgrade: baseOwned,
         isOwned: false,
@@ -93,20 +102,28 @@ const t = useT(); // bruges til sprog
 
   const stageFootprint = Number(actionDef?.stats?.footprint ?? 0);
   const heroId = canonicalId || (family ? `bld.${family}.l1` : 'unknown');
+
+  // Durability: brug pct fra state hvis muligt, fallback til absolut
+  const ownedId = baseOwned ? `bld.${family}.l${ownedMax}` : (canonicalId || (family ? `bld.${family}.l1` : ''));
+  const ownedRow = ownedId ? (state.bld?.[ownedId] || {}) : {};
   const durabilityMax = Number(heroDef?.durability ?? 0);
-  const ownedId = baseOwned ? `bld.${family}.l${ownedMax}` : (canonicalId || `bld.${family}.l1`);
-  const durabilityCurrent = Number(state.bld?.[ownedId]?.durability ?? 0);
-  const durabilityPct = durabilityMax > 0
-    ? Math.max(0, Math.min(100, Math.round((durabilityCurrent / durabilityMax) * 100)))
-    : 0;
+  const durabilityPctFromState = Number.isFinite(ownedRow?.durability_pct) ? Number(ownedRow.durability_pct) : null;
+  const durabilityCurrentAbs = Number(ownedRow?.durability ?? NaN);
+
+  const durabilityPct = durabilityPctFromState != null
+    ? durabilityPctFromState
+    : (durabilityMax > 0 && Number.isFinite(durabilityCurrentAbs))
+      ? Math.max(0, Math.min(100, Math.round((durabilityCurrentAbs / durabilityMax) * 100)))
+      : 0;
+
   const footprintText = `${((heroDef?.stats?.footprint ?? 0) >= 0 ? '+' : '')}${heroDef?.stats?.footprint ?? 0} Byggepoint`;
   const animalCapText = `${((heroDef?.stats?.animalCap ?? 0) >= 0 ? '+' : '')}${heroDef?.stats?.animalCap ?? 0} Staldplads`;
 
   const actionFullId = actionItem && actionItem.id.startsWith('bld.') ? actionItem.id : null;
-  const currentFullId = ownedId;
+  const currentFullId = ownedId || null;
   const jobActiveId = (actionFullId && activeJobs[actionFullId])
     ? actionFullId
-    : (activeJobs[currentFullId] ? currentFullId : null);
+    : (currentFullId && activeJobs[currentFullId] ? currentFullId : null);
 
   const [activeTab, setActiveTab] = useState(DETAIL_TABS[0]);
   const [addonFilter, setAddonFilter] = useState('main');
@@ -120,13 +137,13 @@ const t = useT(); // bruges til sprog
     ? {
         price: actionDef.cost || actionDef.price || {},
         reqString: actionRequirement.reqString,
-        duration: actionRequirement.duration?.final_s ?? Number(actionDef.duration_s ?? 0),
-        durationBase: actionRequirement.duration?.base_s ?? Number(actionDef.duration_s ?? 0),
+        duration: actionRequirement.duration?.final_s ?? Number(actionDef.duration_s ?? actionDef.build_time_s ?? actionDef.stats?.build_time_s ?? 0),
+        durationBase: actionRequirement.duration?.base_s ?? Number(actionDef.duration_s ?? actionDef.build_time_s ?? actionDef.stats?.build_time_s ?? 0),
         footprint: stageFootprint,
       }
     : null;
 
-  const canStart = !!actionDef && actionStageOk && actionRequirement.allOk;
+  const canStart = !!actionDef && actionStageOk && !!actionRequirement.allOk;
 
   const tabContent = (() => {
     switch (activeTab) {
@@ -158,7 +175,12 @@ const t = useT(); // bruges til sprog
           actionTarget={actionTargetInfo}
           requirementState={actionRequirement}
         />
-        <BuildingActions actionItem={actionItem} canStart={canStart} jobActiveId={jobActiveId} />
+        <BuildingActions
+          actionItem={actionItem}
+          canStart={canStart}
+          jobActiveId={jobActiveId}
+          buildingId={canonicalId}
+        />
         <div className="tabs">
           {DETAIL_TABS.map((tab) => (
             <button
@@ -180,7 +202,3 @@ const t = useT(); // bruges til sprog
 }
 
 export default BuildingDetailPage;
-
-
-
-

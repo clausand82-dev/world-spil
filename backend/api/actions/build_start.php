@@ -148,14 +148,86 @@ try {
             $def = $defs['add'][$key] ?? null;
             if(!$def) throw new Exception('Unknown addon: ' . $reqId);
         } else { // building
-            $key = preg_replace('~^bld\.~i', '', $reqId);
-            $def = $defs['bld'][$key] ?? null;
-            if(!$def) throw new Exception('Unknown building: ' . $reqId);
-            // i rest af backend bruges canonical id i jobs
-            if (!function_exists('canonical_bld_id')) require_once __DIR__ . '/../alldata.php';
-            $itemId = canonical_bld_id($key);
-        }
+             $key = preg_replace('~^bld\\.~i', '', $reqId);
+             $def = $defs['bld'][$key] ?? null;
+             if(!$def) throw new Exception('Unknown building: ' . $reqId);
+             // i rest af backend bruges canonical id i jobs
+             if (!function_exists('canonical_bld_id')) require_once __DIR__ . '/../alldata.php';
+             $itemId = canonical_bld_id($key);
+         }
 
+            // --------------------------------------------
+            // Durability-gating: kræv >= 50% for upgrades og addons
+            // --------------------------------------------
+            if (!function_exists('dur__effective_abs')) require_once __DIR__ . '/../lib/durability.php';
+            if (!function_exists('load_config_ini')) require_once __DIR__ . '/../alldata.php';
+            $cfg = load_config_ini();
+
+            // Hjælper: find ejerens nyeste bygning for en given building-family
+            $findBuildingRowForFamily = function(PDO $db, int $uid, string $family): ?array {
+                // Find højeste level-række for samme serie: bld.<family>.l%
+                $like = 'bld.' . $family . '.l%';
+                // Forsøg at hente også created_at og last_repair_ts_utc, hvis de findes
+                $cols = ['id','bld_id','level','durability'];
+                try {
+                $st = $db->prepare("SHOW COLUMNS FROM buildings LIKE 'created_at'"); $st->execute(); if ($st->fetch()) $cols[]='created_at';
+                } catch (Throwable $e) {}
+                try {
+                $st = $db->prepare("SHOW COLUMNS FROM buildings LIKE 'last_repair_ts_utc'"); $st->execute(); if ($st->fetch()) $cols[]='last_repair_ts_utc';
+                } catch (Throwable $e) {}
+                $sql = "SELECT ".implode(',', $cols)." FROM buildings WHERE user_id=? AND bld_id LIKE ? ORDER BY level DESC LIMIT 1";
+                $s = $db->prepare($sql);
+                $s->execute([$uid, $like]);
+                $row = $s->fetch(PDO::FETCH_ASSOC);
+                return $row ?: null;
+            };
+
+            $needsRepairBlock = function(array $row, array $defs, array $cfg): bool {
+                if (empty($row['bld_id'])) return false;
+                $bldKey = preg_replace('~^bld\.~', '', (string)$row['bld_id']);
+                $defMax = (float)($defs['bld'][$bldKey]['durability'] ?? 0.0);
+                if ($defMax <= 0) return false;
+                $cur    = (float)($row['durability'] ?? 0.0);
+                $created= $row['created_at'] ?? null;
+                $lastRp = $row['last_repair_ts_utc'] ?? null;
+                $effAbs = dur__effective_abs($defMax, $cur, $created, $lastRp, time(), $cfg);
+                $pct    = dur__pct($defMax, $effAbs);
+                return ($pct < 50);
+            };
+
+            // A) Bloker ADDON-køb ved < 50% på relateret bygning
+            if ($scopeIn === 'addon') {
+                $addKey = preg_replace('~^add\.~i', '', $reqId);
+                $addDef = $defs['add'][$addKey] ?? null;
+                $famRaw = (string)($addDef['family'] ?? '');
+                $families = array_filter(array_map('trim', explode(',', $famRaw)));
+                // Tag første family (typisk én)
+                $family = $families[0] ?? '';
+                if ($family !== '') {
+                $row = $findBuildingRowForFamily($db, $userId, $family);
+                if ($row && $needsRepairBlock($row, $defs, $cfg)) {
+                    throw new Exception('Reparer bygning først');
+                }
+                }
+            }
+
+            // B) Bloker BUILDING upgrade ved < 50% på eksisterende instans
+            if ($scopeIn === 'building') {
+                // inferAction eksisterer allerede i filen (defineret som $inferAction ovenfor)
+                $action = $inferAction($itemId, $scopeIn);
+                if ($action === 'upgrade') {
+                // Udled family fra $itemId: bld.<family>.lN
+                if (preg_match('~^bld\.([^.]+)\.l\d+$~', $itemId, $m)) {
+                    $family = $m[1];
+                    $row = $findBuildingRowForFamily($db, $userId, $family);
+                    if ($row && $needsRepairBlock($row, $defs, $cfg)) {
+                    throw new Exception('Reparer bygning først');
+                    }
+                }
+                }
+            }
+
+ 
         // Duplikat-kørsel for samme mål
         $dupStmt = $db->prepare("SELECT id FROM build_jobs WHERE user_id = ? AND bld_id = ? AND state = 'running' LIMIT 1 FOR UPDATE");
         $dupStmt->execute([$userId, $itemId]);

@@ -420,6 +420,35 @@ if (!function_exists('yield__collect_active_buffs')) {
   }
 }
 
+/* ========================= Durability multiplier (buildings) ========================= */
+if (!function_exists('yield__apply_durability_multiplier')) {
+  /**
+   * Halverer yields for buildings når durability < 25%.
+   * - assoc: ['res.id' => amount_per_cycle]
+   * - ctxId: 'bld.xxx.lN' eller 'bld.xxx' (vi accepterer begge)
+   * - state: forventer state['bld'][$ctxId]['durability_pct'] hvis tilgængelig
+   * Returnerer uændret assoc hvis ikke relevant.
+   */
+  function yield__apply_durability_multiplier(array $assoc, string $ctxId, array $state = []): array {
+    if (empty($assoc)) return $assoc;
+    $id = (string)$ctxId;
+    if ($id === '' || !str_starts_with($id, 'bld.')) return $assoc;
+    $row = $state['bld'][$id] ?? null;
+    // fallback: prøv uden level-del, hvis state kun har serie-nøgle
+    if (!$row) {
+      $series = preg_replace('~\\.l\\d+$~', '', $id);
+      if ($series && isset($state['bld'][$series])) $row = $state['bld'][$series];
+    }
+    if (!$row) return $assoc;
+   $pct = (int)($row['durability_pct'] ?? 100);
+    if ($pct >= 25) return $assoc;
+    $out = [];
+    foreach ($assoc as $rid => $amt) $out[$rid] = (float)$amt * 0.5;
+    return $out;
+  }
+}
+
+
 /* ========================= Event log bridges ========================= */
 
 if (!function_exists('normalize_rows')) {
@@ -602,6 +631,8 @@ if (!function_exists('yield__compute_and_apply_entity_yields')) {
         if ($assoc) {
           // Buffs før kapacitetsklip
           $assoc = yield__apply_yield_buffs_assoc($assoc, $ctxId, $buffs);
+          // Durability-konsekvens: halver yields for bygninger ved < 25% (kræver state med durability_pct)
+          $assoc = yield__apply_durability_multiplier($assoc, $ctxId, $state);
 
           // Kapacitet (unitSpace) og logging
           [$credited, $lost] = yield__apply_caps_to_assoc($assoc, $usage, $caps, $defs);
