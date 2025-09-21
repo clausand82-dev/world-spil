@@ -20,7 +20,6 @@ function read_json(): array {
   return $data;
 }
 function db(): PDO {
-  // Læs DB creds fra backend/data/config/db.ini
   $ini = __DIR__ . '/../../data/config/db.ini';
   if (!is_file($ini)) {
     throw new RuntimeException('Missing db.ini at backend/data/config/db.ini');
@@ -50,15 +49,17 @@ try {
   $row = $stmt->fetch();
 
   if (!$row || (int)$row['is_active'] !== 1 || !password_verify($password, (string)$row['password_hash'])) {
-    // opdater evt. failed counters hvis du vil (valgfrit)
     json_err('E_LOGIN', 'Invalid username or password', 401);
   }
 
-  // success → nulstil failures + sæt last_login (valgfrit)
   $pdo->prepare('UPDATE users SET failed_logins=0, last_login=NOW() WHERE user_id=?')->execute([(int)$row['user_id']]);
 
-  // start session
+  // VIGTIGT: beskyt mod session fixation
+  session_regenerate_id(true);
+
+  // Standardiser – sæt begge nøgler for kompatibilitet
   $_SESSION['uid'] = (int)$row['user_id'];
+  $_SESSION['user_id'] = (int)$row['user_id'];
   $_SESSION['username'] = (string)$row['username'];
 
   echo json_encode([
@@ -70,5 +71,6 @@ try {
     ]
   ]);
 } catch (Throwable $e) {
-  json_err('E_SERVER', $e->getMessage(), 500);
+  http_response_code(500);
+  echo json_encode(['ok'=>false,'error'=>['code'=>'E_SERVER','message'=>$e->getMessage()]]);  
 }

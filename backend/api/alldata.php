@@ -402,48 +402,8 @@ $data['yields_preview'] = $yields_preview;
 
 
             // 4c) Anvend passive yields (base + normale yields) FØR vi læser inventory
-// MINIMAL FIX: byg et stateForYield med cap.total (solid/liquid) ud fra config + ejede bygninger/addons
-
-$stateMin = ['bld'=>$owned_bld,'add'=>$owned_add,'rsd'=>$owned_rsd,'ani'=>$owned_ani];
-
-// Cap-base fra config
-$liquidBase = (int)($cfg['start_limitations_cap']['storageLiquidCap'] ?? $cfg['start_limitations_cap']['storageLiquidBaseCap'] ?? 0);
-$solidBase  = (int)($cfg['start_limitations_cap']['storageSolidCap']  ?? $cfg['start_limitations_cap']['storageSolidBaseCap']  ?? 0);
-
-// Bonus fra ejede bygninger/addons (kun positive stats tæller til cap)
-$bonusSolid = 0; $bonusLiquid = 0;
-foreach ($owned_bld as $id => $_row) {
-  $key = preg_replace('/^bld\./','',$id);
-  if (isset($defs['bld'][$key]['stats']['storageSolidCap'])) {
-    $ss = (int)$defs['bld'][$key]['stats']['storageSolidCap'];
-    if ($ss > 0) $bonusSolid += $ss;
-  }
-  if (isset($defs['bld'][$key]['stats']['storageLiquidCap'])) {
-    $sl = (int)$defs['bld'][$key]['stats']['storageLiquidCap'];
-    if ($sl > 0) $bonusLiquid += $sl;
-  }
-}
-foreach ($owned_add as $id => $_row) {
-  $key = preg_replace('/^add\./','',$id);
-  if (isset($defs['add'][$key]['stats']['storageSolidCap'])) {
-    $ss = (int)$defs['add'][$key]['stats']['storageSolidCap'];
-    if ($ss > 0) $bonusSolid += $ss;
-  }
-  if (isset($defs['add'][$key]['stats']['storageLiquidCap'])) {
-    $sl = (int)$defs['add'][$key]['stats']['storageLiquidCap'];
-    if ($sl > 0) $bonusLiquid += $sl;
-  }
-}
-
-// Kun totals er nødvendige for yield-klip
-$stateForYield = $stateMin;
-$stateForYield['cap'] = [
-  'solid'  => [ 'total' => max(0, $solidBase  + $bonusSolid)  ],
-  'liquid' => [ 'total' => max(0, $liquidBase + $bonusLiquid) ],
-];
-
-// Kald nu passive yields med stateForYield (så yield-klip ser cap.total)
-apply_passive_yields_for_user($uid, $defs, $stateForYield);
+            $stateMin = ['bld'=>$owned_bld,'add'=>$owned_add,'rsd'=>$owned_rsd,'ani'=>$owned_ani];
+            apply_passive_yields_for_user($uid, $defs, $stateMin);
 
             // 4d) Normaliser defs['res'] FØR inventory
             if (!empty($defs['res'])) {

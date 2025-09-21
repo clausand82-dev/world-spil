@@ -15,7 +15,9 @@ export function GameDataProvider({ children }) {
       setGameState(prev => ({ ...prev, isLoading: !prev?.data, error: null }));
       
       // 1. Hent primær spildata
-      const dataUrl = `/world-spil/backend/api/alldata.php?ts=${Date.now()}`;
+      const API_BASE = import.meta.env.VITE_API_BASE ?? '';
+      const dataUrl = `${API_BASE}/backend/api/alldata.php?ts=${Date.now()}`;
+      //const dataUrl = `/world-spil/backend/api/alldata.php?ts=${Date.now()}`;
       const gameDataResponse = await fetch(dataUrl, { cache: 'no-store' });
       if (!gameDataResponse.ok) throw new Error(`API error: ${gameDataResponse.status}`);
       const gameDataResult = await gameDataResponse.json();

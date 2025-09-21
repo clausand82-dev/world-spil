@@ -17,9 +17,8 @@ function fmtMultAsPercent(mult) {
 // Robust midlertidig XML-indlæsning (samme som tidligere eksempel)
 async function fetchWorldXmlText() {
   const candidates = [
-    '/assets/data/world.map001.land001.xml',
+    '/src/assets/data/world.map001.land001.xml',
     '/backend/data/xml/world.map001.land001.xml',
-    'https://raw.githubusercontent.com/clausand82-dev/world-spil/main/backend/data/xml/world.map001.land001.xml',
   ];
   for (const url of candidates) {
     try {
@@ -101,7 +100,7 @@ async function apiGetOccupied() {
 
 // Opdater API helper (kun sendt payload, resten ens)
 async function apiChooseTile(payload) {
-  const r = await fetch(`/world-spil/backend/api/map/choose_tile.php`, {
+  const r = await fetch(`${API_BASE}/map/choose_tile.php`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
@@ -112,55 +111,8 @@ async function apiChooseTile(payload) {
   return j?.data || {};
 }
 
-// Inde i confirmChoose():
-async function confirmChoose() {
-  try {
-    const t = confirm.tile;
-    if (!t) return;
-
-    const payload = {
-      world_id: worldMeta.worldId ?? 1,
-      map_id: worldMeta.mapId ?? 1,
-      field: t.n,
-      x: t.x,
-      y: t.y,
-      // send multipliers fra XML
-      mul_forest: t.multipliers.forest ?? null,
-      mul_field:  t.multipliers.field  ?? null,
-      mul_mining: t.multipliers.mining ?? null,
-      mul_water:  t.multipliers.water  ?? null,
-    };
-
-    await apiChooseTile(payload);
-
-    // Markér som optaget lokalt
-    setOccupiedSet(prev => new Set(prev).add(t.n));
-    setOccupiedByMap(prev => {
-      const m = new Map(prev);
-      m.set(t.n, { field: t.n, x: t.x, y: t.y });
-      return m;
-    });
-
-    setConfirm({ open: false, tile: t, occupiedBy: null });
-    refreshData && refreshData();
-  } catch (e) {
-    alert(e?.message || 'Kunne ikke gemme dit valg.');
-  }
-}
-
 export default function MapPage() {
-
   const { hasClaim } = useUserBaseClaim();
-
-  // Hvis brugeren allerede har valgt felt, omdirigér til dashboard og stop render
-  if (hasClaim) {
-    // Brug det router-mønster du allerede anvender (her antager vi hash routing)
-    if (typeof window !== 'undefined' && window.location?.hash !== '#/dashboard') {
-      window.location.hash = '#/dashboard';
-    }
-    return null;
-  }
-
   const { refreshData } = useGameData() || {};
 
   const wrapperRef = useRef(null);
@@ -180,6 +132,15 @@ export default function MapPage() {
 
   // markér at siden er set (førstegang)
   useEffect(() => { try { localStorage.setItem('ws.map.seen', '1'); } catch {} }, []);
+
+  // Redirect håndteres i en effekt for at undgå “fewer hooks”
+  useEffect(() => {
+    if (hasClaim) {
+      if (typeof window !== 'undefined' && window.location?.hash !== '#/dashboard') {
+        window.location.hash = '#/dashboard';
+      }
+    }
+  }, [hasClaim]);
 
   // Cells (50x50)
   const cells = useMemo(() => {
@@ -224,7 +185,7 @@ export default function MapPage() {
         const set = new Set();
         const map = new Map();
         for (const row of occupied) {
-          const n = Number(row.field ?? 0) || ((Number(row.y)-1)*COLS + Number(row.x));
+          const n = Number(row.field ?? 0) || ((Number(row.y) - 1) * COLS + Number(row.x));
           set.add(n);
           map.set(n, row);
         }
@@ -268,19 +229,18 @@ export default function MapPage() {
       if (!t) return;
 
       const payload = {
-  world_id: worldMeta.worldId ?? 1,
-  map_id: worldMeta.mapId ?? 1,
-  field: t.n,
-  x: t.x,
-  y: t.y,
-  mul_forest: t.multipliers.forest ?? null,
-  mul_field:  t.multipliers.field  ?? null,
-  mul_mining: t.multipliers.mining ?? null,
-  mul_water:  t.multipliers.water  ?? null,
-};
-await apiChooseTile(payload);
+        world_id: worldMeta.worldId ?? 1,
+        map_id: worldMeta.mapId ?? 1,
+        field: t.n,
+        x: t.x,
+        y: t.y,
+        mul_forest: t.multipliers.forest ?? null,
+        mul_field:  t.multipliers.field  ?? null,
+        mul_mining: t.multipliers.mining ?? null,
+        mul_water:  t.multipliers.water  ?? null,
+      };
 
-      await apiChooseTile(payload);
+      await apiChooseTile(payload); // kun én gang
 
       // Markér som optaget lokalt
       setOccupiedSet(prev => new Set(prev).add(t.n));
@@ -303,6 +263,9 @@ await apiChooseTile(payload);
     setSelectedN(null);
     setConfirm({ open: false, tile: null, occupiedBy: null });
   }
+
+  // Render: hvis hasClaim er true, venter vi blot på redirect-effekten (intet indhold)
+  if (hasClaim) return null;
 
   return (
     <section className="panel section">

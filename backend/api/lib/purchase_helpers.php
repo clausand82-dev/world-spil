@@ -16,16 +16,24 @@ declare(strict_types=1);
    ID-kanonisering (ressourcer)
 ================================= */
 
-/** Canonical res-id: "res.wood" (tiltager "res." hvis mangler) */
+/**
+ * Canonical res-id: "res.wood" (tilføjer "res." hvis mangler)
+ */
 function canonical_res_id(string $rid): string {
   $rid = trim($rid);
   if ($rid === '') return '';
   return str_starts_with($rid, 'res.') ? $rid : ('res.' . $rid);
 }
 
-/** Alternativ res-id (den modsatte variant) — bruges ved læsning fra gamle rækker */
+/** Alternativ res-id (modsatte variant) — bruges ved læsning fra gamle rækker */
 function alt_res_id(string $rid): string {
   return str_starts_with($rid, 'res.') ? substr($rid, 4) : ('res.' . $rid);
+}
+
+/** Valgfrit, men nyttigt andre steder i koden */
+function is_liquid_res(string $resId): bool {
+  $rid = strtolower(canonical_res_id($resId));
+  return str_starts_with($rid, 'res.water') || str_starts_with($rid, 'res.oil');
 }
 
 /* ================================
@@ -59,22 +67,27 @@ function parse_bld_id(string $id): array {
  * Læser en spillers beholdning fra den korrekte tabel (inventory eller animals).
  */
 function read_inventory_amount(PDO $db, int $userId, string $resId): float {
-    // Hvis det er et dyr, tjek `animals`-tabellen
-    if (str_starts_with($resId, 'ani.')) {
-        $stmt = $db->prepare("SELECT quantity FROM animals WHERE user_id = ? AND ani_id = ?");
-        $stmt->execute([$userId, $resId]);
-        return (float)($stmt->fetchColumn() ?: 0.0);
-    }
-    
-    // Ellers, brug den eksisterende logik for ressourcer (solid/liquid)
-    $rid1 = canonical_res_id($resId);
-    $rid2 = alt_res_id($resId);
-    $isLiquid = str_starts_with($rid1, 'res.water') || str_starts_with($rid1, 'res.liquid');
-    $table = $isLiquid ? 'inventory_liquid' : 'inventory_solid';
-    
-    $stmt = $db->prepare("SELECT COALESCE(SUM(amount), 0) AS s FROM inventory WHERE user_id = ? AND res_id IN (?, ?)");
-    $stmt->execute([$userId, $rid1, $rid2]);
-    return (float)$stmt->fetchColumn();
+  // Dyr håndteres i separat tabel
+  if (str_starts_with($resId, 'ani.')) {
+    $stmt = $db->prepare("SELECT quantity FROM animals WHERE user_id = ? AND ani_id = ?");
+    $stmt->execute([$userId, $resId]);
+    return (float)($stmt->fetchColumn() ?: 0.0);
+  }
+
+  // Ressourcer: læs fra den samlede 'inventory'-tabel
+  $ridWith  = canonical_res_id($resId); // fx 'res.wood'
+  $ridPlain = alt_res_id($resId);       // fx 'wood'
+
+  // Brug SUM for robusthed, hvis begge varianter findes
+  $stmt = $db->prepare("
+    SELECT COALESCE(SUM(amount), 0)
+    FROM inventory
+    WHERE user_id = ?
+      AND res_id IN (?, ?)
+    LIMIT 1
+  ");
+  $stmt->execute([$userId, $ridWith, $ridPlain]);
+  return (float)($stmt->fetchColumn() ?: 0.0);
 }
 
 /** Summér låst mængde for et res-id (aktiv lås = hverken released eller consumed) */

@@ -1,15 +1,6 @@
 <?php
 declare(strict_types=1);
 
-/**
- * Robust _init.php
- * - Starter session
- * - Finder alldata.php via flere kandidatstier (valgfri)
- * - Hvis alldata.php ikke findes, læser vi DB fra db.ini
- * - Eksporterer db(), auth_require_user_id(), load_all_defs()
- *   - load_all_defs() kræver alldata.php; ellers smider den en klar fejl
- */
-
 error_reporting(E_ALL);
 ini_set('display_errors', '0');
 
@@ -19,7 +10,7 @@ if (session_status() !== PHP_SESSION_ACTIVE) {
 
 /* -------------------- Fælles utils -------------------- */
 function _path_join(string ...$parts): string {
-  return preg_replace('#[\\/]+#', '/', join('/', $parts));
+  return preg_replace('#[\\\\/]+#', '/', join('/', $parts));
 }
 
 /** Find en fil ved at prøve flere kandidater og at gå opad i mappestrukturen */
@@ -39,8 +30,8 @@ function find_file_upwards(string $startDir, array $candidates, int $maxDepth = 
 
 /** Læs db.ini (samme format som alldata.php bruger) */
 function load_db_ini(?string $hintDir = null): array {
-  // typiske placeringer relativt til backend/api/_init.php
   $start = $hintDir ?? __DIR__;
+  // Udvidet kandidat-liste inkl. backend/data/config/db.ini (bruges andre steder i repoet)
   $iniPath = find_file_upwards($start, [
     'db.ini',
     '../db.ini',
@@ -49,6 +40,13 @@ function load_db_ini(?string $hintDir = null): array {
     'backend/db.ini',
     '../backend/db.ini',
     '../../backend/db.ini',
+    // Nye kandidater – mest sandsynlige i dette repo
+    'backend/data/config/db.ini',
+    '../backend/data/config/db.ini',
+    '../../backend/data/config/db.ini',
+    'data/config/db.ini',
+    '../data/config/db.ini',
+    '../../data/config/db.ini',
   ]);
   if (!$iniPath) return [];
   $ini = parse_ini_file($iniPath, true, INI_SCANNER_TYPED) ?: [];
@@ -56,8 +54,7 @@ function load_db_ini(?string $hintDir = null): array {
 }
 
 /* -------------------- Forsøg at inkludere alldata.php -------------------- */
-// --- Indlæs alldata.php i LIB-mode (samme mappe som _init.php) ---
-if (!defined('WS_RUN_MODE')) define('WS_RUN_MODE', 'lib'); // undgå at køre alldata's main
+if (!defined('WS_RUN_MODE')) define('WS_RUN_MODE', 'lib');
 $alldataPath = __DIR__ . '/alldata.php';
 if (!is_file($alldataPath)) {
   http_response_code(500);
@@ -67,38 +64,46 @@ if (!is_file($alldataPath)) {
 }
 require_once $alldataPath;
 
-/* -------------------- DB-forbindelse -------------------- */
+/* -------------------- DB-forbindelse (fallback) -------------------- */
 /**
  * Hvis alldata.php definerede db(), bruger vi den.
- * Ellers bygger vi en pdo baseret på db.ini (samme data som alldata bruger).
+ * Ellers bygger vi en PDO baseret på db.ini (samme data som alldata bruger).
  */
 if (!function_exists('db')) {
   function db(): PDO {
     static $pdo = null;
-    if ($pdo) return $pdo;
+    if ($pdo instanceof PDO) {
+      return $pdo;
+    }
 
     $cfg = load_db_ini(__DIR__);
-    $driver  = $cfg['driver']  ?? 'mysql';
-    $host    = $cfg['host']    ?? 'localhost';
-    $port    = (int)($cfg['port'] ?? 3306);
-    $name    = $cfg['name']    ?? 'xx';
-    $user    = $cfg['user']    ?? 'xx';
-    $pass    = $cfg['password']?? 'xx';
-    $charset = $cfg['charset'] ?? 'utf8mb4';
-
-    if ($driver !== 'mysql') {
-      throw new RuntimeException('Only mysql driver supported here');
+    if (!$cfg) {
+      // Intelephense accepterer throw som “exit path” => ingen P1075
+      throw new RuntimeException('Missing db.ini (could not resolve database configuration).');
     }
-    $dsn = "mysql:host={$host};port={$port};dbname={$name};charset={$charset}";
-    $opt = [
+
+    $driver  = (string)($cfg['driver']   ?? 'mysql');
+    $host    = (string)($cfg['host']     ?? '127.0.0.1');
+    $port    = (int)   ($cfg['port']     ?? 3306);
+    $dbname  = (string)($cfg['name']     ?? $cfg['database'] ?? '');
+    $user    = (string)($cfg['user']     ?? $cfg['username'] ?? 'root');
+    $pass    = (string)($cfg['password'] ?? '');
+    $charset = (string)($cfg['charset']  ?? 'utf8mb4');
+
+    if ($dbname === '') {
+      throw new RuntimeException('Database name is empty in db.ini.');
+    }
+
+    $dsn = sprintf('%s:host=%s;port=%d;dbname=%s;charset=%s', $driver, $host, $port, $dbname, $charset);
+
+    $opts = [
       PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
       PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
       PDO::ATTR_EMULATE_PREPARES   => false,
     ];
-    $pdo = new PDO($dsn, $user, $pass, $opt);
-    $pdo->exec("SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci");
-$pdo->exec("SET collation_connection = 'utf8mb4_unicode_ci'");
-    return $pdo;
+
+    $pdo = new PDO($dsn, $user, $pass, $opts);
+    return $pdo; // Sikrer return på alle succes-paths
   }
 }
 
