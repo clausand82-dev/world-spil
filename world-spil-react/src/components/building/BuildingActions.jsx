@@ -35,7 +35,7 @@ function spentListToResourceDelta(spent = []) {
   return map;
 }
 
-// Meget tolerant “normalisering”: accepterer både array og nestede objekter
+// Accepter både array og objekt-price
 function normalizePriceLike(price) {
   if (!price) return [];
   if (Array.isArray(price)) {
@@ -45,14 +45,14 @@ function normalizePriceLike(price) {
   }
   if (typeof price === 'object') {
     const out = [];
-    const visitObj = (obj, prefix = '') => {
+    const visitObj = (obj) => {
       for (const [k, v] of Object.entries(obj)) {
         if (v == null) continue;
         if (typeof v === 'number') {
           const rid = k.startsWith('res.') ? k : `res.${k}`;
           out.push({ res_id: rid, amount: v });
         } else if (typeof v === 'object') {
-          visitObj(v, k);
+          visitObj(v);
         }
       }
     };
@@ -80,7 +80,7 @@ function useRepairPreview(buildingId) {
   return useMemo(() => data?.repair_preview?.[buildingId] || null, [data, buildingId]);
 }
 
-function RepairButton({ buildingId, jobActiveId, buildPrice }) {
+function RepairButton({ buildingId, jobActiveId, repairBasePrice }) {
   const t = useT();
   const { refreshData, applyResourceDeltaMap } = useGameData() || {};
   const [busy, setBusy] = useState(false);
@@ -96,9 +96,10 @@ function RepairButton({ buildingId, jobActiveId, buildPrice }) {
     return Math.min(1, fallback);
   })();
 
-  // Estimer pris hvis der ikke er preview: byggeomkostning skaleret med manglende holdbarhed
-  const buildPriceList = useMemo(() => normalizePriceLike(buildPrice), [buildPrice]);
-  const estCost = useMemo(() => scaleCostList(buildPriceList, missingFrac), [buildPriceList, missingFrac]);
+  // Estimat: NUVÆRENDE level-cost × missingFrac × 0.75
+  const basePriceList = useMemo(() => normalizePriceLike(repairBasePrice), [repairBasePrice]);
+  const estFactor = missingFrac * 0.75;
+  const estCost = useMemo(() => scaleCostList(basePriceList, estFactor), [basePriceList, estFactor]);
 
   const canRepair = !!buildingId && !jobActiveId && missingFrac > 0 && !busy;
   const title =
@@ -133,7 +134,7 @@ function RepairButton({ buildingId, jobActiveId, buildPrice }) {
   );
 }
 
-function BuildingActions({ actionItem, canStart, jobActiveId, buildingId }) {
+function BuildingActions({ actionItem, canStart, jobActiveId, buildingId, repairBasePrice }) {
   const t = useT();
   const progressTarget = jobActiveId || actionItem?.id;
 
@@ -151,7 +152,7 @@ function BuildingActions({ actionItem, canStart, jobActiveId, buildingId }) {
         <RepairButton
           buildingId={buildingId}
           jobActiveId={jobActiveId}
-          buildPrice={actionItem?.price}
+          repairBasePrice={repairBasePrice}
         />
       ) : (
         <button className="btn" disabled>{t("ui.btn.repair.h1")}</button>

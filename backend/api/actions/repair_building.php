@@ -17,7 +17,7 @@ try {
   if ($rawBldId === '') throw new Exception('Missing bld_id');
 
   // Canonical og parse family/level
-  $bldId   = canonical_bld_id($rawBldId);   // "bld.family.lN" eller "bld.family" (vi accepterer begge, men kræver family)
+  $bldId   = canonical_bld_id($rawBldId);   // "bld.family.lN" eller "bld.family"
   [$family, $lvlIn] = parse_bld_id($bldId);
   if ($family === '') throw new Exception('Invalid building id');
 
@@ -82,20 +82,22 @@ try {
 
   // Basepris for det aktuelle level
   $baseCosts = normalize_costs($def['cost'] ?? []);
-  // Skaleret pris
+  // Skaleret pris: 75% af manglende durability ud fra NUVÆRENDE level-cost
   $wantCosts = [];
   foreach ($baseCosts as $c) {
     $rid = (string)($c['res_id'] ?? '');
     $amt = (float)($c['amount'] ?? 0);
     if ($rid === '' || $amt <= 0) continue;
     $scaled = $amt * $missingPct * $factorMul;
-    if ($scaled <= 0) continue;
-    $wantCosts[] = ['res_id' => $rid, 'amount' => $scaled];
+
+    // AFRUND OP til heltal for DB-kompatibilitet
+    $scaledInt = (int)ceil($scaled);
+    if ($scaledInt <= 0) continue;
+
+    $wantCosts[] = ['res_id' => $rid, 'amount' => $scaledInt];
   }
 
   if (empty($wantCosts)) {
-    // Intet at betale — men sæt til 100% alligevel?
-    // For nu: undlad at skrive, returner no-op for klarhed.
     $db->rollBack();
     echo json_encode([
       'ok'   => true,
@@ -111,10 +113,10 @@ try {
     return;
   }
 
-  // Valider og træk betaling
+  // Træk betaling (nu som heltal)
   spend_resources($db, $userId, $wantCosts);
 
-  // Opdater durability til defMax og sæt last_repair_ts_utc = nu (UTC)
+  // Sæt til 100%
   $updateSql = "UPDATE buildings SET durability = :max, last_repair_ts_utc = UTC_TIMESTAMP() WHERE id = :id";
   $up = $db->prepare($updateSql);
   $up->execute([':max' => $defMax, ':id' => (int)$row['id']]);
@@ -124,7 +126,7 @@ try {
   echo json_encode([
     'ok'     => true,
     'bld_id' => $curBldId,
-    'spent'  => $wantCosts,
+    'spent'  => $wantCosts, // returnér de afrundede heltal
     'durability' => [
       'eff_abs' => $defMax,
       'pct'     => 100,

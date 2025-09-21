@@ -57,17 +57,36 @@ policeStrength: Politifolkenes styrke - bestemmes af flere faktorer som research
 policeArmor: Politifolkenes armor - bestemmes af flere faktorer som research, addons, udstyr
 policeCap: Det antal point ens politi styrke kan fylde.
 policeLevel: Den level ens politifolk har.
-policeVisibility:
+policeVisibility: ???
 
 Kriminalitet:
 crimeRate: Overordnet kriminalitetsrate (jo lavere jo bedre). crimeRate er crimeForce/citizens*100
 crimeForce: Antal kriminelle i byen (ud af de indbyggere man har ialt)
 crimeChance: Jo lavere jo bedre. Hver gang man gør noget med en indbygger (uddannelse, dør, mm), så tjkkes der først om vedkommende er kriminel. Det foregår ved et roll imod crimeChance/100+policeLevel. Er vedkommende kriminal og dør, trækkes vedkommende fra indbyggertal OG crimeForce mindskes lidt.
 Hvad øger antal kriminelle? Specielle events, samt dårlig health og popularitet holdt op imod politiens styrke.
+crimeLevel: De kriminelles level - udregnes hvergang der er RAZZIE, ved særlige events OG måske engang i døgnet.
+crimeArmor: standard (5) + crimeLevel
+crimeStrength
 
 crimeForce øges ved roll imod (maxHealth-currentHealth + maxpopularity - currentpopularity) = crimeChance
 
-Indbygger = 200
+Indbygger = 200, hver indbygger roller imod random tal imellem (policeLevel procent ud af policeForce) og crimeForce Tal på eller under police
+
+2/25*100 = 8, crimeForce = 10 - random (0,10) - 1-8 = not crime, 9-10 = +1 crimeForce.
+
+RAZZIE:
+Et valg man som spiller kan tage - det koster en pris, og så rolles der pr enhed. En enhed består af 12 mand, hvis muligt. Der oprettes passende antal enheder - rest går i enhed for sig. Der samme gøres ved crimeForce.
+
+Health i en enhed = antal unit * 100+Force
+
+1: Police enhed roller 1d6+policeArmor imod 1d6+crimeArmor - er police roll højere (ikke ligmed) udføres næste træk.
+2: Police enhed roller 1d20*policeStrength imod enhedens samlede health (units health = 100+force/units) - Hvis slag er højere end en units liv, dør unit - fortsætter op til alt skade er gjort.
+3: resterende crime enhed roller 1d6+crimeArmor imod 1d6+policeArmor - er crime roller (højere eller ligmed) udføres næste træk.
+4: Crime enhed roller 1d20*crimeStrength imod police enheds samlede healt - hvis skade er højere end individets, dør indived og således fortsætter det.
+5: Proces gentages indtil den ene eller anden enhed er død (der tælles døde pr side som trækkes fra repræsentive forces OG samlet indbygger tal)
+Proces gentages for næste enhed, indtil alle enheder har kæmpet.
+
+SKAL DET VÆRE PR UNIT ISTEDET FOR PR ENHED??? - kan også være at en enhed er pr unittype (hvis der er flere slags politfolk - måske de opgraderes i bundles fra laveste lvl til højeste) - strategi fase kan så være hvilke man vil angribe med først og hvormange man vil smide ind i kampen. Crimes kan have et par forudprogrammeret strategier de kører med tilfældigt eller ud fra visse faktorer.
 
 
 

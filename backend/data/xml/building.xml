@@ -9,7 +9,7 @@
       <res id="res.stone" amount="2" />
       <res id="res.water" amount="2" />
     </yield>
-    <durability>10.0</durability>
+    <durability>10</durability>
     <upgradesTo>bld.basecamp.l2</upgradesTo>
     <buffs applies_to="all">
       <res id="all" type="mult" amount="0" mode="cost"/>

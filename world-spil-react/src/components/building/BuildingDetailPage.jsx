@@ -66,7 +66,6 @@ function BuildingDetailPage({ buildingId }) {
   const actionStageReq = Number(actionDef?.stage ?? actionDef?.stage_required ?? 0);
   const actionStageOk = !actionDef || actionStageReq <= currentStage;
 
-  // VIGTIGT: requirementInfo(item, state, caches)
   const actionRequirement = requirementInfo(
     actionDef
       ? {
@@ -103,18 +102,20 @@ function BuildingDetailPage({ buildingId }) {
   const stageFootprint = Number(actionDef?.stats?.footprint ?? 0);
   const heroId = canonicalId || (family ? `bld.${family}.l1` : 'unknown');
 
-  // Durability: brug pct fra state hvis muligt, fallback til absolut
+  // Nuværende level-id og række
   const ownedId = baseOwned ? `bld.${family}.l${ownedMax}` : (canonicalId || (family ? `bld.${family}.l1` : ''));
   const ownedRow = ownedId ? (state.bld?.[ownedId] || {}) : {};
   const durabilityMax = Number(heroDef?.durability ?? 0);
   const durabilityPctFromState = Number.isFinite(ownedRow?.durability_pct) ? Number(ownedRow.durability_pct) : null;
   const durabilityCurrentAbs = Number(ownedRow?.durability ?? NaN);
 
+  // DURABILITY UDREGNING
   const durabilityPct = durabilityPctFromState != null
     ? durabilityPctFromState
     : (durabilityMax > 0 && Number.isFinite(durabilityCurrentAbs))
       ? Math.max(0, Math.min(100, Math.round((durabilityCurrentAbs / durabilityMax) * 100)))
       : 0;
+      console.log(durabilityPct);
 
   const footprintText = `${((heroDef?.stats?.footprint ?? 0) >= 0 ? '+' : '')}${heroDef?.stats?.footprint ?? 0} Byggepoint`;
   const animalCapText = `${((heroDef?.stats?.animalCap ?? 0) >= 0 ? '+' : '')}${heroDef?.stats?.animalCap ?? 0} Staldplads`;
@@ -124,6 +125,11 @@ function BuildingDetailPage({ buildingId }) {
   const jobActiveId = (actionFullId && activeJobs[actionFullId])
     ? actionFullId
     : (currentFullId && activeJobs[currentFullId] ? currentFullId : null);
+
+  // Nuværende level-def til repair-estimat
+  const currentLevelKey = baseOwned ? `${family}.l${ownedMax}` : null;
+  const currentLevelDef = currentLevelKey ? defs.bld?.[currentLevelKey] : null;
+  const repairBasePrice = currentLevelDef?.cost || currentLevelDef?.price || heroDef?.cost || heroDef?.price || {};
 
   const [activeTab, setActiveTab] = useState(DETAIL_TABS[0]);
   const [addonFilter, setAddonFilter] = useState('main');
@@ -180,6 +186,7 @@ function BuildingDetailPage({ buildingId }) {
           canStart={canStart}
           jobActiveId={jobActiveId}
           buildingId={canonicalId}
+          repairBasePrice={repairBasePrice}
         />
         <div className="tabs">
           {DETAIL_TABS.map((tab) => (
