@@ -162,6 +162,7 @@
   
   <!--sub addon fodertrug - formål er at øge animal_cap  - på sigt kan det måske miske mad indtag-->
   <addon id="add.barn_feedingtrough.l1" family="farm" group="barn" type="addons" lvl="1" stage="1">
+    <stats>animal_cap=5</stats>
     <cost>
       <res id="res.money" amount="25"/>
       <res id="res.wood" amount="16"/>
@@ -170,8 +171,9 @@
       <upgradesTo>add.barn_feedingtrough.l2</upgradesTo>
   </addon>
 
-    <addon id="add.barn_feedingtrough.l1" family="farm" group="barn" type="addons" lvl="1" stage="1">
-    <cost>
+    <addon id="add.barn_feedingtrough.l2" family="farm" group="barn" type="addons" lvl="2" stage="1">
+    <stats>animal_cap=10</stats>
+     <cost>
       <res id="res.money" amount="25"/>
       <res id="res.wood" amount="16"/>
     </cost>
@@ -281,7 +283,7 @@
   </addon>
 
     <!--addon fiske net af tynd tråd - åbner op for fiskeri -->
-        <addon id="add.mole_net.l1" family="lake" group="fishingmole" type="addons" lvl="1" stage="1">
+        <addon id="add.mole_net.l1" family="lake" group="mole" type="addons" lvl="1" stage="1">
     <cost>
       <res id="res.money" amount="100"/>
       <res id="res.wood" amount="100"/>

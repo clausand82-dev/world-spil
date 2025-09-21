@@ -1,69 +1,28 @@
-import React, { useState, useMemo } from 'react';
-import { useGameData } from '../../context/GameDataContext.jsx';
+import React, { useMemo, useState } from 'react';
 import * as H from '../../services/helpers.js';
+import { useGameData } from '../../context/GameDataContext.jsx';
+import { applyYieldBuffsToAmount } from '../../services/yieldBuffs.js';
 
-/**
- * Læg base stage-bonus ind som ekstra kilde(r) i aggregated.
- * Forventer:
- * - defs.stage_bonus_rules[stageId] med nøgler: forest|mining|field|water -> array af resId'er (res.xxx)
- * - data.state.user.bonus_* (eller mul_* fallback) med heltal pr. kategori
- */
-function injectBaseStageBonus(aggregated, data) {
-  const defs = data?.defs ?? {};
-  const user = data?.state?.user ?? {};
-
-  // Stage id kan være tal eller streng
-  const stageId = user.currentstage ?? user.stage ?? 1;
-  const rulesByStage = defs.stage_bonus_rules ?? {};
-  // slå både med tal og streng op for sikkerhed
-  const rules =
-    rulesByStage[stageId] ??
-    rulesByStage[String(stageId)] ??
-    {};
-
-  // Backend eksporterer bonus_*; mul_* beholdes som fallback
-  const bonuses = {
-    forest: Number(user.bonus_forest ?? user.mul_forest ?? 0),
-    mining: Number(user.bonus_mining ?? user.mul_mining ?? 0),
-    field:  Number(user.bonus_field  ?? user.mul_field  ?? 0),
-    water:  Number(user.bonus_water  ?? user.mul_water  ?? 0),
-  };
-
-  const label = {
-    forest: 'Base bonus (Forest)',
-    mining: 'Base bonus (Mining)',
-    field:  'Base bonus (Field)',
-    water:  'Base bonus (Water)',
-  };
-  const icon = { forest:'🌲', mining:'⛏️', field:'🌾', water:'💧' };
-
-  const push = (resId, amountPerHour, source) => {
-    if (!aggregated[resId]) aggregated[resId] = { total: 0, sources: [] };
-    aggregated[resId].total += amountPerHour;
-    aggregated[resId].sources.push(source);
-  };
-
-  for (const [key, amt] of Object.entries(bonuses)) {
-    if (!amt) continue;
-    const list = rules[key] ?? [];
-    for (const resId of list) {
-      // +N/time → modeller som amount=N per 3600s
-      push(resId, amt, {
-        name: label[key],
-        icon: icon[key],
-        amount: amt,
-        period_s: 3600,
-        quantity: 1,
-      });
+function collectActiveBuffs(defs, state) {
+  const out = [];
+  const push = (arr) => Array.isArray(arr) && arr.forEach((b) => out.push(b));
+  for (const bucket of ['bld','add','rsd']) {
+    const bag = defs?.[bucket] || {};
+    for (const [key, def] of Object.entries(bag)) {
+      const ctxId = `${bucket}.${key}`;
+      const owned =
+        bucket === 'bld' ? !!state?.bld?.[`bld.${key}`] :
+        bucket === 'add' ? !!state?.add?.[`add.${key}`] :
+        !!(state?.rsd?.[key] || state?.rsd?.[`rsd.${key}`]);
+      if (!owned) continue;
+      push(def?.buffs);
     }
   }
+  return out;
 }
 
-// En lille under-komponent til at håndtere én enkelt række
-function YieldRow({ resId, data }) {
+function YieldResource({ resId, data, defs }) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const { defs } = useGameData().data;
-
   const bareId = resId.replace(/^res\./, '');
   const resDef = defs.res?.[bareId];
   if (!resDef) return null;
@@ -84,11 +43,11 @@ function YieldRow({ resId, data }) {
         <div className="collapsible-content expanded">
           {data.sources.map((source, index) => {
             const qty = source.quantity ?? 1;
-            const sourceYieldPerHour = (source.amount / source.period_s) * 3600 * qty;
+            const perHour = (source.amount / source.period_s) * 3600 * qty;
             return (
               <div className="yield-source-item" key={index}>
                 <span>{source.icon} {source.name} {qty > 1 ? `(x${qty})` : ''}</span>
-                <span>+{H.fmt(sourceYieldPerHour)} / time</span>
+                <span>+{H.fmt(perHour)} / time</span>
               </div>
             );
           })}
@@ -105,50 +64,91 @@ export default function PassivYieldsList() {
     if (!data) return {};
     const aggregated = {};
 
+    const defs = data.defs || {};
+    const state = data.state || {};
+    const activeBuffs = collectActiveBuffs(defs, state);
+
     const pushSource = (resId, amountPerHour, source) => {
       if (!aggregated[resId]) aggregated[resId] = { total: 0, sources: [] };
       aggregated[resId].total += amountPerHour;
       aggregated[resId].sources.push(source);
     };
 
-    // Eksisterende: buildings / addons / animals
-    const process = (items, defs, type) => {
+    // Byg en ctxId til buff match
+    const ctxFor = (type, key) =>
+      (type === 'bld' ? 'bld.' : type === 'add' ? 'add.' : type === 'rsd' ? 'rsd.' : 'ani.') + key;
+
+    // buildings / addons / animals (buffet)
+    const process = (items, groupDefs, type) => {
       for (const [id, itemData] of Object.entries(items || {})) {
         const key = id.replace(new RegExp(`^${type}\\.`), '');
-        const def = defs[key];
-        if (def?.yield && def.yield_period_s > 0) {
-          const qty = itemData.quantity || 1; // bld/add = 1, ani = quantity
-          def.yield.forEach(y => {
-            const resId = String(y.id ?? y.res_id ?? '');
-            if (!resId) return;
-            const yieldPerHour = (y.amount / def.yield_period_s) * 3600 * qty;
-            pushSource(resId, yieldPerHour, {
-              name: def.name,
-              icon: def.emoji || def.icon || '🏭',
-              amount: y.amount,
-              period_s: def.yield_period_s,
-              quantity: qty,
-            });
+        const def = groupDefs[key];
+        if (!def?.yield || !(def.yield_period_s > 0)) continue;
+
+        const qty = itemData.quantity || 1; // ani kan være >1
+        const ctxId = ctxFor(type, key);
+
+        for (const y of def.yield) {
+          const baseAmt = Number(y.amount ?? y.qty ?? 0);
+          const resId = String(y.id ?? y.res_id ?? '');
+          if (!resId) continue;
+
+          // Buff pr. cyklus -> omregn til pr. time, anvend buff, tilbage til pr. cyklus for visning
+          const basePerHour = baseAmt * (3600 / def.yield_period_s);
+          const buffedPerHour = applyYieldBuffsToAmount(basePerHour, resId.startsWith('res.') ? resId : `res.${resId}`, { appliesToCtx: ctxId, activeBuffs });
+          const buffedPerCycle = buffedPerHour * (def.yield_period_s / 3600);
+
+          pushSource(resId, buffedPerHour * qty, {
+            name: def.name,
+            icon: def.emoji || def.icon || '🏠',
+            amount: buffedPerCycle,        // behold dit eksisterende render: amount/period_s*3600
+            period_s: def.yield_period_s,
+            quantity: qty,
           });
         }
       }
     };
 
-    const defs = data.defs || {};
-    process(data.state?.bld, defs.bld || {}, 'bld');
-    process(data.state?.add, defs.add || {}, 'add');
-    process(data.state?.ani, defs.ani || {}, 'ani');
+    process(state?.bld, defs.bld || {}, 'bld');
+    process(state?.add, defs.add || {}, 'add');
+    process(state?.ani, defs.ani || {}, 'ani');
 
-    // NYT: Base stage bonus fra defs.stage_bonus_rules + user.bonus_*
-    injectBaseStageBonus(aggregated, data);
+    // Base stage bonus (uændret)
+    const user = state?.user || {};
+    const stageId =
+      user.currentstage ?? user.stage ?? state?.currentstage ?? state?.stage ?? 1;
+    const rules = defs.stage_bonus_rules?.[stageId] || {};
+    const bonuses = {
+      forest: Number(user.mul_forest ?? user.bonus_forest ?? 0),
+      mining: Number(user.mul_mining ?? user.bonus_mining ?? 0),
+      field:  Number(user.mul_field  ?? user.bonus_field  ?? 0),
+      water:  Number(user.mul_water  ?? user.bonus_water  ?? 0),
+    };
+    const label = (k) => ({forest:'Basebonus (Skov)', mining:'Basebonus (Mine)', field:'Basebonus (Mark)', water:'Basebonus (Vand)'}[k] || 'Basebonus');
+
+    for (const [key, lst] of Object.entries(rules)) {
+      const amt = bonuses[key] || 0;
+      if (amt <= 0) continue;
+      for (const rid of (lst || [])) {
+        const resId = String(rid);
+        const perHour = amt;
+        pushSource(resId, perHour, {
+          name: label(key),
+          icon: '✨',
+          amount: perHour,   // 1/time ⇒ period 3600s
+          period_s: 3600,
+          quantity: 1,
+        });
+      }
+    }
 
     return aggregated;
   }, [data]);
 
-  // Sortér på resId
+  const defs = data?.defs || {};
   const sortedYields = Object.entries(aggregatedYields).sort((a, b) => a[0].localeCompare(b[0]));
 
   return sortedYields.map(([resId, yieldData]) => (
-    <YieldRow key={resId} resId={resId} data={yieldData} />
+    <YieldResource key={resId} resId={resId} data={yieldData} defs={defs} />
   ));
 }

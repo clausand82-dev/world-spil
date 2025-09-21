@@ -169,7 +169,8 @@ function apply_speed_buffs(int $baseSeconds, string $action, string $ctx_id, arr
     if (!$pct) continue;
     $mul *= max(0.0, 1 - ($pct / 100));
   }
-  $mul = max($mul, 0.2);
+  $mul = max($mul, 0.001); // ADMIN CAP TIL TILLADER OVER 80% - BRUG NEDENSTÅENDE FOR NORMAL CAP
+  //$mul = max($mul, 0.2); // DEFINED CAP: max 80% hurtigere
   return (int)round($dur * $mul);
 }
 

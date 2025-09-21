@@ -199,8 +199,8 @@
   <entry key="rsd.flintstone.l1.desc">Giver evnen til at benytte flintesten i sin værktøjer (økse, hakke osv.)</entry>
   <entry key="rsd.animalhusbandry.l1.name">Dyrehold</entry>
   <entry key="rsd.animalhusbandry.l1.desc">Giver evner til at holde dyr til produktion og slagtning</entry>
-  <entry key="rsd.animalhusbandry.l1.name">Udvidet Dyrehold</entry>
-  <entry key="rsd.animalhusbandry.l1.desc">Udvider evner til at holde dyr til produktion og slagtning</entry>
+  <entry key="rsd.animalhusbandry.l2.name">Udvidet Dyrehold</entry>
+  <entry key="rsd.animalhusbandry.l2.desc">Udvider evner til at holde dyr til produktion og slagtning</entry>
   <entry key="rsd.farming.l1.name">Farming</entry>
   <entry key="rsd.farming.l1.desc">Giver evnen til at kunne bygge og dyrke  begrænser sorter korn på marker</entry>
   <entry key="rsd.forestry.l1.name">Skovbrug</entry>
@@ -217,16 +217,24 @@
   <entry key="rsd.fertilizer.l1.desc">Giver mere gødning</entry>
   <entry key="rsd.bedding.l1.name">Strøgelse</entry>
   <entry key="rsd.bedding.l1.desc">Strøgelse til dyr giver mere lort </entry>
-  <entry key="rsd.mining.l1.name">Forsk i basal mine</entry>
+  <entry key="rsd.mining.l1.name">Minedrift</entry>
   <entry key="rsd.mining.l1.desc">Forskning i basal mine giver mere sten</entry>
+  <entry key="rsd.mining.l2.name">Bedre minedrift</entry>
+  <entry key="rsd.mining.l2.desc">Forskning i bedre minedrift giver mere sten</entry>
   <entry key="rsd.fishing.l1.name">Fiskeri</entry>
   <entry key="rsd.fishing.l1.desc">Giver evner til at fiske og udnytte vandressourcer</entry>
+  <entry key="rsd.fishing.l2.name">Udvidet Fiskeri</entry>
+  <entry key="rsd.fishing.l2.desc">Giver bedre evner til at fiske og udnytte vandressourcer</entry>
   <entry key="rsd.leatherwork.l1.name">Læderarbejde</entry>
   <entry key="rsd.leatherwork.l1.desc">Giver evner til at bearbejde skind og lave læder</entry>
   <entry key="rsd.betterstorage.l1.name">Bedre opbevaring</entry>
   <entry key="rsd.betterstorage.l1.desc">Giver evner til at forbedre opbevaringsmuligheder</entry>
   <entry key="rsd.rope.l1.name">Forskning i at knytte reb</entry>
   <entry key="rsd.rope.l1.desc">Giver evner til at benytte reb</entry>
+  <entry key="rsd.stage.l1.name">Stage 1</entry>
+  <entry key="rsd.stage.l1.desc">En tid, hvor det basale skal læres</entry>
+  <entry key="rsd.stage.l2.name">Stage 2</entry>
+  <entry key="rsd.stage.l2.desc">En tid, hvor der fokuseres på at få indbyggere</entry>
 
 <!--RECIPES-->
   <entry key="rcp.firewood.l1.name">Lav brænde</entry>

@@ -54,7 +54,7 @@
       <res id="res.stone" amount="40"/>
     </cost>
     <time>15m</time>
-    <require>bld.basecamp.l2</require>
+    <require>bld.basecamp.l2,rsd.tools.l1</require>
   </research>
   
  <!-- Farming related resarch--> 
@@ -103,7 +103,7 @@
       <res id="res.money" amount="100"/>
     </cost>
     <time>10m</time>
-    <require>bld.storage.l1</require>
+    <require>bld.storage.l1,rsd.tools.l2</require>
   </research>
 
     <research id="rsd.leatherwork.l1" family="basecamp" type="storage" lvl="1" stage="1">
@@ -122,12 +122,24 @@
     <require>rsd.tools.l1,bld.basecamp.l2</require>
   </research>
 
-        <research id="rsd.fishing.l1" family="basecamp,lake" type="storage" lvl="1" stage="1">
+    <research id="rsd.fishing.l1" family="basecamp,lake" type="storage" lvl="1" stage="1">
+    <cost>
+      <res id="res.money" amount="75"/>
+    </cost>
+    <time>10m</time>
+    <require>bld.lake.l1,rsd.irrigation.l1</require>
+  </research>
+
+      <research id="rsd.fishing.l2" family="basecamp,lake" type="storage" lvl="2" stage="1">
     <cost>
       <res id="res.money" amount="75"/>
     </cost>
     <time>10m</time>
     <require>rsd.tools.l1,bld.lake.l1</require>
+    <buffs applies_to="all">
+      <res id="res.rawcommonfish" type="mult" amount="50" mode="yield"/>
+    </buffs>
+    <requires>rsd.fishing.l1,add.mole.l1</requires>
   </research>
 
     <research id="rsd.fertilizer.l1" family="basecamp,lake" type="storage" lvl="1" stage="1">
@@ -144,6 +156,14 @@
     </cost>
     <time>10m</time>
     <require>add.barn.l1,rsd.animalhusbandry.l1</require>
+  </research>
+
+  <research id="rsd.stage.l2" family="basecamp" type="stage" lvl="2" stage="1">
+    <cost>
+      <res id="res.money" amount="75"/>
+    </cost>
+    <time>10m</time>
+    <require>add.basecamp.l3,rsd.tools.l3</require>
   </research>
 
 

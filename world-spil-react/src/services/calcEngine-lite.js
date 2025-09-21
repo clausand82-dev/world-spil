@@ -54,6 +54,6 @@ export function applySpeedBuffsToDuration(baseS, action, { appliesToCtx, activeB
   }
 
   // cap (max 80% hurtigere) + clamp
-  mult = Math.max(0.2, mult);
+  mult = Math.max(0.2, mult); // max 80% hurtigere - NORMAL CAP
   return Math.max(0, baseS * mult);
 }

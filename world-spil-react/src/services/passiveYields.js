@@ -1,102 +1,90 @@
-// Finder passive yields pr. resource for ting spilleren ejer.
-// Inkluderer base stage-bonus OG yield-buffs i per-hour beregningerne.
 import { applyYieldBuffsToAmount } from './yieldBuffs.js';
 
-function normResId(s) { return String(s || '').trim().toLowerCase().replace(/^res\./,''); }
-function sameRes(a,b){ return normResId(a) === normRes(b); }
-function normRes(s){ return String(s||'').startsWith('res.') ? String(s) : `res.${String(s||'')}`; }
-
+// Normaliseringer
+function normResId(s) {
+  const v = String(s || '').trim().toLowerCase();
+  return v.startsWith('res.') ? v : `res.${v}`;
+}
+function sameRes(a, b) {
+  return normResId(a) === normResId(b);
+}
 function isOwned(bucket, defKey, state) {
-  if (!state) return false;
-  const bag = state[bucket];
+  const bag = state?.[bucket];
   if (!bag || typeof bag !== 'object') return false;
-
-  const pref =
-    bucket === 'bld' ? 'bld.' :
-    bucket === 'add' ? 'add.' :
-    bucket === 'rsd' ? 'rsd.' :
-    bucket === 'ani' ? 'ani.' : '';
-
+  const pref = bucket === 'bld' ? 'bld.' : bucket === 'add' ? 'add.' : bucket === 'rsd' ? 'rsd.' : 'ani.';
   const naked = String(defKey).replace(/^(?:bld\.|add\.|rsd\.|ani\.)/i, '');
-  const withPref = pref + naked;
-
-  const v1 = bag[withPref];
-  if (v1) {
-    if (bucket === 'ani') {
-      const qty = typeof v1 === 'number' ? v1 : Number(v1?.quantity ?? 0);
-      return Number.isFinite(qty) && qty > 0;
-    }
-    return true;
-  }
-  const v2 = bag[pref + naked];
-  if (v2) {
-    if (bucket === 'ani') {
-      const qty = typeof v2 === 'number' ? v2 : Number(v2?.quantity ?? 0);
-      return Number.isFinite(qty) && qty > 0;
-    }
-    return true;
+  const full = pref + naked;
+  if (bag[full]) return true;
+  if (bag[pref + naked]) return true;
+  for (const k of Object.keys(bag)) {
+    if (k === full || k === pref + naked) return true;
   }
   return false;
 }
 
+// Udlæs yields fra defs (per cyklus) og giv perHour via period
 function readPeriodSeconds(def) {
   const d = def || {};
   const stats = d.stats || {};
-  const cands = [d.yield_period_s, d.yieldPeriodS, d.production_period_s, d.period_s, stats.yield_period_s];
-  for (const v of cands) if (typeof v === 'number' && v > 0) return v;
+  const cands = ['yield_period_s','yieldPeriodS','production_period_s','period_s'];
+  for (const k of cands) {
+    if (typeof d[k] === 'number' && d[k] > 0) return d[k];
+    if (typeof stats[k] === 'number' && stats[k] > 0) return stats[k];
+  }
   return 3600;
 }
-
 function extractNormalizedYields(def) {
   const out = [];
-  const raw = def?.yield ?? null;
+  if (!def) return out;
+  const raw = def.yield ?? def.yields ?? null;
+  const periodS = readPeriodSeconds(def);
   if (!Array.isArray(raw)) return out;
-  const k = 3600 / readPeriodSeconds(def);
   for (const row of raw) {
-    const rid = row?.id ?? row?.res;
-    const amt = row?.amount ?? row?.qty ?? row?.quantity;
-    if (rid && amt != null) out.push({ resourceId: String(rid), perHour: Number(amt) * k });
+    const rid = row.id ?? row.res ?? null;
+    const amt = row.amount ?? row.qty ?? null;
+    if (rid == null || amt == null) continue;
+    const perHour = Number(amt) * (3600 / (periodS || 3600));
+    out.push({ resourceId: String(rid), perHour, period_s: periodS, amount_per_cycle: Number(amt) });
   }
   return out;
 }
 
-function collectActiveBuffs(defs) {
+// Saml aktive buffs fra defs for KUN ejede kilder
+function collectActiveBuffs(defs, state) {
   const out = [];
-  const push = arr => Array.isArray(arr) && arr.forEach(b => out.push(b));
-  for (const key of ['bld','add','rsd']) {
-    const bag = defs?.[key] || {};
-    Object.values(bag).forEach(def => push(def?.buffs));
+  const push = (arr) => Array.isArray(arr) && arr.forEach((b) => out.push(b));
+  for (const bucket of ['bld','add','rsd']) {
+    const bag = defs?.[bucket] || {};
+    for (const [key, def] of Object.entries(bag)) {
+      const ctxId = `${bucket}.${key}`;
+      if (!isOwned(bucket, key, state)) continue;
+      push(def?.buffs);
+      // Buffs på child-noder er allerede fladet ud i alldata’s parser
+    }
   }
   return out;
 }
 
+// Stage-basebonus (forest/field/mining/water)
 function injectBaseStageBonusForResource({ defs, state, resourceResId, positive, modeLc }) {
-  if (!defs || !state || !resourceResId) return;
-  const user = state?.user ?? {};
-  const stageId = user.currentstage ?? user.stage ?? 1;
+  const user = state?.user || {};
+  const stageId =
+    user.currentstage ?? user.stage ?? state?.currentstage ?? state?.stage ?? 1;
 
-  const rulesByStage = defs?.stage_bonus_rules ?? {};
-  const rules = rulesByStage[stageId] ?? rulesByStage[String(stageId)] ?? {};
-
+  const rules = defs?.stage_bonus_rules?.[stageId] || {};
   const bonuses = {
-    forest: Number(user.bonus_forest ?? user.mul_forest ?? 0),
-    mining: Number(user.bonus_mining ?? user.mul_mining ?? 0),
-    field:  Number(user.bonus_field  ?? user.mul_field  ?? 0),
-    water:  Number(user.bonus_water  ?? user.mul_water  ?? 0),
+    forest: Number(user.mul_forest ?? user.bonus_forest ?? 0),
+    mining: Number(user.mul_mining ?? user.bonus_mining ?? 0),
+    field:  Number(user.mul_field  ?? user.bonus_field  ?? 0),
+    water:  Number(user.mul_water  ?? user.bonus_water  ?? 0),
   };
 
-  const labels = {
-    forest: 'Base bonus (Forest)',
-    mining: 'Base bonus (Mining)',
-    field:  'Base bonus (Field)',
-    water:  'Base bonus (Water)',
-  };
+  const labels = { forest: 'Basebonus (Skov)', mining: 'Basebonus (Mine)', field: 'Basebonus (Mark)', water: 'Basebonus (Vand)' };
 
-  const resKey = String(resourceResId);
-  for (const [key, amt] of Object.entries(bonuses)) {
-    if (!amt) continue;
-    const lst = rules[key] ?? [];
-    const hit = lst.some((rid) => normResId(rid) === normResId(resKey));
+  for (const [key, lst] of Object.entries(rules)) {
+    const amt = bonuses[key] || 0;
+    if (amt <= 0) continue;
+    const hit = (lst || []).some((rid) => sameRes(rid, resourceResId));
     if (!hit) continue;
     const entry = { sourceType: 'base', sourceId: `stage.${stageId}.${key}`, name: labels[key], perHour: Number(amt) };
     if (entry.perHour > 0 && modeLc !== 'cost') positive.push(entry);
@@ -110,7 +98,8 @@ export function computePassiveYields({ defs, state, resource, mode = 'both' } = 
   const modeLc = String(mode || 'both').toLowerCase();
   const positive = [];
   const negative = [];
-  const activeBuffs = collectActiveBuffs(defs);
+
+  const activeBuffs = collectActiveBuffs(defs, state);
 
   for (const bucket of ['bld','add','rsd','ani']) {
     const group = defs?.[bucket] || {};
@@ -119,15 +108,16 @@ export function computePassiveYields({ defs, state, resource, mode = 'both' } = 
       const ctxId =
         (bucket === 'bld' ? 'bld.' :
          bucket === 'add' ? 'add.' :
-         bucket === 'rsd' ? 'rsd.' :
-         bucket === 'ani' ? 'ani.' : '') +
+         bucket === 'rsd' ? 'rsd.' : 'ani.') +
         String(defKey).replace(/^(?:bld\.|add\.|rsd\.|ani\.)/i, '');
 
       const yields = extractNormalizedYields(def);
       for (const y of yields) {
-        if (normResId(y.resourceId) !== normResId(resKey)) continue;
+        if (!sameRes(y.resourceId, resKey)) continue;
+
+        // Anvend yield-buffs
         let perHour = y.perHour;
-        perHour = applyYieldBuffsToAmount(perHour, normRes(resKey), { appliesToCtx: ctxId, activeBuffs });
+        perHour = applyYieldBuffsToAmount(perHour, normResId(resKey), { appliesToCtx: ctxId, activeBuffs });
 
         const entry = { sourceType: bucket, sourceId: ctxId, name: def?.name || defKey, perHour };
         if (perHour > 0) {
@@ -139,10 +129,12 @@ export function computePassiveYields({ defs, state, resource, mode = 'both' } = 
     }
   }
 
+  // Injektér base stage-bonus
   injectBaseStageBonusForResource({ defs, state, resourceResId: resKey, positive, modeLc });
 
   const sortFn = (a, b) => Math.abs(b.perHour) - Math.abs(a.perHour);
-  positive.sort(sortFn); negative.sort(sortFn);
+  positive.sort(sortFn);
+  negative.sort(sortFn);
 
   return { positive, negative, meta: { resource: resKey, mode: modeLc } };
 }
