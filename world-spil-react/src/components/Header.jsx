@@ -4,7 +4,7 @@ import { fmt } from '../services/helpers.js';
 import TopbarAuth from './TopbarAuth.jsx';
 import { buildStatsTitle } from '../services/statsEffects.js';
 import { buildPassiveYieldTitle } from '../services/passiveYields.js';
-import HousingHeader from './header/HousingHeader.jsx';
+import HeaderCapacities from './header/HeaderCapacities.jsx';
 
 
 export default function Header() {
@@ -56,12 +56,8 @@ const foodTitle = useMemo(() => buildPassiveYieldTitle({
       </div>
 
       <div className="header-resources">
-        <HousingHeader />
-        <span className="res-chip" title={foodTitle}>{resDefs.food?.emoji || '🪵'} {fmt(solid.food || 0)}</span>
-        <span className="res-chip" title={woodTitle}>{resDefs.wood?.emoji || '🪵'} {fmt(solid.wood || 0)}</span>
-        <span className="res-chip" title={stoneTitle}>{resDefs.stone?.emoji || '🪨'} {fmt(solid.stone || 0)}</span>
-        <span className="res-chip" title={waterTitle}>{resDefs.water?.emoji || '💧'} {fmt(liquid.water || 0)}</span>
-        <span className="res-chip" title={moneyTitle}>💰 {fmt(solid.money || 0)}</span>
+        <HeaderCapacities />
+      
         <span className="res-chip" title={animalcapTitle}>🐾 {fmt(animal_cap.used || 0)}<span className="max">/{fmt(animal_cap.total || 0)}</span></span>
         <span className="res-chip" title={footprintTitle}>⬛ {fmt(Math.abs(footprint.used) || 0)}<span className="max">/{fmt(footprint.total || 0)}</span></span>
       </div>
@@ -74,3 +70,11 @@ const foodTitle = useMemo(() => buildPassiveYieldTitle({
     </header>
   );
 }
+
+/*
+  <span className="res-chip" title={foodTitle}>{resDefs.food?.emoji || '🪵'} {fmt(solid.food || 0)}</span>
+        <span className="res-chip" title={woodTitle}>{resDefs.wood?.emoji || '🪵'} {fmt(solid.wood || 0)}</span>
+        <span className="res-chip" title={stoneTitle}>{resDefs.stone?.emoji || '🪨'} {fmt(solid.stone || 0)}</span>
+        <span className="res-chip" title={waterTitle}>{resDefs.water?.emoji || '💧'} {fmt(liquid.water || 0)}</span>
+        <span className="res-chip" title={moneyTitle}>💰 {fmt(solid.money || 0)}</span>
+*/

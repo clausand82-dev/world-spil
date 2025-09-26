@@ -103,7 +103,7 @@
   </building>
 
   <building id="bld.tent.l2" family="tent" type="housing" lvl="2" stage="1">
-    <stats>footprint=-10,housing=40</stats>
+    <stats>footprint=-10;housing=40</stats>
     <cost>
       <res id="res.money" amount="20" />
       <res id="res.hide" amount="10" />

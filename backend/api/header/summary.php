@@ -2,7 +2,8 @@
 declare(strict_types=1);
 
 header('Content-Type: application/json; charset=utf-8');
-require_once __DIR__ . '/../_init.php'; // db(), auth_require_user_id(), load_all_defs()
+require_once __DIR__ . '/../_init.php';
+require_once __DIR__ . '/../lib/capacity_usage.php';
 
 function respond($p, int $http=200): never {
   http_response_code($http);
@@ -15,167 +16,122 @@ function fail(string $code, string $msg, int $http=500): never {
   exit;
 }
 
-function table_exists(PDO $pdo, string $name): bool {
-  $db = (string)$pdo->query('SELECT DATABASE()')->fetchColumn();
-  $st = $pdo->prepare('SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA=? AND TABLE_NAME=?');
-  $st->execute([$db, $name]);
-  return (bool)$st->fetchColumn();
-}
-
-function get_user_citizens(PDO $pdo, int $uid): array {
-  $st = $pdo->prepare('SELECT * FROM citizens WHERE user_id=? LIMIT 1');
-  $st->execute([$uid]);
-  $r = $st->fetch(PDO::FETCH_ASSOC) ?: [];
-  // Default alle felter til 0 hvis ikke fundet
-  $defaults = [
-    'baby','kidsStreet','kidsStudent','youngStudent','youngWorker','old',
-    'adultsPolice','adultsFire','adultsHealth','adultsSoldier','adultsGovernment','adultsPolitician','adultsUnemployed','adultsWorker','adultsHomeless',
-    'crimePolice','crimeFire','crimeHealth','crimeSoldier','crimeGovernment','crimePolitician','crimeUnemployed','crimeWorker','crimeHomeless',
-  ];
-  $out = [];
-  foreach ($defaults as $k) $out[$k] = (int)($r[$k] ?? 0);
-  return $out;
-}
-
-function group_citizens(array $raw): array {
-  $baby  = (int)($raw['baby'] ?? 0);
-  $kids  = (int)($raw['kidsStreet'] ?? 0) + (int)($raw['kidsStudent'] ?? 0);
-  $young = (int)($raw['youngStudent'] ?? 0) + (int)($raw['youngWorker'] ?? 0);
-  $old   = (int)($raw['old'] ?? 0);
-
-  $adults = 0;
-  foreach (['adultsPolice','adultsFire','adultsHealth','adultsSoldier','adultsGovernment','adultsPolitician','adultsUnemployed','adultsWorker','adultsHomeless'] as $k) {
-    $adults += (int)($raw[$k] ?? 0);
-  }
-  $crime = 0;
-  foreach (['crimePolice','crimeFire','crimeHealth','crimeSoldier','crimeGovernment','crimePolitician','crimeUnemployed','crimeWorker','crimeHomeless'] as $k) {
-    $crime += (int)($raw[$k] ?? 0);
-  }
-
-  // “Forbrug” (used) = alt pånær crime (crime regnes som del af tilhørende adults)
-  $usedExCrime = $baby + $kids + $young + $adults + $old;
-  $totalAll    = $usedExCrime + $crime;
-
-  return [
-    'baby' => $baby,
-    'kids' => $kids,
-    'young'=> $young,
-    'adults'=>$adults,
-    'old'  => $old,
-    'crime'=> $crime,
-    'usedExCrime' => $usedExCrime,
-    'totalAll'    => $totalAll,
-  ];
-}
-
-// Fjern niveau-suffix som ".l3" => base key
-function base_key(string $id): string {
-  return preg_replace('/\\.l\\d+$/', '', $id) ?? $id;
-}
-
-// Slår stats.housing op i defs for et id
-function housing_of(array $defsType, string $fullId): int {
-  $node = $defsType[$fullId] ?? null;
-  if (!$node) return 0;
-  $stats = $node['stats'] ?? [];
-  $h = $stats['housing'] ?? 0;
-  return (int)round((float)$h);
-}
-
 try {
   $uid = auth_require_user_id();
   $pdo = db();
 
-  // 1) Citizens
-  $rawCit = table_exists($pdo, 'citizens') ? get_user_citizens($pdo, $uid) : [];
-  $groups = group_citizens($rawCit);
-
-  // 2) Defs (for housing)
-  if (!function_exists('load_all_defs')) {
-    // _init.php kræver alldata.php og definerer load_all_defs()
-    throw new RuntimeException('load_all_defs() not available');
-  }
-  $defs = load_all_defs();
+  if (!function_exists('load_all_defs')) throw new RuntimeException('load_all_defs() not available');
+  $defs    = load_all_defs();
   $bldDefs = $defs['bld'] ?? [];
   $addDefs = $defs['add'] ?? [];
   $rsdDefs = $defs['rsd'] ?? [];
+  $citDefs = cu_load_defs_citizens($defs);
 
-  // 3) Owned buildings – tag højeste level pr. base key
-  $bldCapacity = 0;
-  if (table_exists($pdo, 'buildings')) {
-    $st = $pdo->prepare('SELECT bld_id, level FROM buildings WHERE user_id=?');
-    $st->execute([$uid]);
-    $maxByBase = []; // base => ['level'=>N, 'fullId'=>'bld.x.lN']
-    while ($row = $st->fetch(PDO::FETCH_ASSOC)) {
-      $full = (string)$row['bld_id'];
-      $lvl  = (int)$row['level'];
-      $base = base_key($full);
-      if (!isset($maxByBase[$base]) || $lvl > $maxByBase[$base]['level']) {
-        $maxByBase[$base] = ['level'=>$lvl, 'fullId'=>$full];
-      }
-    }
-    foreach ($maxByBase as $info) {
-      $bldCapacity += housing_of($bldDefs, $info['fullId']);
-    }
+  // Citizens (rå counts)
+  $rawCit      = cu_table_exists($pdo, 'citizens') ? cu_fetch_citizens_row($pdo, $uid) : [];
+  $groupCounts = cu_group_counts($rawCit)['macro']; // baby, kids, young, adults (uden crime), old, crime, adultsTotal
+
+  // --- eksisterende beregninger af capacities/usages (uændret fra din seneste version) ---
+  // Aliases (caps/uses)
+  $CAP_KEYS = [
+    'housingCapacity'         => ['housing','housingCapacity'],
+    'provisionCapacity'       => ['provision_cap','provisionCapacity'],
+    'waterCapacity'           => ['waterCapacity'],
+    'heatCapacity'            => ['heatCapacity'],
+    'healthCapacity'          => ['healthCapacity'],
+    'productClothCapacity'    => ['productClothCapacity','clothCapacity'],
+    'productMedicinCapacity'  => ['productMedicinCapacity','medicinCapacity'],
+    'wasteOtherCapacity'      => ['wasteOtherCapacity'],
+  ];
+  $USE_ALIAS = [
+    'useCloth'   => 'useProductCloth',
+    'useMedicin' => 'useProductMedicin',
+  ];
+
+  $capacities = [];
+  $parts = [];
+  foreach ($CAP_KEYS as $capName => $keys) {
+    $b = cu_table_exists($pdo, 'buildings')     ? cu_sum_capacity_from_table($pdo, $uid, $bldDefs, 'buildings', 'bld_id', 'level', $keys) : 0.0;
+    $a = cu_table_exists($pdo, 'addon')         ? cu_sum_capacity_from_table($pdo, $uid, $addDefs, 'addon',     'add_id', 'level', $keys) : 0.0;
+    $r = cu_table_exists($pdo, 'user_research') ? cu_sum_capacity_from_research($pdo, $uid, $rsdDefs, $keys) : 0.0;
+    $capacities[$capName] = (float)($b + $a + $r);
+    $parts[$capName]      = ['buildings'=>(float)$b,'addon'=>(float)$a,'research'=>(float)$r];
   }
 
-  // 4) Owned addons – samme strategi (hvis tabel findes)
-  $addCapacity = 0;
-  if (table_exists($pdo, 'addon')) {
-    $st = $pdo->prepare('SELECT add_id, level FROM addon WHERE user_id=?');
-    $st->execute([$uid]);
-    $maxByBase = [];
-    while ($row = $st->fetch(PDO::FETCH_ASSOC)) {
-      $full = (string)$row['add_id'];
-      $lvl  = (int)$row['level'];
-      $base = base_key($full);
-      if (!isset($maxByBase[$base]) || $lvl > $maxByBase[$base]['level']) {
-        $maxByBase[$base] = ['level'=>$lvl, 'fullId'=>$full];
-      }
-    }
-    foreach ($maxByBase as $info) {
-      $addCapacity += housing_of($addDefs, $info['fullId']);
-    }
+  $USAGE_FIELDS = [
+    'useHousing','useProvision','useWater','useHeat','useHealth',
+    'useCloth','useMedicin','wasteOther',
+    'deathHealthExpose','deathHealthWeight','deathHealthBaseline',
+    'birthRate','movingIn','movingOut',
+  ];
+  $aliasMap = $USE_ALIAS;
+  $usages = [];
+  foreach ($USAGE_FIELDS as $field) {
+    $usages[$field] = cu_usage_breakdown($rawCit, $citDefs, $field, $aliasMap);
   }
 
-  // 5) Research – completed giver evt. housing
-  $rsdCapacity = 0;
-  if (table_exists($pdo, 'research')) {
-    $st = $pdo->prepare('SELECT rsd_id FROM research WHERE user_id=?');
-    $st->execute([$uid]);
-    while ($row = $st->fetch(PDO::FETCH_ASSOC)) {
-      $rid = (string)$row['rsd_id'];
-      $rsdCapacity += housing_of($rsdDefs, $rid);
-    }
-  }
+  // Bars (UI)
+  $bars = [
+    'housing' => [
+      'used'      => $usages['useHousing']['total'] ?? 0.0,
+      'capacity'  => $capacities['housingCapacity'] ?? 0.0,
+      // IMPORTANT: hover skal vise RÅ PERSONER → brug groupCounts
+      'breakdown' => $groupCounts,
+      'parts'     => $parts['housingCapacity'] ?? [],
+    ],
+    'provision' => [
+      'used'      => $usages['useProvision']['total'] ?? 0.0,
+      'capacity'  => $capacities['provisionCapacity'] ?? 0.0,
+      'breakdown' => $groupCounts,
+      'parts'     => $parts['provisionCapacity'] ?? [],
+    ],
+    'water' => [
+      'used'      => $usages['useWater']['total'] ?? 0.0,
+      'capacity'  => $capacities['waterCapacity'] ?? 0.0,
+      'breakdown' => $groupCounts,
+      'parts'     => $parts['waterCapacity'] ?? [],
+    ],
+    'heat' => [
+      'used'      => $usages['useHeat']['total'] ?? 0.0,
+      'capacity'  => $capacities['heatCapacity'] ?? 0.0,
+      'breakdown' => $groupCounts,
+      'parts'     => $parts['heatCapacity'] ?? [],
+    ],
+    'health' => [
+      'used'      => $usages['useHealth']['total'] ?? 0.0,
+      'capacity'  => $capacities['healthCapacity'] ?? 0.0,
+      'breakdown' => $groupCounts,
+      'parts'     => $parts['healthCapacity'] ?? [],
+    ],
+    'cloth' => [
+      'used'      => $usages['useCloth']['total'] ?? 0.0,
+      'capacity'  => $capacities['productClothCapacity'] ?? 0.0,
+      'breakdown' => $groupCounts,
+      'parts'     => $parts['productClothCapacity'] ?? [],
+    ],
+    'medicin' => [
+      'used'      => $usages['useMedicin']['total'] ?? 0.0,
+      'capacity'  => $capacities['productMedicinCapacity'] ?? 0.0,
+      'breakdown' => $groupCounts,
+      'parts'     => $parts['productMedicinCapacity'] ?? [],
+    ],
+    'wasteOther' => [
+      'used'      => $usages['wasteOther']['total'] ?? 0.0,
+      'capacity'  => $capacities['wasteOtherCapacity'] ?? 0.0,
+      'breakdown' => $groupCounts,
+      'parts'     => $parts['wasteOtherCapacity'] ?? [],
+    ],
+  ];
 
-  $housingCapacity = $bldCapacity + $addCapacity + $rsdCapacity;
-
-  // 6) Response
   respond([
-    'citizens' => [
-      'raw'    => $rawCit,
-      'groups' => $groups,
+    'citizens'   => [
+      'raw'         => $rawCit,
+      'groupCounts' => $groupCounts, // rå personer pr. makrogruppe til hover
     ],
-    'capacities' => [
-      'housing' => [
-        'capacity'  => $housingCapacity,
-        'used'      => $groups['usedExCrime'],
-        'breakdown' => [
-          'baby'   => $groups['baby'],
-          'kids'   => $groups['kids'],
-          'young'  => $groups['young'],
-          'adults' => $groups['adults'],
-          'old'    => $groups['old'],
-          'crime'  => $groups['crime'], // vises kun i hover
-        ],
-        'parts' => [
-          'buildings' => $bldCapacity,
-          'addons'    => $addCapacity,
-          'research'  => $rsdCapacity,
-        ],
-      ],
-    ],
+    'usages'     => $usages,
+    'capacities' => $capacities,
+    'parts'      => $parts,
+    'bars'       => $bars,
   ]);
 } catch (Throwable $e) {
   fail('E_SERVER', $e->getMessage(), 500);

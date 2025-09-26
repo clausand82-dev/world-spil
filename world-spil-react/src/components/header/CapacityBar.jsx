@@ -15,7 +15,7 @@ export default function CapacityBar({ label, used, capacity, breakdown, style })
   })();
 
   return (
-    <div className="capacity-bar" style={{ minWidth: 200, ...style }} title={tooltip}>
+    <div className="capacity-bar" style={{ minWidth: 20, ...style }} title={tooltip}>
       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 4 }}>
         <span>{label}</span>
         <span>{safeUsed} / {safeCap}</span>

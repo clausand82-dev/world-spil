@@ -1,7 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <citizensData>
   <!--
-Kræver: 
 useProvision: Forbrug i provision (tæller ind i provisionUsage) - passiv/aktiv
 useWater: passiv/aktiv
 useHeat: Passiv output, passiv + active input
@@ -118,7 +117,6 @@ generelStrength:
 generelArmor: 
 -->
   <citizens id="baby">
-    <Kræver />
     <useProvision>0.2</useProvision>
     <useWater>0.2</useWater>
     <useHeat>0.4</useHeat>
@@ -178,7 +176,6 @@ generelArmor:
     <usePollutionWater>0.1</usePollutionWater>
     <usePollutionSoil>0.1</usePollutionSoil>
     <usePollutionNoise>0.3</usePollutionNoise>
-    <Demands />
     <demandsPowerGreenMin>0.7</demandsPowerGreenMin>
     <demandsPowerNuclearMax>0.2</demandsPowerNuclearMax>
     <demandsPowerFossilMax>0.1</demandsPowerFossilMax>
@@ -200,7 +197,6 @@ generelArmor:
     <demandsVechicleTypeHitchHike />
     <demandsVechicleTypeBicycle />
     <demandsVechicleTypeWalk />
-    <Producerer />
     <taxPay>0</taxPay>
     <taxPayMax />
     <taxPayRageRate />
@@ -235,7 +231,6 @@ generelArmor:
     <generelArmor />
   </citizens>
   <citizens id="kidsStreet">
-    <Kræver />
     <useProvision>0.4</useProvision>
     <useWater>0.4</useWater>
     <useHeat>0.2</useHeat>
@@ -295,8 +290,7 @@ generelArmor:
     <usePollutionWater />
     <usePollutionSoil />
     <usePollutionNoise />
-    <Demands />
-    <demandsPowerGreenMin />
+       <demandsPowerGreenMin />
     <demandsPowerNuclearMax />
     <demandsPowerFossilMax />
     <demandsHeatGreenMin />
@@ -317,8 +311,7 @@ generelArmor:
     <demandsVechicleTypeHitchHike />
     <demandsVechicleTypeBicycle />
     <demandsVechicleTypeWalk />
-    <Producerer />
-    <taxPay />
+     <taxPay />
     <taxPayMax />
     <taxPayRageRate />
     <wastePlastic />
@@ -352,8 +345,7 @@ generelArmor:
     <generelArmor />
   </citizens>
   <citizens id="kidsStudent">
-    <Kræver />
-    <useProvision>0.4</useProvision>
+     <useProvision>0.4</useProvision>
     <useWater>0.4</useWater>
     <useHeat>0.3</useHeat>
     <usePower>0.4</usePower>
@@ -412,8 +404,7 @@ generelArmor:
     <usePollutionWater />
     <usePollutionSoil />
     <usePollutionNoise />
-    <Demands />
-    <demandsPowerGreenMin />
+      <demandsPowerGreenMin />
     <demandsPowerNuclearMax />
     <demandsPowerFossilMax />
     <demandsHeatGreenMin />
@@ -434,8 +425,7 @@ generelArmor:
     <demandsVechicleTypeHitchHike />
     <demandsVechicleTypeBicycle />
     <demandsVechicleTypeWalk />
-    <Producerer />
-    <taxPay />
+      <taxPay />
     <taxPayMax />
     <taxPayRageRate />
     <wastePlastic />
@@ -469,8 +459,7 @@ generelArmor:
     <generelArmor />
   </citizens>
   <citizens id="youngStudent">
-    <Kræver />
-    <useProvision>0.7</useProvision>
+       <useProvision>0.7</useProvision>
     <useWater>0.6</useWater>
     <useHeat>0.5</useHeat>
     <usePower>0.8</usePower>
@@ -529,8 +518,7 @@ generelArmor:
     <usePollutionWater />
     <usePollutionSoil />
     <usePollutionNoise />
-    <Demands />
-    <demandsPowerGreenMin />
+      <demandsPowerGreenMin />
     <demandsPowerNuclearMax />
     <demandsPowerFossilMax />
     <demandsHeatGreenMin />
@@ -551,8 +539,7 @@ generelArmor:
     <demandsVechicleTypeHitchHike />
     <demandsVechicleTypeBicycle />
     <demandsVechicleTypeWalk />
-    <Producerer />
-    <taxPay />
+      <taxPay />
     <taxPayMax />
     <taxPayRageRate />
     <wastePlastic />
@@ -586,8 +573,7 @@ generelArmor:
     <generelArmor />
   </citizens>
   <citizens id="youngWorker">
-    <Kræver />
-    <useProvision>0.8</useProvision>
+        <useProvision>0.8</useProvision>
     <useWater>0.7</useWater>
     <useHeat>0.4</useHeat>
     <usePower>1</usePower>
@@ -646,8 +632,7 @@ generelArmor:
     <usePollutionWater>0.5</usePollutionWater>
     <usePollutionSoil>0.5</usePollutionSoil>
     <usePollutionNoise>0.6</usePollutionNoise>
-    <Demands />
-    <demandsPowerGreenMin>0.5</demandsPowerGreenMin>
+       <demandsPowerGreenMin>0.5</demandsPowerGreenMin>
     <demandsPowerNuclearMax>0.3</demandsPowerNuclearMax>
     <demandsPowerFossilMax>0.2</demandsPowerFossilMax>
     <demandsHeatGreenMin>0.6</demandsHeatGreenMin>
@@ -668,8 +653,7 @@ generelArmor:
     <demandsVechicleTypeHitchHike />
     <demandsVechicleTypeBicycle />
     <demandsVechicleTypeWalk />
-    <Producerer />
-    <taxPay>0.2</taxPay>
+       <taxPay>0.2</taxPay>
     <taxPayMax />
     <taxPayRageRate />
     <wastePlastic>0.7</wastePlastic>
@@ -703,8 +687,7 @@ generelArmor:
     <generelArmor />
   </citizens>
   <citizens id="old">
-    <Kræver />
-    <useProvision>0.3</useProvision>
+      <useProvision>0.3</useProvision>
     <useWater>0.6</useWater>
     <useHeat>0.9</useHeat>
     <usePower>0.5</usePower>
@@ -763,8 +746,7 @@ generelArmor:
     <usePollutionWater />
     <usePollutionSoil />
     <usePollutionNoise />
-    <Demands />
-    <demandsPowerGreenMin>0.2</demandsPowerGreenMin>
+        <demandsPowerGreenMin>0.2</demandsPowerGreenMin>
     <demandsPowerNuclearMax>0.3</demandsPowerNuclearMax>
     <demandsPowerFossilMax>0.5</demandsPowerFossilMax>
     <demandsHeatGreenMin>0.2</demandsHeatGreenMin>
@@ -785,7 +767,7 @@ generelArmor:
     <demandsVechicleTypeHitchHike />
     <demandsVechicleTypeBicycle />
     <demandsVechicleTypeWalk />
-    <Producerer />
+    
     <taxPay />
     <taxPayMax />
     <taxPayRageRate />
@@ -820,7 +802,7 @@ generelArmor:
     <generelArmor />
   </citizens>
   <citizens id="adultsPolice">
-    <Kræver />
+    
     <useProvision>1</useProvision>
     <useWater>0.8</useWater>
     <useHeat>0.7</useHeat>
@@ -880,8 +862,7 @@ generelArmor:
     <usePollutionWater />
     <usePollutionSoil />
     <usePollutionNoise />
-    <Demands />
-    <demandsPowerGreenMin />
+        <demandsPowerGreenMin />
     <demandsPowerNuclearMax />
     <demandsPowerFossilMax />
     <demandsHeatGreenMin />
@@ -902,7 +883,7 @@ generelArmor:
     <demandsVechicleTypeHitchHike />
     <demandsVechicleTypeBicycle />
     <demandsVechicleTypeWalk />
-    <Producerer />
+    
     <taxPay />
     <taxPayMax />
     <taxPayRageRate />
@@ -937,7 +918,7 @@ generelArmor:
     <generelArmor />
   </citizens>
   <citizens id="crimePolice">
-    <Kræver />
+    
     <useProvision>1.1</useProvision>
     <useWater>0.9</useWater>
     <useHeat>0.9</useHeat>
@@ -997,8 +978,7 @@ generelArmor:
     <usePollutionWater />
     <usePollutionSoil />
     <usePollutionNoise />
-    <Demands />
-    <demandsPowerGreenMin />
+        <demandsPowerGreenMin />
     <demandsPowerNuclearMax />
     <demandsPowerFossilMax />
     <demandsHeatGreenMin />
@@ -1019,7 +999,7 @@ generelArmor:
     <demandsVechicleTypeHitchHike />
     <demandsVechicleTypeBicycle />
     <demandsVechicleTypeWalk />
-    <Producerer />
+    
     <taxPay />
     <taxPayMax />
     <taxPayRageRate />
@@ -1054,7 +1034,7 @@ generelArmor:
     <generelArmor />
   </citizens>
   <citizens id="adultsFire">
-    <Kræver />
+    
     <useProvision>1</useProvision>
     <useWater>1.6</useWater>
     <useHeat>1</useHeat>
@@ -1114,8 +1094,7 @@ generelArmor:
     <usePollutionWater />
     <usePollutionSoil />
     <usePollutionNoise />
-    <Demands />
-    <demandsPowerGreenMin />
+        <demandsPowerGreenMin />
     <demandsPowerNuclearMax />
     <demandsPowerFossilMax />
     <demandsHeatGreenMin />
@@ -1136,7 +1115,7 @@ generelArmor:
     <demandsVechicleTypeHitchHike />
     <demandsVechicleTypeBicycle />
     <demandsVechicleTypeWalk />
-    <Producerer />
+    
     <taxPay />
     <taxPayMax />
     <taxPayRageRate />
@@ -1171,7 +1150,7 @@ generelArmor:
     <generelArmor />
   </citizens>
   <citizens id="crimeFire">
-    <Kræver />
+    
     <useProvision>1.1</useProvision>
     <useWater>1</useWater>
     <useHeat>1</useHeat>
@@ -1231,8 +1210,7 @@ generelArmor:
     <usePollutionWater />
     <usePollutionSoil />
     <usePollutionNoise />
-    <Demands />
-    <demandsPowerGreenMin />
+        <demandsPowerGreenMin />
     <demandsPowerNuclearMax />
     <demandsPowerFossilMax />
     <demandsHeatGreenMin />
@@ -1253,7 +1231,7 @@ generelArmor:
     <demandsVechicleTypeHitchHike />
     <demandsVechicleTypeBicycle />
     <demandsVechicleTypeWalk />
-    <Producerer />
+    
     <taxPay />
     <taxPayMax />
     <taxPayRageRate />
@@ -1288,7 +1266,7 @@ generelArmor:
     <generelArmor />
   </citizens>
   <citizens id="adultsHealth">
-    <Kræver />
+    
     <useProvision>1</useProvision>
     <useWater>1.5</useWater>
     <useHeat>1</useHeat>
@@ -1348,8 +1326,7 @@ generelArmor:
     <usePollutionWater />
     <usePollutionSoil />
     <usePollutionNoise />
-    <Demands />
-    <demandsPowerGreenMin />
+        <demandsPowerGreenMin />
     <demandsPowerNuclearMax />
     <demandsPowerFossilMax />
     <demandsHeatGreenMin />
@@ -1370,7 +1347,7 @@ generelArmor:
     <demandsVechicleTypeHitchHike />
     <demandsVechicleTypeBicycle />
     <demandsVechicleTypeWalk />
-    <Producerer />
+    
     <taxPay />
     <taxPayMax />
     <taxPayRageRate />
@@ -1405,7 +1382,7 @@ generelArmor:
     <generelArmor />
   </citizens>
   <citizens id="crimeHealth">
-    <Kræver />
+    
     <useProvision>1.1</useProvision>
     <useWater>1.2</useWater>
     <useHeat>1.1</useHeat>
@@ -1465,8 +1442,7 @@ generelArmor:
     <usePollutionWater />
     <usePollutionSoil />
     <usePollutionNoise />
-    <Demands />
-    <demandsPowerGreenMin />
+        <demandsPowerGreenMin />
     <demandsPowerNuclearMax />
     <demandsPowerFossilMax />
     <demandsHeatGreenMin />
@@ -1487,7 +1463,7 @@ generelArmor:
     <demandsVechicleTypeHitchHike />
     <demandsVechicleTypeBicycle />
     <demandsVechicleTypeWalk />
-    <Producerer />
+    
     <taxPay />
     <taxPayMax />
     <taxPayRageRate />
@@ -1522,7 +1498,7 @@ generelArmor:
     <generelArmor />
   </citizens>
   <citizens id="adultsSoldier">
-    <Kræver />
+    
     <useProvision>1</useProvision>
     <useWater>1</useWater>
     <useHeat>0.6</useHeat>
@@ -1582,8 +1558,7 @@ generelArmor:
     <usePollutionWater />
     <usePollutionSoil />
     <usePollutionNoise />
-    <Demands />
-    <demandsPowerGreenMin />
+        <demandsPowerGreenMin />
     <demandsPowerNuclearMax />
     <demandsPowerFossilMax />
     <demandsHeatGreenMin />
@@ -1604,7 +1579,7 @@ generelArmor:
     <demandsVechicleTypeHitchHike />
     <demandsVechicleTypeBicycle />
     <demandsVechicleTypeWalk />
-    <Producerer />
+    
     <taxPay />
     <taxPayMax />
     <taxPayRageRate />
@@ -1639,7 +1614,7 @@ generelArmor:
     <generelArmor />
   </citizens>
   <citizens id="crimeSoldier">
-    <Kræver />
+    
     <useProvision>1.1</useProvision>
     <useWater>0.9</useWater>
     <useHeat>0.8</useHeat>
@@ -1699,8 +1674,7 @@ generelArmor:
     <usePollutionWater />
     <usePollutionSoil />
     <usePollutionNoise />
-    <Demands />
-    <demandsPowerGreenMin />
+        <demandsPowerGreenMin />
     <demandsPowerNuclearMax />
     <demandsPowerFossilMax />
     <demandsHeatGreenMin />
@@ -1721,7 +1695,7 @@ generelArmor:
     <demandsVechicleTypeHitchHike />
     <demandsVechicleTypeBicycle />
     <demandsVechicleTypeWalk />
-    <Producerer />
+    
     <taxPay />
     <taxPayMax />
     <taxPayRageRate />
@@ -1756,7 +1730,7 @@ generelArmor:
     <generelArmor />
   </citizens>
   <citizens id="adultsGovernment">
-    <Kræver />
+    
     <useProvision>1.2</useProvision>
     <useWater>1</useWater>
     <useHeat>1.4</useHeat>
@@ -1816,8 +1790,7 @@ generelArmor:
     <usePollutionWater />
     <usePollutionSoil />
     <usePollutionNoise />
-    <Demands />
-    <demandsPowerGreenMin>0.6</demandsPowerGreenMin>
+        <demandsPowerGreenMin>0.6</demandsPowerGreenMin>
     <demandsPowerNuclearMax>0.3</demandsPowerNuclearMax>
     <demandsPowerFossilMax>0.1</demandsPowerFossilMax>
     <demandsHeatGreenMin />
@@ -1838,7 +1811,7 @@ generelArmor:
     <demandsVechicleTypeHitchHike />
     <demandsVechicleTypeBicycle />
     <demandsVechicleTypeWalk />
-    <Producerer />
+    
     <taxPay />
     <taxPayMax />
     <taxPayRageRate />
@@ -1873,7 +1846,7 @@ generelArmor:
     <generelArmor />
   </citizens>
   <citizens id="crimeGovernment">
-    <Kræver />
+    
     <useProvision>1.3</useProvision>
     <useWater>1.1</useWater>
     <useHeat>1.6</useHeat>
@@ -1933,8 +1906,7 @@ generelArmor:
     <usePollutionWater />
     <usePollutionSoil />
     <usePollutionNoise />
-    <Demands />
-    <demandsPowerGreenMin>0.1</demandsPowerGreenMin>
+        <demandsPowerGreenMin>0.1</demandsPowerGreenMin>
     <demandsPowerNuclearMax>0.1</demandsPowerNuclearMax>
     <demandsPowerFossilMax>0.8</demandsPowerFossilMax>
     <demandsHeatGreenMin />
@@ -1955,7 +1927,7 @@ generelArmor:
     <demandsVechicleTypeHitchHike />
     <demandsVechicleTypeBicycle />
     <demandsVechicleTypeWalk />
-    <Producerer />
+    
     <taxPay />
     <taxPayMax />
     <taxPayRageRate />
@@ -1990,7 +1962,7 @@ generelArmor:
     <generelArmor />
   </citizens>
   <citizens id="adultsPolitician">
-    <Kræver />
+    
     <useProvision>1.2</useProvision>
     <useWater>1</useWater>
     <useHeat>1.6</useHeat>
@@ -2050,8 +2022,7 @@ generelArmor:
     <usePollutionWater />
     <usePollutionSoil />
     <usePollutionNoise />
-    <Demands />
-    <demandsPowerGreenMin />
+        <demandsPowerGreenMin />
     <demandsPowerNuclearMax />
     <demandsPowerFossilMax />
     <demandsHeatGreenMin />
@@ -2072,7 +2043,7 @@ generelArmor:
     <demandsVechicleTypeHitchHike />
     <demandsVechicleTypeBicycle />
     <demandsVechicleTypeWalk />
-    <Producerer />
+    
     <taxPay />
     <taxPayMax />
     <taxPayRageRate />
@@ -2107,7 +2078,7 @@ generelArmor:
     <generelArmor />
   </citizens>
   <citizens id="crimePolitician">
-    <Kræver />
+    
     <useProvision>1.3</useProvision>
     <useWater>1.2</useWater>
     <useHeat>1.8</useHeat>
@@ -2167,8 +2138,7 @@ generelArmor:
     <usePollutionWater />
     <usePollutionSoil />
     <usePollutionNoise />
-    <Demands />
-    <demandsPowerGreenMin />
+        <demandsPowerGreenMin />
     <demandsPowerNuclearMax />
     <demandsPowerFossilMax />
     <demandsHeatGreenMin />
@@ -2189,7 +2159,7 @@ generelArmor:
     <demandsVechicleTypeHitchHike />
     <demandsVechicleTypeBicycle />
     <demandsVechicleTypeWalk />
-    <Producerer />
+    
     <taxPay />
     <taxPayMax />
     <taxPayRageRate />
@@ -2224,7 +2194,7 @@ generelArmor:
     <generelArmor />
   </citizens>
   <citizens id="adultsUnemployed">
-    <Kræver />
+    
     <useProvision>0.5</useProvision>
     <useWater>0.7</useWater>
     <useHeat>0.6</useHeat>
@@ -2284,8 +2254,7 @@ generelArmor:
     <usePollutionWater />
     <usePollutionSoil />
     <usePollutionNoise />
-    <Demands />
-    <demandsPowerGreenMin />
+        <demandsPowerGreenMin />
     <demandsPowerNuclearMax />
     <demandsPowerFossilMax />
     <demandsHeatGreenMin />
@@ -2306,7 +2275,7 @@ generelArmor:
     <demandsVechicleTypeHitchHike />
     <demandsVechicleTypeBicycle />
     <demandsVechicleTypeWalk />
-    <Producerer />
+    
     <taxPay />
     <taxPayMax />
     <taxPayRageRate />
@@ -2341,7 +2310,7 @@ generelArmor:
     <generelArmor />
   </citizens>
   <citizens id="crimeUnemployed">
-    <Kræver />
+    
     <useProvision>0.7</useProvision>
     <useWater>0.5</useWater>
     <useHeat>0.4</useHeat>
@@ -2401,8 +2370,7 @@ generelArmor:
     <usePollutionWater />
     <usePollutionSoil />
     <usePollutionNoise />
-    <Demands />
-    <demandsPowerGreenMin />
+        <demandsPowerGreenMin />
     <demandsPowerNuclearMax />
     <demandsPowerFossilMax />
     <demandsHeatGreenMin />
@@ -2423,7 +2391,7 @@ generelArmor:
     <demandsVechicleTypeHitchHike />
     <demandsVechicleTypeBicycle />
     <demandsVechicleTypeWalk />
-    <Producerer />
+    
     <taxPay />
     <taxPayMax />
     <taxPayRageRate />
@@ -2458,7 +2426,7 @@ generelArmor:
     <generelArmor />
   </citizens>
   <citizens id="adultsWorker">
-    <Kræver />
+    
     <useProvision>0.9</useProvision>
     <useWater>0.9</useWater>
     <useHeat>0.8</useHeat>
@@ -2518,8 +2486,7 @@ generelArmor:
     <usePollutionWater />
     <usePollutionSoil />
     <usePollutionNoise />
-    <Demands />
-    <demandsPowerGreenMin />
+        <demandsPowerGreenMin />
     <demandsPowerNuclearMax />
     <demandsPowerFossilMax />
     <demandsHeatGreenMin />
@@ -2540,7 +2507,7 @@ generelArmor:
     <demandsVechicleTypeHitchHike />
     <demandsVechicleTypeBicycle />
     <demandsVechicleTypeWalk />
-    <Producerer />
+    
     <taxPay />
     <taxPayMax />
     <taxPayRageRate />
@@ -2575,7 +2542,7 @@ generelArmor:
     <generelArmor />
   </citizens>
   <citizens id="crimeWorker">
-    <Kræver />
+    
     <useProvision>0.9</useProvision>
     <useWater>0.7</useWater>
     <useHeat>0.6</useHeat>
@@ -2635,8 +2602,7 @@ generelArmor:
     <usePollutionWater />
     <usePollutionSoil />
     <usePollutionNoise />
-    <Demands />
-    <demandsPowerGreenMin />
+        <demandsPowerGreenMin />
     <demandsPowerNuclearMax />
     <demandsPowerFossilMax />
     <demandsHeatGreenMin />
@@ -2657,7 +2623,7 @@ generelArmor:
     <demandsVechicleTypeHitchHike />
     <demandsVechicleTypeBicycle />
     <demandsVechicleTypeWalk />
-    <Producerer />
+    
     <taxPay />
     <taxPayMax />
     <taxPayRageRate />
@@ -2692,7 +2658,7 @@ generelArmor:
     <generelArmor />
   </citizens>
   <citizens id="adultsHomeless">
-    <Kræver />
+    
     <useProvision>0.01</useProvision>
     <useWater>0.2</useWater>
     <useHeat>0.01</useHeat>
@@ -2752,8 +2718,7 @@ generelArmor:
     <usePollutionWater />
     <usePollutionSoil />
     <usePollutionNoise />
-    <Demands />
-    <demandsPowerGreenMin />
+        <demandsPowerGreenMin />
     <demandsPowerNuclearMax />
     <demandsPowerFossilMax />
     <demandsHeatGreenMin />
@@ -2774,7 +2739,7 @@ generelArmor:
     <demandsVechicleTypeHitchHike />
     <demandsVechicleTypeBicycle />
     <demandsVechicleTypeWalk />
-    <Producerer />
+    
     <taxPay />
     <taxPayMax />
     <taxPayRageRate />
@@ -2809,7 +2774,7 @@ generelArmor:
     <generelArmor />
   </citizens>
   <citizens id="crimeHomeless">
-    <Kræver />
+    
     <useProvision>0.04</useProvision>
     <useWater>0.5</useWater>
     <useHeat>0.01</useHeat>
@@ -2869,8 +2834,7 @@ generelArmor:
     <usePollutionWater />
     <usePollutionSoil />
     <usePollutionNoise />
-    <Demands />
-    <demandsPowerGreenMin />
+        <demandsPowerGreenMin />
     <demandsPowerNuclearMax />
     <demandsPowerFossilMax />
     <demandsHeatGreenMin />
@@ -2891,7 +2855,7 @@ generelArmor:
     <demandsVechicleTypeHitchHike />
     <demandsVechicleTypeBicycle />
     <demandsVechicleTypeWalk />
-    <Producerer />
+    
     <taxPay />
     <taxPayMax />
     <taxPayRageRate />
