@@ -1,0 +1,2928 @@
+<?xml version='1.0' encoding='utf-8'?>
+<citizensData>
+  <!--
+Kræver: 
+useProvision: Forbrug i provision (tæller ind i provisionUsage) - passiv/aktiv
+useWater: passiv/aktiv
+useHeat: Passiv output, passiv + active input
+usePower: Passiv output, passive + active output
+usePolice: Belægning på police (tæller ind i policeUsage)
+useHealth: Belægning på health (tæller ind i healthUsage)
+useFire: Belægning på fire (tæller ind i fireUsage)
+useEducation: 
+useCrime: 
+useHousing: 
+useSocial: 
+useGoverment: Børn, ældre, unge har høj demand her
+useEntertainmentAnalog: Bestemte bygninger eller analoge underholds apperater
+useEntertainmentDigital: Bestemte bygninger eller digitale enheder
+useShoppingLocale: 
+useShoppingOnline: 
+useComfort: 
+useVacationNational: 
+useVacationInternational: 
+useProvisionMeat: 
+useProvisionFruit: 
+useProvisionVeg: 
+useTrafficWalkBicycle: 
+useTrafficPublic: 
+useTrafficFossil: 
+useTrafficEV: 
+useTransport: 
+useRoad: 
+useParkingLot: 
+useParkGreen: 
+useParkLake: 
+useMail: 
+useMailPackage: 
+useTrainingFacility: Hvis opfyldt boster health
+useInternet: 
+usePhone: 
+usePayCash: 
+usePayCard: 
+usePayOnline: 
+useBank: 
+useProductArt: 
+useProductFurniture: 
+useProductToy: 
+useProductCloth: 
+useProductEletronic: 
+useProductBuildingMaterials: 
+useProductSportGear: 
+useProductBeauty: 
+useProductFood: Dette erstatter ikke provision - dette handler om luksus
+useProductDrink: Dette erstatter ikke water - dette handler om luksus
+useProductMedicin: Dette erstatter ikke health - dette supplerer bare
+useProductBooks: 
+useDruks: Bruges i crime
+useBlackMoney: Bruges til Black Money systemet
+useBlackMarket: 
+usePollutionAir: 
+usePollutionWater: 
+usePollutionSoil: 
+usePollutionNoise: 
+Demands: 
+demandsPowerGreenMin: 
+demandsPowerNuclearMax: 
+demandsPowerFossilMax: 
+demandsHeatGreenMin: 
+demandsHeatNuclearMax: 
+demandsHeatFossilMax: 
+demandsPollutionWaterMax: 
+demandsPollutionAirMax: 
+demandsPollutionSoilMax: 
+demandsPollutionNoiseMax: 
+demandsTrafficWalkBicycle: 
+demandsTrafficPublic: 
+demandsTrafficFossil: 
+demandsTrafficEV: 
+demandsDeathRate: 
+demandsVechicleTypeCar: 
+demandsVechicleTypeTruck: 
+demandsVechicleTypePlane: 
+demandsVechicleTypeHitchHike: 
+demandsVechicleTypeBicycle: 
+demandsVechicleTypeWalk: 
+Producerer: 
+taxPay: 
+taxPayMax: 
+taxPayRageRate: 
+wastePlastic: Håndteres på passende bygninger
+wasteOrganic: Dårlig/ingen håndtering af waste kan påvirke
+wasteGlass: pollution af forskellige art
+wasteMetal: 
+wasteWater: 
+wasteElectronic: 
+wastePaper: 
+wasteOther: 
+deathPoliceExpose: (0,6-1,6 - højere tal er lavere dødsantal)
+deathPoliceWeight: Vægt, der styre, hvor hårdt denne gruppe tæller i forhold til andre grupper
+deathPoliceBaseline: baseline - højere tal øger dødelighed
+deathTrafficExpose: (0,6-1,6 - højere tal er lavere dødsantal)
+deathTrafficWeight: 
+deathTrafficBaseline: baseline - højere tal øger dødelighed
+deathFireExpose: (0,6-1,6 - højere tal er lavere dødsantal)
+deathFireWeight: 
+deathFireBaseline: baseline - højere tal øger dødelighed
+deathHealthExpose: (0,6-1,6 - højere tal er lavere dødsantal)
+deathHealthWeight: 
+deathHealthBaseline: baseline - højere tal øger dødelighed
+birthRate: bidrag til fødsel
+movingIn: bidrag til tilflyttere
+movingOut: udflyttere
+migration: Flytte til næste alders gruppe (0-1)
+Øvrige udregninger (sæt citizens type foran): 
+generalHappinessDemand: 
+generelPopularityDemand: 
+generelStrength: 
+generelArmor: 
+-->
+  <citizens id="baby">
+    <Kræver />
+    <useProvision>0.2</useProvision>
+    <useWater>0.2</useWater>
+    <useHeat>0.4</useHeat>
+    <usePower>0.1</usePower>
+    <usePolice>0.1</usePolice>
+    <useHealth>0.4</useHealth>
+    <useFire>0.1</useFire>
+    <useEducation>0.1</useEducation>
+    <useCrime>0</useCrime>
+    <useHousing>0.5</useHousing>
+    <useSocial>1</useSocial>
+    <useGoverment>1.2</useGoverment>
+    <useEntertainmentAnalog>0.8</useEntertainmentAnalog>
+    <useEntertainmentDigital>0.2</useEntertainmentDigital>
+    <useShoppingLocale>0.2</useShoppingLocale>
+    <useShoppingOnline>0.2</useShoppingOnline>
+    <useComfort>0.8</useComfort>
+    <useVacationNational>0</useVacationNational>
+    <useVacationInternational>0</useVacationInternational>
+    <useProvisionMeat />
+    <useProvisionFruit />
+    <useProvisionVeg />
+    <useTrafficWalkBicycle>0</useTrafficWalkBicycle>
+    <useTrafficPublic>0</useTrafficPublic>
+    <useTrafficFossil>0</useTrafficFossil>
+    <useTrafficEV>0</useTrafficEV>
+    <useTransport>0.1</useTransport>
+    <useRoad />
+    <useParkingLot />
+    <useParkGreen />
+    <useParkLake />
+    <useMail>0.1</useMail>
+    <useMailPackage />
+    <useTrainingFacility />
+    <useInternet />
+    <usePhone />
+    <usePayCash />
+    <usePayCard />
+    <usePayOnline />
+    <useBank />
+    <useProductArt />
+    <useProductFurniture />
+    <useProductToy />
+    <useProductCloth>1</useProductCloth>
+    <useProductEletronic />
+    <useProductBuildingMaterials />
+    <useProductSportGear />
+    <useProductBeauty />
+    <useProductFood />
+    <useProductDrink />
+    <useProductMedicin>1.2</useProductMedicin>
+    <useProductBooks />
+    <useDruks />
+    <useBlackMoney />
+    <useBlackMarket />
+    <usePollutionAir>0.1</usePollutionAir>
+    <usePollutionWater>0.1</usePollutionWater>
+    <usePollutionSoil>0.1</usePollutionSoil>
+    <usePollutionNoise>0.3</usePollutionNoise>
+    <Demands />
+    <demandsPowerGreenMin>0.7</demandsPowerGreenMin>
+    <demandsPowerNuclearMax>0.2</demandsPowerNuclearMax>
+    <demandsPowerFossilMax>0.1</demandsPowerFossilMax>
+    <demandsHeatGreenMin>0</demandsHeatGreenMin>
+    <demandsHeatNuclearMax>0</demandsHeatNuclearMax>
+    <demandsHeatFossilMax>0</demandsHeatFossilMax>
+    <demandsPollutionWaterMax>0.2</demandsPollutionWaterMax>
+    <demandsPollutionAirMax>0.1</demandsPollutionAirMax>
+    <demandsPollutionSoilMax>0.1</demandsPollutionSoilMax>
+    <demandsPollutionNoiseMax>0.6</demandsPollutionNoiseMax>
+    <demandsTrafficWalkBicycle>0</demandsTrafficWalkBicycle>
+    <demandsTrafficPublic>0</demandsTrafficPublic>
+    <demandsTrafficFossil>0</demandsTrafficFossil>
+    <demandsTrafficEV>0</demandsTrafficEV>
+    <demandsDeathRate />
+    <demandsVechicleTypeCar />
+    <demandsVechicleTypeTruck />
+    <demandsVechicleTypePlane />
+    <demandsVechicleTypeHitchHike />
+    <demandsVechicleTypeBicycle />
+    <demandsVechicleTypeWalk />
+    <Producerer />
+    <taxPay>0</taxPay>
+    <taxPayMax />
+    <taxPayRageRate />
+    <wastePlastic>0.5</wastePlastic>
+    <wasteOrganic />
+    <wasteGlass />
+    <wasteMetal />
+    <wasteWater />
+    <wasteElectronic />
+    <wastePaper />
+    <wasteOther>1.1</wasteOther>
+    <deathPoliceExpose />
+    <deathPoliceWeight />
+    <deathPoliceBaseline />
+    <deathTrafficExpose />
+    <deathTrafficWeight />
+    <deathTrafficBaseline />
+    <deathFireExpose />
+    <deathFireWeight />
+    <deathFireBaseline />
+    <deathHealthExpose>1.5</deathHealthExpose>
+    <deathHealthWeight>1</deathHealthWeight>
+    <deathHealthBaseline>2</deathHealthBaseline>
+    <birthRate>0</birthRate>
+    <movingIn>0.02</movingIn>
+    <movingOut>0.01</movingOut>
+    <migration>0.8</migration>
+    <Øvrige_udregninger__sæt_citizens_type_foran_ />
+    <generalHappinessDemand />
+    <generelPopularityDemand />
+    <generelStrength />
+    <generelArmor />
+  </citizens>
+  <citizens id="kidsStreet">
+    <Kræver />
+    <useProvision>0.4</useProvision>
+    <useWater>0.4</useWater>
+    <useHeat>0.2</useHeat>
+    <usePower>0.4</usePower>
+    <usePolice>0.3</usePolice>
+    <useHealth>0.6</useHealth>
+    <useFire>0.2</useFire>
+    <useEducation>0.2</useEducation>
+    <useCrime>0.01</useCrime>
+    <useHousing>0.4</useHousing>
+    <useSocial>1.1</useSocial>
+    <useGoverment>1.2</useGoverment>
+    <useEntertainmentAnalog>0.9</useEntertainmentAnalog>
+    <useEntertainmentDigital />
+    <useShoppingLocale />
+    <useShoppingOnline />
+    <useComfort />
+    <useVacationNational />
+    <useVacationInternational />
+    <useProvisionMeat />
+    <useProvisionFruit />
+    <useProvisionVeg />
+    <useTrafficWalkBicycle />
+    <useTrafficPublic />
+    <useTrafficFossil />
+    <useTrafficEV />
+    <useTransport />
+    <useRoad />
+    <useParkingLot />
+    <useParkGreen />
+    <useParkLake />
+    <useMail />
+    <useMailPackage />
+    <useTrainingFacility />
+    <useInternet />
+    <usePhone />
+    <usePayCash />
+    <usePayCard />
+    <usePayOnline />
+    <useBank />
+    <useProductArt />
+    <useProductFurniture />
+    <useProductToy />
+    <useProductCloth>0.9</useProductCloth>
+    <useProductEletronic />
+    <useProductBuildingMaterials />
+    <useProductSportGear />
+    <useProductBeauty />
+    <useProductFood />
+    <useProductDrink />
+    <useProductMedicin>1</useProductMedicin>
+    <useProductBooks />
+    <useDruks />
+    <useBlackMoney />
+    <useBlackMarket />
+    <usePollutionAir />
+    <usePollutionWater />
+    <usePollutionSoil />
+    <usePollutionNoise />
+    <Demands />
+    <demandsPowerGreenMin />
+    <demandsPowerNuclearMax />
+    <demandsPowerFossilMax />
+    <demandsHeatGreenMin />
+    <demandsHeatNuclearMax />
+    <demandsHeatFossilMax />
+    <demandsPollutionWaterMax />
+    <demandsPollutionAirMax />
+    <demandsPollutionSoilMax />
+    <demandsPollutionNoiseMax />
+    <demandsTrafficWalkBicycle />
+    <demandsTrafficPublic />
+    <demandsTrafficFossil />
+    <demandsTrafficEV />
+    <demandsDeathRate />
+    <demandsVechicleTypeCar />
+    <demandsVechicleTypeTruck />
+    <demandsVechicleTypePlane />
+    <demandsVechicleTypeHitchHike />
+    <demandsVechicleTypeBicycle />
+    <demandsVechicleTypeWalk />
+    <Producerer />
+    <taxPay />
+    <taxPayMax />
+    <taxPayRageRate />
+    <wastePlastic />
+    <wasteOrganic />
+    <wasteGlass />
+    <wasteMetal />
+    <wasteWater />
+    <wasteElectronic />
+    <wastePaper />
+    <wasteOther>1.2</wasteOther>
+    <deathPoliceExpose />
+    <deathPoliceWeight />
+    <deathPoliceBaseline />
+    <deathTrafficExpose />
+    <deathTrafficWeight />
+    <deathTrafficBaseline />
+    <deathFireExpose />
+    <deathFireWeight />
+    <deathFireBaseline />
+    <deathHealthExpose>1.3</deathHealthExpose>
+    <deathHealthWeight>1</deathHealthWeight>
+    <deathHealthBaseline>2</deathHealthBaseline>
+    <birthRate>0</birthRate>
+    <movingIn>0.02</movingIn>
+    <movingOut>0.01</movingOut>
+    <migration>0.8</migration>
+    <Øvrige_udregninger__sæt_citizens_type_foran_ />
+    <generalHappinessDemand />
+    <generelPopularityDemand />
+    <generelStrength />
+    <generelArmor />
+  </citizens>
+  <citizens id="kidsStudent">
+    <Kræver />
+    <useProvision>0.4</useProvision>
+    <useWater>0.4</useWater>
+    <useHeat>0.3</useHeat>
+    <usePower>0.4</usePower>
+    <usePolice>0.1</usePolice>
+    <useHealth>0.5</useHealth>
+    <useFire>0.2</useFire>
+    <useEducation>1</useEducation>
+    <useCrime>0.15</useCrime>
+    <useHousing>0.7</useHousing>
+    <useSocial>1.2</useSocial>
+    <useGoverment>1.2</useGoverment>
+    <useEntertainmentAnalog>0.8</useEntertainmentAnalog>
+    <useEntertainmentDigital />
+    <useShoppingLocale />
+    <useShoppingOnline />
+    <useComfort />
+    <useVacationNational />
+    <useVacationInternational />
+    <useProvisionMeat />
+    <useProvisionFruit />
+    <useProvisionVeg />
+    <useTrafficWalkBicycle />
+    <useTrafficPublic />
+    <useTrafficFossil />
+    <useTrafficEV />
+    <useTransport />
+    <useRoad />
+    <useParkingLot />
+    <useParkGreen />
+    <useParkLake />
+    <useMail />
+    <useMailPackage />
+    <useTrainingFacility />
+    <useInternet />
+    <usePhone />
+    <usePayCash />
+    <usePayCard />
+    <usePayOnline />
+    <useBank />
+    <useProductArt />
+    <useProductFurniture />
+    <useProductToy />
+    <useProductCloth>0.9</useProductCloth>
+    <useProductEletronic />
+    <useProductBuildingMaterials />
+    <useProductSportGear />
+    <useProductBeauty />
+    <useProductFood />
+    <useProductDrink />
+    <useProductMedicin>0.85</useProductMedicin>
+    <useProductBooks />
+    <useDruks />
+    <useBlackMoney />
+    <useBlackMarket />
+    <usePollutionAir />
+    <usePollutionWater />
+    <usePollutionSoil />
+    <usePollutionNoise />
+    <Demands />
+    <demandsPowerGreenMin />
+    <demandsPowerNuclearMax />
+    <demandsPowerFossilMax />
+    <demandsHeatGreenMin />
+    <demandsHeatNuclearMax />
+    <demandsHeatFossilMax />
+    <demandsPollutionWaterMax />
+    <demandsPollutionAirMax />
+    <demandsPollutionSoilMax />
+    <demandsPollutionNoiseMax />
+    <demandsTrafficWalkBicycle />
+    <demandsTrafficPublic />
+    <demandsTrafficFossil />
+    <demandsTrafficEV />
+    <demandsDeathRate />
+    <demandsVechicleTypeCar />
+    <demandsVechicleTypeTruck />
+    <demandsVechicleTypePlane />
+    <demandsVechicleTypeHitchHike />
+    <demandsVechicleTypeBicycle />
+    <demandsVechicleTypeWalk />
+    <Producerer />
+    <taxPay />
+    <taxPayMax />
+    <taxPayRageRate />
+    <wastePlastic />
+    <wasteOrganic />
+    <wasteGlass />
+    <wasteMetal />
+    <wasteWater />
+    <wasteElectronic />
+    <wastePaper />
+    <wasteOther>0.9</wasteOther>
+    <deathPoliceExpose />
+    <deathPoliceWeight />
+    <deathPoliceBaseline />
+    <deathTrafficExpose />
+    <deathTrafficWeight />
+    <deathTrafficBaseline />
+    <deathFireExpose />
+    <deathFireWeight />
+    <deathFireBaseline />
+    <deathHealthExpose>1.5</deathHealthExpose>
+    <deathHealthWeight>1</deathHealthWeight>
+    <deathHealthBaseline>2</deathHealthBaseline>
+    <birthRate>0</birthRate>
+    <movingIn>0.04</movingIn>
+    <movingOut>0.03</movingOut>
+    <migration>0.75</migration>
+    <Øvrige_udregninger__sæt_citizens_type_foran_ />
+    <generalHappinessDemand />
+    <generelPopularityDemand />
+    <generelStrength />
+    <generelArmor />
+  </citizens>
+  <citizens id="youngStudent">
+    <Kræver />
+    <useProvision>0.7</useProvision>
+    <useWater>0.6</useWater>
+    <useHeat>0.5</useHeat>
+    <usePower>0.8</usePower>
+    <usePolice>0.2</usePolice>
+    <useHealth>0.4</useHealth>
+    <useFire>0.3</useFire>
+    <useEducation>1</useEducation>
+    <useCrime>0.1</useCrime>
+    <useHousing>0.9</useHousing>
+    <useSocial>1.1</useSocial>
+    <useGoverment>1.2</useGoverment>
+    <useEntertainmentAnalog>0.6</useEntertainmentAnalog>
+    <useEntertainmentDigital />
+    <useShoppingLocale />
+    <useShoppingOnline />
+    <useComfort />
+    <useVacationNational />
+    <useVacationInternational />
+    <useProvisionMeat />
+    <useProvisionFruit />
+    <useProvisionVeg />
+    <useTrafficWalkBicycle />
+    <useTrafficPublic />
+    <useTrafficFossil />
+    <useTrafficEV />
+    <useTransport />
+    <useRoad />
+    <useParkingLot />
+    <useParkGreen />
+    <useParkLake />
+    <useMail />
+    <useMailPackage />
+    <useTrainingFacility />
+    <useInternet />
+    <usePhone />
+    <usePayCash />
+    <usePayCard />
+    <usePayOnline />
+    <useBank />
+    <useProductArt />
+    <useProductFurniture />
+    <useProductToy />
+    <useProductCloth>0.85</useProductCloth>
+    <useProductEletronic />
+    <useProductBuildingMaterials />
+    <useProductSportGear />
+    <useProductBeauty />
+    <useProductFood />
+    <useProductDrink />
+    <useProductMedicin>0.6</useProductMedicin>
+    <useProductBooks />
+    <useDruks />
+    <useBlackMoney />
+    <useBlackMarket />
+    <usePollutionAir />
+    <usePollutionWater />
+    <usePollutionSoil />
+    <usePollutionNoise />
+    <Demands />
+    <demandsPowerGreenMin />
+    <demandsPowerNuclearMax />
+    <demandsPowerFossilMax />
+    <demandsHeatGreenMin />
+    <demandsHeatNuclearMax />
+    <demandsHeatFossilMax />
+    <demandsPollutionWaterMax />
+    <demandsPollutionAirMax />
+    <demandsPollutionSoilMax />
+    <demandsPollutionNoiseMax />
+    <demandsTrafficWalkBicycle />
+    <demandsTrafficPublic />
+    <demandsTrafficFossil />
+    <demandsTrafficEV />
+    <demandsDeathRate />
+    <demandsVechicleTypeCar />
+    <demandsVechicleTypeTruck />
+    <demandsVechicleTypePlane />
+    <demandsVechicleTypeHitchHike />
+    <demandsVechicleTypeBicycle />
+    <demandsVechicleTypeWalk />
+    <Producerer />
+    <taxPay />
+    <taxPayMax />
+    <taxPayRageRate />
+    <wastePlastic />
+    <wasteOrganic />
+    <wasteGlass />
+    <wasteMetal />
+    <wasteWater />
+    <wasteElectronic />
+    <wastePaper />
+    <wasteOther>0.8</wasteOther>
+    <deathPoliceExpose />
+    <deathPoliceWeight />
+    <deathPoliceBaseline />
+    <deathTrafficExpose />
+    <deathTrafficWeight />
+    <deathTrafficBaseline />
+    <deathFireExpose />
+    <deathFireWeight />
+    <deathFireBaseline />
+    <deathHealthExpose>1.5</deathHealthExpose>
+    <deathHealthWeight>1</deathHealthWeight>
+    <deathHealthBaseline>2</deathHealthBaseline>
+    <birthRate>0.05</birthRate>
+    <movingIn>0.04</movingIn>
+    <movingOut>0.03</movingOut>
+    <migration>0.88</migration>
+    <Øvrige_udregninger__sæt_citizens_type_foran_ />
+    <generalHappinessDemand />
+    <generelPopularityDemand />
+    <generelStrength />
+    <generelArmor />
+  </citizens>
+  <citizens id="youngWorker">
+    <Kræver />
+    <useProvision>0.8</useProvision>
+    <useWater>0.7</useWater>
+    <useHeat>0.4</useHeat>
+    <usePower>1</usePower>
+    <usePolice>0.3</usePolice>
+    <useHealth>0.3</useHealth>
+    <useFire>0.4</useFire>
+    <useEducation>1</useEducation>
+    <useCrime>0.4</useCrime>
+    <useHousing>0.8</useHousing>
+    <useSocial>0.9</useSocial>
+    <useGoverment>1.2</useGoverment>
+    <useEntertainmentAnalog>0.6</useEntertainmentAnalog>
+    <useEntertainmentDigital />
+    <useShoppingLocale />
+    <useShoppingOnline />
+    <useComfort />
+    <useVacationNational />
+    <useVacationInternational />
+    <useProvisionMeat />
+    <useProvisionFruit />
+    <useProvisionVeg />
+    <useTrafficWalkBicycle />
+    <useTrafficPublic />
+    <useTrafficFossil />
+    <useTrafficEV />
+    <useTransport />
+    <useRoad />
+    <useParkingLot />
+    <useParkGreen />
+    <useParkLake />
+    <useMail />
+    <useMailPackage />
+    <useTrainingFacility />
+    <useInternet />
+    <usePhone />
+    <usePayCash />
+    <usePayCard />
+    <usePayOnline />
+    <useBank />
+    <useProductArt />
+    <useProductFurniture />
+    <useProductToy />
+    <useProductCloth>0.95</useProductCloth>
+    <useProductEletronic />
+    <useProductBuildingMaterials />
+    <useProductSportGear />
+    <useProductBeauty />
+    <useProductFood />
+    <useProductDrink />
+    <useProductMedicin>0.4</useProductMedicin>
+    <useProductBooks />
+    <useDruks />
+    <useBlackMoney />
+    <useBlackMarket />
+    <usePollutionAir>0.5</usePollutionAir>
+    <usePollutionWater>0.5</usePollutionWater>
+    <usePollutionSoil>0.5</usePollutionSoil>
+    <usePollutionNoise>0.6</usePollutionNoise>
+    <Demands />
+    <demandsPowerGreenMin>0.5</demandsPowerGreenMin>
+    <demandsPowerNuclearMax>0.3</demandsPowerNuclearMax>
+    <demandsPowerFossilMax>0.2</demandsPowerFossilMax>
+    <demandsHeatGreenMin>0.6</demandsHeatGreenMin>
+    <demandsHeatNuclearMax>0.3</demandsHeatNuclearMax>
+    <demandsHeatFossilMax>0.1</demandsHeatFossilMax>
+    <demandsPollutionWaterMax />
+    <demandsPollutionAirMax />
+    <demandsPollutionSoilMax />
+    <demandsPollutionNoiseMax />
+    <demandsTrafficWalkBicycle />
+    <demandsTrafficPublic />
+    <demandsTrafficFossil />
+    <demandsTrafficEV />
+    <demandsDeathRate />
+    <demandsVechicleTypeCar />
+    <demandsVechicleTypeTruck />
+    <demandsVechicleTypePlane />
+    <demandsVechicleTypeHitchHike />
+    <demandsVechicleTypeBicycle />
+    <demandsVechicleTypeWalk />
+    <Producerer />
+    <taxPay>0.2</taxPay>
+    <taxPayMax />
+    <taxPayRageRate />
+    <wastePlastic>0.7</wastePlastic>
+    <wasteOrganic />
+    <wasteGlass />
+    <wasteMetal />
+    <wasteWater />
+    <wasteElectronic />
+    <wastePaper />
+    <wasteOther>0.8</wasteOther>
+    <deathPoliceExpose />
+    <deathPoliceWeight />
+    <deathPoliceBaseline />
+    <deathTrafficExpose />
+    <deathTrafficWeight />
+    <deathTrafficBaseline />
+    <deathFireExpose />
+    <deathFireWeight />
+    <deathFireBaseline />
+    <deathHealthExpose>1.4</deathHealthExpose>
+    <deathHealthWeight>1</deathHealthWeight>
+    <deathHealthBaseline>2</deathHealthBaseline>
+    <birthRate>0.06</birthRate>
+    <movingIn>0.05</movingIn>
+    <movingOut>0.03</movingOut>
+    <migration>0.75</migration>
+    <Øvrige_udregninger__sæt_citizens_type_foran_ />
+    <generalHappinessDemand />
+    <generelPopularityDemand />
+    <generelStrength />
+    <generelArmor />
+  </citizens>
+  <citizens id="old">
+    <Kræver />
+    <useProvision>0.3</useProvision>
+    <useWater>0.6</useWater>
+    <useHeat>0.9</useHeat>
+    <usePower>0.5</usePower>
+    <usePolice>0.2</usePolice>
+    <useHealth>1.2</useHealth>
+    <useFire>0.3</useFire>
+    <useEducation>0.1</useEducation>
+    <useCrime>0.1</useCrime>
+    <useHousing>1.5</useHousing>
+    <useSocial>0.8</useSocial>
+    <useGoverment>1.4</useGoverment>
+    <useEntertainmentAnalog>1</useEntertainmentAnalog>
+    <useEntertainmentDigital />
+    <useShoppingLocale />
+    <useShoppingOnline />
+    <useComfort />
+    <useVacationNational />
+    <useVacationInternational />
+    <useProvisionMeat />
+    <useProvisionFruit />
+    <useProvisionVeg />
+    <useTrafficWalkBicycle />
+    <useTrafficPublic />
+    <useTrafficFossil />
+    <useTrafficEV />
+    <useTransport />
+    <useRoad />
+    <useParkingLot />
+    <useParkGreen />
+    <useParkLake />
+    <useMail />
+    <useMailPackage />
+    <useTrainingFacility />
+    <useInternet />
+    <usePhone />
+    <usePayCash />
+    <usePayCard />
+    <usePayOnline />
+    <useBank />
+    <useProductArt />
+    <useProductFurniture />
+    <useProductToy />
+    <useProductCloth>0.4</useProductCloth>
+    <useProductEletronic />
+    <useProductBuildingMaterials />
+    <useProductSportGear />
+    <useProductBeauty />
+    <useProductFood />
+    <useProductDrink />
+    <useProductMedicin>1.5</useProductMedicin>
+    <useProductBooks />
+    <useDruks />
+    <useBlackMoney />
+    <useBlackMarket />
+    <usePollutionAir />
+    <usePollutionWater />
+    <usePollutionSoil />
+    <usePollutionNoise />
+    <Demands />
+    <demandsPowerGreenMin>0.2</demandsPowerGreenMin>
+    <demandsPowerNuclearMax>0.3</demandsPowerNuclearMax>
+    <demandsPowerFossilMax>0.5</demandsPowerFossilMax>
+    <demandsHeatGreenMin>0.2</demandsHeatGreenMin>
+    <demandsHeatNuclearMax>0.3</demandsHeatNuclearMax>
+    <demandsHeatFossilMax>0.5</demandsHeatFossilMax>
+    <demandsPollutionWaterMax />
+    <demandsPollutionAirMax />
+    <demandsPollutionSoilMax />
+    <demandsPollutionNoiseMax />
+    <demandsTrafficWalkBicycle />
+    <demandsTrafficPublic />
+    <demandsTrafficFossil />
+    <demandsTrafficEV />
+    <demandsDeathRate />
+    <demandsVechicleTypeCar />
+    <demandsVechicleTypeTruck />
+    <demandsVechicleTypePlane />
+    <demandsVechicleTypeHitchHike />
+    <demandsVechicleTypeBicycle />
+    <demandsVechicleTypeWalk />
+    <Producerer />
+    <taxPay />
+    <taxPayMax />
+    <taxPayRageRate />
+    <wastePlastic />
+    <wasteOrganic />
+    <wasteGlass />
+    <wasteMetal />
+    <wasteWater />
+    <wasteElectronic />
+    <wastePaper />
+    <wasteOther>0.4</wasteOther>
+    <deathPoliceExpose />
+    <deathPoliceWeight />
+    <deathPoliceBaseline />
+    <deathTrafficExpose />
+    <deathTrafficWeight />
+    <deathTrafficBaseline />
+    <deathFireExpose />
+    <deathFireWeight />
+    <deathFireBaseline />
+    <deathHealthExpose>0.7</deathHealthExpose>
+    <deathHealthWeight>5</deathHealthWeight>
+    <deathHealthBaseline>2</deathHealthBaseline>
+    <birthRate>0</birthRate>
+    <movingIn>0.02</movingIn>
+    <movingOut>0.01</movingOut>
+    <migration>0</migration>
+    <Øvrige_udregninger__sæt_citizens_type_foran_ />
+    <generalHappinessDemand />
+    <generelPopularityDemand />
+    <generelStrength />
+    <generelArmor />
+  </citizens>
+  <citizens id="adultsPolice">
+    <Kræver />
+    <useProvision>1</useProvision>
+    <useWater>0.8</useWater>
+    <useHeat>0.7</useHeat>
+    <usePower>1</usePower>
+    <usePolice>0.1</usePolice>
+    <useHealth>0.8</useHealth>
+    <useFire>0.2</useFire>
+    <useEducation>0.6</useEducation>
+    <useCrime>0.05</useCrime>
+    <useHousing>1</useHousing>
+    <useSocial>0.8</useSocial>
+    <useGoverment>0.8</useGoverment>
+    <useEntertainmentAnalog>0.4</useEntertainmentAnalog>
+    <useEntertainmentDigital />
+    <useShoppingLocale />
+    <useShoppingOnline />
+    <useComfort />
+    <useVacationNational />
+    <useVacationInternational />
+    <useProvisionMeat />
+    <useProvisionFruit />
+    <useProvisionVeg />
+    <useTrafficWalkBicycle />
+    <useTrafficPublic />
+    <useTrafficFossil />
+    <useTrafficEV />
+    <useTransport />
+    <useRoad />
+    <useParkingLot />
+    <useParkGreen />
+    <useParkLake />
+    <useMail />
+    <useMailPackage />
+    <useTrainingFacility />
+    <useInternet />
+    <usePhone />
+    <usePayCash />
+    <usePayCard />
+    <usePayOnline />
+    <useBank />
+    <useProductArt />
+    <useProductFurniture />
+    <useProductToy />
+    <useProductCloth>0.7</useProductCloth>
+    <useProductEletronic />
+    <useProductBuildingMaterials />
+    <useProductSportGear />
+    <useProductBeauty />
+    <useProductFood />
+    <useProductDrink />
+    <useProductMedicin>0.5</useProductMedicin>
+    <useProductBooks />
+    <useDruks />
+    <useBlackMoney />
+    <useBlackMarket />
+    <usePollutionAir />
+    <usePollutionWater />
+    <usePollutionSoil />
+    <usePollutionNoise />
+    <Demands />
+    <demandsPowerGreenMin />
+    <demandsPowerNuclearMax />
+    <demandsPowerFossilMax />
+    <demandsHeatGreenMin />
+    <demandsHeatNuclearMax />
+    <demandsHeatFossilMax />
+    <demandsPollutionWaterMax />
+    <demandsPollutionAirMax />
+    <demandsPollutionSoilMax />
+    <demandsPollutionNoiseMax />
+    <demandsTrafficWalkBicycle />
+    <demandsTrafficPublic />
+    <demandsTrafficFossil />
+    <demandsTrafficEV />
+    <demandsDeathRate />
+    <demandsVechicleTypeCar />
+    <demandsVechicleTypeTruck />
+    <demandsVechicleTypePlane />
+    <demandsVechicleTypeHitchHike />
+    <demandsVechicleTypeBicycle />
+    <demandsVechicleTypeWalk />
+    <Producerer />
+    <taxPay />
+    <taxPayMax />
+    <taxPayRageRate />
+    <wastePlastic />
+    <wasteOrganic />
+    <wasteGlass />
+    <wasteMetal />
+    <wasteWater />
+    <wasteElectronic />
+    <wastePaper />
+    <wasteOther>0.9</wasteOther>
+    <deathPoliceExpose />
+    <deathPoliceWeight />
+    <deathPoliceBaseline />
+    <deathTrafficExpose />
+    <deathTrafficWeight />
+    <deathTrafficBaseline />
+    <deathFireExpose />
+    <deathFireWeight />
+    <deathFireBaseline />
+    <deathHealthExpose>1</deathHealthExpose>
+    <deathHealthWeight>3</deathHealthWeight>
+    <deathHealthBaseline>3</deathHealthBaseline>
+    <birthRate>0.03</birthRate>
+    <movingIn>0.01</movingIn>
+    <movingOut>0.015</movingOut>
+    <migration>0.7</migration>
+    <Øvrige_udregninger__sæt_citizens_type_foran_ />
+    <generalHappinessDemand />
+    <generelPopularityDemand />
+    <generelStrength />
+    <generelArmor />
+  </citizens>
+  <citizens id="crimePolice">
+    <Kræver />
+    <useProvision>1.1</useProvision>
+    <useWater>0.9</useWater>
+    <useHeat>0.9</useHeat>
+    <usePower>1.1</usePower>
+    <usePolice>0.5</usePolice>
+    <useHealth>1.1</useHealth>
+    <useFire>0.8</useFire>
+    <useEducation>0.1</useEducation>
+    <useCrime>1.1</useCrime>
+    <useHousing>1</useHousing>
+    <useSocial>0.8</useSocial>
+    <useGoverment>0.8</useGoverment>
+    <useEntertainmentAnalog>0.4</useEntertainmentAnalog>
+    <useEntertainmentDigital />
+    <useShoppingLocale />
+    <useShoppingOnline />
+    <useComfort />
+    <useVacationNational />
+    <useVacationInternational />
+    <useProvisionMeat />
+    <useProvisionFruit />
+    <useProvisionVeg />
+    <useTrafficWalkBicycle />
+    <useTrafficPublic />
+    <useTrafficFossil />
+    <useTrafficEV />
+    <useTransport />
+    <useRoad />
+    <useParkingLot />
+    <useParkGreen />
+    <useParkLake />
+    <useMail />
+    <useMailPackage />
+    <useTrainingFacility />
+    <useInternet />
+    <usePhone />
+    <usePayCash />
+    <usePayCard />
+    <usePayOnline />
+    <useBank />
+    <useProductArt />
+    <useProductFurniture />
+    <useProductToy />
+    <useProductCloth>0.6</useProductCloth>
+    <useProductEletronic />
+    <useProductBuildingMaterials />
+    <useProductSportGear />
+    <useProductBeauty />
+    <useProductFood />
+    <useProductDrink />
+    <useProductMedicin>0.5</useProductMedicin>
+    <useProductBooks />
+    <useDruks />
+    <useBlackMoney />
+    <useBlackMarket />
+    <usePollutionAir />
+    <usePollutionWater />
+    <usePollutionSoil />
+    <usePollutionNoise />
+    <Demands />
+    <demandsPowerGreenMin />
+    <demandsPowerNuclearMax />
+    <demandsPowerFossilMax />
+    <demandsHeatGreenMin />
+    <demandsHeatNuclearMax />
+    <demandsHeatFossilMax />
+    <demandsPollutionWaterMax />
+    <demandsPollutionAirMax />
+    <demandsPollutionSoilMax />
+    <demandsPollutionNoiseMax />
+    <demandsTrafficWalkBicycle />
+    <demandsTrafficPublic />
+    <demandsTrafficFossil />
+    <demandsTrafficEV />
+    <demandsDeathRate />
+    <demandsVechicleTypeCar />
+    <demandsVechicleTypeTruck />
+    <demandsVechicleTypePlane />
+    <demandsVechicleTypeHitchHike />
+    <demandsVechicleTypeBicycle />
+    <demandsVechicleTypeWalk />
+    <Producerer />
+    <taxPay />
+    <taxPayMax />
+    <taxPayRageRate />
+    <wastePlastic />
+    <wasteOrganic />
+    <wasteGlass />
+    <wasteMetal />
+    <wasteWater />
+    <wasteElectronic />
+    <wastePaper />
+    <wasteOther>1.1</wasteOther>
+    <deathPoliceExpose />
+    <deathPoliceWeight />
+    <deathPoliceBaseline />
+    <deathTrafficExpose />
+    <deathTrafficWeight />
+    <deathTrafficBaseline />
+    <deathFireExpose />
+    <deathFireWeight />
+    <deathFireBaseline />
+    <deathHealthExpose>1</deathHealthExpose>
+    <deathHealthWeight>2</deathHealthWeight>
+    <deathHealthBaseline>3</deathHealthBaseline>
+    <birthRate>0.02</birthRate>
+    <movingIn>0.01</movingIn>
+    <movingOut>0.013</movingOut>
+    <migration>0.7</migration>
+    <Øvrige_udregninger__sæt_citizens_type_foran_ />
+    <generalHappinessDemand />
+    <generelPopularityDemand />
+    <generelStrength />
+    <generelArmor />
+  </citizens>
+  <citizens id="adultsFire">
+    <Kræver />
+    <useProvision>1</useProvision>
+    <useWater>1.6</useWater>
+    <useHeat>1</useHeat>
+    <usePower>0.9</usePower>
+    <usePolice>0.5</usePolice>
+    <useHealth>0.8</useHealth>
+    <useFire>0.01</useFire>
+    <useEducation>0.5</useEducation>
+    <useCrime>0.2</useCrime>
+    <useHousing>1</useHousing>
+    <useSocial>0.8</useSocial>
+    <useGoverment>0.7</useGoverment>
+    <useEntertainmentAnalog>0.4</useEntertainmentAnalog>
+    <useEntertainmentDigital />
+    <useShoppingLocale />
+    <useShoppingOnline />
+    <useComfort />
+    <useVacationNational />
+    <useVacationInternational />
+    <useProvisionMeat />
+    <useProvisionFruit />
+    <useProvisionVeg />
+    <useTrafficWalkBicycle />
+    <useTrafficPublic />
+    <useTrafficFossil />
+    <useTrafficEV />
+    <useTransport />
+    <useRoad />
+    <useParkingLot />
+    <useParkGreen />
+    <useParkLake />
+    <useMail />
+    <useMailPackage />
+    <useTrainingFacility />
+    <useInternet />
+    <usePhone />
+    <usePayCash />
+    <usePayCard />
+    <usePayOnline />
+    <useBank />
+    <useProductArt />
+    <useProductFurniture />
+    <useProductToy />
+    <useProductCloth>0.7</useProductCloth>
+    <useProductEletronic />
+    <useProductBuildingMaterials />
+    <useProductSportGear />
+    <useProductBeauty />
+    <useProductFood />
+    <useProductDrink />
+    <useProductMedicin>0.5</useProductMedicin>
+    <useProductBooks />
+    <useDruks />
+    <useBlackMoney />
+    <useBlackMarket />
+    <usePollutionAir />
+    <usePollutionWater />
+    <usePollutionSoil />
+    <usePollutionNoise />
+    <Demands />
+    <demandsPowerGreenMin />
+    <demandsPowerNuclearMax />
+    <demandsPowerFossilMax />
+    <demandsHeatGreenMin />
+    <demandsHeatNuclearMax />
+    <demandsHeatFossilMax />
+    <demandsPollutionWaterMax />
+    <demandsPollutionAirMax />
+    <demandsPollutionSoilMax />
+    <demandsPollutionNoiseMax />
+    <demandsTrafficWalkBicycle />
+    <demandsTrafficPublic />
+    <demandsTrafficFossil />
+    <demandsTrafficEV />
+    <demandsDeathRate />
+    <demandsVechicleTypeCar />
+    <demandsVechicleTypeTruck />
+    <demandsVechicleTypePlane />
+    <demandsVechicleTypeHitchHike />
+    <demandsVechicleTypeBicycle />
+    <demandsVechicleTypeWalk />
+    <Producerer />
+    <taxPay />
+    <taxPayMax />
+    <taxPayRageRate />
+    <wastePlastic />
+    <wasteOrganic />
+    <wasteGlass />
+    <wasteMetal />
+    <wasteWater />
+    <wasteElectronic />
+    <wastePaper />
+    <wasteOther>0.8</wasteOther>
+    <deathPoliceExpose />
+    <deathPoliceWeight />
+    <deathPoliceBaseline />
+    <deathTrafficExpose />
+    <deathTrafficWeight />
+    <deathTrafficBaseline />
+    <deathFireExpose />
+    <deathFireWeight />
+    <deathFireBaseline />
+    <deathHealthExpose>0.9</deathHealthExpose>
+    <deathHealthWeight>3</deathHealthWeight>
+    <deathHealthBaseline>3</deathHealthBaseline>
+    <birthRate>0.03</birthRate>
+    <movingIn>0.01</movingIn>
+    <movingOut>0.015</movingOut>
+    <migration>0.7</migration>
+    <Øvrige_udregninger__sæt_citizens_type_foran_ />
+    <generalHappinessDemand />
+    <generelPopularityDemand />
+    <generelStrength />
+    <generelArmor />
+  </citizens>
+  <citizens id="crimeFire">
+    <Kræver />
+    <useProvision>1.1</useProvision>
+    <useWater>1</useWater>
+    <useHeat>1</useHeat>
+    <usePower>1.1</usePower>
+    <usePolice>0.6</usePolice>
+    <useHealth>0.8</useHealth>
+    <useFire>0.03</useFire>
+    <useEducation>0.2</useEducation>
+    <useCrime>1.1</useCrime>
+    <useHousing>1</useHousing>
+    <useSocial>0.8</useSocial>
+    <useGoverment>0.7</useGoverment>
+    <useEntertainmentAnalog>0.4</useEntertainmentAnalog>
+    <useEntertainmentDigital />
+    <useShoppingLocale />
+    <useShoppingOnline />
+    <useComfort />
+    <useVacationNational />
+    <useVacationInternational />
+    <useProvisionMeat />
+    <useProvisionFruit />
+    <useProvisionVeg />
+    <useTrafficWalkBicycle />
+    <useTrafficPublic />
+    <useTrafficFossil />
+    <useTrafficEV />
+    <useTransport />
+    <useRoad />
+    <useParkingLot />
+    <useParkGreen />
+    <useParkLake />
+    <useMail />
+    <useMailPackage />
+    <useTrainingFacility />
+    <useInternet />
+    <usePhone />
+    <usePayCash />
+    <usePayCard />
+    <usePayOnline />
+    <useBank />
+    <useProductArt />
+    <useProductFurniture />
+    <useProductToy />
+    <useProductCloth>0.6</useProductCloth>
+    <useProductEletronic />
+    <useProductBuildingMaterials />
+    <useProductSportGear />
+    <useProductBeauty />
+    <useProductFood />
+    <useProductDrink />
+    <useProductMedicin>0.5</useProductMedicin>
+    <useProductBooks />
+    <useDruks />
+    <useBlackMoney />
+    <useBlackMarket />
+    <usePollutionAir />
+    <usePollutionWater />
+    <usePollutionSoil />
+    <usePollutionNoise />
+    <Demands />
+    <demandsPowerGreenMin />
+    <demandsPowerNuclearMax />
+    <demandsPowerFossilMax />
+    <demandsHeatGreenMin />
+    <demandsHeatNuclearMax />
+    <demandsHeatFossilMax />
+    <demandsPollutionWaterMax />
+    <demandsPollutionAirMax />
+    <demandsPollutionSoilMax />
+    <demandsPollutionNoiseMax />
+    <demandsTrafficWalkBicycle />
+    <demandsTrafficPublic />
+    <demandsTrafficFossil />
+    <demandsTrafficEV />
+    <demandsDeathRate />
+    <demandsVechicleTypeCar />
+    <demandsVechicleTypeTruck />
+    <demandsVechicleTypePlane />
+    <demandsVechicleTypeHitchHike />
+    <demandsVechicleTypeBicycle />
+    <demandsVechicleTypeWalk />
+    <Producerer />
+    <taxPay />
+    <taxPayMax />
+    <taxPayRageRate />
+    <wastePlastic />
+    <wasteOrganic />
+    <wasteGlass />
+    <wasteMetal />
+    <wasteWater />
+    <wasteElectronic />
+    <wastePaper />
+    <wasteOther>1</wasteOther>
+    <deathPoliceExpose />
+    <deathPoliceWeight />
+    <deathPoliceBaseline />
+    <deathTrafficExpose />
+    <deathTrafficWeight />
+    <deathTrafficBaseline />
+    <deathFireExpose />
+    <deathFireWeight />
+    <deathFireBaseline />
+    <deathHealthExpose>0.9</deathHealthExpose>
+    <deathHealthWeight>2</deathHealthWeight>
+    <deathHealthBaseline>3</deathHealthBaseline>
+    <birthRate>0.02</birthRate>
+    <movingIn>0.01</movingIn>
+    <movingOut>0.013</movingOut>
+    <migration>0.7</migration>
+    <Øvrige_udregninger__sæt_citizens_type_foran_ />
+    <generalHappinessDemand />
+    <generelPopularityDemand />
+    <generelStrength />
+    <generelArmor />
+  </citizens>
+  <citizens id="adultsHealth">
+    <Kræver />
+    <useProvision>1</useProvision>
+    <useWater>1.5</useWater>
+    <useHeat>1</useHeat>
+    <usePower>1.1</usePower>
+    <usePolice>0.2</usePolice>
+    <useHealth>0.5</useHealth>
+    <useFire>0.02</useFire>
+    <useEducation>0.9</useEducation>
+    <useCrime>0.3</useCrime>
+    <useHousing>1</useHousing>
+    <useSocial>0.8</useSocial>
+    <useGoverment>0.8</useGoverment>
+    <useEntertainmentAnalog>0.4</useEntertainmentAnalog>
+    <useEntertainmentDigital />
+    <useShoppingLocale />
+    <useShoppingOnline />
+    <useComfort />
+    <useVacationNational />
+    <useVacationInternational />
+    <useProvisionMeat />
+    <useProvisionFruit />
+    <useProvisionVeg />
+    <useTrafficWalkBicycle />
+    <useTrafficPublic />
+    <useTrafficFossil />
+    <useTrafficEV />
+    <useTransport />
+    <useRoad />
+    <useParkingLot />
+    <useParkGreen />
+    <useParkLake />
+    <useMail />
+    <useMailPackage />
+    <useTrainingFacility />
+    <useInternet />
+    <usePhone />
+    <usePayCash />
+    <usePayCard />
+    <usePayOnline />
+    <useBank />
+    <useProductArt />
+    <useProductFurniture />
+    <useProductToy />
+    <useProductCloth>0.9</useProductCloth>
+    <useProductEletronic />
+    <useProductBuildingMaterials />
+    <useProductSportGear />
+    <useProductBeauty />
+    <useProductFood />
+    <useProductDrink />
+    <useProductMedicin>0.5</useProductMedicin>
+    <useProductBooks />
+    <useDruks />
+    <useBlackMoney />
+    <useBlackMarket />
+    <usePollutionAir />
+    <usePollutionWater />
+    <usePollutionSoil />
+    <usePollutionNoise />
+    <Demands />
+    <demandsPowerGreenMin />
+    <demandsPowerNuclearMax />
+    <demandsPowerFossilMax />
+    <demandsHeatGreenMin />
+    <demandsHeatNuclearMax />
+    <demandsHeatFossilMax />
+    <demandsPollutionWaterMax />
+    <demandsPollutionAirMax />
+    <demandsPollutionSoilMax />
+    <demandsPollutionNoiseMax />
+    <demandsTrafficWalkBicycle />
+    <demandsTrafficPublic />
+    <demandsTrafficFossil />
+    <demandsTrafficEV />
+    <demandsDeathRate />
+    <demandsVechicleTypeCar />
+    <demandsVechicleTypeTruck />
+    <demandsVechicleTypePlane />
+    <demandsVechicleTypeHitchHike />
+    <demandsVechicleTypeBicycle />
+    <demandsVechicleTypeWalk />
+    <Producerer />
+    <taxPay />
+    <taxPayMax />
+    <taxPayRageRate />
+    <wastePlastic />
+    <wasteOrganic />
+    <wasteGlass />
+    <wasteMetal />
+    <wasteWater />
+    <wasteElectronic />
+    <wastePaper />
+    <wasteOther>1.2</wasteOther>
+    <deathPoliceExpose />
+    <deathPoliceWeight />
+    <deathPoliceBaseline />
+    <deathTrafficExpose />
+    <deathTrafficWeight />
+    <deathTrafficBaseline />
+    <deathFireExpose />
+    <deathFireWeight />
+    <deathFireBaseline />
+    <deathHealthExpose>1</deathHealthExpose>
+    <deathHealthWeight>1</deathHealthWeight>
+    <deathHealthBaseline>2</deathHealthBaseline>
+    <birthRate>0.03</birthRate>
+    <movingIn>0.01</movingIn>
+    <movingOut>0.015</movingOut>
+    <migration>0.7</migration>
+    <Øvrige_udregninger__sæt_citizens_type_foran_ />
+    <generalHappinessDemand />
+    <generelPopularityDemand />
+    <generelStrength />
+    <generelArmor />
+  </citizens>
+  <citizens id="crimeHealth">
+    <Kræver />
+    <useProvision>1.1</useProvision>
+    <useWater>1.2</useWater>
+    <useHeat>1.1</useHeat>
+    <usePower>1</usePower>
+    <usePolice>0.4</usePolice>
+    <useHealth>0.9</useHealth>
+    <useFire>0.04</useFire>
+    <useEducation>0.7</useEducation>
+    <useCrime>0.9</useCrime>
+    <useHousing>1</useHousing>
+    <useSocial>0.8</useSocial>
+    <useGoverment>0.8</useGoverment>
+    <useEntertainmentAnalog>0.4</useEntertainmentAnalog>
+    <useEntertainmentDigital />
+    <useShoppingLocale />
+    <useShoppingOnline />
+    <useComfort />
+    <useVacationNational />
+    <useVacationInternational />
+    <useProvisionMeat />
+    <useProvisionFruit />
+    <useProvisionVeg />
+    <useTrafficWalkBicycle />
+    <useTrafficPublic />
+    <useTrafficFossil />
+    <useTrafficEV />
+    <useTransport />
+    <useRoad />
+    <useParkingLot />
+    <useParkGreen />
+    <useParkLake />
+    <useMail />
+    <useMailPackage />
+    <useTrainingFacility />
+    <useInternet />
+    <usePhone />
+    <usePayCash />
+    <usePayCard />
+    <usePayOnline />
+    <useBank />
+    <useProductArt />
+    <useProductFurniture />
+    <useProductToy />
+    <useProductCloth>0.6</useProductCloth>
+    <useProductEletronic />
+    <useProductBuildingMaterials />
+    <useProductSportGear />
+    <useProductBeauty />
+    <useProductFood />
+    <useProductDrink />
+    <useProductMedicin>0.5</useProductMedicin>
+    <useProductBooks />
+    <useDruks />
+    <useBlackMoney />
+    <useBlackMarket />
+    <usePollutionAir />
+    <usePollutionWater />
+    <usePollutionSoil />
+    <usePollutionNoise />
+    <Demands />
+    <demandsPowerGreenMin />
+    <demandsPowerNuclearMax />
+    <demandsPowerFossilMax />
+    <demandsHeatGreenMin />
+    <demandsHeatNuclearMax />
+    <demandsHeatFossilMax />
+    <demandsPollutionWaterMax />
+    <demandsPollutionAirMax />
+    <demandsPollutionSoilMax />
+    <demandsPollutionNoiseMax />
+    <demandsTrafficWalkBicycle />
+    <demandsTrafficPublic />
+    <demandsTrafficFossil />
+    <demandsTrafficEV />
+    <demandsDeathRate />
+    <demandsVechicleTypeCar />
+    <demandsVechicleTypeTruck />
+    <demandsVechicleTypePlane />
+    <demandsVechicleTypeHitchHike />
+    <demandsVechicleTypeBicycle />
+    <demandsVechicleTypeWalk />
+    <Producerer />
+    <taxPay />
+    <taxPayMax />
+    <taxPayRageRate />
+    <wastePlastic />
+    <wasteOrganic />
+    <wasteGlass />
+    <wasteMetal />
+    <wasteWater />
+    <wasteElectronic />
+    <wastePaper />
+    <wasteOther>0.9</wasteOther>
+    <deathPoliceExpose />
+    <deathPoliceWeight />
+    <deathPoliceBaseline />
+    <deathTrafficExpose />
+    <deathTrafficWeight />
+    <deathTrafficBaseline />
+    <deathFireExpose />
+    <deathFireWeight />
+    <deathFireBaseline />
+    <deathHealthExpose>0.9</deathHealthExpose>
+    <deathHealthWeight>1</deathHealthWeight>
+    <deathHealthBaseline>2</deathHealthBaseline>
+    <birthRate>0.02</birthRate>
+    <movingIn>0.01</movingIn>
+    <movingOut>0.013</movingOut>
+    <migration>0.7</migration>
+    <Øvrige_udregninger__sæt_citizens_type_foran_ />
+    <generalHappinessDemand />
+    <generelPopularityDemand />
+    <generelStrength />
+    <generelArmor />
+  </citizens>
+  <citizens id="adultsSoldier">
+    <Kræver />
+    <useProvision>1</useProvision>
+    <useWater>1</useWater>
+    <useHeat>0.6</useHeat>
+    <usePower>0.5</usePower>
+    <usePolice>0.1</usePolice>
+    <useHealth>1.1</useHealth>
+    <useFire>0.3</useFire>
+    <useEducation>0.6</useEducation>
+    <useCrime>0.4</useCrime>
+    <useHousing>0.8</useHousing>
+    <useSocial>0.4</useSocial>
+    <useGoverment>0.6</useGoverment>
+    <useEntertainmentAnalog>0.5</useEntertainmentAnalog>
+    <useEntertainmentDigital />
+    <useShoppingLocale />
+    <useShoppingOnline />
+    <useComfort />
+    <useVacationNational />
+    <useVacationInternational />
+    <useProvisionMeat />
+    <useProvisionFruit />
+    <useProvisionVeg />
+    <useTrafficWalkBicycle />
+    <useTrafficPublic />
+    <useTrafficFossil />
+    <useTrafficEV />
+    <useTransport />
+    <useRoad />
+    <useParkingLot />
+    <useParkGreen />
+    <useParkLake />
+    <useMail />
+    <useMailPackage />
+    <useTrainingFacility />
+    <useInternet />
+    <usePhone />
+    <usePayCash />
+    <usePayCard />
+    <usePayOnline />
+    <useBank />
+    <useProductArt />
+    <useProductFurniture />
+    <useProductToy />
+    <useProductCloth>0.5</useProductCloth>
+    <useProductEletronic />
+    <useProductBuildingMaterials />
+    <useProductSportGear />
+    <useProductBeauty />
+    <useProductFood />
+    <useProductDrink />
+    <useProductMedicin>0.5</useProductMedicin>
+    <useProductBooks />
+    <useDruks />
+    <useBlackMoney />
+    <useBlackMarket />
+    <usePollutionAir />
+    <usePollutionWater />
+    <usePollutionSoil />
+    <usePollutionNoise />
+    <Demands />
+    <demandsPowerGreenMin />
+    <demandsPowerNuclearMax />
+    <demandsPowerFossilMax />
+    <demandsHeatGreenMin />
+    <demandsHeatNuclearMax />
+    <demandsHeatFossilMax />
+    <demandsPollutionWaterMax />
+    <demandsPollutionAirMax />
+    <demandsPollutionSoilMax />
+    <demandsPollutionNoiseMax />
+    <demandsTrafficWalkBicycle />
+    <demandsTrafficPublic />
+    <demandsTrafficFossil />
+    <demandsTrafficEV />
+    <demandsDeathRate />
+    <demandsVechicleTypeCar />
+    <demandsVechicleTypeTruck />
+    <demandsVechicleTypePlane />
+    <demandsVechicleTypeHitchHike />
+    <demandsVechicleTypeBicycle />
+    <demandsVechicleTypeWalk />
+    <Producerer />
+    <taxPay />
+    <taxPayMax />
+    <taxPayRageRate />
+    <wastePlastic />
+    <wasteOrganic />
+    <wasteGlass />
+    <wasteMetal />
+    <wasteWater />
+    <wasteElectronic />
+    <wastePaper />
+    <wasteOther>0.6</wasteOther>
+    <deathPoliceExpose />
+    <deathPoliceWeight />
+    <deathPoliceBaseline />
+    <deathTrafficExpose />
+    <deathTrafficWeight />
+    <deathTrafficBaseline />
+    <deathFireExpose />
+    <deathFireWeight />
+    <deathFireBaseline />
+    <deathHealthExpose>0.7</deathHealthExpose>
+    <deathHealthWeight>4</deathHealthWeight>
+    <deathHealthBaseline>2</deathHealthBaseline>
+    <birthRate>0.01</birthRate>
+    <movingIn>0.01</movingIn>
+    <movingOut>0.012</movingOut>
+    <migration>0.7</migration>
+    <Øvrige_udregninger__sæt_citizens_type_foran_ />
+    <generalHappinessDemand />
+    <generelPopularityDemand />
+    <generelStrength />
+    <generelArmor />
+  </citizens>
+  <citizens id="crimeSoldier">
+    <Kræver />
+    <useProvision>1.1</useProvision>
+    <useWater>0.9</useWater>
+    <useHeat>0.8</useHeat>
+    <usePower>0.6</usePower>
+    <usePolice>0.3</usePolice>
+    <useHealth>1.3</useHealth>
+    <useFire>0.9</useFire>
+    <useEducation>0.4</useEducation>
+    <useCrime>1.2</useCrime>
+    <useHousing>0.9</useHousing>
+    <useSocial>0.5</useSocial>
+    <useGoverment>0.5</useGoverment>
+    <useEntertainmentAnalog>0.5</useEntertainmentAnalog>
+    <useEntertainmentDigital />
+    <useShoppingLocale />
+    <useShoppingOnline />
+    <useComfort />
+    <useVacationNational />
+    <useVacationInternational />
+    <useProvisionMeat />
+    <useProvisionFruit />
+    <useProvisionVeg />
+    <useTrafficWalkBicycle />
+    <useTrafficPublic />
+    <useTrafficFossil />
+    <useTrafficEV />
+    <useTransport />
+    <useRoad />
+    <useParkingLot />
+    <useParkGreen />
+    <useParkLake />
+    <useMail />
+    <useMailPackage />
+    <useTrainingFacility />
+    <useInternet />
+    <usePhone />
+    <usePayCash />
+    <usePayCard />
+    <usePayOnline />
+    <useBank />
+    <useProductArt />
+    <useProductFurniture />
+    <useProductToy />
+    <useProductCloth>0.6</useProductCloth>
+    <useProductEletronic />
+    <useProductBuildingMaterials />
+    <useProductSportGear />
+    <useProductBeauty />
+    <useProductFood />
+    <useProductDrink />
+    <useProductMedicin>0.5</useProductMedicin>
+    <useProductBooks />
+    <useDruks />
+    <useBlackMoney />
+    <useBlackMarket />
+    <usePollutionAir />
+    <usePollutionWater />
+    <usePollutionSoil />
+    <usePollutionNoise />
+    <Demands />
+    <demandsPowerGreenMin />
+    <demandsPowerNuclearMax />
+    <demandsPowerFossilMax />
+    <demandsHeatGreenMin />
+    <demandsHeatNuclearMax />
+    <demandsHeatFossilMax />
+    <demandsPollutionWaterMax />
+    <demandsPollutionAirMax />
+    <demandsPollutionSoilMax />
+    <demandsPollutionNoiseMax />
+    <demandsTrafficWalkBicycle />
+    <demandsTrafficPublic />
+    <demandsTrafficFossil />
+    <demandsTrafficEV />
+    <demandsDeathRate />
+    <demandsVechicleTypeCar />
+    <demandsVechicleTypeTruck />
+    <demandsVechicleTypePlane />
+    <demandsVechicleTypeHitchHike />
+    <demandsVechicleTypeBicycle />
+    <demandsVechicleTypeWalk />
+    <Producerer />
+    <taxPay />
+    <taxPayMax />
+    <taxPayRageRate />
+    <wastePlastic />
+    <wasteOrganic />
+    <wasteGlass />
+    <wasteMetal />
+    <wasteWater />
+    <wasteElectronic />
+    <wastePaper />
+    <wasteOther>0.7</wasteOther>
+    <deathPoliceExpose />
+    <deathPoliceWeight />
+    <deathPoliceBaseline />
+    <deathTrafficExpose />
+    <deathTrafficWeight />
+    <deathTrafficBaseline />
+    <deathFireExpose />
+    <deathFireWeight />
+    <deathFireBaseline />
+    <deathHealthExpose>0.6</deathHealthExpose>
+    <deathHealthWeight>4.5</deathHealthWeight>
+    <deathHealthBaseline>2</deathHealthBaseline>
+    <birthRate>0.01</birthRate>
+    <movingIn>0.01</movingIn>
+    <movingOut>0.015</movingOut>
+    <migration>0.7</migration>
+    <Øvrige_udregninger__sæt_citizens_type_foran_ />
+    <generalHappinessDemand />
+    <generelPopularityDemand />
+    <generelStrength />
+    <generelArmor />
+  </citizens>
+  <citizens id="adultsGovernment">
+    <Kræver />
+    <useProvision>1.2</useProvision>
+    <useWater>1</useWater>
+    <useHeat>1.4</useHeat>
+    <usePower>1.2</usePower>
+    <usePolice>0.1</usePolice>
+    <useHealth>0.7</useHealth>
+    <useFire>0.2</useFire>
+    <useEducation>0.1</useEducation>
+    <useCrime>0.4</useCrime>
+    <useHousing>1</useHousing>
+    <useSocial>0.8</useSocial>
+    <useGoverment>0.4</useGoverment>
+    <useEntertainmentAnalog>0.3</useEntertainmentAnalog>
+    <useEntertainmentDigital />
+    <useShoppingLocale />
+    <useShoppingOnline />
+    <useComfort />
+    <useVacationNational />
+    <useVacationInternational />
+    <useProvisionMeat />
+    <useProvisionFruit />
+    <useProvisionVeg />
+    <useTrafficWalkBicycle />
+    <useTrafficPublic />
+    <useTrafficFossil />
+    <useTrafficEV />
+    <useTransport />
+    <useRoad />
+    <useParkingLot />
+    <useParkGreen />
+    <useParkLake />
+    <useMail />
+    <useMailPackage />
+    <useTrainingFacility />
+    <useInternet />
+    <usePhone />
+    <usePayCash />
+    <usePayCard />
+    <usePayOnline />
+    <useBank />
+    <useProductArt />
+    <useProductFurniture />
+    <useProductToy />
+    <useProductCloth>1.1</useProductCloth>
+    <useProductEletronic />
+    <useProductBuildingMaterials />
+    <useProductSportGear />
+    <useProductBeauty />
+    <useProductFood />
+    <useProductDrink />
+    <useProductMedicin>0.5</useProductMedicin>
+    <useProductBooks />
+    <useDruks />
+    <useBlackMoney />
+    <useBlackMarket />
+    <usePollutionAir />
+    <usePollutionWater />
+    <usePollutionSoil />
+    <usePollutionNoise />
+    <Demands />
+    <demandsPowerGreenMin>0.6</demandsPowerGreenMin>
+    <demandsPowerNuclearMax>0.3</demandsPowerNuclearMax>
+    <demandsPowerFossilMax>0.1</demandsPowerFossilMax>
+    <demandsHeatGreenMin />
+    <demandsHeatNuclearMax />
+    <demandsHeatFossilMax />
+    <demandsPollutionWaterMax />
+    <demandsPollutionAirMax />
+    <demandsPollutionSoilMax />
+    <demandsPollutionNoiseMax />
+    <demandsTrafficWalkBicycle />
+    <demandsTrafficPublic />
+    <demandsTrafficFossil />
+    <demandsTrafficEV />
+    <demandsDeathRate />
+    <demandsVechicleTypeCar />
+    <demandsVechicleTypeTruck />
+    <demandsVechicleTypePlane />
+    <demandsVechicleTypeHitchHike />
+    <demandsVechicleTypeBicycle />
+    <demandsVechicleTypeWalk />
+    <Producerer />
+    <taxPay />
+    <taxPayMax />
+    <taxPayRageRate />
+    <wastePlastic />
+    <wasteOrganic />
+    <wasteGlass />
+    <wasteMetal />
+    <wasteWater />
+    <wasteElectronic />
+    <wastePaper />
+    <wasteOther>1.5</wasteOther>
+    <deathPoliceExpose />
+    <deathPoliceWeight />
+    <deathPoliceBaseline />
+    <deathTrafficExpose />
+    <deathTrafficWeight />
+    <deathTrafficBaseline />
+    <deathFireExpose />
+    <deathFireWeight />
+    <deathFireBaseline />
+    <deathHealthExpose>1.1</deathHealthExpose>
+    <deathHealthWeight>1.5</deathHealthWeight>
+    <deathHealthBaseline>2</deathHealthBaseline>
+    <birthRate>0.04</birthRate>
+    <movingIn>0.01</movingIn>
+    <movingOut>0.04</movingOut>
+    <migration>0.7</migration>
+    <Øvrige_udregninger__sæt_citizens_type_foran_ />
+    <generalHappinessDemand />
+    <generelPopularityDemand />
+    <generelStrength />
+    <generelArmor />
+  </citizens>
+  <citizens id="crimeGovernment">
+    <Kræver />
+    <useProvision>1.3</useProvision>
+    <useWater>1.1</useWater>
+    <useHeat>1.6</useHeat>
+    <usePower>1.1</usePower>
+    <usePolice>0.4</usePolice>
+    <useHealth>0.4</useHealth>
+    <useFire>0.8</useFire>
+    <useEducation>0.05</useEducation>
+    <useCrime>1.4</useCrime>
+    <useHousing>1</useHousing>
+    <useSocial>1.1</useSocial>
+    <useGoverment>0.3</useGoverment>
+    <useEntertainmentAnalog>0.3</useEntertainmentAnalog>
+    <useEntertainmentDigital />
+    <useShoppingLocale />
+    <useShoppingOnline />
+    <useComfort />
+    <useVacationNational />
+    <useVacationInternational />
+    <useProvisionMeat />
+    <useProvisionFruit />
+    <useProvisionVeg />
+    <useTrafficWalkBicycle />
+    <useTrafficPublic />
+    <useTrafficFossil />
+    <useTrafficEV />
+    <useTransport />
+    <useRoad />
+    <useParkingLot />
+    <useParkGreen />
+    <useParkLake />
+    <useMail />
+    <useMailPackage />
+    <useTrainingFacility />
+    <useInternet />
+    <usePhone />
+    <usePayCash />
+    <usePayCard />
+    <usePayOnline />
+    <useBank />
+    <useProductArt />
+    <useProductFurniture />
+    <useProductToy />
+    <useProductCloth>1.5</useProductCloth>
+    <useProductEletronic />
+    <useProductBuildingMaterials />
+    <useProductSportGear />
+    <useProductBeauty />
+    <useProductFood />
+    <useProductDrink />
+    <useProductMedicin>0.5</useProductMedicin>
+    <useProductBooks />
+    <useDruks />
+    <useBlackMoney />
+    <useBlackMarket />
+    <usePollutionAir />
+    <usePollutionWater />
+    <usePollutionSoil />
+    <usePollutionNoise />
+    <Demands />
+    <demandsPowerGreenMin>0.1</demandsPowerGreenMin>
+    <demandsPowerNuclearMax>0.1</demandsPowerNuclearMax>
+    <demandsPowerFossilMax>0.8</demandsPowerFossilMax>
+    <demandsHeatGreenMin />
+    <demandsHeatNuclearMax />
+    <demandsHeatFossilMax />
+    <demandsPollutionWaterMax />
+    <demandsPollutionAirMax />
+    <demandsPollutionSoilMax />
+    <demandsPollutionNoiseMax />
+    <demandsTrafficWalkBicycle />
+    <demandsTrafficPublic />
+    <demandsTrafficFossil />
+    <demandsTrafficEV />
+    <demandsDeathRate />
+    <demandsVechicleTypeCar />
+    <demandsVechicleTypeTruck />
+    <demandsVechicleTypePlane />
+    <demandsVechicleTypeHitchHike />
+    <demandsVechicleTypeBicycle />
+    <demandsVechicleTypeWalk />
+    <Producerer />
+    <taxPay />
+    <taxPayMax />
+    <taxPayRageRate />
+    <wastePlastic />
+    <wasteOrganic />
+    <wasteGlass />
+    <wasteMetal />
+    <wasteWater />
+    <wasteElectronic />
+    <wastePaper />
+    <wasteOther>1.6</wasteOther>
+    <deathPoliceExpose />
+    <deathPoliceWeight />
+    <deathPoliceBaseline />
+    <deathTrafficExpose />
+    <deathTrafficWeight />
+    <deathTrafficBaseline />
+    <deathFireExpose />
+    <deathFireWeight />
+    <deathFireBaseline />
+    <deathHealthExpose>1.2</deathHealthExpose>
+    <deathHealthWeight>1.5</deathHealthWeight>
+    <deathHealthBaseline>2</deathHealthBaseline>
+    <birthRate>0.05</birthRate>
+    <movingIn>0.01</movingIn>
+    <movingOut>0.03</movingOut>
+    <migration>0.7</migration>
+    <Øvrige_udregninger__sæt_citizens_type_foran_ />
+    <generalHappinessDemand />
+    <generelPopularityDemand />
+    <generelStrength />
+    <generelArmor />
+  </citizens>
+  <citizens id="adultsPolitician">
+    <Kræver />
+    <useProvision>1.2</useProvision>
+    <useWater>1</useWater>
+    <useHeat>1.6</useHeat>
+    <usePower>1.2</usePower>
+    <usePolice>0.7</usePolice>
+    <useHealth>0.7</useHealth>
+    <useFire>0.2</useFire>
+    <useEducation>0.1</useEducation>
+    <useCrime>0.4</useCrime>
+    <useHousing>1</useHousing>
+    <useSocial>0.8</useSocial>
+    <useGoverment>0.3</useGoverment>
+    <useEntertainmentAnalog>0.4</useEntertainmentAnalog>
+    <useEntertainmentDigital />
+    <useShoppingLocale />
+    <useShoppingOnline />
+    <useComfort />
+    <useVacationNational />
+    <useVacationInternational />
+    <useProvisionMeat />
+    <useProvisionFruit />
+    <useProvisionVeg />
+    <useTrafficWalkBicycle />
+    <useTrafficPublic />
+    <useTrafficFossil />
+    <useTrafficEV />
+    <useTransport />
+    <useRoad />
+    <useParkingLot />
+    <useParkGreen />
+    <useParkLake />
+    <useMail />
+    <useMailPackage />
+    <useTrainingFacility />
+    <useInternet />
+    <usePhone />
+    <usePayCash />
+    <usePayCard />
+    <usePayOnline />
+    <useBank />
+    <useProductArt />
+    <useProductFurniture />
+    <useProductToy />
+    <useProductCloth>1.2</useProductCloth>
+    <useProductEletronic />
+    <useProductBuildingMaterials />
+    <useProductSportGear />
+    <useProductBeauty />
+    <useProductFood />
+    <useProductDrink />
+    <useProductMedicin>0.5</useProductMedicin>
+    <useProductBooks />
+    <useDruks />
+    <useBlackMoney />
+    <useBlackMarket />
+    <usePollutionAir />
+    <usePollutionWater />
+    <usePollutionSoil />
+    <usePollutionNoise />
+    <Demands />
+    <demandsPowerGreenMin />
+    <demandsPowerNuclearMax />
+    <demandsPowerFossilMax />
+    <demandsHeatGreenMin />
+    <demandsHeatNuclearMax />
+    <demandsHeatFossilMax />
+    <demandsPollutionWaterMax />
+    <demandsPollutionAirMax />
+    <demandsPollutionSoilMax />
+    <demandsPollutionNoiseMax />
+    <demandsTrafficWalkBicycle />
+    <demandsTrafficPublic />
+    <demandsTrafficFossil />
+    <demandsTrafficEV />
+    <demandsDeathRate />
+    <demandsVechicleTypeCar />
+    <demandsVechicleTypeTruck />
+    <demandsVechicleTypePlane />
+    <demandsVechicleTypeHitchHike />
+    <demandsVechicleTypeBicycle />
+    <demandsVechicleTypeWalk />
+    <Producerer />
+    <taxPay />
+    <taxPayMax />
+    <taxPayRageRate />
+    <wastePlastic />
+    <wasteOrganic />
+    <wasteGlass />
+    <wasteMetal />
+    <wasteWater />
+    <wasteElectronic />
+    <wastePaper />
+    <wasteOther>1.4</wasteOther>
+    <deathPoliceExpose />
+    <deathPoliceWeight />
+    <deathPoliceBaseline />
+    <deathTrafficExpose />
+    <deathTrafficWeight />
+    <deathTrafficBaseline />
+    <deathFireExpose />
+    <deathFireWeight />
+    <deathFireBaseline />
+    <deathHealthExpose>1.2</deathHealthExpose>
+    <deathHealthWeight>1.5</deathHealthWeight>
+    <deathHealthBaseline>2</deathHealthBaseline>
+    <birthRate>0.05</birthRate>
+    <movingIn>0.01</movingIn>
+    <movingOut>0.01</movingOut>
+    <migration>0.7</migration>
+    <Øvrige_udregninger__sæt_citizens_type_foran_ />
+    <generalHappinessDemand />
+    <generelPopularityDemand />
+    <generelStrength />
+    <generelArmor />
+  </citizens>
+  <citizens id="crimePolitician">
+    <Kræver />
+    <useProvision>1.3</useProvision>
+    <useWater>1.2</useWater>
+    <useHeat>1.8</useHeat>
+    <usePower>1.1</usePower>
+    <usePolice>0.9</usePolice>
+    <useHealth>0.4</useHealth>
+    <useFire>0.9</useFire>
+    <useEducation>0.07</useEducation>
+    <useCrime>1.5</useCrime>
+    <useHousing>1</useHousing>
+    <useSocial>1.2</useSocial>
+    <useGoverment>0.4</useGoverment>
+    <useEntertainmentAnalog>0.4</useEntertainmentAnalog>
+    <useEntertainmentDigital />
+    <useShoppingLocale />
+    <useShoppingOnline />
+    <useComfort />
+    <useVacationNational />
+    <useVacationInternational />
+    <useProvisionMeat />
+    <useProvisionFruit />
+    <useProvisionVeg />
+    <useTrafficWalkBicycle />
+    <useTrafficPublic />
+    <useTrafficFossil />
+    <useTrafficEV />
+    <useTransport />
+    <useRoad />
+    <useParkingLot />
+    <useParkGreen />
+    <useParkLake />
+    <useMail />
+    <useMailPackage />
+    <useTrainingFacility />
+    <useInternet />
+    <usePhone />
+    <usePayCash />
+    <usePayCard />
+    <usePayOnline />
+    <useBank />
+    <useProductArt />
+    <useProductFurniture />
+    <useProductToy />
+    <useProductCloth>1.6</useProductCloth>
+    <useProductEletronic />
+    <useProductBuildingMaterials />
+    <useProductSportGear />
+    <useProductBeauty />
+    <useProductFood />
+    <useProductDrink />
+    <useProductMedicin>0.5</useProductMedicin>
+    <useProductBooks />
+    <useDruks />
+    <useBlackMoney />
+    <useBlackMarket />
+    <usePollutionAir />
+    <usePollutionWater />
+    <usePollutionSoil />
+    <usePollutionNoise />
+    <Demands />
+    <demandsPowerGreenMin />
+    <demandsPowerNuclearMax />
+    <demandsPowerFossilMax />
+    <demandsHeatGreenMin />
+    <demandsHeatNuclearMax />
+    <demandsHeatFossilMax />
+    <demandsPollutionWaterMax />
+    <demandsPollutionAirMax />
+    <demandsPollutionSoilMax />
+    <demandsPollutionNoiseMax />
+    <demandsTrafficWalkBicycle />
+    <demandsTrafficPublic />
+    <demandsTrafficFossil />
+    <demandsTrafficEV />
+    <demandsDeathRate />
+    <demandsVechicleTypeCar />
+    <demandsVechicleTypeTruck />
+    <demandsVechicleTypePlane />
+    <demandsVechicleTypeHitchHike />
+    <demandsVechicleTypeBicycle />
+    <demandsVechicleTypeWalk />
+    <Producerer />
+    <taxPay />
+    <taxPayMax />
+    <taxPayRageRate />
+    <wastePlastic />
+    <wasteOrganic />
+    <wasteGlass />
+    <wasteMetal />
+    <wasteWater />
+    <wasteElectronic />
+    <wastePaper />
+    <wasteOther>1.5</wasteOther>
+    <deathPoliceExpose />
+    <deathPoliceWeight />
+    <deathPoliceBaseline />
+    <deathTrafficExpose />
+    <deathTrafficWeight />
+    <deathTrafficBaseline />
+    <deathFireExpose />
+    <deathFireWeight />
+    <deathFireBaseline />
+    <deathHealthExpose>1.3</deathHealthExpose>
+    <deathHealthWeight>1.5</deathHealthWeight>
+    <deathHealthBaseline>2</deathHealthBaseline>
+    <birthRate>0.06</birthRate>
+    <movingIn>0.01</movingIn>
+    <movingOut>0.012</movingOut>
+    <migration>0.7</migration>
+    <Øvrige_udregninger__sæt_citizens_type_foran_ />
+    <generalHappinessDemand />
+    <generelPopularityDemand />
+    <generelStrength />
+    <generelArmor />
+  </citizens>
+  <citizens id="adultsUnemployed">
+    <Kræver />
+    <useProvision>0.5</useProvision>
+    <useWater>0.7</useWater>
+    <useHeat>0.6</useHeat>
+    <usePower>1</usePower>
+    <usePolice>0.15</usePolice>
+    <useHealth>0.1</useHealth>
+    <useFire>0.4</useFire>
+    <useEducation>0.01</useEducation>
+    <useCrime>0.8</useCrime>
+    <useHousing>1</useHousing>
+    <useSocial>1.1</useSocial>
+    <useGoverment>1.1</useGoverment>
+    <useEntertainmentAnalog>0.4</useEntertainmentAnalog>
+    <useEntertainmentDigital />
+    <useShoppingLocale />
+    <useShoppingOnline />
+    <useComfort />
+    <useVacationNational />
+    <useVacationInternational />
+    <useProvisionMeat />
+    <useProvisionFruit />
+    <useProvisionVeg />
+    <useTrafficWalkBicycle />
+    <useTrafficPublic />
+    <useTrafficFossil />
+    <useTrafficEV />
+    <useTransport />
+    <useRoad />
+    <useParkingLot />
+    <useParkGreen />
+    <useParkLake />
+    <useMail />
+    <useMailPackage />
+    <useTrainingFacility />
+    <useInternet />
+    <usePhone />
+    <usePayCash />
+    <usePayCard />
+    <usePayOnline />
+    <useBank />
+    <useProductArt />
+    <useProductFurniture />
+    <useProductToy />
+    <useProductCloth>0.5</useProductCloth>
+    <useProductEletronic />
+    <useProductBuildingMaterials />
+    <useProductSportGear />
+    <useProductBeauty />
+    <useProductFood />
+    <useProductDrink />
+    <useProductMedicin>0.5</useProductMedicin>
+    <useProductBooks />
+    <useDruks />
+    <useBlackMoney />
+    <useBlackMarket />
+    <usePollutionAir />
+    <usePollutionWater />
+    <usePollutionSoil />
+    <usePollutionNoise />
+    <Demands />
+    <demandsPowerGreenMin />
+    <demandsPowerNuclearMax />
+    <demandsPowerFossilMax />
+    <demandsHeatGreenMin />
+    <demandsHeatNuclearMax />
+    <demandsHeatFossilMax />
+    <demandsPollutionWaterMax />
+    <demandsPollutionAirMax />
+    <demandsPollutionSoilMax />
+    <demandsPollutionNoiseMax />
+    <demandsTrafficWalkBicycle />
+    <demandsTrafficPublic />
+    <demandsTrafficFossil />
+    <demandsTrafficEV />
+    <demandsDeathRate />
+    <demandsVechicleTypeCar />
+    <demandsVechicleTypeTruck />
+    <demandsVechicleTypePlane />
+    <demandsVechicleTypeHitchHike />
+    <demandsVechicleTypeBicycle />
+    <demandsVechicleTypeWalk />
+    <Producerer />
+    <taxPay />
+    <taxPayMax />
+    <taxPayRageRate />
+    <wastePlastic />
+    <wasteOrganic />
+    <wasteGlass />
+    <wasteMetal />
+    <wasteWater />
+    <wasteElectronic />
+    <wastePaper />
+    <wasteOther>0.95</wasteOther>
+    <deathPoliceExpose />
+    <deathPoliceWeight />
+    <deathPoliceBaseline />
+    <deathTrafficExpose />
+    <deathTrafficWeight />
+    <deathTrafficBaseline />
+    <deathFireExpose />
+    <deathFireWeight />
+    <deathFireBaseline />
+    <deathHealthExpose>1</deathHealthExpose>
+    <deathHealthWeight>2</deathHealthWeight>
+    <deathHealthBaseline>2</deathHealthBaseline>
+    <birthRate>0.08</birthRate>
+    <movingIn>0.07</movingIn>
+    <movingOut>0.09</movingOut>
+    <migration>0.7</migration>
+    <Øvrige_udregninger__sæt_citizens_type_foran_ />
+    <generalHappinessDemand />
+    <generelPopularityDemand />
+    <generelStrength />
+    <generelArmor />
+  </citizens>
+  <citizens id="crimeUnemployed">
+    <Kræver />
+    <useProvision>0.7</useProvision>
+    <useWater>0.5</useWater>
+    <useHeat>0.4</useHeat>
+    <usePower>0.9</usePower>
+    <usePolice>1.1</usePolice>
+    <useHealth>0.1</useHealth>
+    <useFire>0.5</useFire>
+    <useEducation>0.01</useEducation>
+    <useCrime>1.1</useCrime>
+    <useHousing>1</useHousing>
+    <useSocial>0.8</useSocial>
+    <useGoverment>1.3</useGoverment>
+    <useEntertainmentAnalog>0.4</useEntertainmentAnalog>
+    <useEntertainmentDigital />
+    <useShoppingLocale />
+    <useShoppingOnline />
+    <useComfort />
+    <useVacationNational />
+    <useVacationInternational />
+    <useProvisionMeat />
+    <useProvisionFruit />
+    <useProvisionVeg />
+    <useTrafficWalkBicycle />
+    <useTrafficPublic />
+    <useTrafficFossil />
+    <useTrafficEV />
+    <useTransport />
+    <useRoad />
+    <useParkingLot />
+    <useParkGreen />
+    <useParkLake />
+    <useMail />
+    <useMailPackage />
+    <useTrainingFacility />
+    <useInternet />
+    <usePhone />
+    <usePayCash />
+    <usePayCard />
+    <usePayOnline />
+    <useBank />
+    <useProductArt />
+    <useProductFurniture />
+    <useProductToy />
+    <useProductCloth>0.4</useProductCloth>
+    <useProductEletronic />
+    <useProductBuildingMaterials />
+    <useProductSportGear />
+    <useProductBeauty />
+    <useProductFood />
+    <useProductDrink />
+    <useProductMedicin>0.5</useProductMedicin>
+    <useProductBooks />
+    <useDruks />
+    <useBlackMoney />
+    <useBlackMarket />
+    <usePollutionAir />
+    <usePollutionWater />
+    <usePollutionSoil />
+    <usePollutionNoise />
+    <Demands />
+    <demandsPowerGreenMin />
+    <demandsPowerNuclearMax />
+    <demandsPowerFossilMax />
+    <demandsHeatGreenMin />
+    <demandsHeatNuclearMax />
+    <demandsHeatFossilMax />
+    <demandsPollutionWaterMax />
+    <demandsPollutionAirMax />
+    <demandsPollutionSoilMax />
+    <demandsPollutionNoiseMax />
+    <demandsTrafficWalkBicycle />
+    <demandsTrafficPublic />
+    <demandsTrafficFossil />
+    <demandsTrafficEV />
+    <demandsDeathRate />
+    <demandsVechicleTypeCar />
+    <demandsVechicleTypeTruck />
+    <demandsVechicleTypePlane />
+    <demandsVechicleTypeHitchHike />
+    <demandsVechicleTypeBicycle />
+    <demandsVechicleTypeWalk />
+    <Producerer />
+    <taxPay />
+    <taxPayMax />
+    <taxPayRageRate />
+    <wastePlastic />
+    <wasteOrganic />
+    <wasteGlass />
+    <wasteMetal />
+    <wasteWater />
+    <wasteElectronic />
+    <wastePaper />
+    <wasteOther>1</wasteOther>
+    <deathPoliceExpose />
+    <deathPoliceWeight />
+    <deathPoliceBaseline />
+    <deathTrafficExpose />
+    <deathTrafficWeight />
+    <deathTrafficBaseline />
+    <deathFireExpose />
+    <deathFireWeight />
+    <deathFireBaseline />
+    <deathHealthExpose>1.1</deathHealthExpose>
+    <deathHealthWeight>1</deathHealthWeight>
+    <deathHealthBaseline>2</deathHealthBaseline>
+    <birthRate>0.07</birthRate>
+    <movingIn>0.06</movingIn>
+    <movingOut>0.1</movingOut>
+    <migration>0.7</migration>
+    <Øvrige_udregninger__sæt_citizens_type_foran_ />
+    <generalHappinessDemand />
+    <generelPopularityDemand />
+    <generelStrength />
+    <generelArmor />
+  </citizens>
+  <citizens id="adultsWorker">
+    <Kræver />
+    <useProvision>0.9</useProvision>
+    <useWater>0.9</useWater>
+    <useHeat>0.8</useHeat>
+    <usePower>1.1</usePower>
+    <usePolice>0.4</usePolice>
+    <useHealth>0.6</useHealth>
+    <useFire>0.5</useFire>
+    <useEducation>0.06</useEducation>
+    <useCrime>0.3</useCrime>
+    <useHousing>1</useHousing>
+    <useSocial>0.9</useSocial>
+    <useGoverment>0.6</useGoverment>
+    <useEntertainmentAnalog>0.3</useEntertainmentAnalog>
+    <useEntertainmentDigital />
+    <useShoppingLocale />
+    <useShoppingOnline />
+    <useComfort />
+    <useVacationNational />
+    <useVacationInternational />
+    <useProvisionMeat />
+    <useProvisionFruit />
+    <useProvisionVeg />
+    <useTrafficWalkBicycle />
+    <useTrafficPublic />
+    <useTrafficFossil />
+    <useTrafficEV />
+    <useTransport />
+    <useRoad />
+    <useParkingLot />
+    <useParkGreen />
+    <useParkLake />
+    <useMail />
+    <useMailPackage />
+    <useTrainingFacility />
+    <useInternet />
+    <usePhone />
+    <usePayCash />
+    <usePayCard />
+    <usePayOnline />
+    <useBank />
+    <useProductArt />
+    <useProductFurniture />
+    <useProductToy />
+    <useProductCloth>0.6</useProductCloth>
+    <useProductEletronic />
+    <useProductBuildingMaterials />
+    <useProductSportGear />
+    <useProductBeauty />
+    <useProductFood />
+    <useProductDrink />
+    <useProductMedicin>0.5</useProductMedicin>
+    <useProductBooks />
+    <useDruks />
+    <useBlackMoney />
+    <useBlackMarket />
+    <usePollutionAir />
+    <usePollutionWater />
+    <usePollutionSoil />
+    <usePollutionNoise />
+    <Demands />
+    <demandsPowerGreenMin />
+    <demandsPowerNuclearMax />
+    <demandsPowerFossilMax />
+    <demandsHeatGreenMin />
+    <demandsHeatNuclearMax />
+    <demandsHeatFossilMax />
+    <demandsPollutionWaterMax />
+    <demandsPollutionAirMax />
+    <demandsPollutionSoilMax />
+    <demandsPollutionNoiseMax />
+    <demandsTrafficWalkBicycle />
+    <demandsTrafficPublic />
+    <demandsTrafficFossil />
+    <demandsTrafficEV />
+    <demandsDeathRate />
+    <demandsVechicleTypeCar />
+    <demandsVechicleTypeTruck />
+    <demandsVechicleTypePlane />
+    <demandsVechicleTypeHitchHike />
+    <demandsVechicleTypeBicycle />
+    <demandsVechicleTypeWalk />
+    <Producerer />
+    <taxPay />
+    <taxPayMax />
+    <taxPayRageRate />
+    <wastePlastic />
+    <wasteOrganic />
+    <wasteGlass />
+    <wasteMetal />
+    <wasteWater />
+    <wasteElectronic />
+    <wastePaper />
+    <wasteOther>1.2</wasteOther>
+    <deathPoliceExpose />
+    <deathPoliceWeight />
+    <deathPoliceBaseline />
+    <deathTrafficExpose />
+    <deathTrafficWeight />
+    <deathTrafficBaseline />
+    <deathFireExpose />
+    <deathFireWeight />
+    <deathFireBaseline />
+    <deathHealthExpose>0.9</deathHealthExpose>
+    <deathHealthWeight>1</deathHealthWeight>
+    <deathHealthBaseline>2</deathHealthBaseline>
+    <birthRate>0.05</birthRate>
+    <movingIn>0.05</movingIn>
+    <movingOut>0.03</movingOut>
+    <migration>0.7</migration>
+    <Øvrige_udregninger__sæt_citizens_type_foran_ />
+    <generalHappinessDemand />
+    <generelPopularityDemand />
+    <generelStrength />
+    <generelArmor />
+  </citizens>
+  <citizens id="crimeWorker">
+    <Kræver />
+    <useProvision>0.9</useProvision>
+    <useWater>0.7</useWater>
+    <useHeat>0.6</useHeat>
+    <usePower>0.9</usePower>
+    <usePolice>0.7</usePolice>
+    <useHealth>0.7</useHealth>
+    <useFire>0.6</useFire>
+    <useEducation>0.06</useEducation>
+    <useCrime>0.9</useCrime>
+    <useHousing>1</useHousing>
+    <useSocial>0.8</useSocial>
+    <useGoverment>0.7</useGoverment>
+    <useEntertainmentAnalog>0.3</useEntertainmentAnalog>
+    <useEntertainmentDigital />
+    <useShoppingLocale />
+    <useShoppingOnline />
+    <useComfort />
+    <useVacationNational />
+    <useVacationInternational />
+    <useProvisionMeat />
+    <useProvisionFruit />
+    <useProvisionVeg />
+    <useTrafficWalkBicycle />
+    <useTrafficPublic />
+    <useTrafficFossil />
+    <useTrafficEV />
+    <useTransport />
+    <useRoad />
+    <useParkingLot />
+    <useParkGreen />
+    <useParkLake />
+    <useMail />
+    <useMailPackage />
+    <useTrainingFacility />
+    <useInternet />
+    <usePhone />
+    <usePayCash />
+    <usePayCard />
+    <usePayOnline />
+    <useBank />
+    <useProductArt />
+    <useProductFurniture />
+    <useProductToy />
+    <useProductCloth>0.65</useProductCloth>
+    <useProductEletronic />
+    <useProductBuildingMaterials />
+    <useProductSportGear />
+    <useProductBeauty />
+    <useProductFood />
+    <useProductDrink />
+    <useProductMedicin>0.6</useProductMedicin>
+    <useProductBooks />
+    <useDruks />
+    <useBlackMoney />
+    <useBlackMarket />
+    <usePollutionAir />
+    <usePollutionWater />
+    <usePollutionSoil />
+    <usePollutionNoise />
+    <Demands />
+    <demandsPowerGreenMin />
+    <demandsPowerNuclearMax />
+    <demandsPowerFossilMax />
+    <demandsHeatGreenMin />
+    <demandsHeatNuclearMax />
+    <demandsHeatFossilMax />
+    <demandsPollutionWaterMax />
+    <demandsPollutionAirMax />
+    <demandsPollutionSoilMax />
+    <demandsPollutionNoiseMax />
+    <demandsTrafficWalkBicycle />
+    <demandsTrafficPublic />
+    <demandsTrafficFossil />
+    <demandsTrafficEV />
+    <demandsDeathRate />
+    <demandsVechicleTypeCar />
+    <demandsVechicleTypeTruck />
+    <demandsVechicleTypePlane />
+    <demandsVechicleTypeHitchHike />
+    <demandsVechicleTypeBicycle />
+    <demandsVechicleTypeWalk />
+    <Producerer />
+    <taxPay />
+    <taxPayMax />
+    <taxPayRageRate />
+    <wastePlastic />
+    <wasteOrganic />
+    <wasteGlass />
+    <wasteMetal />
+    <wasteWater />
+    <wasteElectronic />
+    <wastePaper />
+    <wasteOther>1.3</wasteOther>
+    <deathPoliceExpose />
+    <deathPoliceWeight />
+    <deathPoliceBaseline />
+    <deathTrafficExpose />
+    <deathTrafficWeight />
+    <deathTrafficBaseline />
+    <deathFireExpose />
+    <deathFireWeight />
+    <deathFireBaseline />
+    <deathHealthExpose>0.8</deathHealthExpose>
+    <deathHealthWeight>1</deathHealthWeight>
+    <deathHealthBaseline>2</deathHealthBaseline>
+    <birthRate>0.05</birthRate>
+    <movingIn>0.05</movingIn>
+    <movingOut>0.02</movingOut>
+    <migration>0.7</migration>
+    <Øvrige_udregninger__sæt_citizens_type_foran_ />
+    <generalHappinessDemand />
+    <generelPopularityDemand />
+    <generelStrength />
+    <generelArmor />
+  </citizens>
+  <citizens id="adultsHomeless">
+    <Kræver />
+    <useProvision>0.01</useProvision>
+    <useWater>0.2</useWater>
+    <useHeat>0.01</useHeat>
+    <usePower>0.01</usePower>
+    <usePolice>0.8</usePolice>
+    <useHealth>0.02</useHealth>
+    <useFire>0.03</useFire>
+    <useEducation>0</useEducation>
+    <useCrime>0.6</useCrime>
+    <useHousing>0</useHousing>
+    <useSocial>0.05</useSocial>
+    <useGoverment>1</useGoverment>
+    <useEntertainmentAnalog>0.02</useEntertainmentAnalog>
+    <useEntertainmentDigital />
+    <useShoppingLocale />
+    <useShoppingOnline />
+    <useComfort />
+    <useVacationNational />
+    <useVacationInternational />
+    <useProvisionMeat />
+    <useProvisionFruit />
+    <useProvisionVeg />
+    <useTrafficWalkBicycle />
+    <useTrafficPublic />
+    <useTrafficFossil />
+    <useTrafficEV />
+    <useTransport />
+    <useRoad />
+    <useParkingLot />
+    <useParkGreen />
+    <useParkLake />
+    <useMail />
+    <useMailPackage />
+    <useTrainingFacility />
+    <useInternet />
+    <usePhone />
+    <usePayCash />
+    <usePayCard />
+    <usePayOnline />
+    <useBank />
+    <useProductArt />
+    <useProductFurniture />
+    <useProductToy />
+    <useProductCloth>0.02</useProductCloth>
+    <useProductEletronic />
+    <useProductBuildingMaterials />
+    <useProductSportGear />
+    <useProductBeauty />
+    <useProductFood />
+    <useProductDrink />
+    <useProductMedicin>0.02</useProductMedicin>
+    <useProductBooks />
+    <useDruks />
+    <useBlackMoney />
+    <useBlackMarket />
+    <usePollutionAir />
+    <usePollutionWater />
+    <usePollutionSoil />
+    <usePollutionNoise />
+    <Demands />
+    <demandsPowerGreenMin />
+    <demandsPowerNuclearMax />
+    <demandsPowerFossilMax />
+    <demandsHeatGreenMin />
+    <demandsHeatNuclearMax />
+    <demandsHeatFossilMax />
+    <demandsPollutionWaterMax />
+    <demandsPollutionAirMax />
+    <demandsPollutionSoilMax />
+    <demandsPollutionNoiseMax />
+    <demandsTrafficWalkBicycle />
+    <demandsTrafficPublic />
+    <demandsTrafficFossil />
+    <demandsTrafficEV />
+    <demandsDeathRate />
+    <demandsVechicleTypeCar />
+    <demandsVechicleTypeTruck />
+    <demandsVechicleTypePlane />
+    <demandsVechicleTypeHitchHike />
+    <demandsVechicleTypeBicycle />
+    <demandsVechicleTypeWalk />
+    <Producerer />
+    <taxPay />
+    <taxPayMax />
+    <taxPayRageRate />
+    <wastePlastic />
+    <wasteOrganic />
+    <wasteGlass />
+    <wasteMetal />
+    <wasteWater />
+    <wasteElectronic />
+    <wastePaper />
+    <wasteOther>1.5</wasteOther>
+    <deathPoliceExpose />
+    <deathPoliceWeight />
+    <deathPoliceBaseline />
+    <deathTrafficExpose />
+    <deathTrafficWeight />
+    <deathTrafficBaseline />
+    <deathFireExpose />
+    <deathFireWeight />
+    <deathFireBaseline />
+    <deathHealthExpose>0.6</deathHealthExpose>
+    <deathHealthWeight>3</deathHealthWeight>
+    <deathHealthBaseline>4</deathHealthBaseline>
+    <birthRate>0.01</birthRate>
+    <movingIn>0.03</movingIn>
+    <movingOut>0</movingOut>
+    <migration>0.7</migration>
+    <Øvrige_udregninger__sæt_citizens_type_foran_ />
+    <generalHappinessDemand />
+    <generelPopularityDemand />
+    <generelStrength />
+    <generelArmor />
+  </citizens>
+  <citizens id="crimeHomeless">
+    <Kræver />
+    <useProvision>0.04</useProvision>
+    <useWater>0.5</useWater>
+    <useHeat>0.01</useHeat>
+    <usePower>0.01</usePower>
+    <usePolice>1.1</usePolice>
+    <useHealth>0.03</useHealth>
+    <useFire>0.03</useFire>
+    <useEducation>0</useEducation>
+    <useCrime>0.8</useCrime>
+    <useHousing>0</useHousing>
+    <useSocial>0.04</useSocial>
+    <useGoverment>1</useGoverment>
+    <useEntertainmentAnalog>0.02</useEntertainmentAnalog>
+    <useEntertainmentDigital />
+    <useShoppingLocale />
+    <useShoppingOnline />
+    <useComfort />
+    <useVacationNational />
+    <useVacationInternational />
+    <useProvisionMeat />
+    <useProvisionFruit />
+    <useProvisionVeg />
+    <useTrafficWalkBicycle />
+    <useTrafficPublic />
+    <useTrafficFossil />
+    <useTrafficEV />
+    <useTransport />
+    <useRoad />
+    <useParkingLot />
+    <useParkGreen />
+    <useParkLake />
+    <useMail />
+    <useMailPackage />
+    <useTrainingFacility />
+    <useInternet />
+    <usePhone />
+    <usePayCash />
+    <usePayCard />
+    <usePayOnline />
+    <useBank />
+    <useProductArt />
+    <useProductFurniture />
+    <useProductToy />
+    <useProductCloth>0.01</useProductCloth>
+    <useProductEletronic />
+    <useProductBuildingMaterials />
+    <useProductSportGear />
+    <useProductBeauty />
+    <useProductFood />
+    <useProductDrink />
+    <useProductMedicin>0.03</useProductMedicin>
+    <useProductBooks />
+    <useDruks />
+    <useBlackMoney />
+    <useBlackMarket />
+    <usePollutionAir />
+    <usePollutionWater />
+    <usePollutionSoil />
+    <usePollutionNoise />
+    <Demands />
+    <demandsPowerGreenMin />
+    <demandsPowerNuclearMax />
+    <demandsPowerFossilMax />
+    <demandsHeatGreenMin />
+    <demandsHeatNuclearMax />
+    <demandsHeatFossilMax />
+    <demandsPollutionWaterMax />
+    <demandsPollutionAirMax />
+    <demandsPollutionSoilMax />
+    <demandsPollutionNoiseMax />
+    <demandsTrafficWalkBicycle />
+    <demandsTrafficPublic />
+    <demandsTrafficFossil />
+    <demandsTrafficEV />
+    <demandsDeathRate />
+    <demandsVechicleTypeCar />
+    <demandsVechicleTypeTruck />
+    <demandsVechicleTypePlane />
+    <demandsVechicleTypeHitchHike />
+    <demandsVechicleTypeBicycle />
+    <demandsVechicleTypeWalk />
+    <Producerer />
+    <taxPay />
+    <taxPayMax />
+    <taxPayRageRate />
+    <wastePlastic />
+    <wasteOrganic />
+    <wasteGlass />
+    <wasteMetal />
+    <wasteWater />
+    <wasteElectronic />
+    <wastePaper />
+    <wasteOther>1.7</wasteOther>
+    <deathPoliceExpose />
+    <deathPoliceWeight />
+    <deathPoliceBaseline />
+    <deathTrafficExpose />
+    <deathTrafficWeight />
+    <deathTrafficBaseline />
+    <deathFireExpose />
+    <deathFireWeight />
+    <deathFireBaseline />
+    <deathHealthExpose>0.65</deathHealthExpose>
+    <deathHealthWeight>3</deathHealthWeight>
+    <deathHealthBaseline>4</deathHealthBaseline>
+    <birthRate>0.01</birthRate>
+    <movingIn>0.03</movingIn>
+    <movingOut>0</movingOut>
+    <migration>0.7</migration>
+    <Øvrige_udregninger__sæt_citizens_type_foran_ />
+    <generalHappinessDemand />
+    <generelPopularityDemand />
+    <generelStrength />
+    <generelArmor />
+  </citizens>
+</citizensData>
