@@ -9,6 +9,7 @@
 
   <!-- Stage 2: giver +1/time wheat og +1/time stone -->
   <stage id="2">
+    <requires research="rsd.stage.l2"/>
     <bonus key="field"  res="res.wheat,res.maize"/>
     <bonus key="mining" res="res.stone"/>
   </stage>

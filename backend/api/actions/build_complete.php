@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../_init.php';
 require_once __DIR__ . '/../lib/purchase_helpers.php';
+require_once __DIR__ . '/../lib/stage.php';
 header('Content-Type: application/json');
 
 try {
@@ -62,6 +63,10 @@ try {
         if (str_starts_with($jobItemId, 'rsd.')) {
             spend_locked_costs($db, $userId, $lockedCosts, 'research', $jobItemId);
             $delta = backend_purchase_research($db, $userId, $jobItemId);
+
+// STAGE-TJEK LIGE HER
+    $stage = maybe_stage_upgrade($db, $userId); // kører bl.a. ensure_citizens_row_exists ved stage 1->2
+
         } elseif (str_starts_with($jobItemId, 'add.')) {
             spend_locked_costs($db, $userId, $lockedCosts, 'addon', $jobItemId);
             $delta = backend_purchase_addon($db, $userId, $jobItemId);
@@ -73,6 +78,9 @@ try {
         // Opdater jobbet til 'done' for disse typer
         $upd = $db->prepare("UPDATE build_jobs SET state='done', end_utc=UTC_TIMESTAMP() WHERE id=?");
         $upd->execute([$jobId]);
+
+
+
     }
     // =====================================================================
     // SLUT PÅ DEN KORREKTE LOGIK-GREN
@@ -80,6 +88,7 @@ try {
 
     $db->commit();
     echo json_encode(['ok' => true, 'delta' => $delta, 'yield' => $yres]);
+
 
 } catch (Throwable $e) {
     if (isset($db) && $db->inTransaction()) $db->rollBack();

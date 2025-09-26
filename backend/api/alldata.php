@@ -6,12 +6,29 @@ require_once __DIR__ . '/lib/lang_utils.php';
 // Sørg for at yield-helperne er indlæst tidligt (vi bruger wrapper nedenfor)
 require_once __DIR__ . '/lib/yield.php';
 
-include_once 'load_citizens.php';
+include_once __DIR__ . '/load_citizens.php';
+
+// Justér stien herfra til repo-roden hvis nødvendigt:
+$xmlPath = realpath(__DIR__ . '/data/xml/citizens.xml');
+// Fallback: prøv en alternativ relativ sti hvis ovenstående ikke findes
+if ($xmlPath === false) {
+    $maybe = __DIR__ . '/..//data/xml/citizens.xml';
+    if (is_file($maybe)) {
+        $xmlPath = realpath($maybe);
+    }
+}
+
+if ($xmlPath === false) {
+    throw new RuntimeException('Could not locate backend/data/xml/citizens.xml relative to ' . __DIR__);
+}
+
+
 
 if (WS_RUN_MODE === 'run') {
     header('Content-Type: application/json; charset=utf-8');
     if (session_status() !== PHP_SESSION_ACTIVE) session_start();
 }
+
 
 /* ======================= small utils ======================= */
 function jout($ok, $payload) {
@@ -544,6 +561,8 @@ $data['yields_preview'] = $yields_preview;
             unset($item);
         }
 
+        $defs['citizens'] = loadCitizens($xmlPath, true, 0);
+
         // FJERNER NAME OG DESC FRA LANG, DA DE ALLEREDE LIGGER I DEFS
         $defaultLangCode = (string)($cfg['game_data']['lang'] ?? 'lang.da');
         $langCode = preg_replace('~^lang\.~i', '', $defaultLangCode);
@@ -622,6 +641,8 @@ $data['yields_preview'] = $yields_preview;
         $out = ['defs' => $defs, 'state' => $state, 'lang' => $langMap, 'config' => $cfg];
         if ($debug) $out['__debug'] = ['xml_scan' => $debugXml ?? []];
         jout(true, $out);
+
+        
 
     } catch (Throwable $e) {
       jerr('E_SERVER', $e->getMessage(), 500);

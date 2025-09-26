@@ -39,7 +39,7 @@
     <upgradesTo>rsd.tools.l3</upgradesTo>
   </research>
 
-    <research id="rsd.tools.l3" family="basecamp" type="tools" lvl="3" stage="2">
+    <research id="rsd.tools.l3" family="basecamp" type="tools" lvl="3" stage="1">
     <cost>
       <res id="res.money" amount="25"/>
     </cost>
@@ -68,7 +68,7 @@
     <require>bld.basecamp.l1</require>
   </research>
 
-      <research id="rsd.animalhusbandry.l2" family="basecamp,farm" type="animal" lvl="1" stage="1">
+      <research id="rsd.animalhusbandry.l2" family="basecamp,farm" type="animal" lvl="2" stage="1">
     <cost>
       <res id="res.money" amount="100"/>
       <res id="res.water" amount="25"/>
@@ -162,8 +162,8 @@
     <cost>
       <res id="res.money" amount="75"/>
     </cost>
-    <time>10m</time>
-    <require>add.basecamp.l3,rsd.tools.l3</require>
+    <time>1m</time>
+    <require>bld.basecamp.l3,rsd.tools.l3</require>
   </research>
 
 

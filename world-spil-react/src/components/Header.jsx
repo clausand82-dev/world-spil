@@ -4,6 +4,7 @@ import { fmt } from '../services/helpers.js';
 import TopbarAuth from './TopbarAuth.jsx';
 import { buildStatsTitle } from '../services/statsEffects.js';
 import { buildPassiveYieldTitle } from '../services/passiveYields.js';
+import HousingHeader from './header/HousingHeader.jsx';
 
 
 export default function Header() {
@@ -55,6 +56,7 @@ const foodTitle = useMemo(() => buildPassiveYieldTitle({
       </div>
 
       <div className="header-resources">
+        <HousingHeader />
         <span className="res-chip" title={foodTitle}>{resDefs.food?.emoji || '🪵'} {fmt(solid.food || 0)}</span>
         <span className="res-chip" title={woodTitle}>{resDefs.wood?.emoji || '🪵'} {fmt(solid.wood || 0)}</span>
         <span className="res-chip" title={stoneTitle}>{resDefs.stone?.emoji || '🪨'} {fmt(solid.stone || 0)}</span>
@@ -66,6 +68,7 @@ const foodTitle = useMemo(() => buildPassiveYieldTitle({
 
       <div className="header-tools" style={{ marginLeft: 'auto' }}>
         {/* Login / Logout vises altid */}
+        STAGE: {data?.state?.user?.currentstage || '0'}
         <TopbarAuth onAuthChange={() => window.location.reload()} />
       </div>
     </header>

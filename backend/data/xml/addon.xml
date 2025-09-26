@@ -106,7 +106,7 @@
       <res id="res.wood" amount="125"/>
       <res id="res.stone" amount="50"/>
     </cost>
-    <require>add.animalhusbandry.l2</require>
+    <require>rsd.animalhusbandry.l2</require>
   </addon>
 
 <!-- sub addons for barn -->

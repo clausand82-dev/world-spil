@@ -12,7 +12,7 @@
     <durability>10</durability>
     <upgradesTo>bld.basecamp.l2</upgradesTo>
     <buffs applies_to="all">
-      <res id="all" type="mult" amount="0" mode="cost"/>
+      <res id="all" type="mult" amount="10" mode="cost"/>
       <speed target="all" type="mult" amount="100"/>
     </buffs>
     <cost>
@@ -38,7 +38,11 @@
     <durability>20.0</durability>
     <upgradesTo>bld.basecamp.l3</upgradesTo>
     <require>rsd.tools.l1</require>
-    <time>5m</time>    
+    <time>5m</time>   
+        <buffs applies_to="all">
+      <!--<res id="all" type="mult" amount="5" mode="cost"/>-->
+      <speed target="all" type="mult" amount="100"/>
+    </buffs> 
   </building>
 
   <building id="bld.basecamp.l3" family="basecamp" type="base" lvl="3" stage="1">
@@ -57,6 +61,29 @@
     <durability>35.0</durability>
     <upgradesTo>bld.basecamp.l4</upgradesTo>
     <require>rsd.tools.l3</require>
+    <time>12h</time>
+            <buffs applies_to="all">
+      <!--<res id="all" type="mult" amount="5" mode="cost"/>-->
+      <speed target="all" type="mult" amount="100"/>
+    </buffs> 
+  </building>
+
+   <building id="bld.basecamp.l4" family="basecamp" type="base" lvl="4" stage="2">
+    <stats>footprint=70; provision_cap=75</stats>
+    <cost>
+      <res id="res.money" amount="500" />
+      <res id="res.wood" amount="100" />
+      <res id="res.stone" amount="50" />
+    </cost>
+    <yield period="1h">
+      <res id="res.money" amount="20" />
+      <res id="res.wood" amount="5" />
+      <res id="res.stone" amount="5" />
+      <res id="res.water" amount="5" />
+    </yield>
+    <durability>35.0</durability>
+    <upgradesTo>bld.basecamp.l5</upgradesTo>
+    <require>rsd.tools.l4</require>
     <time>12h</time>
   </building>
 
@@ -147,7 +174,7 @@
     <durability>100.0</durability>
   </building>
 
-    <building id="bld.mine.l1" family="mine" type="extraction" lvl="1" stage="1">
+    <building id="bld.mine.l2" family="mine" type="extraction" lvl="2" stage="1">
     <stats>footprint=-5</stats>
     <cost>
       <res id="res.money" amount="100" />
