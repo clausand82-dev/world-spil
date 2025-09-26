@@ -6,6 +6,8 @@ require_once __DIR__ . '/lib/lang_utils.php';
 // Sørg for at yield-helperne er indlæst tidligt (vi bruger wrapper nedenfor)
 require_once __DIR__ . '/lib/yield.php';
 
+include_once 'load_citizens.php';
+
 if (WS_RUN_MODE === 'run') {
     header('Content-Type: application/json; charset=utf-8');
     if (session_status() !== PHP_SESSION_ACTIVE) session_start();
