@@ -4,6 +4,7 @@ declare(strict_types=1);
 header('Content-Type: application/json; charset=utf-8');
 require_once __DIR__ . '/../_init.php';
 require_once __DIR__ . '/../lib/capacity_usage.php';
+require_once __DIR__ . '/../lib/happiness.php';
 
 function respond($p, int $http=200): never {
   http_response_code($http);
@@ -118,13 +119,41 @@ try {
     $usages[$field] = cu_usage_breakdown($rawCit, $citDefs, $field, $USE_ALIAS);
   }
 
+  // === HAPPINESS: læs weights og beregn – EFTER $usages og $capacities er klar ===
+  $cfgIniPath = __DIR__ . '/../../data/config/config.ini';
+  $cfg = is_file($cfgIniPath) ? parse_ini_file($cfgIniPath, true, INI_SCANNER_TYPED) : [];
+  $happinessWeights = $cfg['happiness'] ?? [];
+
+  // Map fra dine eksisterende arrays til happiness-kategorier
+  $happinessUsages = [
+    'health'  => [
+      'used'     => (float)($usages['useHealth']['total'] ?? 0),
+      'capacity' => (float)($capacities['healthCapacity'] ?? 0),
+    ],
+    'food'    => [
+      'used'     => (float)($usages['useProvision']['total'] ?? 0),
+      'capacity' => (float)($capacities['provisionCapacity'] ?? 0),
+    ],
+    'water'   => [
+      'used'     => (float)($usages['useWater']['total'] ?? 0),
+      'capacity' => (float)($capacities['waterCapacity'] ?? 0),
+    ],
+    'housing' => [
+      'used'     => (float)($usages['useHousing']['total'] ?? 0),
+      'capacity' => (float)($capacities['housingCapacity'] ?? 0),
+    ],
+    // Tilføj flere mappings når du sætter >0 weights for dem i config.ini
+  ];
+
+  $happinessData = happiness_calc_all($happinessUsages, $happinessWeights);
+
+  // Respond – nu inkl. happiness
   respond([
     'citizens' => [
       'raw'          => $rawCit,         // alle felter inkl. crime
       'groupCounts'  => $macro,          // macro + adultsTotal
       'lists'        => $citLists,       // short + long (uden crime)
       'totals'       => ['totalPersons' => $totalPersons],
-      // Hjælpestrukturer, hvis du vil have hurtig adgang:
       'sorted' => [
         'baby'   => ['baby' => (int)$macro['baby']],
         'kids'   => ['kids' => (int)$macro['kids']],
@@ -135,9 +164,11 @@ try {
     ],
     'usages'     => $usages,
     'capacities' => $capacities,
-    'parts'      => $parts,      // totals pr. kilde
-    'partsList'  => $partsList,  // detaljer pr. item (til hover)
+    'parts'      => $parts,
+    'partsList'  => $partsList,
+    'happiness'  => $happinessData, // ← her er din happiness til frontend
   ]);
+
 } catch (Throwable $e) {
   fail('E_SERVER', $e->getMessage(), 500);
 }

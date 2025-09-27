@@ -5,6 +5,7 @@ import TopbarAuth from './TopbarAuth.jsx';
 import { buildStatsTitle } from '../services/statsEffects.js';
 import { buildPassiveYieldTitle } from '../services/passiveYields.js';
 import HeaderCitizensBadge from './header/HeaderCitizensBadge.jsx';
+import HeaderHappinessBadge from './header/HeaderHappinessBadge.jsx';
 
 
 
@@ -57,7 +58,7 @@ const foodTitle = useMemo(() => buildPassiveYieldTitle({
       </div>
 
       <div className="header-resources">
-        
+        <HeaderHappinessBadge />
         <span className="res-chip" ><HeaderCitizensBadge /></span>
         <span className="res-chip" title={animalcapTitle}>🐾 {fmt(animal_cap.used || 0)}<span className="max">/{fmt(animal_cap.total || 0)}</span></span>
         <span className="res-chip" title={footprintTitle}>⬛ {fmt(Math.abs(footprint.used) || 0)}<span className="max">/{fmt(footprint.total || 0)}</span></span>
@@ -71,6 +72,8 @@ const foodTitle = useMemo(() => buildPassiveYieldTitle({
     </header>
   );
 }
+
+/*<span className="res-chip" ><HappinessBadge happiness={data.happiness?.happiness} /></span>*/
 
 /*
   <span className="res-chip" title={foodTitle}>{resDefs.food?.emoji || '🪵'} {fmt(solid.food || 0)}</span>
