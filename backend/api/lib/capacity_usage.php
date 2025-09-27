@@ -347,3 +347,104 @@ function cu_def_name(array $branch, string $id, ?int $level): ?string {
   }
   return null;
 }
+
+/**
+ * Hent stats-værdi for et animal-def (pr. enhed), prøv både key og med 'ani.'-scope.
+ */
+function cu_stat_from_animal_def(array $defsAni, string $keyOrScoped, array $keys): float {
+  $plain = preg_replace('/^ani\./', '', $keyOrScoped);
+  // Prøv plain key
+  if (isset($defsAni[$plain])) {
+    $v = (float)cu_stat_from_defs_node($defsAni[$plain], $keys);
+    if ($v != 0.0) return $v;
+  }
+  // Prøv scoped key (hvis defs skulle være keyed som 'ani.cow')
+  if (isset($defsAni[$keyOrScoped])) {
+    $v = (float)cu_stat_from_defs_node($defsAni[$keyOrScoped], $keys);
+    if ($v != 0.0) return $v;
+  }
+  return 0.0;
+}
+
+/**
+ * Summer kapacitet fra animals (quantity × stat pr. dyr).
+ * - defsAni: branch fra load_all_defs()['ani']
+ * - keys: kapacitetsnøgle(r) du er ved at summere (fx ['provisionCapacity'])
+ */
+function cu_sum_capacity_from_animals(PDO $pdo, int $userId, array $defsAni, array $keys): float {
+  if (empty($defsAni)) return 0.0;
+  $st = $pdo->prepare("SELECT ani_id, quantity FROM animals WHERE user_id = ?");
+  $st->execute([$userId]);
+  $sum = 0.0;
+  while ($row = $st->fetch(PDO::FETCH_ASSOC)) {
+    $aniId = (string)($row['ani_id'] ?? '');
+    $qty   = (float)($row['quantity'] ?? 0);
+    if ($aniId === '' || $qty == 0.0) continue;
+    $perUnit = cu_stat_from_animal_def($defsAni, $aniId, $keys);
+    if ($perUnit == 0.0) continue;
+    $sum += ($perUnit * $qty);
+  }
+  return $sum;
+}
+
+/** Per-item liste for animals (til hover): amount = quantity × per-unit stats. */
+function cu_list_capacity_from_animals(PDO $pdo, int $userId, array $defsAni, array $keys, callable $nameResolver): array {
+  if (empty($defsAni)) return [];
+  $st = $pdo->prepare("SELECT ani_id, quantity FROM animals WHERE user_id = ?");
+  $st->execute([$userId]);
+  $items = [];
+  while ($row = $st->fetch(PDO::FETCH_ASSOC)) {
+    $aniId = (string)($row['ani_id'] ?? '');
+    $qty   = (float)($row['quantity'] ?? 0);
+    if ($aniId === '' || $qty == 0.0) continue;
+    $perUnit = cu_stat_from_animal_def($defsAni, $aniId, $keys);
+    if ($perUnit == 0.0) continue;
+    $plain = preg_replace('/^ani\./', '', $aniId);
+    $name = $nameResolver($defsAni, $plain, null) ?? $aniId;
+    $items[] = ['id' => $aniId, 'amount' => (float)($perUnit * $qty), 'name' => $name];
+  }
+  return $items;
+}
+
+/**
+ * Summer kapacitet fra inventory (amount × stat pr. ressource).
+ * - defsRes er keyed uden "res." (fx "firewood", "water", ...)
+ * - inventory kan indeholde id’er med/uden "res." — vi stripper præfikset for opslag.
+ */
+function cu_sum_capacity_from_inventory(PDO $pdo, int $userId, array $defsRes, array $keys): float {
+  if (empty($defsRes)) return 0.0;
+  $st = $pdo->prepare("SELECT res_id, SUM(amount) AS amount FROM inventory WHERE user_id = ? GROUP BY res_id");
+  $st->execute([$userId]);
+  $sum = 0.0;
+  while ($row = $st->fetch(PDO::FETCH_ASSOC)) {
+    $rid = (string)($row['res_id'] ?? '');
+    $amt = (float)($row['amount'] ?? 0);
+    if ($rid === '' || $amt == 0.0) continue;
+    $key = preg_replace('/^res\./', '', $rid);
+    if (!isset($defsRes[$key])) continue;
+    $perUnit = (float)cu_stat_from_defs_node($defsRes[$key], $keys);
+    if ($perUnit == 0.0) continue;
+    $sum += ($perUnit * $amt);
+  }
+  return $sum;
+}
+
+/** Lav per-item liste for inventory (til hover): amount = beholdning × stat pr. ressource. */
+function cu_list_capacity_from_inventory(PDO $pdo, int $userId, array $defsRes, array $keys, callable $nameResolver): array {
+  if (empty($defsRes)) return [];
+  $st = $pdo->prepare("SELECT res_id, SUM(amount) AS amount FROM inventory WHERE user_id = ? GROUP BY res_id");
+  $st->execute([$userId]);
+  $items = [];
+  while ($row = $st->fetch(PDO::FETCH_ASSOC)) {
+    $rid = (string)($row['res_id'] ?? '');
+    $amt = (float)($row['amount'] ?? 0);
+    if ($rid === '' || $amt == 0.0) continue;
+    $key = preg_replace('/^res\./', '', $rid);
+    if (!isset($defsRes[$key])) continue;
+    $perUnit = (float)cu_stat_from_defs_node($defsRes[$key], $keys);
+    if ($perUnit == 0.0) continue;
+    $name = $nameResolver($defsRes, $key, null) ?? $rid;
+    $items[] = ['id' => $rid, 'amount' => (float)($perUnit * $amt), 'name' => $name];
+  }
+  return $items;
+}

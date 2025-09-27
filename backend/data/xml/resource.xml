@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources source="World 2025.xlsx" sheet="Ressource">
   <resource id="res.wood" family="basic" type="basicRessource" lvl="1" stage="1">
+  <stats>provision_cap=1</stats>
     <unit>pcs</unit>
     <unitSpace>0.5</unitSpace>
     <emoji>🌲</emoji>

@@ -3,10 +3,12 @@ import useHeaderSummary from '../../hooks/useHeaderSummary.js';
 import CapacityBar from '../header/CapacityBar.jsx';
 import CitizensBadge from './CitizensBadge.jsx';
 
-// Genbrug: Byg indhold for én kapacitets partsList (bygninger/addon/research)
 function makeSourceContent(partsListForCap) {
   if (!partsListForCap) return null;
-  const { buildings = [], addon = [], research = [] } = partsListForCap;
+  const {
+    buildings = [], addon = [], research = [],
+    animals = [], inventory = [], // NY
+  } = partsListForCap;
 
   const Section = ({ title, items }) => {
     if (!items || items.length === 0) return null;
@@ -27,11 +29,13 @@ function makeSourceContent(partsListForCap) {
       <Section title="Bygninger" items={buildings} />
       <Section title="Addons" items={addon} />
       <Section title="Research" items={research} />
+      <Section title="Animals" items={animals} />       {/* NY */}
+      <Section title="Inventory" items={inventory} />   {/* NY */}
     </div>
   );
 }
 
-// NY: Sammensat hover for aggregater (fx Heat/Power) med subkategorier
+// Aggregat-hover for Heat/Power med subkilder
 function makeAggregateContent(labelToPartsListMap) {
   const entries = Object.entries(labelToPartsListMap)
     .filter(([_, pl]) => {
@@ -42,7 +46,10 @@ function makeAggregateContent(labelToPartsListMap) {
       return (b + a + r) > 0;
     });
 
-  if (entries.length === 0) return null;
+  // Returnér en placeholder i stedet for null, så vi undgår fallback til citizens-tooltip
+  if (entries.length === 0) {
+    return <div style={{ maxWidth: 360, opacity: 0.8 }}>Ingen kapacitetskilder fundet.</div>;
+  }
 
   return (
     <div style={{ maxWidth: 420 }}>
@@ -59,7 +66,7 @@ function makeAggregateContent(labelToPartsListMap) {
 export default function SidebarCapacities() {
   const { data, err, loading } = useHeaderSummary();
 
-  // KALD HOOKS UBETINGET FØR EARLY RETURNS (for at undgå ændret hooks-rækkefølge)
+  // Hooks før early returns
   const pl = data?.partsList ?? {};
   const tips = useMemo(() => ({
     housing:    makeSourceContent(pl.housingCapacity),
@@ -89,27 +96,29 @@ export default function SidebarCapacities() {
   const citizens = data.citizens;
 
   const rows = [
-    { label: 'Housing',    used: use.useHousing.total,    cap: caps.housingCapacity,         tip: tips.housing },
-    { label: 'Provision',  used: use.useProvision.total,  cap: caps.provisionCapacity,       tip: tips.provision },
-    { label: 'Water',      used: use.useWater.total,      cap: caps.waterCapacity,           tip: tips.water },
-    { label: 'Heat',       used: use.useHeat.total,       cap: caps.heatCapacity,            tip: tips.heat },   // aggregat m. subs
-    { label: 'Power',      used: use.usePower.total,      cap: caps.powerCapacity,           tip: tips.power },  // aggregat m. subs
-    { label: 'Health',     used: use.useHealth.total,     cap: caps.healthCapacity,          tip: tips.health },
-    { label: 'Cloth',      used: use.useCloth.total,      cap: caps.productClothCapacity,    tip: tips.cloth },
-    { label: 'Medicin',    used: use.useMedicin.total,    cap: caps.productMedicinCapacity,  tip: tips.medicin },
-    { label: 'WasteOther', used: use.wasteOther.total,    cap: caps.wasteOtherCapacity,      tip: tips.wasteOther },
+    { label: 'Housing',    used: use.useHousing.total,    cap: caps.housingCapacity,         tip: tips.housing,  breakdown: data.citizens.groupCounts },
+    { label: 'Provision',  used: use.useProvision.total,  cap: caps.provisionCapacity,       tip: tips.provision, breakdown: data.citizens.groupCounts },
+    { label: 'Water',      used: use.useWater.total,      cap: caps.waterCapacity,           tip: tips.water,    breakdown: data.citizens.groupCounts },
+    // Heat/Power: GIV SPECIFIK hoverContent og UNDLAD citizens-breakdown for at undgå forkert tooltip
+    { label: 'Heat',       used: use.useHeat.total,       cap: caps.heatCapacity,            tip: tips.heat,     breakdown: undefined },
+    { label: 'Power',      used: use.usePower.total,      cap: caps.powerCapacity,           tip: tips.power,    breakdown: undefined },
+    { label: 'Health',     used: use.useHealth.total,     cap: caps.healthCapacity,          tip: tips.health,   breakdown: data.citizens.groupCounts },
+    { label: 'Cloth',      used: use.useCloth.total,      cap: caps.productClothCapacity,    tip: tips.cloth,    breakdown: data.citizens.groupCounts },
+    { label: 'Medicin',    used: use.useMedicin.total,    cap: caps.productMedicinCapacity,  tip: tips.medicin,  breakdown: data.citizens.groupCounts },
+    { label: 'WasteOther', used: use.wasteOther.total,    cap: caps.wasteOtherCapacity,      tip: tips.wasteOther, breakdown: data.citizens.groupCounts },
   ];
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <CitizensBadge citizens={citizens} />
       {rows.map((r) => (
         <CapacityBar
           key={r.label}
           label={r.label}
           used={r.used}
           capacity={r.cap}
-          hoverContent={r.tip}                     // viser enten en enkel partsList-oversigt
-          breakdown={data.citizens.groupCounts}    // eller et aggregat med subsektioner (heat/power)
+          hoverContent={r.tip}
+          breakdown={r.breakdown}
         />
       ))}
     </div>

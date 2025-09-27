@@ -27,6 +27,8 @@ try {
   $addDefs = $defs['add'] ?? [];
   $rsdDefs = $defs['rsd'] ?? [];
   $citDefs = cu_load_defs_citizens($defs);
+  $aniDefs = $defs['ani'] ?? [];  // NY
+  $resDefs = $defs['res'] ?? [];  // NY
 
   // Citizens
   $rawCit = cu_table_exists($pdo, 'citizens') ? cu_fetch_citizens_row($pdo, $uid) : [];
@@ -99,8 +101,17 @@ try {
     $a = cu_table_exists($pdo, 'addon')     ? cu_sum_capacity_from_table($pdo, $uid, $addDefs, 'addon',     'add_id', 'level', $keys) : 0.0;
     $r = cu_table_exists($pdo, 'user_research') ? cu_sum_capacity_from_research($pdo, $uid, $rsdDefs, $keys) : 0.0;
 
-    $capacities[$capName] = (float)($b + $a + $r);
-    $parts[$capName]      = ['buildings'=>(float)$b,'addon'=>(float)$a,'research'=>(float)$r];
+    $ani = cu_table_exists($pdo, 'animals')   ? cu_sum_capacity_from_animals($pdo, $uid, $aniDefs, $keys) : 0.0;
+    $inv = cu_table_exists($pdo, 'inventory') ? cu_sum_capacity_from_inventory($pdo, $uid, $resDefs, $keys) : 0.0;
+
+    $capacities[$capName] = (float)($b + $a + $r + $ani + $inv);
+    $parts[$capName]      = [
+      'buildings'=>(float)$b,
+      'addon'    =>(float)$a,
+      'research' =>(float)$r,
+      'animals'  =>(float)$ani,      // NY
+      'inventory'=>(float)$inv,      // NY
+    ];
 
     // Liste per item til hover (name + amount)
     $listB = cu_table_exists($pdo, 'buildings')
@@ -110,10 +121,18 @@ try {
     $listR = cu_table_exists($pdo, 'user_research')
           ? cu_list_capacity_from_research($pdo, $uid, $rsdDefs, $keys, 'cu_def_name') : [];
 
+    // NYE lister
+    $listAni = cu_table_exists($pdo, 'animals')
+          ? cu_list_capacity_from_animals($pdo, $uid, $aniDefs, $keys, 'cu_def_name') : [];
+    $listInv = cu_table_exists($pdo, 'inventory')
+          ? cu_list_capacity_from_inventory($pdo, $uid, $resDefs, $keys, 'cu_def_name') : [];
+
     $partsList[$capName] = [
       'buildings' => $listB,
       'addon'     => $listA,
       'research'  => $listR,
+      'animals'   => $listAni,  // NY
+      'inventory' => $listInv,  // NY
     ];
   }
 
