@@ -5,7 +5,7 @@
   
 
   <addon id="add.bigfireplace.l1" family="basecamp" type="addons" lvl="1" stage="1">
-    <stats>footprint=-1;provision_cap=25</stats>
+    <stats>footprint=-1;provision_cap=25;heatFossilCapacity=10</stats>
     <cost>
       <res id="res.money" amount="150"/>
     </cost>
@@ -26,7 +26,7 @@
   </addon>
 
   <addon id="add.well.l1" family="basecamp" type="addons" lvl="1" stage="1">
-  <stats>footprint=-1</stats>
+  <stats>footprint=-1,waterCapacity=10</stats>
     <cost>
       <res id="res.money" amount="20"/>
       <res id="res.wood" amount="2"/>

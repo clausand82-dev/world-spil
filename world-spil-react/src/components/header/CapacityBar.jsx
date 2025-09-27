@@ -1,11 +1,12 @@
 import React from 'react';
+import HoverCard from '../ui/HoverCard.jsx';
 
-export default function CapacityBar({ label, used, capacity, breakdown, style }) {
+export default function CapacityBar({ label, used, capacity, breakdown, style, titleOverride, hoverContent }) {
   const safeUsed = Math.max(0, Number(used) || 0);
   const safeCap  = Math.max(0, Number(capacity) || 0);
   const pct = safeCap > 0 ? Math.min(100, Math.round((safeUsed / safeCap) * 100)) : 0;
 
-  const tooltip = (() => {
+  const defaultTooltip = (() => {
     if (!breakdown) return '';
     const parts = [];
     for (const [k, v] of Object.entries(breakdown)) {
@@ -14,8 +15,8 @@ export default function CapacityBar({ label, used, capacity, breakdown, style })
     return parts.join(' | ');
   })();
 
-  return (
-    <div className="capacity-bar" style={{ minWidth: 20, ...style }} title={tooltip}>
+  const base = (
+    <div className="capacity-bar" style={{ minWidth: 200, ...style }} title={hoverContent ? undefined : (titleOverride ?? defaultTooltip)}>
       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 4 }}>
         <span>{label}</span>
         <span>{safeUsed} / {safeCap}</span>
@@ -32,5 +33,13 @@ export default function CapacityBar({ label, used, capacity, breakdown, style })
         />
       </div>
     </div>
+  );
+
+  if (!hoverContent) return base;
+
+  return (
+    <HoverCard content={hoverContent}>
+      {base}
+    </HoverCard>
   );
 }

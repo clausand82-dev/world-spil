@@ -27,12 +27,42 @@ try {
   $rsdDefs = $defs['rsd'] ?? [];
   $citDefs = cu_load_defs_citizens($defs);
 
-  // Citizens (rå counts)
-  $rawCit      = cu_table_exists($pdo, 'citizens') ? cu_fetch_citizens_row($pdo, $uid) : [];
-  $groupCounts = cu_group_counts($rawCit)['macro']; // baby, kids, young, adults (uden crime), old, crime, adultsTotal
+  // Citizens
+  $rawCit = cu_table_exists($pdo, 'citizens') ? cu_fetch_citizens_row($pdo, $uid) : [];
+  $counts = cu_group_counts($rawCit);
+  $macro  = $counts['macro'];
+  $fine   = $counts['fine'];
+  $totalPersons = (int)$macro['baby'] + (int)$macro['kids'] + (int)$macro['young'] + (int)$macro['adultsTotal'] + (int)$macro['old'];
 
-  // --- eksisterende beregninger af capacities/usages (uændret fra din seneste version) ---
-  // Aliases (caps/uses)
+  // Byg hover-lister: kort/lang (uden crime i begge)
+  $citLists = [
+    'short' => [
+      ['key'=>'baby',  'label'=>'Baby',   'count'=>(int)$macro['baby']],
+      ['key'=>'kids',  'label'=>'Kids',   'count'=>(int)$macro['kids']],
+      ['key'=>'young', 'label'=>'Young',  'count'=>(int)$macro['young']],
+      ['key'=>'adults','label'=>'Adults', 'count'=>(int)$macro['adultsTotal']], // inkl. crime
+      ['key'=>'old',   'label'=>'Old',    'count'=>(int)$macro['old']],
+    ],
+    'long' => [
+      ['key'=>'baby','label'=>'Baby','count'=>(int)$fine['baby']],
+      ['key'=>'kidsStreet','label'=>'Kids - Street','count'=>(int)$fine['kidsStreet']],
+      ['key'=>'kidsStudent','label'=>'Kids - Student','count'=>(int)$fine['kidsStudent']],
+      ['key'=>'youngStudent','label'=>'Young - Student','count'=>(int)$fine['youngStudent']],
+      ['key'=>'youngWorker','label'=>'Young - Worker','count'=>(int)$fine['youngWorker']],
+      ['key'=>'adultsPolice','label'=>'Adults - Police','count'=>(int)$fine['adultsPolice']],
+      ['key'=>'adultsFire','label'=>'Adults - Fire','count'=>(int)$fine['adultsFire']],
+      ['key'=>'adultsHealth','label'=>'Adults - Health','count'=>(int)$fine['adultsHealth']],
+      ['key'=>'adultsSoldier','label'=>'Adults - Soldier','count'=>(int)$fine['adultsSoldier']],
+      ['key'=>'adultsGovernment','label'=>'Adults - Government','count'=>(int)$fine['adultsGovernment']],
+      ['key'=>'adultsPolitician','label'=>'Adults - Politician','count'=>(int)$fine['adultsPolitician']],
+      ['key'=>'adultsUnemployed','label'=>'Adults - Unemployed','count'=>(int)$fine['adultsUnemployed']],
+      ['key'=>'adultsWorker','label'=>'Adults - Worker','count'=>(int)$fine['adultsWorker']],
+      ['key'=>'adultsHomeless','label'=>'Adults - Homeless','count'=>(int)$fine['adultsHomeless']],
+      ['key'=>'old','label'=>'Old','count'=>(int)$fine['old']],
+    ],
+  ];
+
+  // Capacity keys
   $CAP_KEYS = [
     'housingCapacity'         => ['housing','housingCapacity'],
     'provisionCapacity'       => ['provision_cap','provisionCapacity'],
@@ -48,90 +78,65 @@ try {
     'useMedicin' => 'useProductMedicin',
   ];
 
+  // Kapaciteter + kilde-lister
   $capacities = [];
-  $parts = [];
+  $parts      = [];
+  $partsList  = [];
+
   foreach ($CAP_KEYS as $capName => $keys) {
-    $b = cu_table_exists($pdo, 'buildings')     ? cu_sum_capacity_from_table($pdo, $uid, $bldDefs, 'buildings', 'bld_id', 'level', $keys) : 0.0;
-    $a = cu_table_exists($pdo, 'addon')         ? cu_sum_capacity_from_table($pdo, $uid, $addDefs, 'addon',     'add_id', 'level', $keys) : 0.0;
+    $b = cu_table_exists($pdo, 'buildings') ? cu_sum_capacity_from_table($pdo, $uid, $bldDefs, 'buildings', 'bld_id', 'level', $keys) : 0.0;
+    $a = cu_table_exists($pdo, 'addon')     ? cu_sum_capacity_from_table($pdo, $uid, $addDefs, 'addon',     'add_id', 'level', $keys) : 0.0;
     $r = cu_table_exists($pdo, 'user_research') ? cu_sum_capacity_from_research($pdo, $uid, $rsdDefs, $keys) : 0.0;
+
     $capacities[$capName] = (float)($b + $a + $r);
     $parts[$capName]      = ['buildings'=>(float)$b,'addon'=>(float)$a,'research'=>(float)$r];
+
+    // Liste per item til hover (name + amount)
+    $listB = cu_table_exists($pdo, 'buildings')
+          ? cu_list_capacity_from_table($pdo, $uid, $bldDefs, 'buildings', 'bld_id', 'level', $keys, 'cu_def_name') : [];
+    $listA = cu_table_exists($pdo, 'addon')
+          ? cu_list_capacity_from_table($pdo, $uid, $addDefs, 'addon', 'add_id', 'level', $keys, 'cu_def_name') : [];
+    $listR = cu_table_exists($pdo, 'user_research')
+          ? cu_list_capacity_from_research($pdo, $uid, $rsdDefs, $keys, 'cu_def_name') : [];
+
+    $partsList[$capName] = [
+      'buildings' => $listB,
+      'addon'     => $listA,
+      'research'  => $listR,
+    ];
   }
 
+  // Usages (vægtet)
   $USAGE_FIELDS = [
     'useHousing','useProvision','useWater','useHeat','useHealth',
     'useCloth','useMedicin','wasteOther',
     'deathHealthExpose','deathHealthWeight','deathHealthBaseline',
     'birthRate','movingIn','movingOut',
   ];
-  $aliasMap = $USE_ALIAS;
   $usages = [];
   foreach ($USAGE_FIELDS as $field) {
-    $usages[$field] = cu_usage_breakdown($rawCit, $citDefs, $field, $aliasMap);
+    $usages[$field] = cu_usage_breakdown($rawCit, $citDefs, $field, $USE_ALIAS);
   }
 
-  // Bars (UI)
-  $bars = [
-    'housing' => [
-      'used'      => $usages['useHousing']['total'] ?? 0.0,
-      'capacity'  => $capacities['housingCapacity'] ?? 0.0,
-      // IMPORTANT: hover skal vise RÅ PERSONER → brug groupCounts
-      'breakdown' => $groupCounts,
-      'parts'     => $parts['housingCapacity'] ?? [],
-    ],
-    'provision' => [
-      'used'      => $usages['useProvision']['total'] ?? 0.0,
-      'capacity'  => $capacities['provisionCapacity'] ?? 0.0,
-      'breakdown' => $groupCounts,
-      'parts'     => $parts['provisionCapacity'] ?? [],
-    ],
-    'water' => [
-      'used'      => $usages['useWater']['total'] ?? 0.0,
-      'capacity'  => $capacities['waterCapacity'] ?? 0.0,
-      'breakdown' => $groupCounts,
-      'parts'     => $parts['waterCapacity'] ?? [],
-    ],
-    'heat' => [
-      'used'      => $usages['useHeat']['total'] ?? 0.0,
-      'capacity'  => $capacities['heatCapacity'] ?? 0.0,
-      'breakdown' => $groupCounts,
-      'parts'     => $parts['heatCapacity'] ?? [],
-    ],
-    'health' => [
-      'used'      => $usages['useHealth']['total'] ?? 0.0,
-      'capacity'  => $capacities['healthCapacity'] ?? 0.0,
-      'breakdown' => $groupCounts,
-      'parts'     => $parts['healthCapacity'] ?? [],
-    ],
-    'cloth' => [
-      'used'      => $usages['useCloth']['total'] ?? 0.0,
-      'capacity'  => $capacities['productClothCapacity'] ?? 0.0,
-      'breakdown' => $groupCounts,
-      'parts'     => $parts['productClothCapacity'] ?? [],
-    ],
-    'medicin' => [
-      'used'      => $usages['useMedicin']['total'] ?? 0.0,
-      'capacity'  => $capacities['productMedicinCapacity'] ?? 0.0,
-      'breakdown' => $groupCounts,
-      'parts'     => $parts['productMedicinCapacity'] ?? [],
-    ],
-    'wasteOther' => [
-      'used'      => $usages['wasteOther']['total'] ?? 0.0,
-      'capacity'  => $capacities['wasteOtherCapacity'] ?? 0.0,
-      'breakdown' => $groupCounts,
-      'parts'     => $parts['wasteOtherCapacity'] ?? [],
-    ],
-  ];
-
   respond([
-    'citizens'   => [
-      'raw'         => $rawCit,
-      'groupCounts' => $groupCounts, // rå personer pr. makrogruppe til hover
+    'citizens' => [
+      'raw'          => $rawCit,         // alle felter inkl. crime
+      'groupCounts'  => $macro,          // macro + adultsTotal
+      'lists'        => $citLists,       // short + long (uden crime)
+      'totals'       => ['totalPersons' => $totalPersons],
+      // Hjælpestrukturer, hvis du vil have hurtig adgang:
+      'sorted' => [
+        'baby'   => ['baby' => (int)$macro['baby']],
+        'kids'   => ['kids' => (int)$macro['kids']],
+        'young'  => ['young'=> (int)$macro['young']],
+        'adults' => ['adultsTotal'=> (int)$macro['adultsTotal'], 'adults'=> (int)$macro['adults']],
+        'crime'  => ['crime'=> (int)$macro['crime']],
+      ],
     ],
     'usages'     => $usages,
     'capacities' => $capacities,
-    'parts'      => $parts,
-    'bars'       => $bars,
+    'parts'      => $parts,      // totals pr. kilde
+    'partsList'  => $partsList,  // detaljer pr. item (til hover)
   ]);
 } catch (Throwable $e) {
   fail('E_SERVER', $e->getMessage(), 500);

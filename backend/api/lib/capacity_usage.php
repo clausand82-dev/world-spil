@@ -251,19 +251,17 @@ function cu_group_counts(array $citRow): array {
     ['adultsHomeless','crimeHomeless'],
   ];
 
-  $baby  = cu_cit_val($citRow, 'baby');
-  $kids  = 0;
-  foreach ($kidsKeys as $k)  $kids  += cu_cit_val($citRow, $k);
-  $young = 0;
-  foreach ($youngKeys as $k) $young += cu_cit_val($citRow, $k);
-  $old   = cu_cit_val($citRow, 'old');
+  $baby  = (int)($citRow['baby'] ?? 0);
+  $kids  = array_sum(array_map(fn($k)=> (int)($citRow[$k] ?? 0), $kidsKeys));
+  $young = array_sum(array_map(fn($k)=> (int)($citRow[$k] ?? 0), $youngKeys));
+  $old   = (int)($citRow['old'] ?? 0);
 
   $adultsOnly = 0;
   $adultsTotal = 0;
   $crime = 0;
   foreach ($adultPairs as [$aKey, $cKey]) {
-    $a = cu_cit_val($citRow, $aKey);
-    $c = cu_cit_val($citRow, $cKey);
+    $a = (int)($citRow[$aKey] ?? 0);
+    $c = (int)($citRow[$cKey] ?? 0);
     $adultsOnly  += max(0, $a - $c);
     $adultsTotal += $a;
     $crime       += $c;
@@ -275,9 +273,77 @@ function cu_group_counts(array $citRow): array {
       'kids'        => $kids,
       'young'       => $young,
       'adults'      => $adultsOnly,   // lovlydige (MODEL A)
+      'adultsTotal' => $adultsTotal,  // voksne inkl. crime
       'old'         => $old,
       'crime'       => $crime,
-      'adultsTotal' => $adultsTotal,  // valgfri at bruge i andre visninger
+    ],
+    // fine-grained uden crime (til lang liste)
+    'fine' => [
+      'baby' => $baby,
+      'kidsStreet'    => (int)($citRow['kidsStreet'] ?? 0),
+      'kidsStudent'   => (int)($citRow['kidsStudent'] ?? 0),
+      'youngStudent'  => (int)($citRow['youngStudent'] ?? 0),
+      'youngWorker'   => (int)($citRow['youngWorker'] ?? 0),
+      'adultsPolice'      => max(0, (int)($citRow['adultsPolice'] ?? 0) - (int)($citRow['crimePolice'] ?? 0)),
+      'adultsFire'        => max(0, (int)($citRow['adultsFire'] ?? 0) - (int)($citRow['crimeFire'] ?? 0)),
+      'adultsHealth'      => max(0, (int)($citRow['adultsHealth'] ?? 0) - (int)($citRow['crimeHealth'] ?? 0)),
+      'adultsSoldier'     => max(0, (int)($citRow['adultsSoldier'] ?? 0) - (int)($citRow['crimeSoldier'] ?? 0)),
+      'adultsGovernment'  => max(0, (int)($citRow['adultsGovernment'] ?? 0) - (int)($citRow['crimeGovernment'] ?? 0)),
+      'adultsPolitician'  => max(0, (int)($citRow['adultsPolitician'] ?? 0) - (int)($citRow['crimePolitician'] ?? 0)),
+      'adultsUnemployed'  => max(0, (int)($citRow['adultsUnemployed'] ?? 0) - (int)($citRow['crimeUnemployed'] ?? 0)),
+      'adultsWorker'      => max(0, (int)($citRow['adultsWorker'] ?? 0) - (int)($citRow['crimeWorker'] ?? 0)),
+      'adultsHomeless'    => max(0, (int)($citRow['adultsHomeless'] ?? 0) - (int)($citRow['crimeHomeless'] ?? 0)),
+      'old' => $old,
     ],
   ];
+}
+
+/** Lav per-item liste for en instans-tabel (buildings/addon) for en given stats-nøgle-liste. */
+function cu_list_capacity_from_table(PDO $pdo, int $userId, array $defsBranch, string $table, string $idCol, string $lvlCol, array $keys, callable $nameResolver): array {
+  $st = $pdo->prepare("SELECT {$idCol} AS id, {$lvlCol} AS lvl FROM {$table} WHERE user_id=?");
+  $st->execute([$userId]);
+  $items = [];
+  while ($row = $st->fetch(PDO::FETCH_ASSOC)) {
+    $scopedId = (string)$row['id'];
+    $lvl      = (int)$row['lvl'];
+    $amount   = cu_stat_from_defs($defsBranch, $scopedId, $lvl, $keys);
+    if ($amount == 0.0) continue;
+    $idNoScope = cu_strip_scope($scopedId);
+    $name      = $nameResolver($defsBranch, $idNoScope, $lvl) ?? $idNoScope;
+    $items[] = ['id' => $idNoScope, 'amount' => (float)$amount, 'name' => $name];
+  }
+  return $items;
+}
+
+/** Lav per-item liste for completed research for en given stats-nøgle-liste. */
+function cu_list_capacity_from_research(PDO $pdo, int $userId, array $defsRsd, array $keys, callable $nameResolver): array {
+  $st = $pdo->prepare("SELECT research_id FROM user_research WHERE user_id=? AND completed=1");
+  $st->execute([$userId]);
+  $items = [];
+  while ($row = $st->fetch(PDO::FETCH_ASSOC)) {
+    $rid = cu_strip_scope((string)$row['research_id']);
+    if (!isset($defsRsd[$rid])) continue;
+    $amount = cu_stat_from_defs_node($defsRsd[$rid], $keys);
+    if ($amount == 0.0) continue;
+    $name = $nameResolver($defsRsd, $rid, null) ?? $rid;
+    $items[] = ['id' => $rid, 'amount' => (float)$amount, 'name' => $name];
+  }
+  return $items;
+}
+
+/** Simpel navneopslag fra defs-node: foretræk 'name', ellers 'desc'. */
+function cu_def_name(array $branch, string $id, ?int $level): ?string {
+  $try = [$id];
+  if ($level !== null && !preg_match('/\.l\d+$/', $id)) {
+    $try[] = "{$id}.l{$level}";
+  }
+  foreach ($try as $key) {
+    if (!isset($branch[$key])) continue;
+    $node = $branch[$key];
+    if (is_array($node)) {
+      if (!empty($node['name'])) return (string)$node['name'];
+      if (!empty($node['desc'])) return (string)$node['desc'];
+    }
+  }
+  return null;
 }

@@ -5,6 +5,7 @@ import AnimalList from './AnimalList.jsx';
 import SidebarLog from './SidebarLog.jsx';
 import { fmt } from '../services/helpers.js';
 import { useT } from "../services/i18n.js";
+import HeaderCapacities from './sidebar/SidebarCapacities.jsx';
 
 export default function Sidebar() {
     const { data } = useGameData();
@@ -21,6 +22,13 @@ export default function Sidebar() {
 
     return (
         <aside id="sidebar">
+            <section className="panel section res-panel">
+                <div className="section-head">Data:</div>
+                <div className="section-body">
+                    <HeaderCapacities />
+                </div>
+            </section>
+
             <section className="panel section res-panel">
                 <div className="section-head">💧 {t("ui.liquid.h1")}: {fmt(usedLiquid)}/{fmt(capLiquid)}</div>
                 <div className="section-body">

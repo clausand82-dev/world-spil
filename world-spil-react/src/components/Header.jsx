@@ -4,7 +4,8 @@ import { fmt } from '../services/helpers.js';
 import TopbarAuth from './TopbarAuth.jsx';
 import { buildStatsTitle } from '../services/statsEffects.js';
 import { buildPassiveYieldTitle } from '../services/passiveYields.js';
-import HeaderCapacities from './header/HeaderCapacities.jsx';
+import HeaderCitizensBadge from './header/HeaderCitizensBadge.jsx';
+
 
 
 export default function Header() {
@@ -56,8 +57,8 @@ const foodTitle = useMemo(() => buildPassiveYieldTitle({
       </div>
 
       <div className="header-resources">
-        <HeaderCapacities />
-      
+        
+        <span className="res-chip" ><HeaderCitizensBadge /></span>
         <span className="res-chip" title={animalcapTitle}>🐾 {fmt(animal_cap.used || 0)}<span className="max">/{fmt(animal_cap.total || 0)}</span></span>
         <span className="res-chip" title={footprintTitle}>⬛ {fmt(Math.abs(footprint.used) || 0)}<span className="max">/{fmt(footprint.total || 0)}</span></span>
       </div>
