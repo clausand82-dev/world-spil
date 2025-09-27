@@ -63,16 +63,26 @@ try {
     ],
   ];
 
-  // Capacity keys
+  // Capacity keys (inkl. sub-capacities for heat/power)
   $CAP_KEYS = [
     'housingCapacity'         => ['housing','housingCapacity'],
     'provisionCapacity'       => ['provision_cap','provisionCapacity'],
     'waterCapacity'           => ['waterCapacity'],
-    'heatCapacity'            => ['heatCapacity'],
+    'heatCapacity'            => ['heatCapacity'], // legacy/top-level (hvis sat direkte)
     'healthCapacity'          => ['healthCapacity'],
     'productClothCapacity'    => ['productClothCapacity','clothCapacity'],
     'productMedicinCapacity'  => ['productMedicinCapacity','medicinCapacity'],
     'wasteOtherCapacity'      => ['wasteOtherCapacity'],
+
+    // Sub-capacities for heat
+    'heatFossilCapacity'      => ['heatFossilCapacity'],
+    'heatGreenCapacity'       => ['heatGreenCapacity'],
+    'heatNuclearCapacity'     => ['heatNuclearCapacity'],
+
+    // Sub-capacities for power
+    'powerFossilCapacity'     => ['powerFossilCapacity'],
+    'powerGreenCapacity'      => ['powerGreenCapacity'],
+    'powerNuclearCapacity'    => ['powerNuclearCapacity'],
   ];
   $USE_ALIAS = [
     'useCloth'   => 'useProductCloth',
@@ -107,43 +117,92 @@ try {
     ];
   }
 
+  // Efter vi har alle enkeltdels-kapaciteter, lav aggregerede totals for heat/power
+  $capacities['heatCapacity']  = (float)(
+    ($capacities['heatFossilCapacity']  ?? 0) +
+    ($capacities['heatGreenCapacity']   ?? 0) +
+    ($capacities['heatNuclearCapacity'] ?? 0) +
+    ($capacities['heatCapacity']        ?? 0)   // hvis sat direkte fra et item
+  );
+  $capacities['powerCapacity'] = (float)(
+    ($capacities['powerFossilCapacity']  ?? 0) +
+    ($capacities['powerGreenCapacity']   ?? 0) +
+    ($capacities['powerNuclearCapacity'] ?? 0) +
+    ($capacities['powerCapacity']        ?? 0)  // hvis sat direkte
+  );
+
   // Usages (vægtet)
   $USAGE_FIELDS = [
     'useHousing','useProvision','useWater','useHeat','useHealth',
     'useCloth','useMedicin','wasteOther',
     'deathHealthExpose','deathHealthWeight','deathHealthBaseline',
     'birthRate','movingIn','movingOut',
+
+    // Sub-usage for heat
+    'useHeatFossil','useHeatGreen','useHeatNuclear',
+    // Power usage (top + subs)
+    'usePower','usePowerFossil','usePowerGreen','usePowerNuclear',
   ];
   $usages = [];
   foreach ($USAGE_FIELDS as $field) {
     $usages[$field] = cu_usage_breakdown($rawCit, $citDefs, $field, $USE_ALIAS);
   }
 
+  // Aggreger totals for useHeat/usePower (bevar evt. eksisterende top-niveau og læg oveni)
+  $heatF   = (float)($usages['useHeatFossil']['total']   ?? 0);
+  $heatG   = (float)($usages['useHeatGreen']['total']    ?? 0);
+  $heatN   = (float)($usages['useHeatNuclear']['total']  ?? 0);
+  $powerF  = (float)($usages['usePowerFossil']['total']  ?? 0);
+  $powerG  = (float)($usages['usePowerGreen']['total']   ?? 0);
+  $powerN  = (float)($usages['usePowerNuclear']['total'] ?? 0);
+
+  $useHeatTop  = (float)($usages['useHeat']['total']  ?? 0);
+  $usePowerTop = (float)($usages['usePower']['total'] ?? 0);
+
+  $usages['useHeat']['total']  = $heatF + $heatG + $heatN + $useHeatTop;
+  $usages['usePower']['total'] = $powerF + $powerG + $powerN + $usePowerTop;
+
   // === HAPPINESS: læs weights og beregn – EFTER $usages og $capacities er klar ===
   $cfgIniPath = __DIR__ . '/../../data/config/config.ini';
   $cfg = is_file($cfgIniPath) ? parse_ini_file($cfgIniPath, true, INI_SCANNER_TYPED) : [];
   $happinessWeights = $cfg['happiness'] ?? [];
 
-  // Map fra dine eksisterende arrays til happiness-kategorier
-  $happinessUsages = [
-    'health'  => [
-      'used'     => (float)($usages['useHealth']['total'] ?? 0),
-      'capacity' => (float)($capacities['healthCapacity'] ?? 0),
-    ],
-    'food'    => [
-      'used'     => (float)($usages['useProvision']['total'] ?? 0),
-      'capacity' => (float)($capacities['provisionCapacity'] ?? 0),
-    ],
-    'water'   => [
-      'used'     => (float)($usages['useWater']['total'] ?? 0),
-      'capacity' => (float)($capacities['waterCapacity'] ?? 0),
-    ],
-    'housing' => [
-      'used'     => (float)($usages['useHousing']['total'] ?? 0),
-      'capacity' => (float)($capacities['housingCapacity'] ?? 0),
-    ],
-    // Tilføj flere mappings når du sætter >0 weights for dem i config.ini
+  // Map fra base-key → usage/capacity felter i dine eksisterende arrays
+  $HAP_KEYMAP = [
+    // Eksisterende
+    'health'     => ['usage' => 'useHealth',     'cap' => 'healthCapacity'],
+    'food'       => ['usage' => 'useProvision',  'cap' => 'provisionCapacity'],
+    'water'      => ['usage' => 'useWater',      'cap' => 'waterCapacity'],
+    'housing'    => ['usage' => 'useHousing',    'cap' => 'housingCapacity'],
+
+    // Aggregerede
+    'heat'       => ['usage' => 'useHeat',       'cap' => 'heatCapacity'],
+    'power'      => ['usage' => 'usePower',      'cap' => 'powerCapacity'],
+
+    // Sub-kategorier
+    'heatFossil'   => ['usage' => 'useHeatFossil',   'cap' => 'heatFossilCapacity'],
+    'heatGreen'    => ['usage' => 'useHeatGreen',    'cap' => 'heatGreenCapacity'],
+    'heatNuclear'  => ['usage' => 'useHeatNuclear',  'cap' => 'heatNuclearCapacity'],
+
+    'powerFossil'  => ['usage' => 'usePowerFossil',  'cap' => 'powerFossilCapacity'],
+    'powerGreen'   => ['usage' => 'usePowerGreen',   'cap' => 'powerGreenCapacity'],
+    'powerNuclear' => ['usage' => 'usePowerNuclear', 'cap' => 'powerNuclearCapacity'],
   ];
+
+  // Byg happinessUsages dynamisk ud fra weights (kun weights > 0)
+  $happinessUsages = [];
+  foreach ($happinessWeights as $key => $rawW) {
+    $w = (float)$rawW;
+    if ($w <= 0) continue;
+    $base = preg_replace('/HappinessWeight$/', '', (string)$key); // fx "health" fra "healthHappinessWeight"
+    if (!isset($HAP_KEYMAP[$base])) continue;
+    $uKey = $HAP_KEYMAP[$base]['usage'];
+    $cKey = $HAP_KEYMAP[$base]['cap'];
+    $happinessUsages[$base] = [
+      'used'     => (float)($usages[$uKey]['total'] ?? 0),
+      'capacity' => (float)($capacities[$cKey] ?? 0),
+    ];
+  }
 
   $happinessData = happiness_calc_all($happinessUsages, $happinessWeights);
 
@@ -166,7 +225,7 @@ try {
     'capacities' => $capacities,
     'parts'      => $parts,
     'partsList'  => $partsList,
-    'happiness'  => $happinessData, // ← her er din happiness til frontend
+    'happiness'  => $happinessData, // til frontend (badge + hover)
   ]);
 
 } catch (Throwable $e) {

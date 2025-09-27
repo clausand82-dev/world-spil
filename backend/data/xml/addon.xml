@@ -26,7 +26,7 @@
   </addon>
 
   <addon id="add.well.l1" family="basecamp" type="addons" lvl="1" stage="1">
-  <stats>footprint=-1,waterCapacity=10</stats>
+  <stats>footprint=-1,waterCapacity=15</stats>
     <cost>
       <res id="res.money" amount="20"/>
       <res id="res.wood" amount="2"/>
@@ -39,7 +39,7 @@
   </addon>
 
   <addon id="add.tailorspot.l1" family="basecamp" type="addons" lvl="1" stage="1">
-  <stats>footprint=-1</stats>
+  <stats>footprint=-1;clothCapacity=4</stats>
     <cost>
       <res id="res.money" amount="50"/>
       <res id="res.wood" amount="10"/>
@@ -113,7 +113,7 @@
 
   <!--sub addon vandtrug - formål er at øge animal_cap -->
     <addon id="add.barn_watertrough.l1" family="farm" group="barn" type="addons" lvl="1" stage="1">
-      <stats>animal_cap=5</stats>
+      <stats>animal_cap=5; waterCapacity=2</stats>
       <cost>
         <res id="res.money" amount="25"/>
         <res id="res.wood" amount="16"/>
@@ -123,7 +123,7 @@
     </addon>
 
       <addon id="add.barn_watertrough.l2" family="farm" group="barn" type="addons" lvl="2" stage="1">
-        <stats>animal_cap=10</stats>
+        <stats>animal_cap=10;waterCapacity=2</stats>
     <cost>
       <res id="res.money" amount="25"/>
       <res id="res.stone" amount="16"/>

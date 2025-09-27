@@ -123,7 +123,6 @@
   <entry key="add.well.l1.name">Brønd</entry>
   <entry key="add.well.l1.desc">Tilføjer en brønd til lejren</entry>
 
-
 <!--ADDONS FARM-->  
   <entry key="add.barn.l1.name">Lille stald</entry>
   <entry key="add.barn.l1.desc">Lille stald af simpelt træ, bruges til at holde dyr</entry>
@@ -175,7 +174,7 @@
 
   <entry key="add.tailorspot.l1.name">Skrædderbord</entry>
   <entry key="add.tailorspot.l1.desc">Tilføjer mulighed for at bearbejde skind og læder</entry>
-  <entry key="add.storageliquid.l1">Lille opbevaringstønde til flydende ressourcer</entry>
+  <entry key="add.storageliquid.l1.name">Lille opbevaringstønde til flydende ressourcer</entry>
   <entry key="add.storageliquid.l1.desc">Øger opbevarings for flydende ressourcer</entry>
   <entry key="add.storageliquid.l2.name">Stor opbevaringstønde til flydende ressourcer</entry>
   <entry key="add.storageliquid.l2.desc">Øger opbevarings for flydende ressourcer yderligere</entry>

@@ -46,7 +46,7 @@
   </building>
 
   <building id="bld.basecamp.l3" family="basecamp" type="base" lvl="3" stage="1">
-    <stats>footprint=70; provision_cap=75</stats>
+    <stats>footprint=70; provision_cap=75; heatFossilCapacity=10</stats>
     <cost>
       <res id="res.money" amount="500" />
       <res id="res.wood" amount="100" />
@@ -63,7 +63,7 @@
     <require>rsd.tools.l3</require>
     <time>12h</time>
             <buffs applies_to="all">
-      <!--<res id="all" type="mult" amount="5" mode="cost"/>-->
+      <res id="all" type="mult" amount="50" mode="cost"/>
       <speed target="all" type="mult" amount="100"/>
     </buffs> 
   </building>

@@ -115,7 +115,7 @@ function BuildingDetailPage({ buildingId }) {
     : (durabilityMax > 0 && Number.isFinite(durabilityCurrentAbs))
       ? Math.max(0, Math.min(100, Math.round((durabilityCurrentAbs / durabilityMax) * 100)))
       : 0;
-      console.log(durabilityPct);
+      //console.log(durabilityPct);
 
   const footprintText = `${((heroDef?.stats?.footprint ?? 0) >= 0 ? '+' : '')}${heroDef?.stats?.footprint ?? 0} Byggepoint`;
   const animalCapText = `${((heroDef?.stats?.animalCap ?? 0) >= 0 ? '+' : '')}${heroDef?.stats?.animalCap ?? 0} Staldplads`;
