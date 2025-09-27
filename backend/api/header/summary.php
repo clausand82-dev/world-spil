@@ -92,49 +92,49 @@ try {
   ];
 
   // Kapaciteter + kilde-lister
-  $capacities = [];
-  $parts      = [];
-  $partsList  = [];
+$capacities = [];
+$parts      = [];
+$partsList  = [];
 
-  foreach ($CAP_KEYS as $capName => $keys) {
-    $b = cu_table_exists($pdo, 'buildings') ? cu_sum_capacity_from_table($pdo, $uid, $bldDefs, 'buildings', 'bld_id', 'level', $keys) : 0.0;
-    $a = cu_table_exists($pdo, 'addon')     ? cu_sum_capacity_from_table($pdo, $uid, $addDefs, 'addon',     'add_id', 'level', $keys) : 0.0;
-    $r = cu_table_exists($pdo, 'user_research') ? cu_sum_capacity_from_research($pdo, $uid, $rsdDefs, $keys) : 0.0;
+foreach ($CAP_KEYS as $capName => $keys) {
+  $b = cu_table_exists($pdo, 'buildings')     ? cu_sum_capacity_from_table($pdo, $uid, $bldDefs, 'buildings', 'bld_id', 'level', $keys) : 0.0;
+  $a = cu_table_exists($pdo, 'addon')         ? cu_sum_capacity_from_table($pdo, $uid, $addDefs, 'addon',     'add_id', 'level', $keys) : 0.0;
+  $r = cu_table_exists($pdo, 'user_research') ? cu_sum_capacity_from_research($pdo, $uid, $rsdDefs, $keys) : 0.0;
 
-    $ani = cu_table_exists($pdo, 'animals')   ? cu_sum_capacity_from_animals($pdo, $uid, $aniDefs, $keys) : 0.0;
-    $inv = cu_table_exists($pdo, 'inventory') ? cu_sum_capacity_from_inventory($pdo, $uid, $resDefs, $keys) : 0.0;
+  // NYT: dyr + inventory
+  $ani = cu_table_exists($pdo, 'animals')   ? cu_sum_capacity_from_animals($pdo, $uid, $aniDefs, $keys) : 0.0;
+  $inv = cu_table_exists($pdo, 'inventory') ? cu_sum_capacity_from_inventory($pdo, $uid, $resDefs, $keys) : 0.0;
 
-    $capacities[$capName] = (float)($b + $a + $r + $ani + $inv);
-    $parts[$capName]      = [
-      'buildings'=>(float)$b,
-      'addon'    =>(float)$a,
-      'research' =>(float)$r,
-      'animals'  =>(float)$ani,      // NY
-      'inventory'=>(float)$inv,      // NY
-    ];
+  $capacities[$capName] = (float)($b + $a + $r + $ani + $inv); // <- inkluder dyr + inventory
+  $parts[$capName]      = [
+    'buildings'=>(float)$b,
+    'addon'    =>(float)$a,
+    'research' =>(float)$r,
+    'animals'  =>(float)$ani,      // NY
+    'inventory'=>(float)$inv,      // NY
+  ];
 
-    // Liste per item til hover (name + amount)
-    $listB = cu_table_exists($pdo, 'buildings')
-          ? cu_list_capacity_from_table($pdo, $uid, $bldDefs, 'buildings', 'bld_id', 'level', $keys, 'cu_def_name') : [];
-    $listA = cu_table_exists($pdo, 'addon')
-          ? cu_list_capacity_from_table($pdo, $uid, $addDefs, 'addon', 'add_id', 'level', $keys, 'cu_def_name') : [];
-    $listR = cu_table_exists($pdo, 'user_research')
-          ? cu_list_capacity_from_research($pdo, $uid, $rsdDefs, $keys, 'cu_def_name') : [];
+  // Lister til hover
+  $listB = cu_table_exists($pdo, 'buildings')
+        ? cu_list_capacity_from_table($pdo, $uid, $bldDefs, 'buildings', 'bld_id', 'level', $keys, 'cu_def_name') : [];
+  $listA = cu_table_exists($pdo, 'addon')
+        ? cu_list_capacity_from_table($pdo, $uid, $addDefs, 'addon', 'add_id', 'level', $keys, 'cu_def_name') : [];
+  $listR = cu_table_exists($pdo, 'user_research')
+        ? cu_list_capacity_from_research($pdo, $uid, $rsdDefs, $keys, 'cu_def_name') : [];
 
-    // NYE lister
-    $listAni = cu_table_exists($pdo, 'animals')
-          ? cu_list_capacity_from_animals($pdo, $uid, $aniDefs, $keys, 'cu_def_name') : [];
-    $listInv = cu_table_exists($pdo, 'inventory')
-          ? cu_list_capacity_from_inventory($pdo, $uid, $resDefs, $keys, 'cu_def_name') : [];
+  $listAni = cu_table_exists($pdo, 'animals')
+        ? cu_list_capacity_from_animals($pdo, $uid, $aniDefs, $keys, 'cu_def_name') : [];
+  $listInv = cu_table_exists($pdo, 'inventory')
+        ? cu_list_capacity_from_inventory($pdo, $uid, $resDefs, $keys, 'cu_def_name') : [];
 
-    $partsList[$capName] = [
-      'buildings' => $listB,
-      'addon'     => $listA,
-      'research'  => $listR,
-      'animals'   => $listAni,  // NY
-      'inventory' => $listInv,  // NY
-    ];
-  }
+  $partsList[$capName] = [
+    'buildings' => $listB,
+    'addon'     => $listA,
+    'research'  => $listR,
+    'animals'   => $listAni,
+    'inventory' => $listInv,
+  ];
+}
 
   // Efter vi har alle enkeltdels-kapaciteter, lav aggregerede totals for heat/power
   $capacities['heatCapacity']  = (float)(

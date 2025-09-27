@@ -140,6 +140,7 @@ function load_all_defs(): array {
     'load_research_xml',
     'load_recipes_xml',
     'load_addons_xml',
+    'load_animals_xml', // NY: animals
   ];
   foreach ($requiredFns as $fn) {
     if (!function_exists($fn)) {
@@ -148,10 +149,11 @@ function load_all_defs(): array {
   }
 
   // 1) config + dirs
-  $cfg      = call_user_func('load_config_ini');
-  $xmlDir   = call_user_func('resolve_dir', (string)($cfg['dirs']['xml_dir']  ?? ''), 'data/xml');
+  $cfg    = call_user_func('load_config_ini');
+  $xmlDir = call_user_func('resolve_dir', (string)($cfg['dirs']['xml_dir'] ?? ''), 'data/xml');
 
-  $defs = ['res'=>[], 'bld'=>[], 'rsd'=>[], 'rcp'=>[], 'add'=>[]];
+  // 2) scan xml
+  $defs = ['res'=>[], 'bld'=>[], 'rsd'=>[], 'rcp'=>[], 'add'=>[], 'ani'=>[]]; // NY: 'ani'=>[]
 
   $rii = new RecursiveIteratorIterator(
     new RecursiveDirectoryIterator($xmlDir, FilesystemIterator::SKIP_DOTS)
@@ -179,6 +181,9 @@ function load_all_defs(): array {
     }
     if ($xml->xpath('//addon')) {
       foreach (call_user_func('load_addons_xml', $path) as $id=>$obj) $defs['add'][$id] = $obj;
+    }
+    if ($xml->xpath('//animal')) {
+      foreach (call_user_func('load_animals_xml', $path) as $id=>$obj) $defs['ani'][$id] = $obj; // NY
     }
   }
   return $defs;

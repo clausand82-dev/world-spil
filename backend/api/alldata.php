@@ -398,7 +398,7 @@ if (WS_RUN_MODE === 'run') {
 
         $owned_add=[]; $stmt=$pdo->prepare("SELECT add_id,level FROM addon WHERE user_id=?"); $stmt->execute([$uid]); foreach($stmt as $r)$owned_add[$r['add_id']]=$r;
          $owned_rsd=[]; $stmt=$pdo->prepare("SELECT rsd_id,level FROM research WHERE user_id=?"); $stmt->execute([$uid]); foreach($stmt as $r)$owned_rsd[$r['rsd_id']]=$r;
-         $owned_ani=[]; $stmt=$pdo->prepare("SELECT ani_id, quantity FROM animals WHERE user_id=?"); $stmt->execute([$uid]); foreach($stmt as $r){ $owned_ani[$r['ani_id']] = ['quantity'=>(int)[$r['quantity'] ?? 0]]; 
+         $owned_ani=[]; $stmt=$pdo->prepare("SELECT ani_id, quantity FROM animals WHERE user_id=?"); $stmt->execute([$uid]); foreach($stmt as $r){ $owned_ani[$r['ani_id']] = ['quantity'=>(int)($r['quantity'] ?? 0)]; 
           }
 
             // Lige før I returnerer payload, efter stateMin er kendt og apply_passive_yields_for_user er kaldt:
