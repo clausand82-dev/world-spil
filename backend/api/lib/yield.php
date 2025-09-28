@@ -12,11 +12,7 @@ declare(strict_types=1);
  * Kapaciteter:
  * - Foretrækker caps fra state.cap.solid.total / state.cap.liquid.total, hvis de findes
  * - Ellers users-tabellen (solid_cap/liquid_cap aliaser)
- * - Ellers fallback: sum af ejede defs' stats (solid_cap/liquid_cap)
- *
- * Afhængigheder:
- * - backend/api/actions/buffs.php (apply_yield_buffs_assoc, collect_active_buffs)
- * - backend/api/lib/event_log.php   (log_yield_paid, log_yield_lost)
+ * - Ellers fallback: sum af ejede defs' stats (bld/add/rsd/ani) + inventory-baseret kapacitet (res.*)
  */
 
 /* ========================= unitSpace / buckets / usage ========================= */
@@ -47,145 +43,17 @@ if (!function_exists('yield__unit_space_of_res')) {
   }
 }
 
-/** Bucket: unit 'l' ⇒ liquid, ellers solid */
+/** Bucket: ml/cl/dl/l/liter/litre ⇒ liquid, ellers solid */
 if (!function_exists('yield__bucket_of_res')) {
   function yield__bucket_of_res(string $resId, array $defs): string {
     $key  = preg_replace('/^res\./', '', $resId);
     $unit = strtolower((string)($defs['res'][$key]['unit'] ?? ''));
-    return ($unit === 'l') ? 'liquid' : 'solid';
+    if (preg_match('/^(?:ml|cl|dl|l|liter|litre)$/', $unit)) return 'liquid';
+    return 'solid';
   }
 }
 
-/** Nuværende forbrug af space (amount * unitSpace) pr. bucket fra inventory */
-if (!function_exists('yield__compute_bucket_usage')) {
-  function yield__compute_bucket_usage(PDO $db, int $userId, array $defs): array {
-    $st = $db->prepare("SELECT res_id, amount FROM inventory WHERE user_id = ?");
-    $st->execute([$userId]);
-    $used = ['solid' => 0.0, 'liquid' => 0.0];
-    foreach ($st->fetchAll(PDO::FETCH_ASSOC) as $r) {
-      $rid = (string)$r['res_id'];
-      $amt = (float)$r['amount'];
-      if ($amt <= 0) continue;
-      $bucket       = yield__bucket_of_res($rid, $defs);
-      $spacePerUnit = yield__unit_space_of_res($defs, $rid);
-      $used[$bucket] += $amt * max(0.0, $spacePerUnit);
-    }
-    return $used;
-  }
-}
-
-/**
- * Læs brugerens kapaciteter (space) for solid/liquid i prioriteret rækkefølge:
- * 1) state.cap.solid.total / state.cap.liquid.total (hvis angivet)
- * 2) users-kolonner (solid_cap/liquid_cap aliaser)
- * 3) Fallback: summer stats fra ejede defs (solid_cap/liquid_cap)
- */
-if (!function_exists('yield__read_user_caps')) {
-  function yield__read_user_caps(PDO $db, int $userId, array $defs, array $state): array {
-    // 1) From state.cap.*
-    $sCap = $state['cap']['solid']['total']  ?? $state['cap']['solid']['max']  ?? null;
-    $lCap = $state['cap']['liquid']['total'] ?? $state['cap']['liquid']['max'] ?? null;
-    if (is_numeric($sCap) || is_numeric($lCap)) {
-      return [
-        'solid'  => max(0.0, (float)($sCap ?? 0)),
-        'liquid' => max(0.0, (float)($lCap ?? 0)),
-      ];
-    }
-
-    // 2) users-tabellen
-    $cols = $db->query("SHOW COLUMNS FROM users")->fetchAll(PDO::FETCH_COLUMN, 0);
-    $has  = fn(string $c) => in_array($c, $cols, true);
-
-    $candSolid  = array_values(array_filter(['solid_cap','cap_solid','inv_cap_solid'], $has));
-    $candLiquid = array_values(array_filter(['liquid_cap','cap_liquid','inv_cap_liquid'], $has));
-    if ($candSolid && $candLiquid) {
-      $sql = "SELECT {$candSolid[0]} AS solid_cap, {$candLiquid[0]} AS liquid_cap FROM users WHERE user_id = ? LIMIT 1";
-      $st  = $db->prepare($sql);
-      $st->execute([$userId]);
-      if ($row = $st->fetch(PDO::FETCH_ASSOC)) {
-        return [
-          'solid'  => max(0.0, (float)($row['solid_cap']  ?? 0)),
-          'liquid' => max(0.0, (float)($row['liquid_cap'] ?? 0)),
-        ];
-      }
-    }
-
-    // 3) Fallback: summer fra ejede definitions
-    $acc = ['solid'=>0.0,'liquid'=>0.0];
-    foreach (['bld','add','rsd','ani'] as $bucket) {
-      foreach ((array)($state[$bucket] ?? []) as $ctxId => $_row) {
-        $defKey = preg_replace('~^(?:bld\.|add\.|rsd\.|ani\.)~', '', (string)$ctxId);
-        $def    = $defs[$bucket][$defKey] ?? null;
-        if (!$def) continue;
-        $stats = (array)($def['stats'] ?? []);
-        $acc['solid']  += (float)($stats['solid_cap']  ?? $stats['cap_solid']  ?? 0);
-        $acc['liquid'] += (float)($stats['liquid_cap'] ?? $stats['cap_liquid'] ?? 0);
-      }
-    }
-    return $acc;
-  }
-}
-
-/**
- * Kapacitetsklip i "space": delvis kreditering pr. ressource.
- * - usage opdateres i space (ikke i amount)
- * - returnerer [creditedAssoc, lostAssoc]
- */
-if (!function_exists('yield__apply_caps_to_assoc')) {
-  function yield__apply_caps_to_assoc(array $assoc, array &$usage, array $caps, array $defs): array {
-    $credited  = [];
-    $lost      = [];
-    $perBucket = ['solid'=>[], 'liquid'=>[]];
-
-    foreach ($assoc as $rid => $amt) {
-      $bucket = yield__bucket_of_res($rid, $defs);
-      $perBucket[$bucket][$rid] = ($perBucket[$bucket][$rid] ?? 0.0) + (float)$amt;
-    }
-
-    foreach (['solid','liquid'] as $b) {
-      if (empty($perBucket[$b])) continue;
-      $capTotal  = max(0.0, (float)($caps[$b]  ?? 0));
-      $usedSpace = max(0.0, (float)($usage[$b] ?? 0));
-      $freeSpace = max(0.0, $capTotal - $usedSpace);
-
-      foreach ($perBucket[$b] as $rid => $amt) {
-        $amt = (float)$amt; if ($amt <= 0) continue;
-
-        $spacePerUnit = yield__unit_space_of_res($defs, $rid);
-        if ($spacePerUnit <= 0.0) {
-          // Fylder ikke plads: krediter alt
-          $credited[$rid] = ($credited[$rid] ?? 0.0) + $amt;
-          continue;
-        }
-
-        $needSpace = $amt * $spacePerUnit;
-        if ($freeSpace <= 0.0) {
-          $lost[$rid] = ($lost[$rid] ?? 0.0) + $amt;
-          continue;
-        }
-
-        $takeSpace = min($needSpace, $freeSpace);
-        $takeAmt   = max(0.0, min($amt, $takeSpace / $spacePerUnit));
-
-        if ($takeAmt > 0) {
-          $credited[$rid] = ($credited[$rid] ?? 0.0) + $takeAmt;
-          $usedSpace     += $takeAmt * $spacePerUnit;
-          $freeSpace     -= $takeAmt * $spacePerUnit;
-          $usage[$b]      = $usedSpace;
-        }
-
-        $remAmt = $amt - $takeAmt;
-        if ($remAmt > 0) {
-          $lost[$rid] = ($lost[$rid] ?? 0.0) + $remAmt;
-        }
-      }
-    }
-
-    return [$credited, $lost];
-  }
-}
-
-/* ========================= DB / config / xml helpers ========================= */
+/* ========================= Fælles helpers (DB/defs/state) ========================= */
 
 if (!function_exists('yield__root_backend')) {
   function yield__root_backend(): string {
@@ -194,7 +62,6 @@ if (!function_exists('yield__root_backend')) {
     return $backend ?: (__DIR__ . '/../../');
   }
 }
-
 if (!function_exists('yield__load_config_ini')) {
   function yield__load_config_ini(): array {
     $path = yield__root_backend() . '/data/config/config.ini';
@@ -203,7 +70,6 @@ if (!function_exists('yield__load_config_ini')) {
     return is_array($cfg) ? $cfg : [];
   }
 }
-
 if (!function_exists('yield__xml_dir')) {
   function yield__xml_dir(): string {
     $cfg = yield__load_config_ini();
@@ -236,7 +102,6 @@ if (!function_exists('yield__db')) {
     ]);
   }
 }
-
 if (!function_exists('yield__db_has_columns')) {
   function yield__db_has_columns(PDO $db, string $table, array $cols): bool {
     foreach ($cols as $c) {
@@ -245,6 +110,295 @@ if (!function_exists('yield__db_has_columns')) {
       if (!$st->fetch()) return false;
     }
     return true;
+  }
+}
+
+/** Hvis defs mangler (eller mangler grene), så load dem fra XML og merge */
+if (!function_exists('yield__ensure_defs')) {
+  function yield__ensure_defs(?array $defs): array {
+    $need = ['res','bld','add','rsd','ani'];
+    $haveAll = is_array($defs);
+    if ($haveAll) {
+      foreach ($need as $k) if (!array_key_exists($k, $defs)) { $haveAll = false; break; }
+    }
+    if ($haveAll) return $defs;
+
+    if (!function_exists('load_all_defs')) {
+      $alldata = yield__root_backend() . '/api/alldata.php';
+      if (is_file($alldata)) require_once $alldata;
+    }
+    if (function_exists('load_all_defs')) {
+      $loaded = load_all_defs();
+      return is_array($defs) ? array_replace_recursive($loaded, $defs) : $loaded;
+    }
+    return $defs ?? [];
+  }
+}
+
+/** Hvis state ikke gives, byg et minimalt state så entitets-yields kan køre */
+if (!function_exists('yield__build_min_state')) {
+  function yield__build_min_state(PDO $db, int $userId): array {
+    $state = ['bld'=>[], 'add'=>[], 'rsd'=>[], 'ani'=>[]];
+
+    if (yield__db_has_columns($db, 'buildings', ['bld_id','user_id'])) {
+      $st=$db->prepare("SELECT bld_id FROM buildings WHERE user_id=?"); $st->execute([$userId]);
+      foreach ($st->fetchAll(PDO::FETCH_COLUMN, 0) as $id) {
+        $state['bld'][(string)$id] = ['durability_pct'=>100];
+      }
+    }
+    if (yield__db_has_columns($db, 'addon', ['add_id','user_id'])) {
+      $st=$db->prepare("SELECT add_id FROM addon WHERE user_id=?"); $st->execute([$userId]);
+      foreach ($st->fetchAll(PDO::FETCH_COLUMN, 0) as $id) $state['add'][(string)$id] = 1;
+    }
+    // Fuldførte research (BRUG user_research)
+    if (yield__db_has_columns($db, 'research', ['rsd_id','user_id'])) {
+      $st=$db->prepare("SELECT rsd_id FROM research WHERE user_id=?");
+      $st->execute([$userId]);
+      foreach ($st->fetchAll(PDO::FETCH_COLUMN, 0) as $rid) {
+        $plain = preg_replace('~^rsd\.~','', (string)$rid);
+        $state['rsd'][$plain] = 1;
+      }
+    }
+    // Dyr
+    if (yield__db_has_columns($db, 'animals', ['ani_id','quantity','user_id'])) {
+      $st=$db->prepare("SELECT ani_id, quantity FROM animals WHERE user_id=?");
+      $st->execute([$userId]);
+      foreach ($st->fetchAll(PDO::FETCH_ASSOC) as $r) {
+        $plain = preg_replace('~^ani\.~','', (string)$r['ani_id']);
+        $state['ani'][$plain] = ['quantity'=>(float)($r['quantity'] ?? 0)];
+      }
+    }
+
+    return $state;
+  }
+}
+
+/* ========================= Usage og Caps ========================= */
+
+if (!function_exists('yield__compute_bucket_usage')) {
+  function yield__compute_bucket_usage(PDO $db, int $userId, array $defs): array {
+    $st = $db->prepare("SELECT res_id, amount FROM inventory WHERE user_id = ?");
+    $st->execute([$userId]);
+    $used = ['solid' => 0.0, 'liquid' => 0.0];
+    foreach ($st->fetchAll(PDO::FETCH_ASSOC) as $r) {
+      $rid = (string)$r['res_id'];
+      $amt = (float)$r['amount'];
+      if ($amt <= 0) continue;
+      $bucket       = yield__bucket_of_res($rid, $defs);
+      $spacePerUnit = yield__unit_space_of_res($defs, $rid);
+      $used[$bucket] += $amt * max(0.0, $spacePerUnit);
+    }
+    return $used;
+  }
+}
+
+/**
+ * Læs brugerens kapaciteter for solid/liquid:
+ * 1) state.cap.* hvis angivet
+ * 2) users-kolonner
+ * 3) Fallback: bld/add/rsd/ani + inventory (res.*) + base fra config.ini
+ */
+if (!function_exists('yield__read_user_caps')) {
+  function yield__read_user_caps(PDO $db, int $userId, array $defs, array $state): array {
+    // 1) From state.cap.*
+    $sCap = $state['cap']['solid']['total']  ?? $state['cap']['solid']['max']  ?? null;
+    $lCap = $state['cap']['liquid']['total'] ?? $state['cap']['liquid']['max'] ?? null;
+    if (is_numeric($sCap) || is_numeric($lCap)) {
+      return [
+        'solid'  => max(0.0, (float)($sCap ?? 0)),
+        'liquid' => max(0.0, (float)($lCap ?? 0)),
+      ];
+    }
+
+    // 2) users-tabellen
+    $cols = $db->query("SHOW COLUMNS FROM users")->fetchAll(PDO::FETCH_COLUMN, 0);
+    $has  = fn(string $c) => in_array($c, $cols, true);
+
+    $candSolid  = array_values(array_filter(['solid_cap','cap_solid','inv_cap_solid'], $has));
+    $candLiquid = array_values(array_filter(['liquid_cap','cap_liquid','inv_cap_liquid'], $has));
+    if ($candSolid && $candLiquid) {
+      $sql = "SELECT {$candSolid[0]} AS solid_cap, {$candLiquid[0]} AS liquid_cap FROM users WHERE user_id = ? LIMIT 1";
+      $st  = $db->prepare($sql);
+      $st->execute([$userId]);
+      if ($row = $st->fetch(PDO::FETCH_ASSOC)) {
+        return [
+          'solid'  => max(0.0, (float)($row['solid_cap']  ?? 0)),
+          'liquid' => max(0.0, (float)($row['liquid_cap'] ?? 0)),
+        ];
+      }
+    }
+
+    // 3) Fallback: summer fra defs + inventory
+    $acc = ['solid'=>0.0,'liquid'=>0.0];
+
+    $readStat = function($node, array $keys): float {
+      if (!$node) return 0.0;
+      if (is_array($node)) {
+        $stats = $node['stats'] ?? null;
+        if (is_array($stats)) {
+          foreach ($keys as $k) if (array_key_exists($k, $stats)) return (float)$stats[$k];
+        } elseif (is_string($stats)) {
+          $s = str_replace(["\xC2\xA0", "\xEF\xBC\x9B", "\xEF\xBC\x8C", "\xE2\x80\x8B"], [' ', ';', ',', ''], $stats);
+          foreach (preg_split('/[;,]\s*/u', $s) as $p) {
+            foreach ($keys as $k) if (preg_match('/^\s*'.preg_quote($k,'/').'\s*=\s*([+-]?\d+(?:\.\d+)?)\s*$/u', (string)$p, $m)) return (float)$m[1];
+          }
+        }
+      }
+      return 0.0;
+    };
+
+    // Buildings
+    if (!empty($defs['bld']) && yield__db_has_columns($db, 'buildings', ['bld_id','level','user_id'])) {
+      $st = $db->prepare("SELECT bld_id AS id, level AS lvl FROM buildings WHERE user_id=?");
+      $st->execute([$userId]);
+      while ($row = $st->fetch(PDO::FETCH_ASSOC)) {
+        $id = (string)$row['id'];
+        $lvl= (int)$row['lvl'];
+        $plain = preg_replace('/^bld\./','', $id);
+        $node = $defs['bld'][$plain] ?? $defs['bld']["{$plain}.l{$lvl}"] ?? null;
+        if (!$node) continue;
+        $acc['solid']  += (float)$readStat($node, ['storageSolidCap','storage_solid_cap','solidCap']);
+        $acc['liquid'] += (float)$readStat($node, ['storageLiquidCap','storage_liquid_cap','liquidCap']);
+      }
+    }
+    // Addons
+    if (!empty($defs['add']) && yield__db_has_columns($db, 'addon', ['add_id','level','user_id'])) {
+      $st = $db->prepare("SELECT add_id AS id, level AS lvl FROM addon WHERE user_id=?");
+      $st->execute([$userId]);
+      while ($row = $st->fetch(PDO::FETCH_ASSOC)) {
+        $id = (string)$row['id'];
+        $lvl= (int)$row['lvl'];
+        $plain = preg_replace('/^add\./','', $id);
+        $node = $defs['add'][$plain] ?? $defs['add']["{$plain}.l{$lvl}"] ?? null;
+        if (!$node) continue;
+        $acc['solid']  += (float)$readStat($node, ['storageSolidCap','storage_solid_cap','solidCap']);
+        $acc['liquid'] += (float)$readStat($node, ['storageLiquidCap','storage_liquid_cap','liquidCap']);
+      }
+    }
+    // Research (BRUG user_research, completed=1)
+    if (!empty($defs['rsd']) && yield__db_has_columns($db, 'research', ['rsd_id','user_id'])) {
+      $st = $db->prepare("SELECT rsd_id FROM research WHERE user_id=?");
+      $st->execute([$userId]);
+      while ($row = $st->fetch(PDO::FETCH_ASSOC)) {
+        $rid = preg_replace('/^rsd\./','', (string)$row['rsd_id']);
+        $node = $defs['rsd'][$rid] ?? null;
+        if (!$node) continue;
+        $acc['solid']  += (float)$readStat($node, ['storageSolidCap','storage_solid_cap','solidCap']);
+        $acc['liquid'] += (float)$readStat($node, ['storageLiquidCap','storage_liquid_cap','liquidCap']);
+      }
+    }
+    // Animals (sjældent bærer storage, men understøttes)
+    if (!empty($defs['ani']) && yield__db_has_columns($db, 'animals', ['ani_id','quantity','user_id'])) {
+      $st = $db->prepare("SELECT ani_id, quantity FROM animals WHERE user_id=?");
+      $st->execute([$userId]);
+      while ($row = $st->fetch(PDO::FETCH_ASSOC)) {
+        $aid = preg_replace('/^ani\./','', (string)$row['ani_id']);
+        $qty = (float)($row['quantity'] ?? 0);
+        if ($qty <= 0) continue;
+        $node = $defs['ani'][$aid] ?? null;
+        if (!$node) continue;
+        $acc['solid']  += $qty * (float)$readStat($node, ['storageSolidCap','storage_solid_cap','solidCap']);
+        $acc['liquid'] += $qty * (float)$readStat($node, ['storageLiquidCap','storage_liquid_cap','liquidCap']);
+      }
+    }
+    // Inventory (res.* kan give kapacitet)
+    if (!empty($defs['res']) && yield__db_has_columns($db, 'inventory', ['res_id','amount','user_id'])) {
+      $st = $db->prepare("SELECT res_id, amount FROM inventory WHERE user_id=?");
+      $st->execute([$userId]);
+      while ($row = $st->fetch(PDO::FETCH_ASSOC)) {
+        $rid = preg_replace('/^res\./','', (string)$row['res_id']);
+        $amt = (float)($row['amount'] ?? 0);
+        if ($amt <= 0) continue;
+        $node = $defs['res'][$rid] ?? null; if (!$node) continue;
+        $capSolidPer  = (float)$readStat($node, ['storageSolidCap','storage_solid_cap','solidCap']);
+        $capLiquidPer = (float)$readStat($node, ['storageLiquidCap','storage_liquid_cap','liquidCap']);
+        if ($capSolidPer  !== 0.0) $acc['solid']  += $amt * $capSolidPer;
+        if ($capLiquidPer !== 0.0) $acc['liquid'] += $amt * $capLiquidPer;
+      }
+    }
+    // NYT: læg base-cap fra config.ini oveni (samme som UI/summary gør)
+    $cfg = yield__load_config_ini();
+    $solidBase  = (float)($cfg['start_limitations_cap']['storageSolidCap']  ?? $cfg['start_limitations_cap']['storageSolidBaseCap']  ?? 0);
+    $liquidBase = (float)($cfg['start_limitations_cap']['storageLiquidCap'] ?? $cfg['start_limitations_cap']['storageLiquidBaseCap'] ?? 0);
+    $acc['solid']  += max(0.0, $solidBase);
+    $acc['liquid'] += max(0.0, $liquidBase);
+
+    // Clamp og retur
+    $acc['solid']  = max(0.0, (float)$acc['solid']);
+    $acc['liquid'] = max(0.0, (float)$acc['liquid']);
+    return $acc;
+  }
+}
+
+/* ========================= Kapacitetsklip ========================= */
+
+if (!function_exists('yield__apply_caps_to_assoc')) {
+  function yield__apply_caps_to_assoc(array $assoc, array &$usage, array $caps, array $defs): array {
+    $credited  = [];
+    $lost      = [];
+    $perBucket = ['solid'=>[], 'liquid'=>[]];
+
+    foreach ($assoc as $rid => $amt) {
+      $bucket = yield__bucket_of_res($rid, $defs);
+      $perBucket[$bucket][$rid] = ($perBucket[$bucket][$rid] ?? 0.0) + (float)$amt;
+    }
+
+    foreach (['solid','liquid'] as $b) {
+      if (empty($perBucket[$b])) continue;
+      $capTotal  = max(0.0, (float)($caps[$b]  ?? 0));
+      $usedSpace = max(0.0, (float)($usage[$b] ?? 0));
+      $freeSpace = max(0.0, $capTotal - $usedSpace);
+
+      foreach ($perBucket[$b] as $rid => $amt) {
+        $amt = (float)$amt; if ($amt <= 0) continue;
+
+        $spacePerUnit = yield__unit_space_of_res($defs, $rid);
+        if ($spacePerUnit <= 0.0) {
+          $credited[$rid] = ($credited[$rid] ?? 0.0) + $amt;
+          continue;
+        }
+
+        $needSpace = $amt * $spacePerUnit;
+        if ($freeSpace <= 0.0) {
+          $lost[$rid] = ($lost[$rid] ?? 0.0) + $amt;
+          continue;
+        }
+
+        $takeSpace = min($needSpace, $freeSpace);
+        $takeAmt   = max(0.0, min($amt, $takeSpace / $spacePerUnit));
+
+        if ($takeAmt > 0) {
+          $credited[$rid] = ($credited[$rid] ?? 0.0) + $takeAmt;
+          $usedSpace     += $takeAmt * $spacePerUnit;
+          $freeSpace     -= $takeAmt * $spacePerUnit;
+          $usage[$b]      = $usedSpace;
+        }
+
+        $remAmt = $amt - $takeAmt;
+        if ($remAmt > 0) {
+          $lost[$rid] = ($lost[$rid] ?? 0.0) + $remAmt;
+        }
+      }
+    }
+
+    return [$credited, $lost];
+  }
+}
+
+/* ========================= Debug logging til user_event_log ========================= */
+
+if (!function_exists('yield__log_debug_caps')) {
+  function yield__log_debug_caps(PDO $db, int $userId, array $caps, array $usage, string $tag=''): void {
+    try {
+      $payload = json_encode([
+        'tag'   => $tag,
+        'caps'  => $caps,
+        'usage' => $usage,
+      ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+      $sql = "INSERT INTO user_event_log (user_id, event_type, subject_scope, subject_key, payload_json, event_time)
+              VALUES (?, 'yield_debug', 'sys', ?, ?, UTC_TIMESTAMP())";
+      $db->prepare($sql)->execute([$userId, $tag, $payload]);
+    } catch (Throwable $e) { /* ignore */ }
   }
 }
 
@@ -273,7 +427,6 @@ if (!function_exists('yield__parse_stage_bonus_rules_from_xml')) {
     return $out;
   }
 }
-
 if (!function_exists('yield__load_all_stage_bonus_rules')) {
   function yield__load_all_stage_bonus_rules(): array {
     $dir   = yield__xml_dir();
@@ -355,7 +508,6 @@ if (!function_exists('yield__read_period_seconds')) {
     return 3600;
   }
 }
-
 if (!function_exists('yield__extract_yields_rows')) {
   function yield__extract_yields_rows(array $def): array {
     $out = [];
@@ -373,7 +525,6 @@ if (!function_exists('yield__extract_yields_rows')) {
     return $out;
   }
 }
-
 if (!function_exists('yield__compute_ctx_id')) {
   function yield__compute_ctx_id(string $bucket, string $defKey): string {
     $pref  = ($bucket === 'bld' ? 'bld.' : ($bucket === 'add' ? 'add.' : ($bucket === 'rsd' ? 'rsd.' : ($bucket==='ani'?'ani.':''))));
@@ -381,7 +532,6 @@ if (!function_exists('yield__compute_ctx_id')) {
     return $pref . $naked;
   }
 }
-
 if (!function_exists('yield__is_owned')) {
   function yield__is_owned(string $bucket, string $ctxId, array $state): bool {
     if ($bucket === 'bld') return !empty($state['bld'][$ctxId]);
@@ -398,21 +548,19 @@ if (!function_exists('yield__is_owned')) {
     return false;
   }
 }
-
 if (!function_exists('yield__assoc_add')) {
   function yield__assoc_add(array &$dst, array $src): void {
     foreach ($src as $k => $v) $dst[$k] = ($dst[$k] ?? 0.0) + (float)$v;
   }
 }
 
-/* Buff bridges (kræver actions/buffs.php) */
+/* Buff bridges */
 if (!function_exists('yield__apply_yield_buffs_assoc')) {
   function yield__apply_yield_buffs_assoc(array $assoc, string $ctxId, array $buffs): array {
     if (!function_exists('apply_yield_buffs_assoc')) require_once __DIR__ . '/../actions/buffs.php';
     return apply_yield_buffs_assoc($assoc, $ctxId, $buffs);
   }
 }
-
 if (!function_exists('yield__collect_active_buffs')) {
   function yield__collect_active_buffs(array $defs, array $state, ?int $now = null): array {
     if (!function_exists('collect_active_buffs')) require_once __DIR__ . '/../actions/buffs.php';
@@ -422,32 +570,23 @@ if (!function_exists('yield__collect_active_buffs')) {
 
 /* ========================= Durability multiplier (buildings) ========================= */
 if (!function_exists('yield__apply_durability_multiplier')) {
-  /**
-   * Halverer yields for buildings når durability < 25%.
-   * - assoc: ['res.id' => amount_per_cycle]
-   * - ctxId: 'bld.xxx.lN' eller 'bld.xxx' (vi accepterer begge)
-   * - state: forventer state['bld'][$ctxId]['durability_pct'] hvis tilgængelig
-   * Returnerer uændret assoc hvis ikke relevant.
-   */
   function yield__apply_durability_multiplier(array $assoc, string $ctxId, array $state = []): array {
     if (empty($assoc)) return $assoc;
     $id = (string)$ctxId;
     if ($id === '' || !str_starts_with($id, 'bld.')) return $assoc;
     $row = $state['bld'][$id] ?? null;
-    // fallback: prøv uden level-del, hvis state kun har serie-nøgle
     if (!$row) {
       $series = preg_replace('~\\.l\\d+$~', '', $id);
       if ($series && isset($state['bld'][$series])) $row = $state['bld'][$series];
     }
     if (!$row) return $assoc;
-   $pct = (int)($row['durability_pct'] ?? 100);
+    $pct = (int)($row['durability_pct'] ?? 100);
     if ($pct >= 25) return $assoc;
     $out = [];
     foreach ($assoc as $rid => $amt) $out[$rid] = (float)$amt * 0.5;
     return $out;
   }
 }
-
 
 /* ========================= Event log bridges ========================= */
 
@@ -464,14 +603,12 @@ if (!function_exists('normalize_rows')) {
     return $out;
   }
 }
-
 if (!function_exists('yield__log_paid')) {
   function yield__log_paid(PDO $db, int $userId, string $itemId, array $creditedRows): void {
     require_once __DIR__ . '/event_log.php';
     log_yield_paid($db, $userId, $itemId, normalize_rows($creditedRows));
   }
 }
-
 if (!function_exists('yield__log_lost')) {
   function yield__log_lost(PDO $db, int $userId, string $itemId, array $lostRows, string $reason = ''): void {
     require_once __DIR__ . '/event_log.php';
@@ -505,14 +642,12 @@ if (!function_exists('yield__get_last_base_tick_ts')) {
     return $ts ? (string)$ts : null;
   }
 }
-
 if (!function_exists('yield__set_last_base_tick_ts_now')) {
   function yield__set_last_base_tick_ts_now(PDO $db, int $userId): void {
     $st = $db->prepare("UPDATE users SET last_base_bonus_ts_utc = UTC_TIMESTAMP() WHERE user_id = ?");
     $st->execute([$userId]);
   }
 }
-
 if (!function_exists('yield__seconds_diff')) {
   function yield__seconds_diff(PDO $db, string $fromTs): int {
     $st = $db->prepare("SELECT GREATEST(0, TIMESTAMPDIFF(SECOND, ?, UTC_TIMESTAMP()))");
@@ -528,12 +663,11 @@ if (!function_exists('yield__table_meta')) {
     return [
       'bld' => ['table' => 'buildings', 'id_col' => 'bld_id', 'extra_cols' => ['level', 'durability']],
       'add' => ['table' => 'addon',     'id_col' => 'add_id', 'extra_cols' => ['level']],
-      'rsd' => ['table' => 'research',  'id_col' => 'rsd_id', 'extra_cols' => ['level']],
+      'rsd' => ['table' => 'research',  'id_col' => 'rsd_id', 'extra_cols' => ['level']], // kun hvis du senere vil have research-yields
       'ani' => ['table' => 'animals',   'id_col' => 'ani_id', 'extra_cols' => ['quantity']],
     ];
   }
 }
-
 if (!function_exists('yield__load_owned_rows_with_progress')) {
   function yield__load_owned_rows_with_progress(PDO $db, int $userId, string $bucket): array {
     $meta        = yield__table_meta()[$bucket] ?? null;
@@ -554,7 +688,6 @@ if (!function_exists('yield__load_owned_rows_with_progress')) {
     return $rows;
   }
 }
-
 if (!function_exists('yield__update_entity_progress')) {
   function yield__update_entity_progress(PDO $db, string $bucket, int $userId, string $ctxId, int $advanceSeconds, int $addCycles): void {
     $meta = yield__table_meta()[$bucket] ?? null; if (!$meta) return;
@@ -577,7 +710,6 @@ if (!function_exists('yield__update_entity_progress')) {
     ]);
   }
 }
-
 if (!function_exists('yield__compute_and_apply_entity_yields')) {
   function yield__compute_and_apply_entity_yields(PDO $db, int $userId, array $defs, array $state, array &$usage, array $caps): array {
     $buffs         = yield__collect_active_buffs($defs, $state);
@@ -604,7 +736,6 @@ if (!function_exists('yield__compute_and_apply_entity_yields')) {
         $hasProgress = !empty($row['__has_progress']);
         $lastTs      = $hasProgress ? (string)($row['last_yield_ts_utc'] ?? '') : '';
         if ($hasProgress && $lastTs === '') {
-          // Init uden udbetaling
           yield__update_entity_progress($db, $bucket, $userId, $ctxId, 0, 0);
           continue;
         }
@@ -629,12 +760,9 @@ if (!function_exists('yield__compute_and_apply_entity_yields')) {
         }
 
         if ($assoc) {
-          // Buffs før kapacitetsklip
           $assoc = yield__apply_yield_buffs_assoc($assoc, $ctxId, $buffs);
-          // Durability-konsekvens: halver yields for bygninger ved < 25% (kræver state med durability_pct)
           $assoc = yield__apply_durability_multiplier($assoc, $ctxId, $state);
 
-          // Kapacitet (unitSpace) og logging
           [$credited, $lost] = yield__apply_caps_to_assoc($assoc, $usage, $caps, $defs);
           if (!empty($credited)) {
             yield__assoc_add($totalCredited, $credited);
@@ -645,7 +773,6 @@ if (!function_exists('yield__compute_and_apply_entity_yields')) {
           }
         }
 
-        // Forbrug præcis de krediterede cycles (også hvis alt blev lost)
         yield__update_entity_progress($db, $bucket, $userId, $ctxId, $cycles * $periodS, $cycles);
       }
     }
@@ -656,17 +783,14 @@ if (!function_exists('yield__compute_and_apply_entity_yields')) {
 
 /* ========================= Offentlig API ========================= */
 
-/**
- * Anvend alle passive yields for en bruger:
- * - Diskret base bonus (hele timer) med cap-klip og logging
- * - Entiteter (diskrete perioder) med buffs, cap-klip og logging
- * - Opdater inventory kun med krediterede mængder
- */
 if (!function_exists('apply_passive_yields_for_user')) {
   function apply_passive_yields_for_user(int $userId, ?array $defs = null, ?array $state = null): void {
     $db = yield__db();
 
-    // Første run: init base-ts og entitets-ts uden udbetaling
+    $defsSafe  = yield__ensure_defs($defs);
+    $stateSafe = $state ?? yield__build_min_state($db, $userId);
+
+    // Første run: init timestamps uden udbetaling
     $lastBase = yield__get_last_base_tick_ts($db, $userId);
     if (!$lastBase) {
       yield__set_last_base_tick_ts_now($db, $userId);
@@ -678,13 +802,14 @@ if (!function_exists('apply_passive_yields_for_user')) {
       return;
     }
 
-    // Kapaciteter og aktuelt space-forbrug
-    $defsSafe  = $defs  ?? [];
-    $stateSafe = $state ?? ['bld'=>[], 'add'=>[], 'rsd'=>[], 'ani'=>[]];
-    $caps      = yield__read_user_caps($db, $userId, $defsSafe, $stateSafe);
-    $usage     = yield__compute_bucket_usage($db, $userId, $defsSafe);
+    // Caps og usage
+    $caps  = yield__read_user_caps($db, $userId, $defsSafe, $stateSafe);
+    $usage = yield__compute_bucket_usage($db, $userId, $defsSafe);
 
-    // Base bonus — diskret pr. hele time(r)
+    // DEBUG: skriv caps/usage til log (kan fjernes når verificeret)
+    yield__log_debug_caps($db, $userId, $caps, $usage, 'pre');
+
+    // Base bonus (hele timer)
     $elapsedBase  = yield__seconds_diff($db, $lastBase);
     $creditedBase = [];
     if ($elapsedBase >= 3600) {
@@ -692,9 +817,7 @@ if (!function_exists('apply_passive_yields_for_user')) {
       $perHour = yield__compute_base_stage_bonus_per_hour($db, $userId);
       if (!empty($perHour)) {
         $want = [];
-        foreach ($perHour as $rid => $amt) {
-          $want[$rid] = (float)$amt * $cycles;
-        }
+        foreach ($perHour as $rid => $amt) $want[$rid] = (float)$amt * $cycles;
         [$credited, $lost] = yield__apply_caps_to_assoc($want, $usage, $caps, $defsSafe);
         if (!empty($credited)) {
           $creditedBase = $credited;
@@ -704,21 +827,18 @@ if (!function_exists('apply_passive_yields_for_user')) {
           yield__log_lost($db, $userId, 'base_bonus', $lost, 'Yield tabt pga. ingen plads (kapacitetsgrænse)');
         }
       }
-      // Avancer base-ts præcist med forbrugte hele timer, så der højst kommer én udbetaling pr. time
       yield__advance_base_tick_ts($db, $userId, $cycles * 3600);
     }
 
-    // Entiteter — diskret med buffs og kapacitet
-    $creditedFlow = [];
-    if ($defs !== null && $state !== null) {
-      $creditedFlow = yield__compute_and_apply_entity_yields($db, $userId, $defsSafe, $stateSafe, $usage, $caps);
-    }
+    // Entiteter
+    $creditedFlow = yield__compute_and_apply_entity_yields($db, $userId, $defsSafe, $stateSafe, $usage, $caps);
 
-    // Persistér kun krediterede mængder til inventory
+    // DEBUG: skriv caps/usage efter flows (skal være steget i usage, reduceret freeSpace)
+    yield__log_debug_caps($db, $userId, $caps, $usage, 'post');
+
+    // Persistér krediterede mængder
     $delta = $creditedBase;
-    foreach ($creditedFlow as $rid => $amt) {
-      $delta[$rid] = ($delta[$rid] ?? 0.0) + (float)$amt;
-    }
+    foreach ($creditedFlow as $rid => $amt) $delta[$rid] = ($delta[$rid] ?? 0.0) + (float)$amt;
     if (empty($delta)) return;
 
     $db->beginTransaction();

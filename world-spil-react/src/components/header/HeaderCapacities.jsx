@@ -3,22 +3,29 @@ import useHeaderSummary from '../../hooks/useHeaderSummary.js';
 import { useGameData } from '../../context/GameDataContext.jsx';
 import CapacityBar from './CapacityBar.jsx';
 
-// Hjælp: lav pænt navn ud fra defs + håndtér ".lN"-suffix
+// Hjælp: lav pænt navn ud fra defs + håndtér scope og ".lN"-suffix
 function resolveDefName(defs, branch, rawId, fallbackName) {
   const id = String(rawId || '');
-  const baseId = id.replace(/\.l\d+$/, '');
-  const lvlMatch = id.match(/\.l(\d+)$/);
+
+  // Fjern scope
+  const idNoScope = id.replace(/^(?:bld|add|rsd|ani|res)\./i, '');
+
+  // Level-suffix
+  const lvlMatch = idNoScope.match(/\.l(\d+)$/i);
   const lvl = lvlMatch ? Number(lvlMatch[1]) : null;
+  const baseId = idNoScope.replace(/\.l\d+$/i, '');
 
   const b = String(branch || '').toLowerCase();
   const bucket = (b === 'buildings' || b === 'bld') ? 'bld'
-               : (b === 'addon' || b === 'add') ? 'add'
-               : (b === 'research' || b === 'rsd') ? 'rsd'
+               : (b === 'addon'     || b === 'add') ? 'add'
+               : (b === 'research'  || b === 'rsd') ? 'rsd'
+               : (b === 'animals'   || b === 'ani') ? 'ani'
+               : (b === 'inventory' || b === 'res') ? 'res'
                : null;
 
   const def = bucket ? defs?.[bucket]?.[baseId] : null;
-  const nice = fallbackName || def?.display_name || def?.name || baseId;
-  return (lvl && lvl > 0) ? `${nice} (L${lvl})` : nice;
+  const niceCore = def?.display_name || def?.name || fallbackName || baseId;
+  return (lvl && lvl > 0) ? `${niceCore} (L${lvl})` : niceCore;
 }
 
 // Genbrug fra sidebar – men med defs-navne
@@ -46,8 +53,8 @@ function makeSourceContent(partsListForCap, defs) {
   return (
     <div style={{ maxWidth: 360 }}>
       <Section title="Bygninger" items={buildings} branch="bld" />
-      <Section title="Addons" items={addon} branch="add" />
-      <Section title="Research" items={research} branch="rsd" />
+      <Section title="Addons"    items={addon}     branch="add" />
+      <Section title="Research"  items={research}  branch="rsd" />
     </div>
   );
 }

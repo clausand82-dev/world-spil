@@ -46,7 +46,7 @@
   </building>
 
   <building id="bld.basecamp.l3" family="basecamp" type="base" lvl="3" stage="1">
-    <stats>footprint=70; provision_cap=75; heatFossilCapacity=10;</stats>
+    <stats>footprint=70; provision_cap=75; heatFossilCapacity=10</stats>
     <cost>
       <res id="res.money" amount="500" />
       <res id="res.wood" amount="100" />

@@ -4,25 +4,31 @@ import useHeaderSummary from '../../hooks/useHeaderSummary.js';
 import CapacityBar from '../header/CapacityBar.jsx';
 import CitizensBadge from './CitizensBadge.jsx';
 
-// Hjælp: lav pænt navn ud fra defs + håndtér ".lN"-suffix
+// Hjælp: lav pænt navn ud fra defs + håndtér scope og ".lN"-suffix
 function resolveDefName(defs, branch, rawId, fallbackName) {
   const id = String(rawId || '');
-  // Fjern evt. level-suffix: "tent.l2" -> "tent"
-  const baseId = id.replace(/\.l\d+$/, '');
-  const lvlMatch = id.match(/\.l(\d+)$/);
+
+  // Fjern scope først: bld.|add.|rsd.|ani.|res.
+  const idNoScope = id.replace(/^(?:bld|add|rsd|ani|res)\./i, '');
+
+  // Pil evt. level-suffix af for lookup, men udled level for visning
+  const lvlMatch = idNoScope.match(/\.l(\d+)$/i);
   const lvl = lvlMatch ? Number(lvlMatch[1]) : null;
+  const baseId = idNoScope.replace(/\.l\d+$/i, '');
 
   const b = String(branch || '').toLowerCase();
   const bucket = (b === 'buildings' || b === 'bld') ? 'bld'
-               : (b === 'addon' || b === 'add') ? 'add'
-               : (b === 'research' || b === 'rsd') ? 'rsd'
-               : (b === 'animals' || b === 'ani') ? 'ani'
+               : (b === 'addon'     || b === 'add') ? 'add'
+               : (b === 'research'  || b === 'rsd') ? 'rsd'
+               : (b === 'animals'   || b === 'ani') ? 'ani'
                : (b === 'inventory' || b === 'res') ? 'res'
                : null;
 
   const def = bucket ? defs?.[bucket]?.[baseId] : null;
-  const nice = fallbackName || def?.display_name || def?.name || baseId;
-  return (lvl && lvl > 0) ? `${nice} (L${lvl})` : nice;
+
+  // Foretræk defs.display_name/name → fallback it.name → baseId
+  const niceCore = def?.display_name || def?.name || fallbackName || baseId;
+  return (lvl && lvl > 0) ? `${niceCore} (L${lvl})` : niceCore;
 }
 
 // Sektion til hover for én kapacitets partsList (bygninger/addon/research/animals/inventory)
@@ -50,7 +56,6 @@ function makeSourceContent(partsListForCap, defs) {
     );
   };
 
-  // Ingen kilder? Returnér lille tekst (så vi ikke falder tilbage til citizens-tooltip)
   const totalCount =
     (buildings?.length || 0) +
     (addon?.length || 0) +
@@ -65,15 +70,15 @@ function makeSourceContent(partsListForCap, defs) {
   return (
     <div style={{ maxWidth: 360 }}>
       <Section title="Bygninger" branch="bld" items={buildings} />
-      <Section title="Addons" branch="add" items={addon} />
-      <Section title="Research" branch="rsd" items={research} />
-      <Section title="Animals" branch="ani" items={animals} />
+      <Section title="Addons"    branch="add" items={addon} />
+      <Section title="Research"  branch="rsd" items={research} />
+      <Section title="Animals"   branch="ani" items={animals} />
       <Section title="Inventory" branch="res" items={inventory} />
     </div>
   );
 }
 
-// Aggregat-hover for fx Heat/Power, der viser underkategoriernes kilder
+// Aggregat-hover for fx Heat/Power
 function makeAggregateContent(subLabelToPartsListMap, defs) {
   const entries = Object.entries(subLabelToPartsListMap)
     .filter(([_, pl]) => {
@@ -107,7 +112,6 @@ const PREFERRED_ORDER = [
   'housing', 'food', 'water', 'heat', 'power', 'health', 'cloth', 'medicin', 'wasteOther',
 ];
 
-// Hjælp: sorter top-level metrics med prefereret rækkefølge → derefter alfabetisk
 function sortTopLevelMetrics(metaEntries) {
   const indexOf = (id) => {
     const i = PREFERRED_ORDER.indexOf(id);
@@ -119,7 +123,6 @@ function sortTopLevelMetrics(metaEntries) {
     const ia = indexOf(idA);
     const ib = indexOf(idB);
     if (ia !== ib) return ia - ib;
-    // fallback: label alfabetisk
     const la = (mA.label || idA).toLowerCase();
     const lb = (mB.label || idB).toLowerCase();
     return la.localeCompare(lb);
@@ -127,22 +130,19 @@ function sortTopLevelMetrics(metaEntries) {
 }
 
 export default function SidebarCapacities() {
-  // 1) Kald alle hooks UDEN betingelser
   const { data, err, loading } = useHeaderSummary();
   const { data: gameData } = useGameData();
   const defs = gameData?.defs || {};
 
-  // 2) Afled null-safe værdier (så hooks kan køre samme antal på alle renders)
   const capacities = data?.capacities ?? {};
   const usages = data?.usages ?? {};
   const partsList = data?.partsList ?? {};
   const metricsMeta = data?.metricsMeta ?? null;
   const stageCurrent = Number(data?.stage?.current ?? data?.state?.user?.currentstage ?? 0);
 
-  // 3) useMemo hooks – KALDES ALTID (returnerer bare tomt/null hvis data ikke er klar)
   const fallbackRows = useMemo(() => {
     if (metricsMeta) return null;
-    if (!data) return null; // intet at vise i fallback uden data
+    if (!data) return null;
 
     const rows = [
       { id: 'housing',    label: 'Housing',   used: usages.useHousing?.total,   cap: capacities.housingCapacity,        capField: 'housingCapacity' },
@@ -192,36 +192,30 @@ export default function SidebarCapacities() {
   const dynamicRows = useMemo(() => {
     if (!metricsMeta) return null;
 
-    // Build map for let opslag
     const metaMap = metricsMeta;
     const entries = Object.entries(metaMap);
 
-    // Filtrér til kun unlocked metrics og top-level (uden parent)
     const topUnlocked = entries.filter(([id, m]) => {
       const unlockAt = Number(m?.stage?.unlock_at ?? 1);
       const isUnlocked = stageCurrent >= unlockAt;
       const isTop = !m?.parent;
-      // Kun metrics med mindst én af usageField/capacityField (ellers kan vi ikke vise baren meningsfuldt)
       const hasAnyField = Boolean((m?.usageField || '').length || (m?.capacityField || '').length);
       return isUnlocked && isTop && hasAnyField;
     });
 
-    // Sortér pænt
     const sortedTop = sortTopLevelMetrics(topUnlocked);
 
-    // Funktion: Byg hover content for én metric (med evt. subs)
     const hoverForMetric = (id, m) => {
       const capField = m?.capacityField || '';
       const subs = Array.isArray(m?.subs) ? m.subs : [];
 
-      // Hvis der er subs, vis aggregat – men tag kun med de subs der er unlocked
       if (subs.length > 0) {
         const map = {};
         subs.forEach(subId => {
           const subMeta = metaMap[subId];
           if (!subMeta) return;
           const unlockAt = Number(subMeta?.stage?.unlock_at ?? 1);
-          if (stageCurrent < unlockAt) return; // skjul låste subs
+          if (stageCurrent < unlockAt) return;
           const subLabel = subMeta?.label || subId;
           const subCapField = subMeta?.capacityField || '';
           if (!subCapField) return;
@@ -230,16 +224,12 @@ export default function SidebarCapacities() {
         return makeAggregateContent(map, defs);
       }
 
-      // Ellers vis direkte partsList for capField
       if (capField) {
         return makeSourceContent(partsList[capField], defs);
       }
-
-      // Ingen capField? så ingen kapacitetskilder – intet hover
       return null;
     };
 
-    // Byg rækker
     const rows = sortedTop.map(([id, m]) => {
       const label = m?.label || id;
       const uKey = m?.usageField || '';
@@ -248,27 +238,15 @@ export default function SidebarCapacities() {
       const cap = cKey ? Number(capacities[cKey] || 0) : 0;
       const hoverContent = hoverForMetric(id, m);
 
-      return {
-        key: id,
-        label,
-        used,
-        cap,
-        hoverContent,
-      };
+      return { key: id, label, used, cap, hoverContent };
     });
 
-    // Filtrér metrics væk, hvor både used og cap er 0 – behold dog dem med subs (da hover kan være nyttig)
-    const filtered = rows.filter(r => {
-      if (r.hoverContent) return true;
-      return (r.used > 0) || (r.cap > 0);
-    });
-
+    const filtered = rows.filter(r => r.hoverContent || r.used > 0 || r.cap > 0);
     return filtered;
   }, [metricsMeta, stageCurrent, usages, capacities, partsList, defs]);
 
   const rows = dynamicRows || fallbackRows || [];
 
-  // 4) Først her må vi lave early returns (efter alle hooks er kaldt)
   if (err) return <div style={{ color: 'red' }}>Fejl: {String(err)}</div>;
   if (loading || !data) return null;
 
@@ -276,7 +254,6 @@ export default function SidebarCapacities() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-      <CitizensBadge citizens={citizens} />
       {rows.map((r) => (
         <CapacityBar
           key={r.key}
