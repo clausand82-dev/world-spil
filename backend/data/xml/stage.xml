@@ -12,5 +12,6 @@
     <requires research="rsd.stage.l2"/>
     <bonus key="field"  res="res.wheat,res.maize"/>
     <bonus key="mining" res="res.stone"/>
+    <bonus key="forest" res="res.wood"/>
   </stage>
 </stages>

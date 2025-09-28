@@ -61,7 +61,7 @@ function metrics_registry(): array {
       'capacityStatKeys' => ['waterCapacity'],
       'usageStatKeys' => ['waterUsage'],
       'sources' => ['bld'=>true,'add'=>true,'rsd'=>true,'ani'=>true,'res'=>true],
-      'stage' => ['unlock_at'=>1,'visible_at'=>1],
+      'stage' => ['unlock_at'=>2,'visible_at'=>2],
       'happiness' => ['enabled'=>true, 'weight_key'=>'waterHappinessWeight'],
       'popularity'=> ['enabled'=>true, 'weight_key'=>'waterPopularityWeight'],
       'subs' => [],
@@ -263,6 +263,25 @@ function metrics_registry(): array {
         // ['citizenField'=>'wastePlastic', 'unit'=>'per_hour'],
       ],
     ],
+
+    'social' => [
+      'label' => 'Social',
+      'usageField' => 'useSocial',
+      'capacityField' => 'socialCapacity',
+      'capacityStatKeys' => ['socialCapacity'],
+      'usageStatKeys' => ['socialUsage'],
+      'sources' => ['bld'=>true,'add'=>true,'rsd'=>true,'ani'=>true,'res'=>true],
+      'stage' => ['unlock_at'=>1,'visible_at'=>1],
+      'happiness' => ['enabled'=>true, 'weight_key'=>'socialHappinessWeight'], // eksempel
+      'popularity'=> ['enabled'=>false],
+      'subs' => [],
+      'demands' => [],
+      'flows' => [
+        // Eksempel på borger-flow du kan bruge senere:
+        // ['citizenField'=>'wastePlastic', 'unit'=>'per_hour'],
+      ],
+    ],
+    
 
     // Pollution (eksempel – ikke koblet til capacity/use direkte her)
     'pollutionAir' => [

@@ -184,6 +184,45 @@ try {
     $usages[$field] = cu_usage_breakdown($rawCit, $citDefs, $field, $USE_ALIAS);
   }
 
+  // === INFRA USAGE fra registry: læg ...Usage fra defs (bld/add/rsd/ani/res) oveni citizen-usage ===
+foreach ($registry as $id => $m) {
+  // Stage-gate
+  $unlockAt = (int)($m['stage']['unlock_at'] ?? 1);
+  if ($userStage < $unlockAt) continue;
+
+  $usageField = (string)($m['usageField'] ?? '');
+  if ($usageField === '') continue;
+
+  // Hvis metrikken har subs, så skip parent for at undgå dobbelt-tælling — subs håndteres hver for sig
+  if (!empty($m['subs'])) continue;
+
+  $usageKeys = array_values(array_unique(array_filter((array)($m['usageStatKeys'] ?? []))));
+  if (empty($usageKeys)) continue;
+
+  $src = (array)($m['sources'] ?? []);
+  $infra = 0.0;
+
+  if (!empty($src['bld']) && cu_table_exists($pdo, 'buildings')) {
+    $infra += cu_sum_capacity_from_table($pdo, $uid, $bldDefs, 'buildings', 'bld_id', 'level', $usageKeys);
+  }
+  if (!empty($src['add']) && cu_table_exists($pdo, 'addon')) {
+    $infra += cu_sum_capacity_from_table($pdo, $uid, $addDefs, 'addon', 'add_id', 'level', $usageKeys);
+  }
+  if (!empty($src['rsd']) && cu_table_exists($pdo, 'user_research')) {
+    $infra += cu_sum_capacity_from_research($pdo, $uid, $rsdDefs, $usageKeys);
+  }
+  if (!empty($src['ani']) && cu_table_exists($pdo, 'animals')) {
+    $infra += cu_sum_capacity_from_animals($pdo, $uid, $aniDefs, $usageKeys);
+  }
+  if (!empty($src['res']) && cu_table_exists($pdo, 'inventory')) {
+    $infra += cu_sum_capacity_from_inventory($pdo, $uid, $resDefs, $usageKeys);
+  }
+
+  if ($infra != 0.0) {
+    $usages[$usageField]['infra'] = (float)($usages[$usageField]['infra'] ?? 0) + (float)$infra;
+    $usages[$usageField]['total'] = (float)($usages[$usageField]['total'] ?? 0) + (float)$infra;
+  }
+}
   // Aggreger useHeat/usePower fra sub-uses + evt. top-niveau (bevar kompatibilitet)
   $heatF   = (float)($usages['useHeatFossil']['total']   ?? 0);
   $heatG   = (float)($usages['useHeatGreen']['total']    ?? 0);
