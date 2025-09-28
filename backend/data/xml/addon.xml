@@ -16,7 +16,7 @@
   </addon>
 
   <addon id="add.saltbowl.l1" family="basecamp" type="addons" lvl="1" stage="1">
-    <cost>
+     <cost>
       <res id="res.money" amount="25"/>
     </cost>
     <yield period="1h">

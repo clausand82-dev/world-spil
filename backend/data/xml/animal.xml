@@ -54,7 +54,7 @@
   </animal> 
     
   <animal id="ani.chicken" family="farm" stage="1">
-   <stats>animal_cap=-1</stats>
+   <stats>animal_cap=-1;waterUsage=200</stats>
     <cost>
       <res id="res.money" amount="10"/>
       <res id="res.food" amount="2"/>

@@ -5,6 +5,10 @@ header('Content-Type: application/json; charset=utf-8');
 require_once __DIR__ . '/../_init.php';
 require_once __DIR__ . '/../lib/capacity_usage.php';
 require_once __DIR__ . '/../lib/happiness.php';
+require_once __DIR__ . '/../lib/popularity.php';
+require_once __DIR__ . '/../lib/metrics_registry.php';
+require_once __DIR__ . '/../lib/demands.php';
+require_once __DIR__ . '/../lib/effects_rules.php';
 
 function respond($p, int $http=200): never {
   http_response_code($http);
@@ -26,9 +30,15 @@ try {
   $bldDefs = $defs['bld'] ?? [];
   $addDefs = $defs['add'] ?? [];
   $rsdDefs = $defs['rsd'] ?? [];
+  $aniDefs = $defs['ani'] ?? [];
+  $resDefs = $defs['res'] ?? [];
+
   $citDefs = cu_load_defs_citizens($defs);
-  $aniDefs = $defs['ani'] ?? [];  // NY
-  $resDefs = $defs['res'] ?? [];  // NY
+
+  // User stage (til gates i registry/demands/effects)
+  $st = $pdo->prepare("SELECT currentstage FROM users WHERE user_id = ? LIMIT 1");
+  $st->execute([$uid]);
+  $userStage = (int)($st->fetchColumn() ?: 0);
 
   // Citizens
   $rawCit = cu_table_exists($pdo, 'citizens') ? cu_fetch_citizens_row($pdo, $uid) : [];
@@ -43,7 +53,7 @@ try {
       ['key'=>'baby',  'label'=>'Baby',   'count'=>(int)$macro['baby']],
       ['key'=>'kids',  'label'=>'Kids',   'count'=>(int)$macro['kids']],
       ['key'=>'young', 'label'=>'Young',  'count'=>(int)$macro['young']],
-      ['key'=>'adults','label'=>'Adults', 'count'=>(int)$macro['adultsTotal']], // inkl. crime
+      ['key'=>'adults','label'=>'Adults', 'count'=>(int)$macro['adultsTotal']],
       ['key'=>'old',   'label'=>'Old',    'count'=>(int)$macro['old']],
     ],
     'long' => [
@@ -65,101 +75,108 @@ try {
     ],
   ];
 
-  // Capacity keys (inkl. sub-capacities for heat/power)
+  // Capacity keys (hold eksisterende + sub-capacities for heat/power + mulighed for registry-udvidelser)
   $CAP_KEYS = [
     'housingCapacity'         => ['housing','housingCapacity'],
     'provisionCapacity'       => ['provision_cap','provisionCapacity'],
-    'waterCapacity'           => ['waterCapacity'],
-    'heatCapacity'            => ['heatCapacity'], // legacy/top-level (hvis sat direkte)
+    'heatCapacity'            => ['heatCapacity'],
     'healthCapacity'          => ['healthCapacity'],
     'productClothCapacity'    => ['productClothCapacity','clothCapacity'],
     'productMedicinCapacity'  => ['productMedicinCapacity','medicinCapacity'],
     'wasteOtherCapacity'      => ['wasteOtherCapacity'],
 
-    // Sub-capacities for heat
+    // Heat sub-capacities
     'heatFossilCapacity'      => ['heatFossilCapacity'],
     'heatGreenCapacity'       => ['heatGreenCapacity'],
     'heatNuclearCapacity'     => ['heatNuclearCapacity'],
 
-    // Sub-capacities for power
+    // Power sub-capacities
     'powerFossilCapacity'     => ['powerFossilCapacity'],
     'powerGreenCapacity'      => ['powerGreenCapacity'],
     'powerNuclearCapacity'    => ['powerNuclearCapacity'],
   ];
+
+  // Udvid CAP_KEYS fra registry (så nye metrics bliver auto-summeret)
+  $registry = metrics_registry();
+  foreach ($registry as $id => $m) {
+    $capField = (string)($m['capacityField'] ?? '');
+    if ($capField === '') continue;
+    if (!isset($CAP_KEYS[$capField])) {
+      $keys = array_values(array_unique(array_filter((array)($m['capacityStatKeys'] ?? []))));
+      if ($keys) $CAP_KEYS[$capField] = $keys;
+    }
+  }
+
   $USE_ALIAS = [
     'useCloth'   => 'useProductCloth',
     'useMedicin' => 'useProductMedicin',
   ];
 
   // Kapaciteter + kilde-lister
-$capacities = [];
-$parts      = [];
-$partsList  = [];
+  $capacities = [];
+  $parts      = [];
+  $partsList  = [];
 
-foreach ($CAP_KEYS as $capName => $keys) {
-  $b = cu_table_exists($pdo, 'buildings')     ? cu_sum_capacity_from_table($pdo, $uid, $bldDefs, 'buildings', 'bld_id', 'level', $keys) : 0.0;
-  $a = cu_table_exists($pdo, 'addon')         ? cu_sum_capacity_from_table($pdo, $uid, $addDefs, 'addon',     'add_id', 'level', $keys) : 0.0;
-  $r = cu_table_exists($pdo, 'user_research') ? cu_sum_capacity_from_research($pdo, $uid, $rsdDefs, $keys) : 0.0;
+  foreach ($CAP_KEYS as $capName => $keys) {
+    $b = cu_table_exists($pdo, 'buildings')     ? cu_sum_capacity_from_table($pdo, $uid, $bldDefs, 'buildings', 'bld_id', 'level', $keys) : 0.0;
+    $a = cu_table_exists($pdo, 'addon')         ? cu_sum_capacity_from_table($pdo, $uid, $addDefs, 'addon',     'add_id', 'level', $keys) : 0.0;
+    $r = cu_table_exists($pdo, 'user_research') ? cu_sum_capacity_from_research($pdo, $uid, $rsdDefs, $keys) : 0.0;
+    $ani = cu_table_exists($pdo, 'animals')     ? cu_sum_capacity_from_animals($pdo, $uid, $aniDefs, $keys) : 0.0;
+    $inv = cu_table_exists($pdo, 'inventory')   ? cu_sum_capacity_from_inventory($pdo, $uid, $resDefs, $keys) : 0.0;
 
-  // NYT: dyr + inventory
-  $ani = cu_table_exists($pdo, 'animals')   ? cu_sum_capacity_from_animals($pdo, $uid, $aniDefs, $keys) : 0.0;
-  $inv = cu_table_exists($pdo, 'inventory') ? cu_sum_capacity_from_inventory($pdo, $uid, $resDefs, $keys) : 0.0;
+    $capacities[$capName] = (float)($b + $a + $r + $ani + $inv);
+    $parts[$capName]      = [
+      'buildings'=>(float)$b,
+      'addon'    =>(float)$a,
+      'research' =>(float)$r,
+      'animals'  =>(float)$ani,
+      'inventory'=>(float)$inv,
+    ];
 
-  $capacities[$capName] = (float)($b + $a + $r + $ani + $inv); // <- inkluder dyr + inventory
-  $parts[$capName]      = [
-    'buildings'=>(float)$b,
-    'addon'    =>(float)$a,
-    'research' =>(float)$r,
-    'animals'  =>(float)$ani,      // NY
-    'inventory'=>(float)$inv,      // NY
-  ];
+    // Liste per item til hover (name + amount)
+    $listB = cu_table_exists($pdo, 'buildings')
+          ? cu_list_capacity_from_table($pdo, $uid, $bldDefs, 'buildings', 'bld_id', 'level', $keys, 'cu_def_name') : [];
+    $listA = cu_table_exists($pdo, 'addon')
+          ? cu_list_capacity_from_table($pdo, $uid, $addDefs, 'addon', 'add_id', 'level', $keys, 'cu_def_name') : [];
+    $listR = cu_table_exists($pdo, 'user_research')
+          ? cu_list_capacity_from_research($pdo, $uid, $rsdDefs, $keys, 'cu_def_name') : [];
+    $listAni = cu_table_exists($pdo, 'animals')
+          ? cu_list_capacity_from_animals($pdo, $uid, $aniDefs, $keys, 'cu_def_name') : [];
+    $listInv = cu_table_exists($pdo, 'inventory')
+          ? cu_list_capacity_from_inventory($pdo, $uid, $resDefs, $keys, 'cu_def_name') : [];
 
-  // Lister til hover
-  $listB = cu_table_exists($pdo, 'buildings')
-        ? cu_list_capacity_from_table($pdo, $uid, $bldDefs, 'buildings', 'bld_id', 'level', $keys, 'cu_def_name') : [];
-  $listA = cu_table_exists($pdo, 'addon')
-        ? cu_list_capacity_from_table($pdo, $uid, $addDefs, 'addon', 'add_id', 'level', $keys, 'cu_def_name') : [];
-  $listR = cu_table_exists($pdo, 'user_research')
-        ? cu_list_capacity_from_research($pdo, $uid, $rsdDefs, $keys, 'cu_def_name') : [];
+    $partsList[$capName] = [
+      'buildings' => $listB,
+      'addon'     => $listA,
+      'research'  => $listR,
+      'animals'   => $listAni,
+      'inventory' => $listInv,
+    ];
+  }
 
-  $listAni = cu_table_exists($pdo, 'animals')
-        ? cu_list_capacity_from_animals($pdo, $uid, $aniDefs, $keys, 'cu_def_name') : [];
-  $listInv = cu_table_exists($pdo, 'inventory')
-        ? cu_list_capacity_from_inventory($pdo, $uid, $resDefs, $keys, 'cu_def_name') : [];
-
-  $partsList[$capName] = [
-    'buildings' => $listB,
-    'addon'     => $listA,
-    'research'  => $listR,
-    'animals'   => $listAni,
-    'inventory' => $listInv,
-  ];
-}
-
-  // Efter vi har alle enkeltdels-kapaciteter, lav aggregerede totals for heat/power
+  // Aggreger totals for heat/power
   $capacities['heatCapacity']  = (float)(
     ($capacities['heatFossilCapacity']  ?? 0) +
     ($capacities['heatGreenCapacity']   ?? 0) +
     ($capacities['heatNuclearCapacity'] ?? 0) +
-    ($capacities['heatCapacity']        ?? 0)   // hvis sat direkte fra et item
+    ($capacities['heatCapacity']        ?? 0)
   );
   $capacities['powerCapacity'] = (float)(
     ($capacities['powerFossilCapacity']  ?? 0) +
     ($capacities['powerGreenCapacity']   ?? 0) +
     ($capacities['powerNuclearCapacity'] ?? 0) +
-    ($capacities['powerCapacity']        ?? 0)  // hvis sat direkte
+    ($capacities['powerCapacity']        ?? 0)
   );
 
-  // Usages (vægtet)
+  // Usages (citizen-baseret)
   $USAGE_FIELDS = [
     'useHousing','useProvision','useWater','useHeat','useHealth',
     'useCloth','useMedicin','wasteOther',
     'deathHealthExpose','deathHealthWeight','deathHealthBaseline',
     'birthRate','movingIn','movingOut',
 
-    // Sub-usage for heat
+    // Heat/Power sub uses
     'useHeatFossil','useHeatGreen','useHeatNuclear',
-    // Power usage (top + subs)
     'usePower','usePowerFossil','usePowerGreen','usePowerNuclear',
   ];
   $usages = [];
@@ -167,70 +184,95 @@ foreach ($CAP_KEYS as $capName => $keys) {
     $usages[$field] = cu_usage_breakdown($rawCit, $citDefs, $field, $USE_ALIAS);
   }
 
-  // Aggreger totals for useHeat/usePower (bevar evt. eksisterende top-niveau og læg oveni)
+  // Aggreger useHeat/usePower fra sub-uses + evt. top-niveau (bevar kompatibilitet)
   $heatF   = (float)($usages['useHeatFossil']['total']   ?? 0);
   $heatG   = (float)($usages['useHeatGreen']['total']    ?? 0);
   $heatN   = (float)($usages['useHeatNuclear']['total']  ?? 0);
   $powerF  = (float)($usages['usePowerFossil']['total']  ?? 0);
   $powerG  = (float)($usages['usePowerGreen']['total']   ?? 0);
   $powerN  = (float)($usages['usePowerNuclear']['total'] ?? 0);
-
   $useHeatTop  = (float)($usages['useHeat']['total']  ?? 0);
   $usePowerTop = (float)($usages['usePower']['total'] ?? 0);
 
   $usages['useHeat']['total']  = $heatF + $heatG + $heatN + $useHeatTop;
   $usages['usePower']['total'] = $powerF + $powerG + $powerN + $usePowerTop;
 
-  // === HAPPINESS: læs weights og beregn – EFTER $usages og $capacities er klar ===
+  // === Konfiguration ===
   $cfgIniPath = __DIR__ . '/../../data/config/config.ini';
   $cfg = is_file($cfgIniPath) ? parse_ini_file($cfgIniPath, true, INI_SCANNER_TYPED) : [];
-  $happinessWeights = $cfg['happiness'] ?? [];
+  $happinessWeights  = $cfg['happiness']  ?? [];
+  $popularityWeights = $cfg['popularity'] ?? [];
 
-  // Map fra base-key → usage/capacity felter i dine eksisterende arrays
-  $HAP_KEYMAP = [
-    // Eksisterende
-    'health'     => ['usage' => 'useHealth',     'cap' => 'healthCapacity'],
-    'food'       => ['usage' => 'useProvision',  'cap' => 'provisionCapacity'],
-    'water'      => ['usage' => 'useWater',      'cap' => 'waterCapacity'],
-    'housing'    => ['usage' => 'useHousing',    'cap' => 'housingCapacity'],
+  // === HAPPINESS: byg dynamisk fra registry + stage ===
+  $happinessPairs = []; // key => ['used','capacity']
+  foreach ($happinessWeights as $wKey => $_w) {
+    $base = preg_replace('/HappinessWeight$/', '', (string)$wKey);
+    if (!isset($registry[$base])) continue;
+    $m = $registry[$base];
+    $unlockAt = (int)($m['stage']['unlock_at'] ?? 1);
+    if ($userStage < $unlockAt) continue;
 
-    // Aggregerede
-    'heat'       => ['usage' => 'useHeat',       'cap' => 'heatCapacity'],
-    'power'      => ['usage' => 'usePower',      'cap' => 'powerCapacity'],
+    $uKey = $m['usageField']     ?? null;
+    $cKey = $m['capacityField']  ?? null;
+    $used = $uKey ? (float)($usages[$uKey]['total'] ?? 0) : 0.0;
+    $cap  = $cKey ? (float)($capacities[$cKey]      ?? 0) : 0.0;
+    $happinessPairs[$base] = ['used'=>$used, 'capacity'=>$cap];
+  }
+  $happinessData = happiness_calc_all($happinessPairs, $happinessWeights);
 
-    // Sub-kategorier
-    'heatFossil'   => ['usage' => 'useHeatFossil',   'cap' => 'heatFossilCapacity'],
-    'heatGreen'    => ['usage' => 'useHeatGreen',    'cap' => 'heatGreenCapacity'],
-    'heatNuclear'  => ['usage' => 'useHeatNuclear',  'cap' => 'heatNuclearCapacity'],
+  // === POPULARITY: identisk struktur ===
+  $popularityPairs = [];
+  foreach ($popularityWeights as $wKey => $_w) {
+    $base = preg_replace('/PopularityWeight$/', '', (string)$wKey);
+    if (!isset($registry[$base])) continue;
+    $m = $registry[$base];
+    $unlockAt = (int)($m['stage']['unlock_at'] ?? 1);
+    if ($userStage < $unlockAt) continue;
 
-    'powerFossil'  => ['usage' => 'usePowerFossil',  'cap' => 'powerFossilCapacity'],
-    'powerGreen'   => ['usage' => 'usePowerGreen',   'cap' => 'powerGreenCapacity'],
-    'powerNuclear' => ['usage' => 'usePowerNuclear', 'cap' => 'powerNuclearCapacity'],
-  ];
+    $uKey = $m['usageField']     ?? null;
+    $cKey = $m['capacityField']  ?? null;
+    $used = $uKey ? (float)($usages[$uKey]['total'] ?? 0) : 0.0;
+    $cap  = $cKey ? (float)($capacities[$cKey]      ?? 0) : 0.0;
+    $popularityPairs[$base] = ['used'=>$used, 'capacity'=>$cap];
+  }
+  $popularityData = popularity_calc_all($popularityPairs, $popularityWeights);
 
-  // Byg happinessUsages dynamisk ud fra weights (kun weights > 0)
-  $happinessUsages = [];
-  foreach ($happinessWeights as $key => $rawW) {
-    $w = (float)$rawW;
-    if ($w <= 0) continue;
-    $base = preg_replace('/HappinessWeight$/', '', (string)$key); // fx "health" fra "healthHappinessWeight"
-    if (!isset($HAP_KEYMAP[$base])) continue;
-    $uKey = $HAP_KEYMAP[$base]['usage'];
-    $cKey = $HAP_KEYMAP[$base]['cap'];
-    $happinessUsages[$base] = [
-      'used'     => (float)($usages[$uKey]['total'] ?? 0),
-      'capacity' => (float)($capacities[$cKey] ?? 0),
+  // === DEMANDS: evaluér eksempler (power/heat shares + pollution levels placeholder) ===
+  $demandsData = demands_evaluate_all($registry, $usages, $capacities, $counts, $cfg, $userStage);
+
+  // === EFFECTS/RULES: udfør tværgående checks (ændrer ikke tallene med mindre du selv vælger det) ===
+  $effects = apply_effects([
+    'demands'    => $demandsData,
+    'usages'     => $usages,
+    'capacities' => $capacities,
+    'happiness'  => $happinessData,
+    'popularity' => $popularityData,
+    'stage'      => $userStage,
+  ]);
+
+  // Meta til UI (labels, hierarki, stages)
+  $metricsMeta = [];
+  foreach ($registry as $id => $m) {
+    $metricsMeta[$id] = [
+      'label'      => (string)($m['label'] ?? $id),
+      'parent'     => (string)($m['parent'] ?? ''),
+      'subs'       => array_values($m['subs'] ?? []),
+      'stage'      => [
+        'unlock_at'  => (int)($m['stage']['unlock_at'] ?? 1),
+        'visible_at' => (int)($m['stage']['visible_at'] ?? 1),
+        'locked'     => $userStage < (int)($m['stage']['unlock_at'] ?? 1),
+      ],
+      'usageField'    => (string)($m['usageField'] ?? ''),
+      'capacityField' => (string)($m['capacityField'] ?? ''),
     ];
   }
 
-  $happinessData = happiness_calc_all($happinessUsages, $happinessWeights);
-
-  // Respond – nu inkl. happiness
+  // Respond – udvidet payload (kompatibel med eksisterende UI)
   respond([
     'citizens' => [
-      'raw'          => $rawCit,         // alle felter inkl. crime
-      'groupCounts'  => $macro,          // macro + adultsTotal
-      'lists'        => $citLists,       // short + long (uden crime)
+      'raw'          => $rawCit,
+      'groupCounts'  => $macro,
+      'lists'        => $citLists,
       'totals'       => ['totalPersons' => $totalPersons],
       'sorted' => [
         'baby'   => ['baby' => (int)$macro['baby']],
@@ -240,11 +282,16 @@ foreach ($CAP_KEYS as $capName => $keys) {
         'crime'  => ['crime'=> (int)$macro['crime']],
       ],
     ],
-    'usages'     => $usages,
-    'capacities' => $capacities,
-    'parts'      => $parts,
-    'partsList'  => $partsList,
-    'happiness'  => $happinessData, // til frontend (badge + hover)
+    'usages'       => $usages,
+    'capacities'   => $capacities,
+    'parts'        => $parts,
+    'partsList'    => $partsList,
+    'happiness'    => $happinessData,   // uændret form – frontend virker videre
+    'popularity'   => $popularityData,  // ny (samme struktur)
+    'demands'      => $demandsData,     // ny
+    'effects'      => $effects,         // ny – anvend når du vil
+    'metricsMeta'  => $metricsMeta,     // ny – labels/hierarki/stage til UI
+    'stage'        => ['current' => $userStage],
   ]);
 
 } catch (Throwable $e) {
