@@ -10,6 +10,7 @@ export default function Quickbar({ activePage }) {
         { page: 'production', title: 'Productions', icon: '🏭' },
         { page: 'overview', title: 'Overview', icon: '📂' },
         { page: 'userpage', title: 'User', icon: '👤' },
+        { page: 'population-tick', title: 'Befolkningstjek', icon: '👤' },
     ];
 
     return (

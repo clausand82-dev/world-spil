@@ -79,11 +79,11 @@ function cu_sum_capacity_from_table(PDO $pdo, int $userId, array $defsBranch, st
 
 /** Summer kapacitet over completed research. */
 function cu_sum_capacity_from_research(PDO $pdo, int $userId, array $defsRsd, array $keys): float {
-  $st = $pdo->prepare("SELECT research_id FROM user_research WHERE user_id=? AND completed=1");
+  $st = $pdo->prepare("SELECT rsd_id FROM research WHERE user_id=?");
   $st->execute([$userId]);
   $sum = 0.0;
   while ($row = $st->fetch(PDO::FETCH_ASSOC)) {
-    $rid = (string)$row['research_id'];
+    $rid = (string)$row['rsd_id'];
     if (isset($defsRsd[$rid])) {
       $sum += cu_stat_from_defs_node($defsRsd[$rid], $keys);
     } else {
@@ -317,11 +317,11 @@ function cu_list_capacity_from_table(PDO $pdo, int $userId, array $defsBranch, s
 
 /** Lav per-item liste for completed research for en given stats-nøgle-liste. */
 function cu_list_capacity_from_research(PDO $pdo, int $userId, array $defsRsd, array $keys, callable $nameResolver): array {
-  $st = $pdo->prepare("SELECT research_id FROM user_research WHERE user_id=? AND completed=1");
+  $st = $pdo->prepare("SELECT rsd_id FROM research WHERE user_id=?");
   $st->execute([$userId]);
   $items = [];
   while ($row = $st->fetch(PDO::FETCH_ASSOC)) {
-    $rid = cu_strip_scope((string)$row['research_id']);
+    $rid = cu_strip_scope((string)$row['rsd_id']);
     if (!isset($defsRsd[$rid])) continue;
     $amount = cu_stat_from_defs_node($defsRsd[$rid], $keys);
     if ($amount == 0.0) continue;
