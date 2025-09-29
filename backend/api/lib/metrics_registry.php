@@ -281,6 +281,8 @@ function metrics_registry(): array {
         // ['citizenField'=>'wastePlastic', 'unit'=>'per_hour'],
       ],
     ],
+
+    
     
 
     // Pollution (eksempel – ikke koblet til capacity/use direkte her)

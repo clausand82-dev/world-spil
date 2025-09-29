@@ -43,9 +43,12 @@ Change/update History
 
 4.1
 - STAGE 2 INTRODUCTION
-- citizens system is introduced
+- citizens system is introduced (handles birth, moving in, moving out, death, regroup citizens and user interference)
 - health system is introduced
 - happiness system is introduced
+- popularity system is introduced
+- citymanagement system as housing, provision, medicin, water, heat, power, cloth, waste and health is unlocked
+- fixed error with storage not working as intended
 
 4.0
 - moving all code to react code instead
