@@ -122,11 +122,12 @@ function repro__sum_groups(array $src, array $keys): int { $s=0; foreach ($keys 
 /* ===== Aging pipeline ===== */
 function repro__age_pipeline(array &$c, array $cfgAging, float $intervalHours): array {
   $delta = [];
+
   $avg = [
-    'babyToKids'    => max(1.0,(float)($cfgAging['avgHours.babyToKids']    ?? 48)),
-    'kidsToYoung'   => max(1.0,(float)($cfgAging['avgHours.kidsToYoung']   ?? 96)),
-    'youngToAdults' => max(1.0,(float)($cfgAging['avgHours.youngToAdults'] ?? 120)),
-    'adultsToOld'   => max(1.0,(float)($cfgAging['avgHours.adultsToOld']   ?? 480)),
+    'babyToKids'   => max(1.0, (float)($cfgAging['avgHours.babyToKids']   ?? 48)),
+    'kidsToYoung'  => max(1.0, (float)($cfgAging['avgHours.kidsToYoung']  ?? 96)),
+    'youngToAdults'=> max(1.0, (float)($cfgAging['avgHours.youngToAdults']?? 120)),
+    'adultsToOld'  => max(1.0, (float)($cfgAging['avgHours.adultsToOld']  ?? 480)),
   ];
   $f = [
     'b2k' => min(1.0, $intervalHours / $avg['babyToKids']),
@@ -134,40 +135,69 @@ function repro__age_pipeline(array &$c, array $cfgAging, float $intervalHours): 
     'y2a' => min(1.0, $intervalHours / $avg['youngToAdults']),
     'a2o' => min(1.0, $intervalHours / $avg['adultsToOld']),
   ];
-  $b2k = (int)floor(($c['baby'] ?? 0) * $f['b2k']);
+
+  // Baby -> Kids (fordel lige til kidsStreet og kidsStudent)
+  $b2k = (int) floor(($c['baby'] ?? 0) * $f['b2k']);
+  $addStreet = (int)floor($b2k / 2);
+  $addStudent = $b2k - $addStreet;
   $c['baby'] = repro__clampi(($c['baby'] ?? 0) - $b2k);
-  $c['kids'] = ($c['kids'] ?? 0) + $b2k;
-  $delta['aging']['baby->kids'] = $b2k;
+  $c['kidsStreet'] = ($c['kidsStreet'] ?? 0) + $addStreet;
+  $c['kidsStudent'] = ($c['kidsStudent'] ?? 0) + $addStudent;
+  $delta['baby'] = ($delta['baby'] ?? 0) - $b2k;
+  $delta['kidsStreet'] = ($delta['kidsStreet'] ?? 0) + $addStreet;
+  $delta['kidsStudent'] = ($delta['kidsStudent'] ?? 0) + $addStudent;
 
-  $k2y = (int)floor(($c['kids'] ?? 0) * $f['k2y']);
-  $c['kids']  = repro__clampi(($c['kids'] ?? 0) - $k2y);
-  $c['young'] = ($c['young'] ?? 0) + $k2y;
-  $delta['aging']['kids->young'] = $k2y;
+  // Kids -> Young (tag proportionalt fra kidsStreet/kidsStudent, fordel til youngStreet/youngStudent)
+  $totalKids = (int)($c['kidsStreet'] ?? 0) + (int)($c['kidsStudent'] ?? 0);
+  $k2y = (int) floor($totalKids * $f['k2y']);
+  $fromStreetK = (int)floor($k2y * (($c['kidsStreet'] ?? 0) / max(1, $totalKids)));
+  $fromStudentK = $k2y - $fromStreetK;
+  $c['kidsStreet'] = repro__clampi(($c['kidsStreet'] ?? 0) - $fromStreetK);
+  $c['kidsStudent'] = repro__clampi(($c['kidsStudent'] ?? 0) - $fromStudentK);
 
-  $y2a = (int)floor(($c['young'] ?? 0) * $f['y2a']);
-  $c['young'] = repro__clampi(($c['young'] ?? 0) - $y2a);
+  // Fordel til youngStreet og youngStudent (samme fordeling for nu)
+  $addStreetY = $fromStreetK;
+  $addStudentY = $fromStudentK;
+  $c['youngWorker'] = ($c['youngWorker'] ?? 0) + $addStreetY;
+  $c['youngStudent'] = ($c['youngStudent'] ?? 0) + $addStudentY;
+  $delta['kidsStreet'] = ($delta['kidsStreet'] ?? 0) - $fromStreetK;
+  $delta['kidsStudent'] = ($delta['kidsStudent'] ?? 0) - $fromStudentK;
+  $delta['youngWorker'] = ($delta['youngWorker'] ?? 0) + $addStreetY;
+  $delta['youngStudent'] = ($delta['youngStudent'] ?? 0) + $addStudentY;
+
+  // Young -> AdultsUnemployed (proportionalt fra youngStreet/youngStudent)
+  $totalYoung = (int)($c['youngWorker'] ?? 0) + (int)($c['youngStudent'] ?? 0);
+  $y2a = (int) floor($totalYoung * $f['y2a']);
+  $fromStreetY = (int)floor($y2a * (($c['youngWorker'] ?? 0) / max(1, $totalYoung)));
+  $fromStudentY = $y2a - $fromStreetY;
+  $c['youngWorker'] = repro__clampi(($c['youngWorker'] ?? 0) - $fromStreetY);
+  $c['youngStudent'] = repro__clampi(($c['youngStudent'] ?? 0) - $fromStudentY);
   $c['adultsUnemployed'] = ($c['adultsUnemployed'] ?? 0) + $y2a;
-  $delta['aging']['young->adultsUnemployed'] = $y2a;
+  $delta['youngStreet'] = ($delta['youngStreet'] ?? 0) - $fromStreetY;
+  $delta['youngStudent'] = ($delta['youngStudent'] ?? 0) - $fromStudentY;
+  $delta['adultsUnemployed'] = ($delta['adultsUnemployed'] ?? 0) + $y2a;
 
+  // Adults* -> Old (uændret, men husk at summer over alle adults-varianter)
   $adultKeys = ['adultsUnemployed','adultsWorker','adultsPolice','adultsFire','adultsHealth','adultsGovernment','adultsPolitician','adultsHomeless'];
   $adultsTotal = repro__sum_groups($c, $adultKeys);
-  $a2oTarget = (int)floor($adultsTotal * $f['a2o']);
-  $delta['aging']['adults->old'] = 0;
-  if ($a2oTarget > 0) {
-    $remaining = $a2oTarget;
+  $a2o = (int) floor($adultsTotal * $f['a2o']);
+  if ($a2o > 0) {
+    $remaining = $a2o;
     foreach ($adultKeys as $k) {
       if ($remaining <= 0) break;
       $cnt = (int)($c[$k] ?? 0);
       if ($cnt <= 0) continue;
-      $take = min($cnt, (int)floor($a2oTarget * ($cnt / max(1,$adultsTotal))));
+      $take = min($cnt, (int)floor($a2o * ($cnt / max(1, $adultsTotal))));
       if ($take <= 0) $take = 1;
       $take = min($take, $remaining, $cnt);
-      $c[$k] -= $take;
+      $c[$k] = $cnt - $take;
       $c['old'] = ($c['old'] ?? 0) + $take;
-      $delta['aging']['adults->old'] += $take;
+      $delta[$k]   = ($delta[$k]   ?? 0) - $take;
+      $delta['old']= ($delta['old']?? 0) + $take;
       $remaining -= $take;
     }
   }
+
   return $delta;
 }
 
