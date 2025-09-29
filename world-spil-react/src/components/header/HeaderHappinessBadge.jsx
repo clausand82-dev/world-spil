@@ -16,18 +16,18 @@ function emojiFromScore(score01) {
 const LABELS = {
   housing: 'Housing',
   food: 'Provision',
-  water: 'Water',
-  health: 'Health',
+  water: 'Vand',
+  health: 'Sundhed',
   // Aggregerede
-  heat: 'Heat',
-  power: 'Power',
+  heat: 'Varme',
+  power: 'Strøm',
   // Subkategorier
-  heatFossil: 'Heat (Fossil)',
-  heatGreen: 'Heat (Green)',
-  heatNuclear: 'Heat (Nuclear)',
-  powerFossil: 'Power (Fossil)',
-  powerGreen: 'Power (Green)',
-  powerNuclear: 'Power (Nuclear)',
+  heatFossil: 'Varme (Fossil)',
+  heatGreen: 'Varme (Green)',
+  heatNuclear: 'Varme (Nuclear)',
+  powerFossil: 'Strøm (Fossil)',
+  powerGreen: 'Strøm (Green)',
+  powerNuclear: 'Strøm (Nuclear)',
 };
 
 // Hoved → sub nøgler
@@ -63,10 +63,8 @@ function calcScore01(used, cap) {
 
 export default function HeaderHappinessBadge() {
   const { data, loading, err } = useHeaderSummary();
-  // Hooks SKAL kaldes ubetinget:
   const [hoverMain, setHoverMain] = useState(null);
 
-  // Safe defaults så hooks-ordren ikke ændres ved early returns
   const h = data?.happiness ?? { impacts: {}, weightTotal: 0, impactTotal: 0, happiness: 0 };
   const usages = data?.usages ?? {};
   const caps   = data?.capacities ?? {};
@@ -75,7 +73,7 @@ export default function HeaderHappinessBadge() {
   const pct = Math.round(score01 * 100);
   const emoji = emojiFromScore(score01);
 
-  // Lav en visnings-row for en given nøgle
+  // Uændret: makeRow bruger impacts hvis de findes, ellers regner den score ud fra usages/capacities
   const makeRow = (key) => {
     const label = LABELS[key] || key;
     const imp = h.impacts?.[key] || null;
@@ -109,15 +107,48 @@ export default function HeaderHappinessBadge() {
   };
 
   const content = useMemo(() => {
-    const MAIN_ORDER = ['health', 'food', 'water', 'housing', 'heat', 'power'];
+    // Foretrukken visningsorden – andre følger alfabetisk
+    const PREFERRED = ['health', 'food', 'water', 'housing', 'heat', 'power'];
 
-    const mainRows = MAIN_ORDER
+    // Saml alle sub-keys (så vi kan filtrere dem ud af toprækker)
+    const SUB_SET = new Set(Object.values(GROUPS || {}).flat());
+
+    // 1) Nøgler med weight > 0 fra backend-impacts (disse SKAL vises), men ikke subs
+    const impactKeys = Object.entries(h.impacts || {})
+      .filter(([, imp]) => Number(imp?.weight || 0) > 0)
+      .map(([k]) => k)
+      .filter(k => !SUB_SET.has(k)); // ← filtrér subs væk her
+
+    // 2) Kombinér med de vigtige standardnøgler, så de også kan vises ved aktivitet
+    const allKeys = Array.from(new Set([...impactKeys, ...PREFERRED]));
+
+    // 3) Sortér efter PREFERRED, derefter alfabetisk
+    const orderIndex = (k) => {
+      const i = PREFERRED.indexOf(k);
+      return i === -1 ? Number.POSITIVE_INFINITY : i;
+    };
+    allKeys.sort((a, b) => {
+      const oa = orderIndex(a), ob = orderIndex(b);
+      if (oa !== ob) return oa - ob;
+      return a.localeCompare(b);
+    });
+
+    // 4) Lav rækker, filtrér sådan:
+    //    - ALT med weight > 0 (fromImpact) vises
+    //    - Ellers vis hvis der er aktivitet (used>0 eller cap>0)
+    const mainRows = allKeys
       .map(k => makeRow(k))
-      .filter(r => (r.used > 0) || (r.cap > 0) || r.fromImpact);
+      .filter(r => r.fromImpact || r.used > 0 || r.cap > 0);
 
     return (
-      <div>
-        <div style={{ fontWeight: 700, marginBottom: 6 }}>Happiness breakdown</div>
+      
+        
+      <div style={{ minWidth: 260, maxWidth: 420 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+        <strong>Happiness breakdown</strong>
+        <span style={{ opacity: 0.75 }}>Σw={Math.round(h.weightTotal || 0)}</span>
+      </div>
+        
         {mainRows.length === 0 ? (
           <div style={{ opacity: 0.7 }}>Ingen aktive kategorier.</div>
         ) : (
@@ -139,49 +170,43 @@ export default function HeaderHappinessBadge() {
                   }}
                 >
                   <div style={{ display: 'flex', gap: 8, justifyContent: 'space-between', alignItems: 'baseline' }}>
-                    <div>
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
                       <strong>{r.label}</strong>
-                      {subs.length > 0 && (
-                        <span style={{ marginLeft: 6, fontSize: 11, color: '#666' }}>
-                          (hold mus for sub)
-                        </span>
-                      )}
+                      {/* NYT: vis “brug” under hver hovedrække */}
+                      <span style={{ fontSize: 12, opacity: 0.8 }}>
+                        brug: {r.used.toLocaleString()} / {r.cap.toLocaleString()}
+                      </span>
                     </div>
-                    <div style={{ whiteSpace: 'nowrap', fontSize: 12 }}>
-                      {fmt(r.used)} / {fmt(r.cap)} — score {r.scorePct}%{r.weight > 0 ? <> × weight {fmt(r.weight)} = {fmt(r.impact)}</> : null}
+                    <div style={{ textAlign: 'right' }}>
+                      <div style={{ fontVariantNumeric: 'tabular-nums' }}>{r.scorePct}%</div>
+                      {r.fromImpact && <div style={{ fontSize: 12, opacity: 0.8 }}>Weight:{r.weight}</div>}
                     </div>
                   </div>
 
+                  {/* Subs – vises kun under parent */}
                   {showSubs && (
-                    <ul style={{ marginTop: 6, marginBottom: 2, paddingLeft: 10, listStyle: 'none', borderLeft: '2px solid rgba(0,0,0,0.06)' }}>
-                      {subs.map(sk => {
-                        const s = makeRow(sk);
-                        const show = (s.used > 0) || (s.cap > 0) || s.fromImpact;
-                        if (!show) return null;
-                        return (
-                          <li key={sk} style={{ padding: '3px 0 3px 6px' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
-                              <span style={{ fontSize: 12 }}>{LABELS[sk] || sk}</span>
-                              <span style={{ fontSize: 12, color: '#333' }}>
-                                {fmt(s.used)} / {fmt(s.cap)} — score {s.scorePct}%{s.weight > 0 ? <> × weight {fmt(s.weight)} = {fmt(s.impact)}</> : null}
-                              </span>
-                            </div>
-                          </li>
-                        );
-                      })}
-                    </ul>
+                    <div style={{ marginTop: 6, paddingLeft: 8 }}>
+                      <ul style={{ margin: 0, paddingLeft: 14 }}>
+                        {subs.map(subKey => {
+                          const subRow = makeRow(subKey);
+                          return (
+                            <li key={subKey} style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+                              <span>{LABELS[subKey] || subKey}</span>
+                              <span style={{ fontVariantNumeric: 'tabular-nums' }}>{subRow.scorePct}%</span>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </div>
                   )}
                 </li>
               );
             })}
           </ul>
         )}
-        <div style={{ marginTop: 8, fontSize: 12, opacity: 0.8 }}>
-          Total impact {fmt(h.impactTotal)} / weight {fmt(h.weightTotal)} → {Math.round(score01 * 100)}%
-        </div>
       </div>
     );
-  }, [hoverMain, h, caps, usages]);
+  }, [h, usages, caps, hoverMain]);
 
   // Nu må vi gerne "stille" os selv ved loading/fejl
   if (loading || err) return null;

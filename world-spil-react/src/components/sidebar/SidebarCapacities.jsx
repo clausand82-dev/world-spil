@@ -24,10 +24,15 @@ function resolveDefName(defs, branch, rawId, fallbackName) {
                : (b === 'inventory' || b === 'res') ? 'res'
                : null;
 
-  const def = bucket ? defs?.[bucket]?.[baseId] : null;
+  // PRØV først level-specifik def (fx basecamp.l3), derefter basis-def (basecamp)
+  const defLevel = (bucket && lvl) ? (defs?.[bucket]?.[`${baseId}.l${lvl}`] || null) : null;
+  const defBase  = bucket ? defs?.[bucket]?.[baseId] : null;
 
-  // Foretræk defs.display_name/name → fallback it.name → baseId
-  const niceCore = def?.display_name || def?.name || fallbackName || baseId;
+  const niceCore =
+    defLevel?.display_name || defLevel?.name ||
+    defBase?.display_name  || defBase?.name  ||
+    fallbackName || baseId;
+
   return (lvl && lvl > 0) ? `${niceCore} (L${lvl})` : niceCore;
 }
 

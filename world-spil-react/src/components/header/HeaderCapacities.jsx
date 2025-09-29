@@ -23,8 +23,15 @@ function resolveDefName(defs, branch, rawId, fallbackName) {
                : (b === 'inventory' || b === 'res') ? 'res'
                : null;
 
-  const def = bucket ? defs?.[bucket]?.[baseId] : null;
-  const niceCore = def?.display_name || def?.name || fallbackName || baseId;
+  // PRØV level-specifik def først (fx choppingblock.l1), ellers basis
+  const defLevel = (bucket && lvl) ? (defs?.[bucket]?.[`${baseId}.l${lvl}`] || null) : null;
+  const defBase  = bucket ? defs?.[bucket]?.[baseId] : null;
+
+  const niceCore =
+    defLevel?.display_name || defLevel?.name ||
+    defBase?.display_name  || defBase?.name  ||
+    fallbackName || baseId;
+
   return (lvl && lvl > 0) ? `${niceCore} (L${lvl})` : niceCore;
 }
 

@@ -226,7 +226,7 @@ function metrics_registry(): array {
       'usageStatKeys' => ['clothUsage'],
       'sources' => ['bld'=>true,'add'=>true,'rsd'=>true,'ani'=>true,'res'=>true],
       'stage' => ['unlock_at'=>1,'visible_at'=>1],
-      'happiness' => ['enabled'=>true, 'weight_key'=>'comfortHappinessWeight'], // eller clothHappinessWeight, hvis du opretter den
+      'happiness' => ['enabled'=>true, 'weight_key'=>'clothHappinessWeight'], // eller clothHappinessWeight, hvis du opretter den
       'popularity'=> ['enabled'=>true, 'weight_key'=>'clothPopularityWeight'],
       'subs' => [],
       'demands' => [],
@@ -240,7 +240,7 @@ function metrics_registry(): array {
       'usageStatKeys' => ['medicinUsage'],
       'sources' => ['bld'=>true,'add'=>true,'rsd'=>true,'ani'=>true,'res'=>true],
       'stage' => ['unlock_at'=>1,'visible_at'=>1],
-      'happiness' => ['enabled'=>true, 'weight_key'=>'phoneHappinessWeight'], // eksempel – sæt din egen
+      'happiness' => ['enabled'=>true, 'weight_key'=>'medicinHappinessWeight'], // eksempel – sæt din egen
       'popularity'=> ['enabled'=>true, 'weight_key'=>'medicinPopularityWeight'],
       'subs' => [],
       'demands' => [],
@@ -271,7 +271,7 @@ function metrics_registry(): array {
       'capacityStatKeys' => ['socialCapacity'],
       'usageStatKeys' => ['socialUsage'],
       'sources' => ['bld'=>true,'add'=>true,'rsd'=>true,'ani'=>true,'res'=>true],
-      'stage' => ['unlock_at'=>1,'visible_at'=>1],
+      'stage' => ['unlock_at'=>3,'visible_at'=>3],
       'happiness' => ['enabled'=>true, 'weight_key'=>'socialHappinessWeight'], // eksempel
       'popularity'=> ['enabled'=>false],
       'subs' => [],

@@ -6,6 +6,7 @@ import HeaderCitizensBadge from './header/HeaderCitizensBadge.jsx';
 import HeaderHappinessBadge from './header/HeaderHappinessBadge.jsx';
 import HoverCard from './ui/HoverCard.jsx';
 import CapHoverContent from './ui/CapHoverContent.jsx';
+import HeaderPopularityBadge from './header/HeaderPopularityBadge.jsx'; // NY
 // Hvis du stadig bruger buildStatsTitle andre steder, behold importen. Ellers kan den fjernes.
 // import { buildStatsTitle } from '../services/statsEffects.js';
 
@@ -38,6 +39,7 @@ export default function Header() {
       </div>
 
       <div className="header-resources">
+        <HeaderPopularityBadge />
         <HeaderHappinessBadge />
         <span className="res-chip"><HeaderCitizensBadge /></span>
 
