@@ -18,13 +18,29 @@ function fail(string $code, string $msg, int $http=400): never {
 }
 
 /**
+ * Tjek om en tabel har en given kolonne (bruges til at undgå at røre lastupdated).
+ */
+function table_has_column(PDO $pdo, string $table, string $column): bool {
+  $sql = "SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ? LIMIT 1";
+  $st = $pdo->prepare($sql);
+  $st->execute([$table, $column]);
+  return (bool)$st->fetchColumn();
+}
+
+/**
  * Hjælpere til at læse defs-branch arrays.
- * _init.php i dit projekt plejer at sørge for, at defs er tilgængelige i global kontekst, men
- * vi håndterer forsigtigt fallback til tomme arrays.
+ * Fald tilbage til load_all_defs(), hvis globals ikke er sat i denne request.
  */
 function _load_defs_branches(): array {
-  // Forsøg at hente forgreninger fra global kontekst (afhænger af dit framework-init).
   $defs = $GLOBALS['DEFS'] ?? ($GLOBALS['defs'] ?? null);
+  if (!is_array($defs) || empty($defs)) {
+    try {
+      $defs = load_all_defs();
+      $GLOBALS['DEFS'] = $defs; // gør dem tilgængelige for resten af requesten
+    } catch (Throwable $e) {
+      $defs = [];
+    }
+  }
   $bld = is_array($defs) && isset($defs['bld']) ? $defs['bld'] : [];
   $add = is_array($defs) && isset($defs['add']) ? $defs['add'] : [];
   $rsd = is_array($defs) && isset($defs['rsd']) ? $defs['rsd'] : [];
@@ -42,11 +58,11 @@ function sum_role_capacity(PDO $pdo, int $uid, array $branches, array $keyVarian
   [$bld, $add, $rsd, $ani, $res] = $branches;
   $sum = 0.0;
   $variants = $keyVariants;
-  if (cu_table_exists($pdo,'buildings')) $sum += cu_sum_capacity_from_table($pdo, $uid, $bld, 'buildings', 'bld_id', 'level', $variants);
-  if (cu_table_exists($pdo,'addon'))     $sum += cu_sum_capacity_from_table($pdo, $uid, $add, 'addon', 'add_id', 'level', $variants);
-  if (cu_table_exists($pdo,'user_research')) $sum += cu_sum_capacity_from_research($pdo, $uid, $rsd, $variants);
-  if (cu_table_exists($pdo,'animals'))   $sum += cu_sum_capacity_from_animals($pdo, $uid, $ani, $variants);
-  if (cu_table_exists($pdo,'inventory')) $sum += cu_sum_capacity_from_inventory($pdo, $uid, $res, $variants);
+  if (cu_table_exists($pdo,'buildings'))     $sum += cu_sum_capacity_from_table($pdo, $uid, $bld, 'buildings', 'bld_id', 'level', $variants);
+  if (cu_table_exists($pdo,'addon'))         $sum += cu_sum_capacity_from_table($pdo, $uid, $add, 'addon',     'add_id', 'level', $variants);
+  if (cu_table_exists($pdo,'research')) $sum += cu_sum_capacity_from_research($pdo, $uid, $rsd, $variants);
+  if (cu_table_exists($pdo,'animals'))       $sum += cu_sum_capacity_from_animals($pdo, $uid, $ani, $variants);
+  if (cu_table_exists($pdo,'inventory'))     $sum += cu_sum_capacity_from_inventory($pdo, $uid, $res, $variants);
   return (int)floor($sum);
 }
 
@@ -145,7 +161,7 @@ function compute_basic_ratios(PDO $pdo, int $uid, array $branches): array {
 
   if (cu_table_exists($pdo,'buildings')) { $provCap += cu_sum_capacity_from_table($pdo,$uid,$bld,'buildings','bld_id','level',$provKeys); $houseCap += cu_sum_capacity_from_table($pdo,$uid,$bld,'buildings','bld_id','level',$houseKeys); }
   if (cu_table_exists($pdo,'addon'))     { $provCap += cu_sum_capacity_from_table($pdo,$uid,$add,'addon','add_id','level',$provKeys); $houseCap += cu_sum_capacity_from_table($pdo,$uid,$add,'addon','add_id','level',$houseKeys); }
-  if (cu_table_exists($pdo,'user_research')) { $provCap += cu_sum_capacity_from_research($pdo,$uid,$rsd,$provKeys); $houseCap += cu_sum_capacity_from_research($pdo,$uid,$rsd,$houseKeys); }
+  if (cu_table_exists($pdo,'research')) { $provCap += cu_sum_capacity_from_research($pdo,$uid,$rsd,$provKeys); $houseCap += cu_sum_capacity_from_research($pdo,$uid,$rsd,$houseKeys); }
   if (cu_table_exists($pdo,'animals'))   { $provCap += cu_sum_capacity_from_animals($pdo,$uid,$ani,$provKeys); $houseCap += cu_sum_capacity_from_animals($pdo,$uid,$ani,$houseKeys); }
   if (cu_table_exists($pdo,'inventory')) { $provCap += cu_sum_capacity_from_inventory($pdo,$uid,$res,$provKeys); $houseCap += cu_sum_capacity_from_inventory($pdo,$uid,$res,$houseKeys); }
 
@@ -217,7 +233,7 @@ function handle_get(PDO $pdo, int $uid): void {
   ]);
 }
 
-/** POST: Gem tildeling m. dobbelttjek, auto-unemployed, crime-tilskriv. */
+/** POST: Gem tildeling m. dobbelttjek, auto-unemployed, crime-tilskriv – uden at røre lastupdated. */
 function handle_post(PDO $pdo, int $uid): void {
   [$bld,$add,$rsd,$ani,$res,$cfg] = _load_defs_branches();
   $branches = [$bld,$add,$rsd,$ani,$res];
@@ -310,7 +326,7 @@ function handle_post(PDO $pdo, int $uid): void {
     $crime[$ckey] = max(0, min((int)$val, (int)$newCit[$aKey]));
   }
 
-  // Gem alt i en transaktion
+  // Gem alt i en transaktion – uden at røre lastupdated
   $pdo->beginTransaction();
   try {
     // Byg UPDATE sætning for relevante felter
@@ -324,6 +340,12 @@ function handle_post(PDO $pdo, int $uid): void {
       $sets[] = "{$f} = ?";
       $vals[] = (int)($crime[$f] ?? $newCit[$f] ?? 0);
     }
+
+    // Undertryk automatisk ON UPDATE på lastupdated (hvis kolonnen findes)
+    if (table_has_column($pdo, 'citizens', 'lastupdated')) {
+      $sets[] = "lastupdated = lastupdated";
+    }
+
     $vals[] = $uid;
 
     $sql = "UPDATE citizens SET " . implode(',', $sets) . " WHERE user_id = ?";
@@ -337,10 +359,10 @@ function handle_post(PDO $pdo, int $uid): void {
   }
 
   respond([
-    'applied'  => $req,
+    'applied'    => $req,
     'unemployed' => $newUnemp,
-    'crime'    => $crime,
-    'warnings' => $warnings,
+    'crime'      => $crime,
+    'warnings'   => $warnings,
   ]);
 }
 

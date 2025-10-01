@@ -62,14 +62,19 @@ export default function CitizenAssignmentsPage() {
     return { totalAdults, totalNonHomeless, sumAssign, unemployedWillBe };
   }, [state, assign]);
 
-  const clampForView = (key) => {
-    if (!state) return { cap: 0, max: 0 };
-    const cap = Number(state?.caps?.[`${key}Capacity`] ?? 0);
-    const current = Number(state?.citizens?.[key] ?? 0);
-    // Tillad altid minimum det nuværende (så UI ikke låser brugeren hvis caps pt. er lavt i GET)
-    const effCap = Math.max(cap, current);
+ const clampForView = (key) => {
+  if (!state) return { cap: 0, max: 0 };
+  const cap = Number(state?.caps?.[`${key}Capacity`] ?? 0);
+  const current = Number(state?.citizens?.[key] ?? 0);
+  // Politician: tag også hensyn til ratio-limit i UI
+  if (key === 'adultsPolitician') {
+    const polMax = Number(state?.limits?.politicianMax ?? 0);
+    const effCap = Math.max(cap, current, polMax);
     return { cap: effCap, max: effCap };
-  };
+  }
+  const effCap = Math.max(cap, current);
+  return { cap: effCap, max: effCap };
+};
 
   const onChange = (key, val) => {
     const v = Math.max(0, Math.floor(Number(val) || 0));
@@ -117,7 +122,7 @@ export default function CitizenAssignmentsPage() {
           - Politician har ratio-grænse pr. påbegyndt X borgere.
         </div>
 
-        <div style={{ margin: '10px 0', padding: 10, background: '#f7f9ff', borderRadius: 8 }}>
+        <div style={{ margin: '10px 0', padding: 10, background: '#1f2937', borderRadius: 8 }}>
           <div>Ikke-hjemløse voksne (til rådighed): <b>{totals.totalNonHomeless}</b></div>
           <div>Sum af dine valg: <b>{totals.sumAssign}</b> {totals.sumAssign > totals.totalNonHomeless ? <span style={{ color: 'red' }}>(for højt)</span> : null}</div>
           <div>Unemployed (bliver): <b>{totals.unemployedWillBe}</b></div>
