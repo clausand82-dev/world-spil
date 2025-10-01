@@ -43,7 +43,8 @@ Change/update History
 
 4.1
 - STAGE 2 INTRODUCTION
-- citizens system is introduced (handles birth, moving in, moving out, death, regroup citizens and user interference)
+- citizens system is introduced
+- citizens rebirth, death and growing is handled manual
 - health system is introduced
 - happiness system is introduced
 - popularity system is introduced

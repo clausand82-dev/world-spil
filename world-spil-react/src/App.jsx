@@ -21,6 +21,7 @@ import UserPage from './components/user/UserPage.jsx';
 import MapPage from './pages/MapPage.jsx';
 import { BoardProvider } from './components/ui/BoardProvider.jsx';
 import PopulationTickPage from './pages/PopulationTickPage.jsx';
+import CitizensAssignmentsPage from './pages/CitizensAssignmentsPage.jsx';
 
 function App() {
   const { isLoading, data, error } = useGameData();
@@ -61,6 +62,7 @@ function App() {
       case 'userpage': return <UserPage />;
       case 'map': return <MapPage />;
       case 'population-tick': return <PopulationTickPage />;
+      case 'citizensassignment': return <CitizensAssignmentsPage />;
       default: return <h1>Side ikke fundet: {page}</h1>;
     }
   };

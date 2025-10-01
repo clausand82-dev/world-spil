@@ -446,7 +446,7 @@ generelArmor:
     <deathHealthExpose>1.5</deathHealthExpose>
     <deathHealthWeight>1</deathHealthWeight>
     <deathHealthBaseline>2</deathHealthBaseline>
-    <birthRate>0</birthRate>
+    <birthRate>0.12</birthRate>
     <movingIn>0.04</movingIn>
     <movingOut>0.03</movingOut>
     <migration>0.75</migration>
@@ -559,7 +559,7 @@ generelArmor:
     <deathHealthExpose>1.5</deathHealthExpose>
     <deathHealthWeight>1</deathHealthWeight>
     <deathHealthBaseline>2</deathHealthBaseline>
-    <birthRate>0.05</birthRate>
+    <birthRate>0.10</birthRate>
     <movingIn>0.04</movingIn>
     <movingOut>0.03</movingOut>
     <migration>0.88</migration>

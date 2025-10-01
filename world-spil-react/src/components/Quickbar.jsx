@@ -11,6 +11,7 @@ export default function Quickbar({ activePage }) {
         { page: 'overview', title: 'Overview', icon: '📂' },
         { page: 'userpage', title: 'User', icon: '👤' },
         { page: 'population-tick', title: 'Befolkningstjek', icon: '👤' },
+        { page: 'citizensassignment', title: 'Borgertildeling', icon: '🧑‍💼' },
     ];
 
     return (

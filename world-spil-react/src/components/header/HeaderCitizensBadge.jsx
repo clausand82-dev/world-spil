@@ -10,7 +10,7 @@ import CitizensBadge from '../sidebar/CitizensBadge.jsx';
  * - Prop userStage kan gives udefra (din spil-state).
  * - thresholdStage kan ændres her eller i CitizensBadge som default.
  */
-export default function HeaderCitizensBadge({ style, thresholdStage = 3}) { //her ændres thresholdStage globalt
+export default function HeaderCitizensBadge({ style, thresholdStage = 2}) { //her ændres thresholdStage globalt
   const { data, err, loading } = useHeaderSummary();
 
   const { data: gameData } = useGameData(); // data fra GameDataContext ændres til gameData for at undgå konflikt med useHeaderSummary
