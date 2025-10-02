@@ -161,7 +161,7 @@ function metrics_registry(): array {
       'capacityStatKeys' => ['powerCapacity'],
       'usageStatKeys' => ['powerUsage'],
       'sources' => ['bld'=>true,'add'=>true,'rsd'=>true,'ani'=>true,'res'=>true],
-      'stage' => ['unlock_at'=>1,'visible_at'=>1],
+      'stage' => ['unlock_at'=>4,'visible_at'=>4],
       'happiness' => ['enabled'=>true, 'weight_key'=>'powerHappinessWeight'],
       'popularity'=> ['enabled'=>true, 'weight_key'=>'powerPopularityWeight'],
       'subs' => ['powerGreen','powerNuclear','powerFossil'],

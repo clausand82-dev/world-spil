@@ -113,13 +113,31 @@ export default function CitizenAssignmentsPage() {
   const polVal = Number(assign.adultsPolitician || 0);
 
   return (
-    <div className="panel" style={{ maxWidth: 760, margin: '0 auto' }}>
+    <div className="panel" style={{margin: '0 auto' }}>
       <div className="section-head">Borgere – Tildeling (Adults)</div>
+
       <div className="section-body">
+
+              <div style={{ margin: '10px 0', padding: 10, background: '#1f2937', borderRadius: 8, textAlign: 'center' }}>
+      👶 {state?.citizens?.baby} |
+      🧢 {state?.citizens?.kidsStreet}  |
+      ⛪ {state?.citizens?.kidsStudent}  |
+      🙎 {state?.citizens?.youngWorker}  |
+      🎓 {state?.citizens?.youngStudent}  |
+      👮 {state?.citizens?.adultsPolice} |
+      🔥 {state?.citizens?.adultsFire} |
+      💊 {state?.citizens?.adultsHealth} |
+        🪖 {state?.citizens?.adultsSoldier} |
+      🏢 {state?.citizens?.adultsGovernment} |
+      👔 {state?.citizens?.adultsPolitician} |
+      👷 {state?.citizens?.adultsWorker} |
+      🧓 {state?.citizens?.old}
+      </div>
         <div style={{ marginBottom: 12, fontSize: 14 }}>
           - adultsHomeless styres automatisk og kan ikke tildeles.<br/>
           - adultsUnemployed sættes automatisk som rest, når du gemmer.<br/>
-          - Politician har ratio-grænse pr. påbegyndt X borgere.
+          - Politician har ratio-grænse pr. påbegyndt X borgere.<br/>
+          - Pt har du 👫 <b>{totals.totalAdults}</b> voksne borgere i alt, hvoraf 👤 <b>{state?.citizens?.adultsHomeless||0}</b> er hjemløse.
         </div>
 
         <div style={{ margin: '10px 0', padding: 10, background: '#1f2937', borderRadius: 8 }}>

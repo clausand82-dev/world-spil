@@ -5,7 +5,7 @@
   
 
   <addon id="add.bigfireplace.l1" family="basecamp" type="addons" lvl="1" stage="1">
-    <stats>footprint=-1;provision_cap=25;heatFossilCapacity=10</stats>
+    <stats>footprint=-1;provision_cap=25;heatFossilCapacity=25;wasteOtherCapacity=50</stats>
     <cost>
       <res id="res.money" amount="150"/>
     </cost>
@@ -45,6 +45,15 @@
       <res id="res.wood" amount="10"/>
     </cost>
     <require>rsd.leatherwork.l1</require>
+  </addon>
+
+    <addon id="add.tailorspot.l2" family="basecamp" type="addons" lvl="2" stage="1">
+  <stats>footprint=-1;clothCapacity=25</stats>
+    <cost>
+      <res id="res.money" amount="75"/>
+      <res id="res.wood" amount="15"/>
+    </cost>
+    <require></require>
   </addon>
 
   <!-- storage addons -->
@@ -238,6 +247,7 @@
 
   <!-- ADDONS FOR FIELD-->
  <addon id="add.maizefield.l1" family="farm" group="main" type="addons" lvl="1" stage="1">
+ <stats>footprint=-5;provision_cap=25</stats>
     <cost>
       <res id="res.money" amount="100"/>
     </cost>
@@ -245,9 +255,11 @@
     <yield period="1h">
       <res id="res.maize" amount="2"/>
       </yield>
+      <time>5m</time>
   </addon>
 
    <addon id="add.wheatfield.l1" family="farm" group="main" type="addons" lvl="1" stage="1">
+   <stats>footprint=-5;provision_cap=25</stats>
     <cost>
       <res id="res.money" amount="100"/>
     </cost>

@@ -173,13 +173,13 @@ function compute_basic_ratios(PDO $pdo, int $uid, array $branches): array {
 /** Klargør kapaciteter for sliders. */
 function build_caps(PDO $pdo, int $uid, array $branches): array {
   $caps = [];
-  $caps['adultsPoliceCapacity']     = sum_role_capacity($pdo,$uid,$branches, ['adultsPoliceCapacity','policeCapacity','police_cap']);
-  $caps['adultsFireCapacity']       = sum_role_capacity($pdo,$uid,$branches, ['adultsFireCapacity','fireCapacity','fire_cap']);
-  $caps['adultsHealthCapacity']     = sum_role_capacity($pdo,$uid,$branches, ['adultsHealthCapacity','healthCapacity','health_cap']);
-  $caps['adultsSoldierCapacity']    = sum_role_capacity($pdo,$uid,$branches, ['adultsSoldierCapacity','soldierCapacity','soldier_cap']);
-  $caps['adultsGovernmentCapacity'] = sum_role_capacity($pdo,$uid,$branches, ['adultsGovernmentCapacity','governmentCapacity','govermentCapacity','government_cap','goverment_cap']);
-  $caps['adultsPoliticianCapacity'] = sum_role_capacity($pdo,$uid,$branches, ['adultsPoliticianCapacity','politicianCapacity','politician_cap']);
-  $caps['adultsWorkerCapacity']     = sum_role_capacity($pdo,$uid,$branches, ['adultsWorkerCapacity','workerCapacity','worker_cap']);
+  $caps['adultsPoliceCapacity']     = sum_role_capacity($pdo,$uid,$branches, ['adultsPoliceCapacity','police_cap']);
+  $caps['adultsFireCapacity']       = sum_role_capacity($pdo,$uid,$branches, ['adultsFireCapacity','fire_cap']);
+  $caps['adultsHealthCapacity']     = sum_role_capacity($pdo,$uid,$branches, ['adultsHealthCapacity','health_cap']);
+  $caps['adultsSoldierCapacity']    = sum_role_capacity($pdo,$uid,$branches, ['adultsSoldierCapacity','soldier_cap']);
+  $caps['adultsGovernmentCapacity'] = sum_role_capacity($pdo,$uid,$branches, ['adultsGovernmentCapacity','government_cap','goverment_cap']);
+  $caps['adultsPoliticianCapacity'] = sum_role_capacity($pdo,$uid,$branches, ['adultsPoliticianCapacity','politician_cap']);
+  $caps['adultsWorkerCapacity']     = sum_role_capacity($pdo,$uid,$branches, ['adultsWorkerCapacity','worker_cap']);
   // Studenter-capaciteter til auto-korrektion
   $caps['kidsStudentCapacity']  = sum_role_capacity($pdo,$uid,$branches, ['kidsStudentCapacity']);
   $caps['youngStudentCapacity'] = sum_role_capacity($pdo,$uid,$branches, ['youngStudentCapacity']);

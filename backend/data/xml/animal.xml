@@ -3,7 +3,7 @@
 
  <!-- BASIS GÅRD DYR--> 
   <animal id="ani.cow"  family="farm" stage="1">
-  <stats>animal_cap=-10;provisionCapacity=5;waterUsage=2</stats>
+  <stats>animal_cap=-10;provisionCapacity=5;waterUsage=2;wasteOtherUsage=1</stats>
     <cost>
       <res id="res.money" amount="10"/>
       <res id="res.food" amount="6"/>
@@ -16,7 +16,7 @@
   </animal>
 
   <animal id="ani.pig" family="farm" stage="1">
-    <stats>animal_cap=-4;provisionCapacity=3;waterUsage=3</stats>
+    <stats>animal_cap=-4;provisionCapacity=3;waterUsage=3;wasteOtherUsage=4</stats>
     <cost>
       <res id="res.money" amount="10"/>
       <res id="res.food" amount="2"/>
@@ -28,7 +28,7 @@
   </animal>
 
   <animal id="ani.goat" family="farm" stage="1">
-    <stats>animal_cap=-5;provisionCapacity=1;waterUsage=2</stats>
+    <stats>animal_cap=-5;provisionCapacity=1;waterUsage=2;wasteOtherUsage=1</stats>
     <cost>
       <res id="res.money" amount="10"/>
       <res id="res.food" amount="2"/>
@@ -41,7 +41,7 @@
   </animal>
 
   <animal id="ani.sheep" family="farm" stage="1">
-   <stats>animal_cap=-5;provisionCapacity=1;waterUsage=2</stats>
+   <stats>animal_cap=-5;provisionCapacity=1;waterUsage=2;wasteOtherUsage=1</stats>
     <cost>
       <res id="res.money" amount="10"/>
       <res id="res.food" amount="2"/>
@@ -54,7 +54,7 @@
   </animal> 
     
   <animal id="ani.chicken" family="farm" stage="1">
-   <stats>animal_cap=-1;provisionCapacity=0.2;waterUsage=0.2</stats>
+   <stats>animal_cap=-1;provisionCapacity=0.2;waterUsage=0.2;wasteOtherUsage=1</stats>
     <cost>
       <res id="res.money" amount="10"/>
       <res id="res.food" amount="2"/>
@@ -81,7 +81,7 @@
   </animal>
 
   <animal id="ani.duck" family="lake" stage="1">
-   <stats>animal_cap=-1;provisionCapacity=0.2;waterUsage=0.4</stats>
+   <stats>animal_cap=-1;provisionCapacity=0.2;waterUsage=0.4;wasteOtherUsage=1</stats>
     <cost>
       <res id="res.money" amount="10"/>
       <res id="res.food" amount="2"/>

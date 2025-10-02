@@ -21,32 +21,35 @@ function usePortalContainer() {
 
 export default function ConfirmModal({
   isOpen,
+  open,                 // alias understøttelse
   title = 'Bekræft',
   body = '',
   confirmText = 'OK',
   cancelText = 'Annuller',
   onConfirm,
   onCancel,
+  children,             // vis indhold fra ReproSummaryModal
 }) {
   const container = usePortalContainer();
+  const visible = (typeof isOpen !== 'undefined') ? isOpen : !!open;
 
   // Lås baggrundsscroll når åben
   useEffect(() => {
-    if (!isOpen) return;
+    if (!visible) return;
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     return () => { document.body.style.overflow = prev; };
-  }, [isOpen]);
+  }, [visible]);
 
   // ESC luk
   useEffect(() => {
-    if (!isOpen) return;
+    if (!visible) return;
     const onKey = (e) => { if (e.key === 'Escape') onCancel && onCancel(); };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [isOpen, onCancel]);
+  }, [visible, onCancel]);
 
-  if (!isOpen) return null;
+  if (!visible) return null;
 
   const overlay = (
     <div
@@ -80,11 +83,20 @@ export default function ConfirmModal({
           <h3 id="confirm-title" style={{ margin: 0, fontSize: 18 }}>{title}</h3>
         </div>
 
-        <div
-          style={{ padding: '12px 18px 0 18px', lineHeight: 1.5, color: '#cbd5e1' }}
-          // body kan indeholde simple <br/> osv.
-          dangerouslySetInnerHTML={{ __html: body }}
-        />
+        {/* Body som ren tekst/HTML, hvis givet */}
+        {body && (
+          <div
+            style={{ padding: '12px 18px 0 18px', lineHeight: 1.5, color: '#cbd5e1' }}
+            dangerouslySetInnerHTML={{ __html: body }}
+          />
+        )}
+
+        {/* Render children (React-indhold) */}
+        {children && (
+          <div style={{ padding: '12px 18px 0 18px' }}>
+            {children}
+          </div>
+        )}
 
         <div
           style={{

@@ -3,11 +3,17 @@ import ActionButton from '../../ActionButton.jsx';
 import BuildProgress from '../../BuildProgress.jsx';
 import RequirementSummary from '../RequirementSummary.jsx';
 import { requirementInfo } from '../../../services/requirements.js';
+import HoverCard from '../../ui/HoverCard.jsx';
+import StatsEffectsTooltip from '../../ui/StatsEffectsTooltip.jsx';
 import { useT } from "../../../services/i18n.js";
+import { useGameData } from '../../../context/GameDataContext.jsx';
 
 function AddonRow({ entry, state, baseOwned, requirementCaches }) {
   const { def, fullId, stageReq, stageOk, ownedLevel, displayLevel } = entry;
 const t = useT();
+  const { data } = useGameData();
+  const translations = data?.i18n?.current ?? {};
+
   const requirement = requirementInfo(
     {
       id: fullId,
@@ -40,7 +46,9 @@ const t = useT();
   const hasBuff = durationValue != null && durationBase != null && Math.round(durationValue) !== Math.round(durationBase);
   const durationText = hasBuff ? null : (def.time_str || def.duration_text || null);
 
-  return (
+  const hoverContent = <StatsEffectsTooltip def={def} translations={translations} />;
+
+  const row =  (
     <div className="item" data-addon-row={fullId}>
       <div className="icon">{t("ui.emoji.addon.h1")}</div>
       <div className="grow">
@@ -75,6 +83,14 @@ const t = useT();
       </div>
     </div>
   );
+
+  // Wrapper: HoverCard skal fylde hele rækken, så vi sætter style display:block,width:100%
+  return (
+    <HoverCard content={hoverContent} style={{ display: 'block', width: '100%' }}>
+      {row}
+    </HoverCard>
+  );
+
 }
 
 export default AddonRow;

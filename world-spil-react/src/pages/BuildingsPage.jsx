@@ -6,6 +6,8 @@ import ActionButton from '../components/ActionButton.jsx';
 import BuildProgress from '../components/BuildProgress.jsx';
 import LevelStatus from '../components/requirements/LevelStatus.jsx';
 import { useRequirements as useReqAgg } from '../components/requirements/Requirements.jsx';
+import HoverCard from '../components/ui/HoverCard.jsx';
+import StatsEffectsTooltip from '../components/ui/StatsEffectsTooltip.jsx';
 
 /*function _page_canAfford(price, state) {
     for (const item of Object.values(H.normalizePrice(price))) {
@@ -42,10 +44,22 @@ function computeOwnedMaxBySeriesFromState(state, stateKey = 'bld') {
     return bySeries;
 }
 
-function BuildingRow({ bld, state }) {
+
+
+function BuildingRow({ bld, state, defs }) {
+    // bld is the row object we constructed in BuildingsPage. We prefer to use bld.def (real definition)
+    const def = bld?.def || (defs?.bld ? (defs.bld[(bld.id || '').replace(/^bld\./, '')] || null) : null);
+
     const { allOk, Component: ReqLine } = useReqAgg(bld);
 
-    return (
+    // translations for tooltip labels, if available
+    const { data } = useGameData();
+    const translations = data?.i18n?.current ?? {};
+
+    // Pass the actual def (with stats) to StatsEffectsTooltip
+    const hoverContent = <StatsEffectsTooltip def={def || bld} translations={translations} />;
+
+    const row = (
         <div className="item" data-bld-id={bld.id}>
             <div className="icon">
                 <GameImage src={`/assets/art/${bld.id}.medium.png`} fallback="/assets/art/placeholder.medium.png" className="bld-thumb" width={50} height={50} style={{ width: 50, height: 50, borderRadius: '6px', border: '1px solid var(--border)' }} />
@@ -65,6 +79,14 @@ function BuildingRow({ bld, state }) {
             </div>
         </div>
     );
+
+  // Wrapper: HoverCard skal fylde hele rækken, så vi sætter style display:block,width:100%
+  return (
+    <HoverCard content={hoverContent} style={{ display: 'block', width: '100%' }}>
+      {row}
+    </HoverCard>
+  );
+
 }
 
 export default function BuildingsPage() {
@@ -132,7 +154,8 @@ export default function BuildingsPage() {
                 durability: top.def?.durability || 0,
                 footprintDelta: top.def?.stats?.footprint || 0,
                 animalCapDelta: top.def?.stats?.animalCap || 0,
-                ownedMax
+                ownedMax,
+                def: top.def || null, // <= include original def here
             });
             continue;
         }
@@ -148,7 +171,7 @@ export default function BuildingsPage() {
             owned: false,
             isUpgrade: ownedMax > 0,
             price,
-            req: target.def?.require || '',
+            req: target.def?.require || target.def?.req || '',
             duration_s: Number(target.def?.duration_s ?? 10),
             displayName,
             displayDesc,
@@ -161,7 +184,8 @@ export default function BuildingsPage() {
             durability: target.def?.durability || 0,
             footprintDelta: target.def?.stats?.footprint || 0,
             animalCapDelta: target.def?.stats?.animalCap || 0,
-            ownedMax
+            ownedMax,
+            def: target.def || null, // <= include original def here
         });
     }
 
@@ -170,7 +194,7 @@ export default function BuildingsPage() {
             <div className="section-head">🧱 Buildings</div>
             <div className="section-body">
                 {bldList.map((bld) => (
-                    <BuildingRow key={bld.id} bld={bld} state={state} />
+                    <BuildingRow key={bld.id} bld={bld} state={state} defs={defs} />
                 ))}
             </div>
         </section>

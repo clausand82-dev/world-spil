@@ -50,6 +50,7 @@ Change/update History
 - popularity system is introduced
 - citymanagement system as housing, provision, medicin, water, heat, power, cloth, waste and health is unlocked
 - fixed error with storage not working as intended
+- education system coded - maybe for another stage
 
 4.0
 - moving all code to react code instead
