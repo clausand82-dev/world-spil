@@ -17,9 +17,7 @@ function fail(string $code, string $msg, int $http=400): never {
   exit;
 }
 
-/**
- * Tjek om en tabel har en given kolonne (bruges til at undgå at røre lastupdated).
- */
+/** Tabel-kolonne check (bruges til at undgå at røre lastupdated). */
 function table_has_column(PDO $pdo, string $table, string $column): bool {
   $sql = "SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ? LIMIT 1";
   $st = $pdo->prepare($sql);
@@ -27,16 +25,13 @@ function table_has_column(PDO $pdo, string $table, string $column): bool {
   return (bool)$st->fetchColumn();
 }
 
-/**
- * Hjælpere til at læse defs-branch arrays.
- * Fald tilbage til load_all_defs(), hvis globals ikke er sat i denne request.
- */
+/** Indlæs defs-branches; fallback til load_all_defs() hvis globals mangler. */
 function _load_defs_branches(): array {
   $defs = $GLOBALS['DEFS'] ?? ($GLOBALS['defs'] ?? null);
   if (!is_array($defs) || empty($defs)) {
     try {
       $defs = load_all_defs();
-      $GLOBALS['DEFS'] = $defs; // gør dem tilgængelige for resten af requesten
+      $GLOBALS['DEFS'] = $defs;
     } catch (Throwable $e) {
       $defs = [];
     }
@@ -50,19 +45,15 @@ function _load_defs_branches(): array {
   return [$bld, $add, $rsd, $ani, $res, $cfg];
 }
 
-/**
- * Summer kapaciteter for en rolle ved at understøtte flere mulige stat-navne.
- * Eksempel: adultsPoliceCapacity eller policeCapacity eller police_cap.
- */
+/** Summer kapacitet fra defs/tabeller for en rolle. */
 function sum_role_capacity(PDO $pdo, int $uid, array $branches, array $keyVariants): int {
   [$bld, $add, $rsd, $ani, $res] = $branches;
   $sum = 0.0;
-  $variants = $keyVariants;
-  if (cu_table_exists($pdo,'buildings'))     $sum += cu_sum_capacity_from_table($pdo, $uid, $bld, 'buildings', 'bld_id', 'level', $variants);
-  if (cu_table_exists($pdo,'addon'))         $sum += cu_sum_capacity_from_table($pdo, $uid, $add, 'addon',     'add_id', 'level', $variants);
-  if (cu_table_exists($pdo,'research')) $sum += cu_sum_capacity_from_research($pdo, $uid, $rsd, $variants);
-  if (cu_table_exists($pdo,'animals'))       $sum += cu_sum_capacity_from_animals($pdo, $uid, $ani, $variants);
-  if (cu_table_exists($pdo,'inventory'))     $sum += cu_sum_capacity_from_inventory($pdo, $uid, $res, $variants);
+  if (cu_table_exists($pdo,'buildings'))     $sum += cu_sum_capacity_from_table($pdo, $uid, $bld, 'buildings', 'bld_id', 'level', $keyVariants);
+  if (cu_table_exists($pdo,'addon'))         $sum += cu_sum_capacity_from_table($pdo, $uid, $add, 'addon',     'add_id', 'level', $keyVariants);
+  if (cu_table_exists($pdo,'user_research')) $sum += cu_sum_capacity_from_research($pdo, $uid, $rsd, $keyVariants);
+  if (cu_table_exists($pdo,'animals'))       $sum += cu_sum_capacity_from_animals($pdo, $uid, $ani, $keyVariants);
+  if (cu_table_exists($pdo,'inventory'))     $sum += cu_sum_capacity_from_inventory($pdo, $uid, $res, $keyVariants);
   return (int)floor($sum);
 }
 
@@ -72,7 +63,6 @@ function load_citizens_row(PDO $pdo, int $uid): array {
   $st->execute([$uid]);
   $row = $st->fetch(PDO::FETCH_ASSOC);
   if (!$row) {
-    // Opret tom række hvis ikke findes
     $pdo->prepare("INSERT INTO citizens (user_id) VALUES (?)")->execute([$uid]);
     $st->execute([$uid]);
     $row = $st->fetch(PDO::FETCH_ASSOC);
@@ -83,37 +73,33 @@ function load_citizens_row(PDO $pdo, int $uid): array {
   return $row;
 }
 
-/** Politician max: "X,Y" betyder maks Y pr. påbegyndt X borgere. */
+/** Politician max: "X,Y" => maks Y pr. påbegyndt X borgere. */
 function compute_politician_max(array $config, array $cit): int {
   $raw = $config['student']['politicianMax'] ?? '100,2';
   if (!is_string($raw)) $raw = strval($raw);
   $parts = array_map('trim', explode(',', $raw));
   $X = max(1, (int)($parts[0] ?? 100));
   $Y = max(0, (int)($parts[1] ?? 2));
-
-  // Total borgere = alle grupper
   $total = 0;
   $keys = ['baby','kidsStreet','kidsStudent','youngWorker','youngStudent','old','adultsPolice','adultsFire','adultsHealth','adultsSoldier','adultsGovernment','adultsPolitician','adultsWorker','adultsUnemployed','adultsHomeless'];
   foreach ($keys as $k) $total += (int)($cit[$k] ?? 0);
-
-  return (int) (ceil($total / $X) * $Y);
+  return (int)(ceil($total / $X) * $Y);
 }
 
-/** Lav en moderat, vilkårlig crime-fordeling baseret på arbejdsløshed m.m. */
+/** Enkel crime-fordeling (baseline + arbejdsløshed/housing/provision + police suppression). */
 function compute_crime_distribution(array $newCit, array $ratios): array {
-  // Globalt niveau (inspireret af reproduction.php logikken – forenklet)
-  $adultsTotal = 0;
   $adultKeys = ['adultsUnemployed','adultsWorker','adultsPolice','adultsFire','adultsHealth','adultsGovernment','adultsPolitician','adultsHomeless'];
-  foreach ($adultKeys as $k) $adultsTotal += (int)($newCit[$k] ?? 0);
+  $adultsTotal = 0; foreach ($adultKeys as $k) $adultsTotal += (int)($newCit[$k] ?? 0);
   $unempRatio = $adultsTotal > 0 ? ((int)$newCit['adultsUnemployed'] / $adultsTotal) : 0.0;
   $polSuppression = $adultsTotal > 0 ? ((int)$newCit['adultsPolice'] / $adultsTotal) : 0.0;
 
-  // Baseline ~3%, øges af arbejdsløshed og små forsyningsunderskud, sænkes af police
   $baseline = 0.03;
   $r = $baseline + 0.6*$unempRatio + 0.2*max(0.0, 1.0 - ($ratios['provision'] ?? 1.0)) + 0.2*max(0.0, 1.0 - ($ratios['housing'] ?? 1.0)) - 0.6*$polSuppression;
-  $r = max(0.0, min(0.25, $r)); // clamp 0–25%
+  $r = max(0.0, min(0.25, $r));
+  
+    $minBaseline = 0.005; // 0.5% minimum crime rate
+  $r = max($r, $minBaseline);
 
-  // Rolle-vægte (homeless og unemployed lidt højere; police lavere, men > 0 for korruption)
   $W = [
     'adultsUnemployed' => 1.35,
     'adultsWorker'     => 1.00,
@@ -132,88 +118,69 @@ function compute_crime_distribution(array $newCit, array $ratios): array {
   foreach ($W as $role => $w) {
     $n = (int)($newCit[$role] ?? 0);
     if ($n <= 0) continue;
-    // Jitter ±20% omkring r*w
     $rw = $r * $w;
     $jitter = (mt_rand(-20, 20) / 100.0);
     $rate = max(0.0, $rw * (1.0 + $jitter));
     $target = (int)round($n * $rate);
-    $ckey = 'crime' . substr($role, strlen('adults')); // fx adultsPolice -> crimePolice
+    $ckey = 'crime' . substr($role, strlen('adults'));
     $crime[$ckey] = max(0, min($target, $n));
   }
 
-  // Sikre crime ⊆ adults
   foreach ($crime as $ckey => $val) {
-    $aKey = 'adults' . substr($ckey, strlen('crime')); // back-map
+    $aKey = 'adults' . substr($ckey, strlen('crime'));
     $crime[$ckey] = max(0, min((int)$val, (int)($newCit[$aKey] ?? 0)));
   }
 
   return $crime;
 }
 
-/** Udregn simple provision/housing-ratios for crime-modifikator. */
+/** Læs simple housing/provision kapaciteter til ratioer (bruges også til rehousing). */
 function compute_basic_ratios(PDO $pdo, int $uid, array $branches): array {
   [$bld,$add,$rsd,$ani,$res] = $branches;
-  $provCap = 0.0;
-  $houseCap = 0.0;
-
+  $provCap = 0.0; $houseCap = 0.0;
   $provKeys = ['provisionCapacity','provision_cap'];
   $houseKeys = ['housingCapacity','housing'];
-
   if (cu_table_exists($pdo,'buildings')) { $provCap += cu_sum_capacity_from_table($pdo,$uid,$bld,'buildings','bld_id','level',$provKeys); $houseCap += cu_sum_capacity_from_table($pdo,$uid,$bld,'buildings','bld_id','level',$houseKeys); }
   if (cu_table_exists($pdo,'addon'))     { $provCap += cu_sum_capacity_from_table($pdo,$uid,$add,'addon','add_id','level',$provKeys); $houseCap += cu_sum_capacity_from_table($pdo,$uid,$add,'addon','add_id','level',$houseKeys); }
-  if (cu_table_exists($pdo,'research')) { $provCap += cu_sum_capacity_from_research($pdo,$uid,$rsd,$provKeys); $houseCap += cu_sum_capacity_from_research($pdo,$uid,$rsd,$houseKeys); }
+  if (cu_table_exists($pdo,'user_research')) { $provCap += cu_sum_capacity_from_research($pdo,$uid,$rsd,$provKeys); $houseCap += cu_sum_capacity_from_research($pdo,$uid,$rsd,$houseKeys); }
   if (cu_table_exists($pdo,'animals'))   { $provCap += cu_sum_capacity_from_animals($pdo,$uid,$ani,$provKeys); $houseCap += cu_sum_capacity_from_animals($pdo,$uid,$ani,$houseKeys); }
   if (cu_table_exists($pdo,'inventory')) { $provCap += cu_sum_capacity_from_inventory($pdo,$uid,$res,$provKeys); $houseCap += cu_sum_capacity_from_inventory($pdo,$uid,$res,$houseKeys); }
-
-  // Brug simple usage-estimater: total personer ~ provision-usage, total personer ~ housing-usage
-  // Her bruger vi citizens-rækken direkte i GET/POST flowet, så ratio=cap / persons (clampet)
   return ['provisionCapacity'=>$provCap, 'housingCapacity'=>$houseCap];
 }
 
-/** Klargør kapaciteter for sliders. */
+/** Byg caps til sliders. */
 function build_caps(PDO $pdo, int $uid, array $branches): array {
   $caps = [];
-  $caps['adultsPoliceCapacity']     = sum_role_capacity($pdo,$uid,$branches, ['adultsPoliceCapacity','police_cap']);
-  $caps['adultsFireCapacity']       = sum_role_capacity($pdo,$uid,$branches, ['adultsFireCapacity','fire_cap']);
-  $caps['adultsHealthCapacity']     = sum_role_capacity($pdo,$uid,$branches, ['adultsHealthCapacity','health_cap']);
-  $caps['adultsSoldierCapacity']    = sum_role_capacity($pdo,$uid,$branches, ['adultsSoldierCapacity','soldier_cap']);
-  $caps['adultsGovernmentCapacity'] = sum_role_capacity($pdo,$uid,$branches, ['adultsGovernmentCapacity','government_cap','goverment_cap']);
-  $caps['adultsPoliticianCapacity'] = sum_role_capacity($pdo,$uid,$branches, ['adultsPoliticianCapacity','politician_cap']);
-  $caps['adultsWorkerCapacity']     = sum_role_capacity($pdo,$uid,$branches, ['adultsWorkerCapacity','worker_cap']);
+  $caps['adultsPoliceCapacity']     = sum_role_capacity($pdo,$uid,$branches, ['adultsPoliceCapacity','policeCapacity','police_cap']);
+  $caps['adultsFireCapacity']       = sum_role_capacity($pdo,$uid,$branches, ['adultsFireCapacity','fireCapacity','fire_cap']);
+  $caps['adultsHealthCapacity']     = sum_role_capacity($pdo,$uid,$branches, ['adultsHealthCapacity','healthCapacity','health_cap']);
+  $caps['adultsSoldierCapacity']    = sum_role_capacity($pdo,$uid,$branches, ['adultsSoldierCapacity','soldierCapacity','soldier_cap']);
+  $caps['adultsGovernmentCapacity'] = sum_role_capacity($pdo,$uid,$branches, ['adultsGovernmentCapacity','governmentCapacity','govermentCapacity','government_cap','goverment_cap']);
+  $caps['adultsPoliticianCapacity'] = sum_role_capacity($pdo,$uid,$branches, ['adultsPoliticianCapacity','politicianCapacity','politician_cap']);
+  $caps['adultsWorkerCapacity']     = sum_role_capacity($pdo,$uid,$branches, ['adultsWorkerCapacity','workerCapacity','worker_cap']);
   // Studenter-capaciteter til auto-korrektion
   $caps['kidsStudentCapacity']  = sum_role_capacity($pdo,$uid,$branches, ['kidsStudentCapacity']);
   $caps['youngStudentCapacity'] = sum_role_capacity($pdo,$uid,$branches, ['youngStudentCapacity']);
   return $caps;
 }
 
-/** AUTO-KORRIGER kids/young students mod caps (overflow flyttes). */
+/** Auto-korriger students mod caps (overflow -> street/worker). */
 function adjust_students_against_caps(array &$c, array $caps): void {
   $ksCap = max(0, (int)($caps['kidsStudentCapacity'] ?? 0));
   $ysCap = max(0, (int)($caps['youngStudentCapacity'] ?? 0));
-
   $ks = (int)($c['kidsStudent'] ?? 0);
-  if ($ks > $ksCap) {
-    $over = $ks - $ksCap;
-    $c['kidsStudent'] = $ksCap;
-    $c['kidsStreet'] = max(0, (int)($c['kidsStreet'] ?? 0) + $over);
-  }
+  if ($ks > $ksCap) { $over = $ks - $ksCap; $c['kidsStudent'] = $ksCap; $c['kidsStreet'] = max(0, (int)($c['kidsStreet'] ?? 0) + $over); }
   $ys = (int)($c['youngStudent'] ?? 0);
-  if ($ys > $ysCap) {
-    $over = $ys - $ysCap;
-    $c['youngStudent'] = $ysCap;
-    $c['youngWorker'] = max(0, (int)($c['youngWorker'] ?? 0) + $over);
-  }
+  if ($ys > $ysCap) { $over = $ys - $ysCap; $c['youngStudent'] = $ysCap; $c['youngWorker'] = max(0, (int)($c['youngWorker'] ?? 0) + $over); }
 }
 
-/** GET: Returnér nuværende citizens + caps + limits. */
+/** GET */
 function handle_get(PDO $pdo, int $uid): void {
   [$bld,$add,$rsd,$ani,$res,$cfg] = _load_defs_branches();
   $branches = [$bld,$add,$rsd,$ani,$res];
 
   $cit = load_citizens_row($pdo, $uid);
   $caps = build_caps($pdo, $uid, $branches);
-
-  // Politician-limit
   $polMax = compute_politician_max($cfg, $cit);
 
   respond([
@@ -227,13 +194,11 @@ function handle_get(PDO $pdo, int $uid): void {
       'adultsPoliticianCapacity' => $caps['adultsPoliticianCapacity'],
       'adultsWorkerCapacity'     => $caps['adultsWorkerCapacity'],
     ],
-    'limits'   => [
-      'politicianMax' => $polMax,
-    ],
+    'limits'   => [ 'politicianMax' => $polMax ],
   ]);
 }
 
-/** POST: Gem tildeling m. dobbelttjek, auto-unemployed, crime-tilskriv – uden at røre lastupdated. */
+/** POST */
 function handle_post(PDO $pdo, int $uid): void {
   [$bld,$add,$rsd,$ani,$res,$cfg] = _load_defs_branches();
   $branches = [$bld,$add,$rsd,$ani,$res];
@@ -246,26 +211,20 @@ function handle_post(PDO $pdo, int $uid): void {
 
   $cit = load_citizens_row($pdo, $uid);
   $caps = build_caps($pdo, $uid, $branches);
-
-  // Politician max
   $polMax = compute_politician_max($cfg, $cit);
 
-  // Forbered inddata og clamps
   $roles = ['adultsPolice','adultsFire','adultsHealth','adultsSoldier','adultsGovernment','adultsPolitician','adultsWorker'];
   $req = [];
   foreach ($roles as $r) $req[$r] = max(0, (int)($payload['assignments'][$r] ?? 0));
 
-  // Caps pr. rolle
   $warnings = [];
+
+  // Clamp til caps (mindst nuværende)
   foreach ($roles as $r) {
     $capKey = $r . 'Capacity';
     $cap = (int)($caps[$capKey] ?? 0);
-    // Tillad mindst nuværende, så eksisterende ikke bliver invalid, selv hvis cap-læsning er 0
     $cap = max($cap, (int)$cit[$r]);
-    if ($req[$r] > $cap) {
-      $req[$r] = $cap;
-      $warnings[] = "Clamped {$r} til cap={$cap}";
-    }
+    if ($req[$r] > $cap) { $req[$r] = $cap; $warnings[] = "Clamped {$r} til cap={$cap}"; }
   }
 
   // Politician-regel
@@ -274,42 +233,35 @@ function handle_post(PDO $pdo, int $uid): void {
     $warnings[] = "Clamped adultsPolitician til politicianMax={$polMax}";
   }
 
-  // Ikke-hjemløse voksne til rådighed
+  // Ikke-hjemløse voksne og sum targets
   $totalAdults = (int)$cit['adultsUnemployed'] + (int)$cit['adultsWorker'] + (int)$cit['adultsPolice']
                + (int)$cit['adultsFire'] + (int)$cit['adultsHealth'] + (int)$cit['adultsSoldier']
                + (int)$cit['adultsGovernment'] + (int)$cit['adultsPolitician'] + (int)$cit['adultsHomeless'];
 
   $nonHomeless = $totalAdults - (int)$cit['adultsHomeless'];
-  $sumTargets = 0;
-  foreach ($roles as $r) $sumTargets += (int)$req[$r];
+  $sumTargets = 0; foreach ($roles as $r) $sumTargets += (int)$req[$r];
 
   if ($sumTargets > $nonHomeless) {
-    // Proportionel nedskalering
     $scale = $nonHomeless > 0 ? ($nonHomeless / $sumTargets) : 0.0;
-    foreach ($roles as $r) {
-      $req[$r] = (int)floor($req[$r] * $scale);
-    }
+    foreach ($roles as $r) $req[$r] = (int)floor($req[$r] * $scale);
     $warnings[] = "Nedskalerede valg for at matche tilgængelige voksne={$nonHomeless}";
-    // Gen-beregn sum
-    $sumTargets = 0;
-    foreach ($roles as $r) $sumTargets += (int)$req[$r];
+    $sumTargets = 0; foreach ($roles as $r) $sumTargets += (int)$req[$r];
   }
 
-  // Sæt ny adultsUnemployed som rest (kan ikke være negativ)
+  // Sæt ny adultsUnemployed som rest
   $newUnemp = max(0, $nonHomeless - $sumTargets);
 
-  // Konstruér ny citizens-tilstand (kun felter vi styrer her)
+  // Opbyg ny tilstand
   $newCit = $cit;
   foreach ($roles as $r) $newCit[$r] = (int)$req[$r];
   $newCit['adultsUnemployed'] = (int)$newUnemp;
-  // adultsHomeless forbliver som i cit (styres af ticks/provision)
+  // adultsHomeless beholdes indtil rehousing (nedenfor)
 
-  // Auto-korriger students ift. cap (overflow flyttes)
+  // Auto-korriger kids/young students
   adjust_students_against_caps($newCit, $caps);
 
-  // Crime-tilskriv: beregn simple ratios og anvend vægte + jitter
-  $capRatios = compute_basic_ratios($pdo, $uid, $branches);
-  // Persons anslået som sum af grupper (inkl. baby/kids/young/old)
+  // Crime init baseret på ratior
+  $capRatios  = compute_basic_ratios($pdo, $uid, $branches);
   $totalPersons = 0;
   foreach (['baby','kidsStreet','kidsStudent','youngWorker','youngStudent','old','adultsUnemployed','adultsWorker','adultsPolice','adultsFire','adultsHealth','adultsSoldier','adultsGovernment','adultsPolitician','adultsHomeless'] as $k) {
     $totalPersons += (int)($newCit[$k] ?? 0);
@@ -320,34 +272,77 @@ function handle_post(PDO $pdo, int $uid): void {
   ];
   $crime = compute_crime_distribution($newCit, $ratios);
 
-  // Sikre crime ⊆ adults efter evt. stud.-justering
+  // Sikre crime ⊆ adults (før rehousing)
   foreach ($crime as $ckey => $val) {
     $aKey = 'adults' . substr($ckey, strlen('crime'));
     $crime[$ckey] = max(0, min((int)$val, (int)$newCit[$aKey]));
   }
 
-  // Gem alt i en transaktion – uden at røre lastupdated
+  /* ========== REHOUSING BLOCK (homeless -> unemployed, hvis ledig housing) ========== */
+
+  $housingCap = (int)floor($capRatios['housingCapacity'] ?? 0);
+  $adultsHomeless = (int)($newCit['adultsHomeless'] ?? 0);
+  $crimeHomeless  = (int)($crime['crimeHomeless'] ?? 0);
+
+  // Housed persons = alle personer undtagen homeless
+  $housedPersons = max(0, $totalPersons - $adultsHomeless);
+  $freeHousing   = max(0, $housingCap - $housedPersons);
+
+  if ($freeHousing > 0 && $adultsHomeless > 0) {
+    $reh = min($adultsHomeless, $freeHousing);
+
+    // Flyt proportional del af crimeHomeless med
+    $movedCrime = $adultsHomeless > 0 ? (int)min($crimeHomeless, round($reh * ($crimeHomeless / $adultsHomeless))) : 0;
+
+    // Udfør flyt
+    $newCit['adultsHomeless']    = $adultsHomeless - $reh;
+    $newCit['adultsUnemployed']  = (int)$newCit['adultsUnemployed'] + $reh;
+    $crime['crimeHomeless']      = max(0, $crimeHomeless - $movedCrime);
+    $crime['crimeUnemployed']    = (int)$crime['crimeUnemployed'] + $movedCrime;
+
+    $warnings[] = "Rehoused {$reh} fra homeless til unemployed" . ($movedCrime > 0 ? " (heraf {$movedCrime} crime)" : "");
+    // Opdater working vars til efterfølgende checks
+    $adultsHomeless = (int)$newCit['adultsHomeless'];
+    $crimeHomeless  = (int)$crime['crimeHomeless'];
+  }
+
+  // Tving konsistens: crimeHomeless må ikke overstige adultsHomeless
+  if ($crimeHomeless > $adultsHomeless) {
+    $overflow = $crimeHomeless - $adultsHomeless;
+    // Flyt overflow som både voksne og crime fra homeless -> unemployed
+    $moveAdults = min($overflow, $adultsHomeless); // normalt lig overflow, men guard
+    if ($moveAdults > 0) {
+      $newCit['adultsHomeless']    = max(0, $adultsHomeless - $moveAdults);
+      $newCit['adultsUnemployed']  = (int)$newCit['adultsUnemployed'] + $moveAdults;
+      $crime['crimeHomeless']      = max(0, $crimeHomeless - $moveAdults);
+      $crime['crimeUnemployed']    = (int)$crime['crimeUnemployed'] + $moveAdults;
+      $warnings[] = "Tvangsflyttede {$moveAdults} (crime) fra homeless til unemployed pga. crime>adults";
+      $adultsHomeless = (int)$newCit['adultsHomeless'];
+      $crimeHomeless  = (int)$crime['crimeHomeless'];
+    }
+  }
+
+  // Endelig subset-clamp for berørte grupper efter flyt
+  $crime['crimeHomeless']     = min((int)$crime['crimeHomeless'],    (int)$newCit['adultsHomeless']);
+  $crime['crimeUnemployed']   = min((int)$crime['crimeUnemployed'],  (int)$newCit['adultsUnemployed']);
+
+  /* ====================== SLUT REHOUSING BLOCK ====================== */
+
+  // Gem alt (inkl. adultsHomeless) i én transaktion – rør ikke lastupdated
   $pdo->beginTransaction();
   try {
-    // Byg UPDATE sætning for relevante felter
-    $fields = array_merge($roles, ['adultsUnemployed','kidsStudent','kidsStreet','youngStudent','youngWorker']);
+    $fields = array_merge($roles, ['adultsUnemployed','adultsHomeless','kidsStudent','kidsStreet','youngStudent','youngWorker']);
     $crimeFields = array_keys($crime);
     $all = array_merge($fields, $crimeFields);
 
-    $sets = [];
-    $vals = [];
-    foreach ($all as $f) {
-      $sets[] = "{$f} = ?";
-      $vals[] = (int)($crime[$f] ?? $newCit[$f] ?? 0);
-    }
+    $sets = []; $vals = [];
+    foreach ($all as $f) { $sets[] = "{$f} = ?"; $vals[] = (int)($crime[$f] ?? $newCit[$f] ?? 0); }
 
-    // Undertryk automatisk ON UPDATE på lastupdated (hvis kolonnen findes)
     if (table_has_column($pdo, 'citizens', 'lastupdated')) {
       $sets[] = "lastupdated = lastupdated";
     }
 
     $vals[] = $uid;
-
     $sql = "UPDATE citizens SET " . implode(',', $sets) . " WHERE user_id = ?";
     $st = $pdo->prepare($sql);
     $st->execute($vals);
@@ -359,22 +354,18 @@ function handle_post(PDO $pdo, int $uid): void {
   }
 
   respond([
-    'applied'    => $req,
-    'unemployed' => $newUnemp,
-    'crime'      => $crime,
-    'warnings'   => $warnings,
+    'applied'     => $req,
+    'unemployed'  => (int)$newCit['adultsUnemployed'],
+    'homeless'    => (int)$newCit['adultsHomeless'],
+    'crime'       => $crime,
+    'warnings'    => $warnings,
   ]);
 }
 
 try {
-  $uid = auth_require_user_id();
-  $pdo = db();
-
-  if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    handle_post($pdo, $uid);
-  } else {
-    handle_get($pdo, $uid);
-  }
+  $uid = auth_require_user_id(); $pdo = db();
+  if ($_SERVER['REQUEST_METHOD'] === 'POST') handle_post($pdo, $uid);
+  else handle_get($pdo, $uid);
 } catch (Throwable $e) {
   fail('E_SERVER', $e->getMessage(), 500);
 }

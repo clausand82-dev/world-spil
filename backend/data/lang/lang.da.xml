@@ -74,7 +74,6 @@
   <entry key="ui.emoji.animalcap.h1">🐾</entry>
   <entry key="ui.emoji.footprint.h1">⬛</entry>
   
-
 <!--BUILDINGS-->
   <entry key="bld.basecamp.l1.name">Lejrbål</entry>
   <entry key="bld.basecamp.l1.desc">Spillets starter base</entry>
@@ -104,14 +103,22 @@
   <entry key="bld.forest.l1.desc">Skovområde, der giver træressourcer over tid.</entry>
   <entry key="bld.forest.l2.name">Stor skov</entry>
   <entry key="bld.forest.l2.desc">Skovområde, der giver træressourcer over tid.</entry>
-  <entry key="bld.lake.l1.name">Sø</entry>
+  <entry key="bld.lake.l1.name">Lille Sø</entry>
   <entry key="bld.lake.l1.desc">En sø, der kan udvides med vigtige muligheder. En Sø giver vand.</entry>
-  <entry key="bld.mine.l1.name">Mine</entry>
+  <entry key="bld.lake.l2.name">Stor Sø</entry>
+  <entry key="bld.lake.l2.desc">En større sø, der kan fanges endnu flere fisk i. Søen giver endnu mere vand.</entry>
+  <entry key="bld.mine.l1.name">Lille Mine</entry>
   <entry key="bld.mine.l1.desc">Mine, der automatisk giver en smule sten over tid. Kan udvides til at give mere og flere ressourcer</entry>
+  <entry key="bld.mine.l2.name">Udvidet Mine</entry>
+  <entry key="bld.mine.l2.desc">Giver flere sten. Kan udvides til at give mere og flere ressourcer</entry>
+  <entry key="bld.mine.l3.name">Stor Mine</entry>
+  <entry key="bld.mine.l3.desc">Minen kan udvide bronze og jern, udover sten.</entry>
   <entry key="bld.storage.l1.name">Opbevaringstelt</entry>
   <entry key="bld.storage.l1.desc">Øger lager plads på alle type varer</entry>
   <entry key="bld.storage.l2.name">Stor Opbevaringstelt</entry>
   <entry key="bld.storage.l2.desc">Øger lager plads yderligere</entry>
+  <entry key="bld.health.l1.name">Medicin telt</entry>
+  <entry key="bld.health.l1.desc">Et medicin telt, hvor der kan udøves basal første hjælp.</entry>
 
 <!--ADDONS BASECAMP-->  
   <entry key="add.choppingblock.l1.name">Økseblok</entry>
@@ -174,6 +181,8 @@
 
   <entry key="add.tailorspot.l1.name">Skrædderbord</entry>
   <entry key="add.tailorspot.l1.desc">Tilføjer mulighed for at bearbejde skind og læder</entry>
+  <entry key="add.tailorspot.l2.name">Udvidet Skrædderbord</entry>
+  <entry key="add.tailorspot.l2.desc">Forbedrer mulighed for at bearbejde skind og læder</entry>
   <entry key="add.storageliquid.l1.name">Lille opbevaringstønde til flydende ressourcer</entry>
   <entry key="add.storageliquid.l1.desc">Øger opbevarings for flydende ressourcer</entry>
   <entry key="add.storageliquid.l2.name">Stor opbevaringstønde til flydende ressourcer</entry>
@@ -184,8 +193,18 @@
   <entry key="add.storagesolid.l2.desc">Øger opbevarings for solide ressourcer yderligere</entry>
 
   <entry key="add.stacking.l1.name">Bedre pakning</entry>
-  <entry key="add.stacking.l1.desc">Forbedre opbevarings muligheder</entry>
-  
+  <entry key="add.stacking.l1.desc">Forbedre opbevarings muligheder</entry>  
+
+  <entry key="add.maizefield.l1.name">Majsmark</entry>
+  <entry key="add.maizefield.l1.desc">Mark til at dyrke majs; giver majs som afgrøde.</entry>
+  <entry key="add.wheatfield.l1.name">Hvedemark</entry>
+  <entry key="add.wheatfield.l1.desc">Mark til at dyrke hvede; øger madproduktionen.</entry>
+  <entry key="add.field_scarecrow.l1.name">Fugleskræmsel</entry>
+  <entry key="add.field_scarecrow.l1.desc">Beskytter marker mod fugle og reducerer afgrødetab.</entry>
+  <entry key="add.mole.l1.name">Fiske mole</entry>
+  <entry key="add.mole.l1.desc">Giver mulighed for at fiske i søen.</entry>
+  <entry key="add.mole_net.l1.name">Fiske net</entry>
+  <entry key="add.mole_net.l1.desc">Forbedre fiskeri.</entry>
 
 <!--RESEARCH-->
   <entry key="rsd.tools.l1.name">Basis værktøjs kendskab</entry>
@@ -200,12 +219,20 @@
   <entry key="rsd.animalhusbandry.l1.desc">Giver evner til at holde dyr til produktion og slagtning</entry>
   <entry key="rsd.animalhusbandry.l2.name">Udvidet Dyrehold</entry>
   <entry key="rsd.animalhusbandry.l2.desc">Udvider evner til at holde dyr til produktion og slagtning</entry>
+  <entry key="rsd.animalhusbandry.l3.name">Forbedret Dyrehold</entry>
+  <entry key="rsd.animalhusbandry.l3.desc">Giver endnu bedre evner til at holde dyr til produktion og slagtning</entry>
   <entry key="rsd.farming.l1.name">Farming</entry>
   <entry key="rsd.farming.l1.desc">Giver evnen til at kunne bygge og dyrke  begrænser sorter korn på marker</entry>
+  <entry key="rsd.farming.l2.name">Udvidet Farming</entry>
+  <entry key="rsd.farming.l2.desc">Giver bedre evner til at kunne bygge og dyrke  begrænser sorter korn på marker</entry>
   <entry key="rsd.forestry.l1.name">Skovbrug</entry>
   <entry key="rsd.forestry.l1.desc">Giver evner til at bygge skov og drive simpel skovbrug</entry>
+  <entry key="rsd.forestry.l2.name">Udvidet Skovbrug</entry>
+  <entry key="rsd.forestry.l2.desc">Giver bedre evner til at bygge skov og drive skovbrug</entry>
   <entry key="rsd.irrigation.l1.name">Vandbrug</entry>
   <entry key="rsd.irrigation.l1.desc">Giver evner til at udnytte vand og lave en sø</entry>
+  <entry key="rsd.irrigation.l2.name">Udvidet Vandbrug</entry>
+  <entry key="rsd.irrigation.l2.desc">Giver bedre evner til at udnytte vand og lave en sø</entry>
   <entry key="rsd.prospecting.l1.name">Stenbrug</entry>
   <entry key="rsd.prospecting.l1.desc">Giver evnen til at bygge en mine og udvinde sten</entry>
   <entry key="rsd.storage.l1.name">Optimeret opbevaring</entry>
@@ -224,6 +251,8 @@
   <entry key="rsd.fishing.l1.desc">Giver evner til at fiske og udnytte vandressourcer</entry>
   <entry key="rsd.fishing.l2.name">Udvidet Fiskeri</entry>
   <entry key="rsd.fishing.l2.desc">Giver bedre evner til at fiske og udnytte vandressourcer</entry>
+  <entry key="rsd.fishing.l3.name">Forbedret Fiskeri</entry>
+  <entry key="rsd.fishing.l3.desc">Giver endnu bedre evner til at fiske og udnytte vandressourcer</entry>
   <entry key="rsd.leatherwork.l1.name">Læderarbejde</entry>
   <entry key="rsd.leatherwork.l1.desc">Giver evner til at bearbejde skind og lave læder</entry>
   <entry key="rsd.betterstorage.l1.name">Bedre opbevaring</entry>
@@ -233,7 +262,61 @@
   <entry key="rsd.stage.l1.name">Stage 1</entry>
   <entry key="rsd.stage.l1.desc">En tid, hvor det basale skal læres</entry>
   <entry key="rsd.stage.l2.name">Stage 2</entry>
-  <entry key="rsd.stage.l2.desc">En tid, hvor der fokuseres på at få indbyggere</entry>
+  <entry key="rsd.stage.l2.desc">En tid, hvor der fokuseres på at få indbyggere glade</entry>
+  <entry key="rsd.stage.l3.name">Stage 3</entry>
+  <entry key="rsd.stage.l3.desc">En tid, hvor der fokuses på at ...</entry>
+
+  <entry key="rsd.betterfeeding.l1.name">Forbedret fodring</entry>
+  <entry key="rsd.betterfeeding.l1.desc">Forbedrer fodringseffektivitet og dyrs trivsel</entry>
+
+  <entry key="rsd.oats.l1.name">Havreavl</entry>
+  <entry key="rsd.oats.l1.desc">Giver mulighed for at dyrke og udnytte havre som afgrøde</entry>
+
+  <entry key="rsd.useclay.l1.name">Lerudnyttelse</entry>
+  <entry key="rsd.useclay.l1.desc">Giver evnen til at udvinde og bruge ler til byggeri og keramik</entry>
+
+  <entry key="rsd.stonebricks.l1.name">Stenmursten</entry>
+  <entry key="rsd.stonebricks.l1.desc">Giver mulighed for at fremstille mursten af sten til stærkere bygninger</entry>
+
+  <entry key="rsd.bronze.l1.name">Bronze</entry>
+  <entry key="rsd.bronze.l1.desc">Muliggør fremstilling og brug af bronzeværktøj og -komponenter</entry>
+
+  <entry key="rsd.iron.l1.name">Jern</entry>
+  <entry key="rsd.iron.l1.desc">Giver evnen til at udvinde og forarbejde jern</entry>
+
+  <entry key="rsd.bronzemolding.l1.name">Bronzestøbning</entry>
+  <entry key="rsd.bronzemolding.l1.desc">Giver evnen til at støbe bronzedele ved hjælp af forme</entry>
+
+  <entry key="rsd.ironmolding.l1.name">Jernstøbning</entry>
+  <entry key="rsd.ironmolding.l1.desc">Giver evnen til at støbe og forme jern til værktøj og dele</entry>
+
+  <entry key="rsd.betterstorage.l2.name">Forbedret opbevaring</entry>
+  <entry key="rsd.betterstorage.l2.desc">Yderligere forbedringer af opbevaringskapacitet og effektivitet</entry>
+
+  <entry key="rsd.basiccloth.l1.name">Grundlæggende tekstil</entry>
+  <entry key="rsd.basiccloth.l1.desc">Giver evnen til at producere basale stoffer og tøj</entry>
+
+  <entry key="rsd.sleepingbag.l1.name">Sovepose</entry>
+  <entry key="rsd.sleepingbag.l1.desc">Giver mulighed for at lave eller bruge soveposer for bedre hvile</entry>
+
+  <entry key="rsd.sleeping.l1.name">Søvn</entry>
+  <entry key="rsd.sleeping.l1.desc">Forbedrer hvileeffekt og genopretning fra søvn</entry>
+
+  <entry key="rsd.campmanagement.l1.name">Lejrledelse</entry>
+  <entry key="rsd.campmanagement.l1.desc">Giver bedre styring af lejrens ressourcer og indbyggere</entry>
+
+  <entry key="rsd.campmanagement.l2.name">Avanceret lejrledelse</entry>
+  <entry key="rsd.campmanagement.l2.desc">Yderligere værktøjer til effektiv administration af lejren</entry>
+
+  <entry key="rsd.herbalism.l1.name">Urtemedicin</entry>
+  <entry key="rsd.herbalism.l1.desc">Giver evner til at finde og bruge medicinske planter</entry>
+
+  <entry key="rsd.herbalism.l2.name">Forbedret urtemedicin</entry>
+  <entry key="rsd.herbalism.l2.desc">Avanceret viden om planter til medicin og behandling</entry>
+
+  <entry key="rsd.medicinstorage.l1.name">Medicinsk opbevaring</entry>
+  <entry key="rsd.medicinstorage.l1.desc">Giver mulighed for sikker opbevaring af medicin og medicinsk udstyr</entry>
+
 
 <!--RECIPES-->
   <entry key="rcp.firewood.l1.name">Lav brænde</entry>

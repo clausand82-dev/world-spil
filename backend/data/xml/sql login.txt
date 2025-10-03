@@ -1,0 +1,5 @@
+CREATE USER 'worlduser'@'localhost' IDENTIFIED BY 'testuser1234';
+
+GRANT ALL PRIVILEGES ON *.* TO 'worlduser'@'localhost' WITH GRANT OPTION;
+
+FLUSH PRIVILEGES;

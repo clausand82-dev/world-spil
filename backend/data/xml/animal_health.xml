@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<animals source="World 2025.xlsx" sheet="Addon">
+
+ <!-- HEALTH UNITS--> 
+  <animal id="ani.health_groundbed1"  family="health" stage="1">
+  <stats>healthUnitUsage=1;provisionUsage=2;waterUsage=2;healthCapacity=1</stats>
+    <cost>
+      <res id="res.money" amount="10"/>
+      <res id="res.food" amount="6"/>
+    </cost>
+    <emoji>🛏</emoji>
+
+
+  </animal>
+
+  </animals>

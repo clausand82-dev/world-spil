@@ -77,7 +77,7 @@ try {
 
   // Capacity keys (hold eksisterende + sub-capacities for heat/power + mulighed for registry-udvidelser)
   $CAP_KEYS = [
-    'housingCapacity'         => ['housing','housingCapacity'],
+    /*'housingCapacity'         => ['housing','housingCapacity'],
     'provisionCapacity'       => ['provision_cap','provisionCapacity'],
     'heatCapacity'            => ['heatCapacity'],
     'healthCapacity'          => ['healthCapacity'],
@@ -93,7 +93,7 @@ try {
     // Power sub-capacities
     'powerFossilCapacity'     => ['powerFossilCapacity'],
     'powerGreenCapacity'      => ['powerGreenCapacity'],
-    'powerNuclearCapacity'    => ['powerNuclearCapacity'],
+    'powerNuclearCapacity'    => ['powerNuclearCapacity'],*/
   ];
 
   // Udvid CAP_KEYS fra registry (så nye metrics bliver auto-summeret)
@@ -305,6 +305,30 @@ foreach ($registry as $id => $m) {
       'capacityField' => (string)($m['capacityField'] ?? ''),
     ];
   }
+
+/** Rekursiv afrunding af numeriske værdier i arrays/skalare */
+function round_numeric_recursive($val, int $decimals = 2) {
+  if (is_array($val)) {
+    foreach ($val as $k => $v) {
+      $val[$k] = round_numeric_recursive($v, $decimals);
+    }
+    return $val;
+  }
+  if (is_numeric($val)) {
+    $f = (float)$val;
+    $r = round($f, $decimals);
+    // Return int hvis helt tal efter afrunding
+    if (floor($r) == $r) return (int)$r;
+    return $r;
+  }
+  return $val;
+}
+
+// --- Afslutningsvis: afrund de ønskede strukturer til maks 2 decimaler ---
+$ROUND_DECIMALS = 2;
+$capacities = round_numeric_recursive($capacities, $ROUND_DECIMALS);
+$parts      = round_numeric_recursive($parts, $ROUND_DECIMALS);
+$usages     = round_numeric_recursive($usages, $ROUND_DECIMALS);
 
   // Respond – udvidet payload (kompatibel med eksisterende UI)
   respond([

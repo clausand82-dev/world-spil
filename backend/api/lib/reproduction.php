@@ -391,6 +391,10 @@ function repro__redistribute_crime(array &$c, array $cfgCrime, float $housingDef
   $ratio = $baseline + 0.6*$unemp + 0.4*max(0.0,$housingDef) + 0.3*max(0.0,$provDef) + 0.2*max(0.0,$waterDef) - 0.8*$suppression;
   $ratio = max((float)($cfgCrime['minRatio'] ?? 0.0), min((float)($cfgCrime['maxRatio'] ?? 0.5), $ratio));
 
+ // ensure a small baseline crime even when conditions are good
+  $minBaseline = max(0.0, (float)($cfgCrime['minBaseline'] ?? 0.005)); // 0.5% default
+  $ratio = max($ratio, $minBaseline);
+
   $res=[];
   foreach ($adultKeys as $i=>$g) {
     $cnt = (int)($c[$g] ?? 0);

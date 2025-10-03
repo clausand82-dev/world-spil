@@ -1,98 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <addons source="World 2025.xlsx" sheet="Addon">
-  
-  <!-- addons for basecamp -->
-  
-
-  <addon id="add.bigfireplace.l1" family="basecamp" type="addons" lvl="1" stage="1">
-    <stats>footprint=-1;provision_cap=25;heatFossilCapacity=25;wasteOtherCapacity=50</stats>
-    <cost>
-      <res id="res.money" amount="150"/>
-    </cost>
-    <require>bld.basecamp.l2</require>
-    <yield period="1h">
-      <res id="res.money" amount="5"/>
-      </yield>
-  </addon>
-
-  <addon id="add.saltbowl.l1" family="basecamp" type="addons" lvl="1" stage="1">
-     <cost>
-      <res id="res.money" amount="25"/>
-    </cost>
-    <yield period="1h">
-      <res  id="res.salt" amount="1"/>
-    </yield>
-    
-  </addon>
-
-  <addon id="add.well.l1" family="basecamp" type="addons" lvl="1" stage="1">
-  <stats>footprint=-1,waterCapacity=15</stats>
-    <cost>
-      <res id="res.money" amount="20"/>
-      <res id="res.wood" amount="2"/>
-      <res id="res.stone" amount="35"/>
-    </cost>
-    <yield period="1h">
-      <res id="res.water" amount="5"/>
-      <res id="res.salt" amount="1"/>
-    </yield>
-  </addon>
-
-  <addon id="add.tailorspot.l1" family="basecamp" type="addons" lvl="1" stage="1">
-  <stats>footprint=-1;clothCapacity=4</stats>
-    <cost>
-      <res id="res.money" amount="50"/>
-      <res id="res.wood" amount="10"/>
-    </cost>
-    <require>rsd.leatherwork.l1</require>
-  </addon>
-
-    <addon id="add.tailorspot.l2" family="basecamp" type="addons" lvl="2" stage="1">
-  <stats>footprint=-1;clothCapacity=25</stats>
-    <cost>
-      <res id="res.money" amount="75"/>
-      <res id="res.wood" amount="15"/>
-    </cost>
-    <require></require>
-  </addon>
-
-  <!-- storage addons -->
-
-  <addon id="add.storageliquid.l1" family="storage" type="addons" lvl="1" stage="1">
-    <stats>footprint=-1;storageLiquidCap=25</stats>
-    <cost>
-      <res id="res.money" amount="50"/>
-      <res id="res.wood" amount="10"/>
-    </cost>
-    <upgradesTo>add.storageliquid.l2</upgradesTo>
-    </addon>
-
-    <addon id="add.storageliquid.l2" family="storage" type="addons" lvl="1" stage="1">
-    <stats>footprint=-1;storageLiquidCap=50</stats>
-    <cost>
-      <res id="res.money" amount="50"/>
-      <res id="res.wood" amount="10"/>
-    </cost>
-    <require>rsd.betterstorage.l1,rsd.tools.l2</require>
-  </addon>
-
-  <addon id="add.storagesolid.l1" family="storage" type="addons" lvl="2" stage="1">
-    <stats>footprint=-1;storageSolidCap=25</stats>
-    <cost>
-      <res id="res.money" amount="100"/>
-      <res id="res.wood" amount="25"/>
-    </cost>
-    <upgradesTo>add.storagesolid.l2</upgradesTo>
-  </addon>
-
-    <addon id="add.storagesolid.l2" family="storage" type="addons" lvl="2" stage="1">
-    <stats>footprint=-1;storageSolidCap=50</stats>
-    <cost>
-      <res id="res.money" amount="100"/>
-      <res id="res.wood" amount="25"/>
-    </cost>
-    <require>rsd.betterstorage.l1,rsd.tools.l2</require>
-  </addon>
 
 <!-- addons for farm -->
 
@@ -127,17 +34,17 @@
         <res id="res.money" amount="25"/>
         <res id="res.wood" amount="16"/>
       </cost>
-      <upgradesTo>add.barn_waterthough.l2</upgradesTo>
+      <upgradesTo>add.barn_watertrough.l2</upgradesTo>
       <require>rsd.betterfeeding.l1</require>
     </addon>
 
-      <addon id="add.barn_watertrough.l2" family="farm" group="barn" type="addons" lvl="2" stage="1">
+    <addon id="add.barn_watertrough.l2" family="farm" group="barn" type="addons" lvl="2" stage="1">
         <stats>animal_cap=10;waterCapacity=2</stats>
     <cost>
       <res id="res.money" amount="25"/>
       <res id="res.stone" amount="16"/>
     </cost>
-        <require>add.barn_waterthough.l1</require>
+        <require>add.barn_watertrough.l1</require>
   </addon>
 
   <!--sub addon yard/gård - formål er at øge animal_cap -->
@@ -156,8 +63,8 @@
       <res id="res.money" amount="45"/>
       <res id="res.wood" amount="25"/>
     </cost>
-    <require>add.yard.l1</require>
-    <upgradesTo>bld.barn_fence.l2</upgradesTo>
+    <require>add.barn_yard.l1</require>
+    <upgradesTo>add.barn_fence.l2</upgradesTo>
   </addon>
 
     <addon id="add.barn_fence.l2" family="farm" group="barn" type="addons" lvl="2" stage="1">
@@ -242,6 +149,20 @@
     <cost>
       <res id="res.money" amount="100"/>
     </cost>
+    <require>add.barn.l1</require>
+  </addon>
+
+    <addon id="add.barn_slaughterspot.l2" family="farm" group="barn" type="addons" lvl="2" stage="1">
+    <cost>
+      <res id="res.money" amount="125"/>
+    </cost>
+    <require></require>
+  </addon>
+
+    <addon id="add.barn_slaughterspot.l3" family="farm" group="barn" type="addons" lvl="3" stage="1">
+    <cost>
+      <res id="res.money" amount="235"/>
+    </cost>
     <require></require>
   </addon>
 
@@ -277,43 +198,5 @@
   </addon>
 
 
-
-  <!--addon fiske mole - åbner op for fiskeri -->
-      <addon id="add.mole.l1" family="lake" type="addons" lvl="1" stage="1">
-      <stats>footprint=-1</stats>
-    <cost>
-      <res id="res.money" amount="100"/>
-      <res id="res.wood" amount="100"/>
-    </cost>
-    <require>rsd.fishing.l1</require>
-    <yield period="1h">
-      <res id="res.rawcommonfish" amount="2"/>
-      </yield>
-      <buff applies_to="all">
-        <res id="res.rawcommonfish" amount="10" type="mult" mode="yield"/>
-      </buff>
-  </addon>
-
-    <!--addon fiske net af tynd tråd - åbner op for fiskeri -->
-        <addon id="add.mole_net.l1" family="lake" group="mole" type="addons" lvl="1" stage="1">
-    <cost>
-      <res id="res.money" amount="100"/>
-      <res id="res.wood" amount="100"/>
-    </cost>
-        <yield period="1h">
-      <res id="res.rawcommonfish" amount="2"/>
-      </yield>
-  </addon>
-
-  <!-- addon til at øge træ fældning -->
-
-  <addon id="add.choppingblock.l1" family="forest" group="main" type="addons" lvl="1" stage="1">
-  <stats>footprint=-1;provision_cap=+5</stats>
-    <cost>
-      <res id="res.money" amount="100"/>
-      <res id="res.wood" amount="5"/>
-    </cost>
-    <require>rsd.flintstone.l1</require>
-  </addon>
 
 </addons>
