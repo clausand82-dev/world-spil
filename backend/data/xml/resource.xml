@@ -1,18 +1,36 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources source="World 2025.xlsx" sheet="Ressource">
-  <resource id="res.wood" family="basic" type="basicRessource" lvl="1" stage="1">
   
+<!-- BASIC BUILD RESSOURCES-->
+    
+  
+  <resource id="res.wood" family="basic" type="basicRessource" lvl="1" stage="1">
     <unit>pcs</unit>
     <unitSpace>0.5</unitSpace>
     <emoji>🌲</emoji>
   </resource>
+
   <resource id="res.stone" family="basic" type="minning" lvl="1" stage="1">
     <unit>pcs</unit>
     <unitSpace>0.2</unitSpace>
     <emoji>🪨</emoji>
   </resource>
+
+  <resource id="res.iron" family="basic" type="minning" lvl="1" stage="1">
+    <unit>pcs</unit>
+    <unitSpace>0.7</unitSpace>
+    <emoji>🔗</emoji>
+  </resource>
+
+    <resource id="res.bronze" family="basic" type="minning" lvl="1" stage="1">
+    <unit>pcs</unit>
+    <unitSpace>0.7</unitSpace>
+    <emoji>🔶</emoji>
+  </resource>
+
+
   <resource id="res.water" family="basic" type="basicRessource" lvl="1" stage="1">
-    <stats>waterCapacity=2</stats>
+    <stats>waterCapacity=0.1</stats>
     <unit>l</unit>
     <unitSpace>0.1</unitSpace>
     <emoji>💧</emoji>
@@ -23,24 +41,27 @@
     <emoji>💰</emoji>
   </resource>
   <resource id="res.food" family="food" type="product" lvl="1" stage="1">
-    <stats>provisionCapacity=2</stats>
+    <stats>provisionCapacity=0.1</stats>
     <unit>kg</unit>
     <unitSpace>0.1</unitSpace>
     <emoji>🍖</emoji>
   </resource>
   <resource id="res.cowmilk" family="food" type="animalProduct" lvl="1" stage="1">
+  <stats>provisionCapacity=0.1</stats>
     <unit>l</unit>
     <unitSpace>0.1</unitSpace>
     <emoji>🥛</emoji>
     <stats>origin_animal=cow</stats>
   </resource>
   <resource id="res.goatmilk" family="food" type="animalProduct" lvl="1" stage="1">
+  <stats>provisionCapacity=0.1</stats>
     <unit>l</unit>
     <unitSpace>0.1</unitSpace>
     <emoji>🥛</emoji>
     <stats>origin_animal=goat</stats>
   </resource>
   <resource id="res.egg" family="food" type="animalProduct" lvl="1" stage="1">
+  <stats>provisionCapacity=0.1</stats>
     <unit>pcs</unit>
     <unitSpace>0.1</unitSpace>
     <emoji>🥚</emoji>
@@ -53,16 +74,19 @@
     <stats>origin_animal=sheep</stats>
   </resource>
   <resource id="res.wheat" family="food" type="grain" lvl="1" stage="1">
+  <stats>provisionCapacity=0.1</stats>
     <unit>kg</unit>
     <unitSpace>0.5</unitSpace>
     <emoji>🌾</emoji >
   </resource>
   <resource id="res.oats" family="food" type="grain" lvl="1" stage="1">
+  <stats>provisionCapacity=0.1</stats>
     <unit>kg</unit>
     <unitSpace>0.5</unitSpace>
     <emoji>🌾</emoji >
   </resource>
     <resource id="res.maize" family="food" type="grain" lvl="1" stage="1">
+    <stats>provisionCapacity=0.1</stats>
     <unit>kg</unit>
     <unitSpace>0.5</unitSpace>
     <emoji>🌾</emoji >
