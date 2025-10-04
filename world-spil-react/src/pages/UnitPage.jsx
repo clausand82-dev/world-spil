@@ -4,28 +4,22 @@ import * as H from '../services/helpers.js';
 import ResourceCost from '../components/requirements/ResourceCost.jsx';
 import ConfirmModal from '../components/ConfirmModal.jsx';
 import useHeaderSummary from '../hooks/useHeaderSummary.js';
+import { UNIT_GROUPS } from '../config/unitGroups.js';
 
-/**
- * UnitPage med to faner:
- * - Dyr (family="farm"): bruger animal_cap (som før).
- * - Health (family="health"): bruger healthUnitUsage/healthUnitCapacity (units), ikke healthCapacity/useHealth.
- *
- * Backend: stadig /actions/animal.php buy/sell og ani.* i DB.
- */
-
-// Fallback-beregning hvis header-summary endnu ikke har healthUnit-cap/usage
-function computeHealthUnitTotals(defs, state) {
-  // Total kapacitet: sum af stats.healthUnitCapacity på ejede bygninger (og evt. addons/research hvis du vil udvide)
+// Fallback-beregning hvis header-summary ikke har kap/brug for en gruppe
+function computeUnitTotalsFallback(defs, state, group) {
   let total = 0;
+  // Bygn. kapacitet: summer stat på alle ejede bygninger
   for (const id of Object.keys(state?.bld || {})) {
     const p = H.parseBldKey(id);
     if (!p) continue;
-    const def = defs?.bld?.[`${p.family}.l${p.level}`] || defs?.bld?.[p.key] || defs?.bld?.[`${p.family}.l${p.level}`];
-    const cap = Number(def?.stats?.healthUnitCapacity ?? 0);
-    total += cap;
+    const bdef = defs?.bld?.[`${p.family}.l${p.level}`] || defs?.bld?.[p.key];
+    if (!bdef) continue;
+    const cap = Number(bdef?.stats?.[group.buildingCapacityStat] ?? 0);
+    if (Number.isFinite(cap)) total += cap;
   }
 
-  // Forbrug: sum af healthUnitUsage for ejede ani med family="health"
+  // Forbrug: sum perItemStat for ejede ani med matching family
   let used = 0;
   for (const [aniId, row] of Object.entries(state?.ani || {})) {
     const qty = Number(row?.quantity || 0);
@@ -34,8 +28,8 @@ function computeHealthUnitTotals(defs, state) {
     const adef = defs?.ani?.[key];
     if (!adef) continue;
     const fams = String(adef?.family || '').split(',').map(s => s.trim()).filter(Boolean);
-    if (!fams.includes('health')) continue;
-    const per = Math.abs(Number(adef?.stats?.healthUnitUsage ?? 0)) || 0;
+    if (!fams.includes(group.family)) continue;
+    const per = Math.abs(Number(adef?.stats?.[group.perItemStat] ?? 0)) || 0;
     used += per * qty;
   }
 
@@ -62,22 +56,22 @@ function renderCostInline(costLike, defs) {
   return entries.map((e) => `${emojiForId(e.id, defs)} ${H.fmt(e.amount)}`).join(' · ');
 }
 
-function PurchaseRow({ def, defs, aniId, toBuy, setQty, availableCap, isHealth }) {
-  const per = isHealth
-    ? Math.abs(Number(def?.stats?.healthUnitUsage ?? 0)) || 0
-    : Math.abs(Number(def?.stats?.animal_cap ?? 1)) || 1;
+function PurchaseRow({ def, defs, aniId, toBuy, setQty, availableCap, perItemStat, isAnimal }) {
+  const per = isAnimal
+    ? Math.abs(Number(def?.stats?.[perItemStat] ?? 1)) || 1
+    : Math.abs(Number(def?.stats?.[perItemStat] ?? 0)) || 0;
 
   const capUsedByOthers = useMemo(() => {
     return Object.entries(toBuy).reduce((sum, [id, qty]) => {
       if (id === aniId) return sum;
       const otherKey = id.replace(/^ani\./, '');
       const otherDef = defs.ani?.[otherKey];
-      const otherPer = isHealth
-        ? Math.abs(Number(otherDef?.stats?.healthUnitUsage ?? 0)) || 0
-        : Math.abs(Number(otherDef?.stats?.animal_cap ?? 1)) || 1;
+      const otherPer = isAnimal
+        ? Math.abs(Number(otherDef?.stats?.[perItemStat] ?? 1)) || 1
+        : Math.abs(Number(otherDef?.stats?.[perItemStat] ?? 0)) || 0;
       return sum + otherPer * (Number(qty) || 0);
     }, 0);
-  }, [toBuy, aniId, defs, isHealth]);
+  }, [toBuy, aniId, defs, perItemStat, isAnimal]);
 
   const remainingCap = Math.max(0, availableCap - capUsedByOthers);
   const maxVal = per > 0 ? Math.floor(remainingCap / per) : 999999;
@@ -85,11 +79,13 @@ function PurchaseRow({ def, defs, aniId, toBuy, setQty, availableCap, isHealth }
 
   return (
     <div className="item">
-      <div className="icon">{def.emoji || (isHealth ? '🏥' : '🐄')}</div>
+      <div className="icon">{def.emoji || (isAnimal ? '🐄' : '🏷️')}</div>
       <div className="grow">
         <div className="title">{def.name}</div>
         <div className="sub"><ResourceCost cost={def.cost} /></div>
-        <div className="sub">{isHealth ? `Forbruger ${per} health-unit` : `Kræver ${per} staldplads`}</div>
+        <div className="sub">
+          {isAnimal ? `Kræver ${per} staldplads` : `Forbruger ${per} units`}
+        </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '8px' }}>
           <input
             type="range"
@@ -112,18 +108,17 @@ function PurchaseRow({ def, defs, aniId, toBuy, setQty, availableCap, isHealth }
 export default function UnitPage() {
   const { data, isLoading, error, refreshData } = useGameData();
   const { data: header } = useHeaderSummary();
-  const [tab, setTab] = useState('farm'); // 'farm' | 'health'
+  const [selectedKey, setSelectedKey] = useState(null);
+  // Indkøbskurve pr. gruppe
+  const [toBuyByGroup, setToBuyByGroup] = useState({}); // { [groupKey]: { 'ani.x': qty } }
   const [confirm, setConfirm] = useState({ isOpen: false, title: '', body: '', onConfirm: null });
-  const [toBuy, setToBuy] = useState({});
-
-  const isHealth = tab === 'health';
-  const familyKey = isHealth ? 'health' : 'farm';
 
   if (isLoading) return <div className="sub">Indlæser...</div>;
   if (error || !data) return <div className="sub">Fejl.</div>;
 
   const { state, defs } = data;
 
+  // Ejer hvilke families?
   const familiesOwned = useMemo(() => {
     const set = new Set();
     Object.keys(state?.bld || {}).forEach((id) => {
@@ -133,58 +128,88 @@ export default function UnitPage() {
     return set;
   }, [state?.bld]);
 
-  // Fallback totals for health units (hvis header ikke har det endnu)
-  const healthUnitTotals = useMemo(() => computeHealthUnitTotals(defs, state), [defs, state]);
+  // Kun tabs for grupper, hvor man ejer family
+  const visibleGroups = useMemo(() => {
+    return UNIT_GROUPS.filter(g => familiesOwned.has(g.family));
+  }, [familiesOwned]);
 
-  const availableAnimals = useMemo(() => {
+  // Første synlige tab som default
+  const effectiveSelectedKey = useMemo(() => {
+    if (selectedKey && visibleGroups.some(g => g.key === selectedKey)) return selectedKey;
+    return visibleGroups[0]?.key || null;
+  }, [selectedKey, visibleGroups]);
+
+  const group = useMemo(() => {
+    return visibleGroups.find(g => g.key === effectiveSelectedKey) || null;
+  }, [effectiveSelectedKey, visibleGroups]);
+
+  const isAnimal = group?.capacityMode === 'animalCap';
+
+  // Tilgængelige defs i aktiv gruppe
+  const availableDefs = useMemo(() => {
+    if (!group) return [];
     return Object.entries(defs.ani || {}).filter(([_, def]) => {
       const fams = String(def?.family || '').split(',').map(s => s.trim()).filter(Boolean);
-      const inFamily = fams.includes(familyKey);
+      const inFamily = fams.includes(group.family);
       if (!inFamily) return false;
       const stageOk = Number(def?.stage || 0) <= Number(state?.user?.currentstage || 0);
-
-      // Kræv enten ejerskab af relevant family-bygning ELLER (for health) at der findes unit-kapacitet.
-      const buildingOk = fams.some(f => familiesOwned.has(f));
-      const unitCapOk  = isHealth && (Number(header?.capacities?.healthUnitCapacity ?? healthUnitTotals.total) > 0);
-
-      return stageOk && (buildingOk || unitCapOk);
+      return stageOk; // ejer allerede family (tab vises kun da), så ekstra check er ikke nødvendigt
     });
-  }, [defs?.ani, state?.user?.currentstage, familiesOwned, familyKey, isHealth, header?.capacities?.healthUnitCapacity, healthUnitTotals.total]);
+  }, [defs?.ani, state?.user?.currentstage, group]);
 
+  // Ejede units i aktiv gruppe
   const ownedUnits = useMemo(() => {
+    if (!group) return [];
     return Object.entries(state?.ani || {}).filter(([id, a]) => {
       if ((a?.quantity || 0) <= 0) return false;
       const key = id.replace(/^ani\./, '');
       const def = defs.ani?.[key];
       if (!def) return false;
       const fams = String(def?.family || '').split(',').map(s => s.trim()).filter(Boolean);
-      return fams.includes(familyKey);
+      return fams.includes(group.family);
     });
-  }, [state?.ani, defs?.ani, familyKey]);
+  }, [state?.ani, defs?.ani, group]);
 
-  const details = useMemo(() => {
-    if (!defs) return null;
-
-    let total = 0, used = 0;
-
-    if (isHealth) {
-      // Brug nye unit-metrics hvis de findes, ellers fallback
-      const headerTotal = Number(header?.capacities?.healthUnitCapacity ?? NaN);
-      const headerUsed  = Number(header?.usages?.healthUnitUsage?.total ?? NaN);
-      if (Number.isFinite(headerTotal) && Number.isFinite(headerUsed)) {
-        total = headerTotal;
-        used  = headerUsed;
-      } else {
-        total = healthUnitTotals.total;
-        used  = healthUnitTotals.used;
-      }
-    } else {
+  // Kapacitet og brug for aktiv gruppe
+  const totals = useMemo(() => {
+    if (!group) return { total: 0, used: 0 };
+    if (isAnimal) {
       const cap = state?.cap?.animal_cap || { total: 0, used: 0 };
-      total = Number(cap.total || 0);
-      used  = Number(cap.used || 0);
+      return { total: Number(cap.total || 0), used: Number(cap.used || 0) };
     }
+    // Header-summary hvis muligt
+    const hc = group.headerCapacityKey;
+    const hu = group.headerUsageKey;
+    const headerTotal = Number(header?.capacities?.[hc] ?? NaN);
+    const headerUsed  = Number(header?.usages?.[hu]?.total ?? NaN);
+    if (Number.isFinite(headerTotal) && Number.isFinite(headerUsed)) {
+      return { total: headerTotal, used: headerUsed };
+    }
+    // Fallback: sum via defs/state
+    return computeUnitTotalsFallback(defs, state, group);
+  }, [group, isAnimal, state?.cap?.animal_cap, header, defs, state]);
 
-    // Kurv-summeringer
+  const toBuy = toBuyByGroup[effectiveSelectedKey] || {};
+
+  const setQty = useCallback((aniId, value) => {
+    if (!group) return;
+    setToBuyByGroup(prev => {
+      const bucket = { ...(prev[effectiveSelectedKey] || {}) };
+      if (value > 0) bucket[aniId] = value;
+      else delete bucket[aniId];
+      return { ...prev, [effectiveSelectedKey]: bucket };
+    });
+  }, [effectiveSelectedKey, group]);
+
+  // Beregn “kurv”-summeringer
+  const basket = useMemo(() => {
+    if (!group) return null;
+
+    // total / used fra totals
+    const total = Number(totals.total || 0);
+    const used  = Number(totals.used  || 0);
+
+    // Cap der bruges af det, man er ved at købe
     let capToUse = 0;
     const totalCost = {};
 
@@ -193,10 +218,9 @@ export default function UnitPage() {
       const key = aniId.replace(/^ani\./, '');
       const def = defs.ani?.[key];
       if (!def) continue;
-
-      const per = isHealth
-        ? Math.abs(Number(def?.stats?.healthUnitUsage ?? 0)) || 0
-        : Math.abs(Number(def?.stats?.animal_cap ?? 1)) || 1;
+      const per = isAnimal
+        ? Math.abs(Number(def?.stats?.[group.perItemStat] ?? 1)) || 1
+        : Math.abs(Number(def?.stats?.[group.perItemStat] ?? 0)) || 0;
       capToUse += per * qty;
 
       const costs = H.normalizePrice(def?.cost || {});
@@ -216,27 +240,18 @@ export default function UnitPage() {
       return liquid + solid;
     };
     const canAfford = Object.values(totalCost).every((c) => getHave(c.id) >= (c.amount || 0));
-
-    const totalQty = Object.values(toBuy).reduce((s, q) => s + (Number(q) || 0), 0);
+    const totalQty  = Object.values(toBuy).reduce((s, q) => s + (Number(q) || 0), 0);
 
     return { total, used, availableCap, capToUse, totalCost, canAfford, hasCapacity, totalQty };
-  }, [defs, state, header, toBuy, isHealth, healthUnitTotals]);
+  }, [group, totals, toBuy, defs, state, isAnimal]);
 
-  const setQty = useCallback((aniId, value) => {
-    setToBuy((prev) => {
-      const next = { ...prev };
-      if (value > 0) next[aniId] = value;
-      else delete next[aniId];
-      return next;
-    });
-  }, []);
-
+  // Køb/salg
   const handleBuy = useCallback(async () => {
-    if (!details) return;
+    if (!basket) return;
     const animals = Object.fromEntries(Object.entries(toBuy).filter(([, q]) => Number(q) > 0));
-    if (!Object.keys(animals).length || details.totalQty <= 0) throw new Error('No items selected.');
-    if (!details.hasCapacity) throw new Error('Insufficient capacity.');
-    if (!details.canAfford) throw new Error('Insufficient resources.');
+    if (!Object.keys(animals).length || basket.totalQty <= 0) throw new Error('No items selected.');
+    if (!basket.hasCapacity) throw new Error('Insufficient capacity.');
+    if (!basket.canAfford) throw new Error('Insufficient resources.');
 
     const res = await fetch('/world-spil/backend/api/actions/animal.php', {
       method: 'POST',
@@ -246,10 +261,10 @@ export default function UnitPage() {
     });
     const json = await res.json();
     if (json && json.ok === false) throw new Error(json.message || 'Server refused purchase.');
-    setToBuy({});
+    setToBuyByGroup(prev => ({ ...prev, [effectiveSelectedKey]: {} }));
     await refreshData();
     return json;
-  }, [details, toBuy, refreshData]);
+  }, [basket, toBuy, effectiveSelectedKey, refreshData]);
 
   const handleSell = useCallback(async (aniId, quantity) => {
     if (!aniId || !quantity) return;
@@ -266,12 +281,12 @@ export default function UnitPage() {
   }, [refreshData]);
 
   const openBuyConfirm = () => {
-    if (!details?.totalQty) return;
-    const costText = renderCostInline(details.totalCost, defs);
+    if (!basket?.totalQty) return;
+    const costText = renderCostInline(basket.totalCost, defs);
     setConfirm({
       isOpen: true,
-      title: isHealth ? 'Bekræft køb (Health units)' : 'Bekræft køb (Dyr)',
-      body: `Du køber ${details.totalQty} enhed(er).<br/><div style="margin-top:8px;">Pris: ${costText || '(ukendt)'}</div>`,
+      title: `Bekræft køb (${group?.label || 'Units'})`,
+      body: `Du køber ${basket.totalQty} enhed(er).<br/><div style="margin-top:8px;">Pris: ${costText || '(ukendt)'}</div>`,
       onConfirm: async () => {
         try { await handleBuy(); }
         catch (e) { alert(e.message || 'Køb fejlede.'); }
@@ -304,15 +319,18 @@ export default function UnitPage() {
     });
   };
 
-  const capHead = (() => {
-    if (!details) return null;
-    const label = isHealth ? 'Health unit-kapacitet' : 'Staldplads';
+  if (!group) {
     return (
-      <span style={{ marginLeft: 'auto' }}>
-        <strong>{label}:</strong> {H.fmt(details.used + details.capToUse)} / {H.fmt(details.total)}
-      </span>
+      <section className="panel section">
+        <div className="section-head">Units</div>
+        <div className="section-body">
+          <div className="sub">Ingen unit-grupper tilgængelige. Byg først relevante faciliteter.</div>
+        </div>
+      </section>
     );
-  })();
+  }
+
+  const capLabel = group.capacityLabel || (isAnimal ? 'Staldplads' : 'Units');
 
   return (
     <>
@@ -320,33 +338,42 @@ export default function UnitPage() {
         <div className="section-head" style={{ display:'flex', gap:8, alignItems:'center' }}>
           <span>Units</span>
           <div className="tabs" style={{ marginLeft: 'auto' }}>
-            <button type="button" className={`tab ${tab === 'farm' ? 'active' : ''}`} onClick={() => { setTab('farm'); setToBuy({}); }}>
-              Dyr
-            </button>
-            <button type="button" className={`tab ${tab === 'health' ? 'active' : ''}`} onClick={() => { setTab('health'); setToBuy({}); }}>
-              Health
-            </button>
+            {visibleGroups.map(g => (
+              <button
+                key={g.key}
+                type="button"
+                className={`tab ${g.key === effectiveSelectedKey ? 'active' : ''}`}
+                onClick={() => {
+                  setSelectedKey(g.key);
+                  // nulstil kurv for skiftet tab? vi bevarer pr. gruppe alligevel
+                }}
+              >
+                {g.label}
+              </button>
+            ))}
           </div>
         </div>
       </section>
 
       <section className="panel section">
         <div className="section-head">
-          {tab === 'farm' ? 'Dine Dyr' : 'Dine Health units'}
-          {capHead}
+          {group.label} – Dine enheder
+          <span style={{ marginLeft: 'auto' }}>
+            <strong>{capLabel}:</strong> {H.fmt((basket?.used || 0) + (basket?.capToUse || 0))} / {H.fmt(basket?.total || 0)}
+          </span>
         </div>
         <div className="section-body">
           {ownedUnits.map(([aniId, row]) => {
             const key = aniId.replace(/^ani\./, '');
             const def = defs.ani[key];
             const qty = Number(row?.quantity || 0);
-            const per = isHealth
-              ? Math.abs(Number(def?.stats?.healthUnitUsage ?? 0)) || 0
-              : Math.abs(Number(def?.stats?.animal_cap ?? 1)) || 1;
-            const perLabel = isHealth ? `Forbruger ${per} health-unit` : `Optager ${per} staldplads`;
+            const per = isAnimal
+              ? Math.abs(Number(def?.stats?.[group.perItemStat] ?? 1)) || 1
+              : Math.abs(Number(def?.stats?.[group.perItemStat] ?? 0)) || 0;
+            const perLabel = isAnimal ? `Optager ${per} staldplads` : `Forbruger ${per} units`;
             return (
               <div className="item" key={aniId}>
-                <div className="icon">{def.emoji || (isHealth ? '🏥' : '🐄')}</div>
+                <div className="icon">{def.emoji || (isAnimal ? '🐄' : group.emoji || '🏷️')}</div>
                 <div>
                   <div className="title">
                     {def.name} (x{H.fmt(qty)})
@@ -364,9 +391,9 @@ export default function UnitPage() {
       </section>
 
       <section className="panel section">
-        <div className="section-head">{tab === 'farm' ? 'Køb Dyr' : 'Køb Health units'}</div>
+        <div className="section-head">Køb {group.label}</div>
         <div className="section-body">
-          {availableAnimals.map(([key, def]) => (
+          {availableDefs.map(([key, def]) => (
             <PurchaseRow
               key={key}
               def={def}
@@ -374,33 +401,27 @@ export default function UnitPage() {
               aniId={`ani.${key}`}
               toBuy={toBuy}
               setQty={setQty}
-              availableCap={details?.availableCap || 0}
-              isHealth={isHealth}
+              availableCap={basket?.availableCap || 0}
+              perItemStat={group.perItemStat}
+              isAnimal={isAnimal}
             />
           ))}
           <div className="actions-bar" style={{ marginTop: '16px' }}>
             <div>
-              <strong>Total:</strong> <ResourceCost cost={details?.totalCost || {}} /> &nbsp;
-              <strong style={{ marginLeft: '1em' }}>{isHealth ? 'Health units:' : 'Staldplads:'}</strong>
-              <span className={!details?.hasCapacity ? 'price-bad' : ''}>
-                {H.fmt((details?.used || 0) + (details?.capToUse || 0))}
+              <strong>Total:</strong> <ResourceCost cost={basket?.totalCost || {}} /> &nbsp;
+              <strong style={{ marginLeft: '1em' }}>{capLabel}:</strong>
+              <span className={!basket?.hasCapacity ? 'price-bad' : ''}>
+                {H.fmt((basket?.used || 0) + (basket?.capToUse || 0))}
               </span>
               {' / '}
-              {H.fmt(details?.total || 0)}
+              {H.fmt(basket?.total || 0)}
             </div>
             <button
               className="btn primary"
-              disabled={!details || details.totalQty === 0 || !details.canAfford || !details.hasCapacity}
-              onClick={() => {
-                // ekstra guard: ingen kapacitet? vis en besked
-                if (!details?.hasCapacity && isHealth && (details?.total || 0) === 0) {
-                  alert('Ingen health unit-kapacitet tilgængelig. Byg en health-bygning først.');
-                  return;
-                }
-                openBuyConfirm();
-              }}
+              disabled={!basket || basket.totalQty === 0 || !basket.canAfford || !basket.hasCapacity}
+              onClick={openBuyConfirm}
             >
-              {tab === 'farm' ? 'Køb valgte dyr' : 'Køb valgte units'}
+              Køb valgte {group.label.toLowerCase()}
             </button>
           </div>
         </div>
