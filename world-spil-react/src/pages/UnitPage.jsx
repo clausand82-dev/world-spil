@@ -10,7 +10,7 @@ import StatsEffectsTooltip from '../components/ui/StatsEffectsTooltip.jsx';
 /**
  * UnitPage med to faner:
  * - Dyr (family="farm"): bruger animal_cap (som før).
- * - Health (family="health"): bruger KUN healthUnitUsage/healthUnitProvision (ikke de generiske healthCapacity/useHealth).
+ * - Health (family="health"): bruger KUN healthUnitUsage/healthUnitCapacity (ikke de generiske healthCapacity/useHealth).
  *
  * Backend-endpoint og DB er uændret (ani.*); vi kalder samme /actions/animal.php buy/sell.
  */
@@ -74,7 +74,7 @@ export default function UnitPage() {
     return set;
   }, [state?.bld]);
 
-  // Ejer/vis kun ani-defs i aktiv family + stage OK + kræver at by-ejer har family-building
+  // Kun vis ani-defs i aktiv family + stage OK + kræver at by-ejer har family-building
   const availableAnimals = useMemo(() => {
     return Object.entries(defs.ani || {}).filter(([_, def]) => {
       const fams = String(def?.family || '')
@@ -108,18 +108,29 @@ export default function UnitPage() {
   const details = useMemo(() => {
     if (!defs) return null;
 
-    let total = 0,
-      used = 0;
+    let total = 0;
+    let used = 0;
 
     if (isHealth) {
       // Health-units: brug KUN healthUnitProvision/healthUnitUsage (ignorer generiske healthCapacity/useHealth)
-      const headerTotal = Number(header?.capacities?.healthUnitProvision ?? NaN);
-      const headerUsed = Number(header?.usages?.healthUnitUsage?.total ?? NaN);
-      if (Number.isFinite(headerTotal) && Number.isFinite(headerUsed)) {
-        total = headerTotal;
-        used = headerUsed;
+      const hTotalRaw = header?.capacities?.healthUnitCapacity;
+      const hUsedRaw = header?.usages?.healthUnitUsage?.total;
+      const hTotal = Number(hTotalRaw ?? NaN);
+      const hUsed = Number(hUsedRaw ?? NaN);
+
+      const fb = computeHealthUnitTotals(defs, state);
+
+      // Vurder headerens validitet: brug header hvis den tydeligt er udfyldt,
+      // ellers brug fallback (fx hvis headerTotal=0 men vi kan udlede kapacitet fra defs).
+      const headerLooksValid =
+        Number.isFinite(hTotal) &&
+        Number.isFinite(hUsed) &&
+        (hTotal > 0 || hUsed > 0 || (hTotal === 0 && hUsed === 0 && fb.total === 0));
+
+      if (headerLooksValid) {
+        total = hTotal;
+        used = hUsed;
       } else {
-        const fb = computeHealthUnitTotals(defs, state);
         total = fb.total;
         used = fb.used;
       }
