@@ -89,17 +89,17 @@ function metrics_registry(): array {
       'demands' => [],
       'flows' => [],
     ],
-        'healthUnit' => [
-      'label' => 'HealthUnit',
-      'usageField' => 'healthUnitUsage',
-      'capacityField' => 'healthUnitCapacity',
-      // Tilføj nye stat keys fra defs (både bld og ani kan bidrage)
-      'capacityStatKeys' => ['healthUnitCapacity'],
-      'usageStatKeys'    => ['healthUnitUsage'],
+      // Tilføj under $metrics = [ ... ] som ny top-level metric:
+    'healthUnit' => [
+      'label' => 'Health Units',
+      'usageField' => 'healthUnitUsage',         // summary.usages.healthUnitUsage
+      'capacityField' => 'healthUnitProvision',  // summary.capacities.healthUnitProvision
+      'capacityStatKeys' => ['healthUnitProvision'],
+      'usageStatKeys' => ['healthUnitUsage'],
       'sources' => ['bld'=>true,'add'=>true,'rsd'=>true,'ani'=>true,'res'=>true],
       'stage' => ['unlock_at'=>1,'visible_at'=>1],
-      'happiness' => ['enabled'=>false, 'weight_key'=>''],
-      'popularity'=> ['enabled'=>false, 'weight_key'=>''],
+      'happiness' => ['enabled'=>false],
+      'popularity'=> ['enabled'=>false],
       'subs' => [],
       'demands' => [],
       'flows' => [],

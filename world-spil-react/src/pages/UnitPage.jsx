@@ -8,18 +8,53 @@ import DockHoverCard from '../components/ui/DockHoverCard.jsx';
 import StatsEffectsTooltip from '../components/ui/StatsEffectsTooltip.jsx';
 
 /**
- * Ny AnimalsPage med to faner:
- * - Dyr (family="farm"): bruger animal_cap præcis som i dag.
- * - Health (family="health"): bruger healthUnitUsage/healthCapacity (fra header summary).
+ * UnitPage med to faner:
+ * - Dyr (family="farm"): bruger animal_cap (som før).
+ * - Health (family="health"): bruger KUN healthUnitUsage/healthUnitProvision (ikke de generiske healthCapacity/useHealth).
  *
  * Backend-endpoint og DB er uændret (ani.*); vi kalder samme /actions/animal.php buy/sell.
  */
-export default function AnimalsPage() {
+
+// Fallback-beregning hvis header-summary endnu ikke har healthUnitCapacity/healthUnitUsage
+function computeHealthUnitTotals(defs, state) {
+  // Total plads til units: sum af stats.healthUnitCapacity på ejede bygninger
+  let total = 0;
+  for (const id of Object.keys(state?.bld || {})) {
+    const p = H.parseBldKey(id);
+    if (!p) continue;
+    const bdef =
+      defs?.bld?.[`${p.family}.l${p.level}`] ||
+      defs?.bld?.[p.key];
+    const cap = Number(bdef?.stats?.healthUnitCapacity ?? 0);
+    if (Number.isFinite(cap)) total += cap;
+  }
+
+  // Forbrug: sum af stats.healthUnitUsage for ejede ani med family="health"
+  let used = 0;
+  for (const [aniId, row] of Object.entries(state?.ani || {})) {
+    const qty = Number(row?.quantity || 0);
+    if (!qty) continue;
+    const key = String(aniId).replace(/^ani\./, '');
+    const adef = defs?.ani?.[key];
+    if (!adef) continue;
+    const fams = String(adef?.family || '')
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+    if (!fams.includes('health')) continue;
+    const per = Math.abs(Number(adef?.stats?.healthUnitUsage ?? 0)) || 0;
+    used += per * qty;
+  }
+
+  return { total, used };
+}
+
+export default function UnitPage() {
   const { data, isLoading, error, refreshData } = useGameData();
-  const { data: header } = useHeaderSummary(); // til health-capacitet
+  const { data: header } = useHeaderSummary(); // til unit-kapacitet/usage i header
   const [tab, setTab] = useState('farm'); // 'farm' | 'health'
   const [confirm, setConfirm] = useState({ isOpen: false, title: '', body: '', onConfirm: null });
-  const [toBuy, setToBuy] = useState({}); // { 'ani.cow': qty, ... } – per aktiv fane
+  const [toBuy, setToBuy] = useState({}); // { 'ani.cow': qty, ... } – pr. aktiv fane
 
   const isHealth = tab === 'health';
   const familyKey = isHealth ? 'health' : 'farm';
@@ -29,7 +64,7 @@ export default function AnimalsPage() {
 
   const { state, defs } = data;
 
-  // Ejer hvilke building-familier? (samme check som før)
+  // Ejer hvilke building-familier?
   const familiesOwned = useMemo(() => {
     const set = new Set();
     Object.keys(state?.bld || {}).forEach((id) => {
@@ -42,10 +77,14 @@ export default function AnimalsPage() {
   // Ejer/vis kun ani-defs i aktiv family + stage OK + kræver at by-ejer har family-building
   const availableAnimals = useMemo(() => {
     return Object.entries(defs.ani || {}).filter(([_, def]) => {
-      const fams = String(def?.family || '').split(',').map(s => s.trim()).filter(Boolean);
+      const fams = String(def?.family || '')
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean);
       const inFamily = fams.includes(familyKey);
+      if (!inFamily) return false;
       const stageOk = Number(def?.stage || 0) <= Number(state?.user?.currentstage || 0);
-      const buildingOk = fams.some(f => familiesOwned.has(f));
+      const buildingOk = fams.some((f) => familiesOwned.has(f));
       return inFamily && stageOk && buildingOk;
     });
   }, [defs?.ani, state?.user?.currentstage, familiesOwned, familyKey]);
@@ -57,7 +96,10 @@ export default function AnimalsPage() {
       const key = id.replace(/^ani\./, '');
       const def = defs.ani?.[key];
       if (!def) return false;
-      const fams = String(def?.family || '').split(',').map(s => s.trim()).filter(Boolean);
+      const fams = String(def?.family || '')
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean);
       return fams.includes(familyKey);
     });
   }, [state?.ani, defs?.ani, familyKey]);
@@ -66,18 +108,26 @@ export default function AnimalsPage() {
   const details = useMemo(() => {
     if (!defs) return null;
 
-    // Kapacitetsobjekt
-    let total = 0, used = 0;
+    let total = 0,
+      used = 0;
 
     if (isHealth) {
-      // Fra header-summary (serverens metrics)
-      total = Number(header?.capacities?.healthCapacity || 0);
-      used  = Number(header?.usages?.useHealth?.total || 0);
+      // Health-units: brug KUN healthUnitProvision/healthUnitUsage (ignorer generiske healthCapacity/useHealth)
+      const headerTotal = Number(header?.capacities?.healthUnitProvision ?? NaN);
+      const headerUsed = Number(header?.usages?.healthUnitUsage?.total ?? NaN);
+      if (Number.isFinite(headerTotal) && Number.isFinite(headerUsed)) {
+        total = headerTotal;
+        used = headerUsed;
+      } else {
+        const fb = computeHealthUnitTotals(defs, state);
+        total = fb.total;
+        used = fb.used;
+      }
     } else {
-      // Klassisk animal_cap som før
+      // Farm: klassisk animal_cap
       const cap = state?.cap?.animal_cap || { total: 0, used: 0 };
       total = Number(cap.total || 0);
-      used  = Number(cap.used || 0);
+      used = Number(cap.used || 0);
     }
 
     // Beregn indkøbskurv totals
@@ -109,10 +159,9 @@ export default function AnimalsPage() {
 
     // Kan vi betale? (simpel check mod inventory)
     const getHave = (resId) => {
-      // res.money, res.wood, etc.
       const key = String(resId).replace(/^res\./, '');
       const liquid = Number(state?.inv?.liquid?.[key] || 0);
-      const solid  = Number(state?.inv?.solid?.[key]  || 0);
+      const solid = Number(state?.inv?.solid?.[key] || 0);
       return liquid + solid;
     };
     const canAfford = Object.values(totalCost).every((c) => getHave(c.id) >= (c.amount || 0));
@@ -142,7 +191,7 @@ export default function AnimalsPage() {
     const res = await fetch('/world-spil/backend/api/actions/animal.php', {
       method: 'POST',
       credentials: 'include',
-      headers: { 'Content-Type':'application/json' },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'buy', animals }),
     });
     const json = await res.json();
@@ -153,19 +202,22 @@ export default function AnimalsPage() {
   }, [details, toBuy, refreshData]);
 
   // SALG (per item)
-  const handleSell = useCallback(async (aniId, quantity) => {
-    if (!aniId || !quantity) return;
-    const res = await fetch('/world-spil/backend/api/actions/animal.php', {
-      method: 'POST',
-      credentials: 'include',
-      headers: { 'Content-Type':'application/json' },
-      body: JSON.stringify({ action: 'sell', animal_id: aniId, quantity }),
-    });
-    const json = await res.json();
-    if (json && json.ok === false) throw new Error(json.message || 'Server refused sale.');
-    await refreshData();
-    return json;
-  }, [refreshData]);
+  const handleSell = useCallback(
+    async (aniId, quantity) => {
+      if (!aniId || !quantity) return;
+      const res = await fetch('/world-spil/backend/api/actions/animal.php', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'sell', animal_id: aniId, quantity }),
+      });
+      const json = await res.json();
+      if (json && json.ok === false) throw new Error(json.message || 'Server refused sale.');
+      await refreshData();
+      return json;
+    },
+    [refreshData]
+  );
 
   // Køb-bekræft
   const openBuyConfirm = () => {
@@ -176,9 +228,13 @@ export default function AnimalsPage() {
       title: isHealth ? 'Bekræft køb (Health units)' : 'Bekræft køb (Dyr)',
       body: `Du køber ${details.totalQty} enhed(er).<br/><div style="margin-top:8px;">Pris: ${costText || '(ukendt)'}</div>`,
       onConfirm: async () => {
-        try { await handleBuy(); }
-        catch (e) { alert(e.message || 'Køb fejlede.'); }
-        finally { setConfirm((c) => ({ ...c, isOpen: false })); }
+        try {
+          await handleBuy();
+        } catch (e) {
+          alert(e.message || 'Køb fejlede.');
+        } finally {
+          setConfirm((c) => ({ ...c, isOpen: false }));
+        }
       },
     });
   };
@@ -201,9 +257,13 @@ export default function AnimalsPage() {
       title: quantity === 1 ? 'Sælg 1 enhed' : `Sælg ${quantity} enheder`,
       body: `Du får følgende tilbage:<br/><div style="margin-top:8px;">${refundText || '(ukendt værdi)'}</div>`,
       onConfirm: async () => {
-        try { await handleSell(aniId, quantity); }
-        catch (e) { alert(e.message || 'Salg fejlede.'); }
-        finally { setConfirm((c) => ({ ...c, isOpen: false })); }
+        try {
+          await handleSell(aniId, quantity);
+        } catch (e) {
+          alert(e.message || 'Salg fejlede.');
+        } finally {
+          setConfirm((c) => ({ ...c, isOpen: false }));
+        }
       },
     });
   };
@@ -211,7 +271,7 @@ export default function AnimalsPage() {
   // Kapacitetslabel i head for aktiv fane
   const capHead = (() => {
     if (!details) return null;
-    const label = isHealth ? 'Health kapacitet' : 'Staldplads';
+    const label = isHealth ? 'Health units' : 'Staldplads';
     return (
       <span style={{ marginLeft: 'auto' }}>
         <strong>{label}:</strong> {H.fmt(details.used + details.capToUse)} / {H.fmt(details.total)}
@@ -222,13 +282,27 @@ export default function AnimalsPage() {
   return (
     <>
       <section className="panel section">
-        <div className="section-head" style={{ display:'flex', gap:8, alignItems:'center' }}>
+        <div className="section-head" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <span>Units</span>
           <div className="tabs" style={{ marginLeft: 'auto' }}>
-            <button type="button" className={`tab ${tab === 'farm' ? 'active' : ''}`} onClick={() => { setTab('farm'); setToBuy({}); }}>
+            <button
+              type="button"
+              className={`tab ${tab === 'farm' ? 'active' : ''}`}
+              onClick={() => {
+                setTab('farm');
+                setToBuy({});
+              }}
+            >
               Dyr
             </button>
-            <button type="button" className={`tab ${tab === 'health' ? 'active' : ''}`} onClick={() => { setTab('health'); setToBuy({}); }}>
+            <button
+              type="button"
+              className={`tab ${tab === 'health' ? 'active' : ''}`}
+              onClick={() => {
+                setTab('health');
+                setToBuy({});
+              }}
+            >
               Health
             </button>
           </div>
@@ -250,50 +324,54 @@ export default function AnimalsPage() {
             const perLabel = isHealth ? `Forbruger ${per} health-unit` : `Optager ${per} staldplads`;
             const hoverContent = <StatsEffectsTooltip def={def} translations={data?.i18n?.current ?? {}} />;
 
-  return (
-    <DockHoverCard key={aniId} content={hoverContent}>
-      <div className="item">
-        <div className="icon">{def.emoji || (isAnimal ? '🐄' : group.emoji || '🏷️')}</div>
-        <div>
-          <div className="title">{def.name} (x{H.fmt(animalData.quantity)})</div>
-          <div className="sub">{perLabel}</div>
-        </div>
-        <div className="right">
-          <button className="btn" onClick={() => openSellConfirm(aniId, 1)}>Sælg 1</button>
-          <button className="btn" onClick={() => openSellConfirm(aniId, animalData.quantity)}>Sælg alle</button>
-        </div>
-      </div>
-    </DockHoverCard>
-  );
-})}
+            return (
+              <DockHoverCard key={aniId} content={hoverContent}>
+                <div className="item">
+                  <div className="icon">{def.emoji || (isHealth ? '🏥' : '🐄')}</div>
+                  <div>
+                    <div className="title">
+                      {def.name} (x{H.fmt(animalData.quantity)})
+                    </div>
+                    <div className="sub">{perLabel}</div>
+                  </div>
+                  <div className="right">
+                    <button className="btn" onClick={() => openSellConfirm(aniId, 1)}>
+                      Sælg 1
+                    </button>
+                    <button className="btn" onClick={() => openSellConfirm(aniId, animalData.quantity)}>
+                      Sælg alle
+                    </button>
+                  </div>
+                </div>
+              </DockHoverCard>
+            );
+          })}
         </div>
       </section>
 
       <section className="panel section">
         <div className="section-head">{tab === 'farm' ? 'Køb Dyr' : 'Køb Health units'}</div>
         <div className="section-body">
-            
-
           {availableAnimals.map(([key, def]) => {
-  const hoverContent = <StatsEffectsTooltip def={def} translations={data?.i18n?.current ?? {}} />;
-  return (
-    <DockHoverCard key={key} content={hoverContent}>
-      <PurchaseRow
-        def={def}
-        defs={defs}
-        aniId={`ani.${key}`}
-        toBuy={toBuy}
-        setQty={setQty}
-        availableCap={details?.availableCap || 0}
-        isHealth={isHealth}
-      />
-    </DockHoverCard>
-  );
-})}
+            const hoverContent = <StatsEffectsTooltip def={def} translations={data?.i18n?.current ?? {}} />;
+            return (
+              <DockHoverCard key={key} content={hoverContent}>
+                <PurchaseRow
+                  def={def}
+                  defs={defs}
+                  aniId={`ani.${key}`}
+                  toBuy={toBuy}
+                  setQty={setQty}
+                  availableCap={details?.availableCap || 0}
+                  isHealth={isHealth}
+                />
+              </DockHoverCard>
+            );
+          })}
           <div className="actions-bar" style={{ marginTop: '16px' }}>
             <div>
               <strong>Total:</strong> <ResourceCost cost={details?.totalCost || {}} /> &nbsp;
-              <strong style={{ marginLeft: '1em' }}>{isHealth ? 'Health:' : 'Staldplads:'}</strong>
+              <strong style={{ marginLeft: '1em' }}>{isHealth ? 'Health units:' : 'Staldplads:'}</strong>
               <span className={!details?.hasCapacity ? 'price-bad' : ''}>
                 {H.fmt((details?.used || 0) + (details?.capToUse || 0))}
               </span>
@@ -324,7 +402,7 @@ export default function AnimalsPage() {
   );
 }
 
-/* ===== helpers (genbrugt fra din nuværende side) ===== */
+/* ===== helpers ===== */
 
 function emojiForId(id, defs) {
   if (id.startsWith('res.')) {
@@ -343,9 +421,7 @@ function emojiForId(id, defs) {
 function renderCostInline(costLike, defs) {
   const entries = Object.values(H.normalizePrice(costLike || {}));
   if (!entries.length) return '';
-  return entries
-    .map((e) => `${emojiForId(e.id, defs)} ${H.fmt(e.amount)}`)
-    .join(' · ');
+  return entries.map((e) => `${emojiForId(e.id, defs)} ${H.fmt(e.amount)}`).join(' · ');
 }
 
 function PurchaseRow({ def, defs, aniId, toBuy, setQty, availableCap, isHealth, ...rest }) {
@@ -376,7 +452,9 @@ function PurchaseRow({ def, defs, aniId, toBuy, setQty, availableCap, isHealth, 
       <div className="icon">{def.emoji || (isHealth ? '🏥' : '🐄')}</div>
       <div className="grow">
         <div className="title">{def.name}</div>
-        <div className="sub"><ResourceCost cost={def.cost} /></div>
+        <div className="sub">
+          <ResourceCost cost={def.cost} />
+        </div>
         <div className="sub">{isHealth ? `Forbruger ${per} health-unit` : `Kræver ${per} staldplads`}</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '8px' }}>
           <input
