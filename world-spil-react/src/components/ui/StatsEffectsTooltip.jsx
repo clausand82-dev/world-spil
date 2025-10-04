@@ -50,6 +50,10 @@ function defaultLabelMap() {
     'healthUnitCapacity': { label: 'Sundhedsenhed', desc: 'Kapacitet til sundhedsenheder.' },
     'storageSolidCap': { label: 'Lagerplads (fast)', desc: 'Lagerplads til faste varer.' },
     'storageLiquidCap': { label: 'Lagerplads (flydende)', desc: 'Lagerplads til flydende varer.' },
+    'healthUnitUsage': { label: 'Health Unit Forbrug', desc: 'Hvor mange health units der forbruges pr. enhed.' },
+    'waterUsage': { label: 'Vandforbrug', desc: 'Hvor meget vand der forbruges pr. enhed.' },
+    'provisionUsage': { label: 'Provision forbrug', desc: 'Hvor meget provision der forbruges pr. enhed.' },
+
     // ... tilføj flere efter behov
   };
 }

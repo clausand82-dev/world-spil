@@ -4,6 +4,8 @@ import * as H from '../services/helpers.js';
 import ResourceCost from '../components/requirements/ResourceCost.jsx';
 import ConfirmModal from '../components/ConfirmModal.jsx';
 import useHeaderSummary from '../hooks/useHeaderSummary.js';
+import DockHoverCard from '../components/ui/DockHoverCard.jsx';
+import StatsEffectsTooltip from '../components/ui/StatsEffectsTooltip.jsx';
 
 /**
  * Ny AnimalsPage med to faner:
@@ -246,40 +248,48 @@ export default function AnimalsPage() {
               ? Math.abs(Number(def?.stats?.healthUnitUsage ?? 0) || 0)
               : Math.abs(Number(def?.stats?.animal_cap ?? 1) || 1);
             const perLabel = isHealth ? `Forbruger ${per} health-unit` : `Optager ${per} staldplads`;
-            return (
-              <div className="item" key={aniId}>
-                <div className="icon">{def.emoji || (isHealth ? '🏥' : '🐄')}</div>
-                <div>
-                  <div className="title">
-                    {def.name} (x{H.fmt(animalData.quantity)})
-                  </div>
-                  <div className="sub">{perLabel}</div>
-                </div>
-                <div className="right">
-                  <button className="btn" onClick={() => openSellConfirm(aniId, 1)}>Sælg 1</button>
-                  <button className="btn" onClick={() => openSellConfirm(aniId, animalData.quantity)}>Sælg alle</button>
-                </div>
-              </div>
-            );
-          })}
+            const hoverContent = <StatsEffectsTooltip def={def} translations={data?.i18n?.current ?? {}} />;
+
+  return (
+    <DockHoverCard key={aniId} content={hoverContent}>
+      <div className="item">
+        <div className="icon">{def.emoji || (isAnimal ? '🐄' : group.emoji || '🏷️')}</div>
+        <div>
+          <div className="title">{def.name} (x{H.fmt(animalData.quantity)})</div>
+          <div className="sub">{perLabel}</div>
+        </div>
+        <div className="right">
+          <button className="btn" onClick={() => openSellConfirm(aniId, 1)}>Sælg 1</button>
+          <button className="btn" onClick={() => openSellConfirm(aniId, animalData.quantity)}>Sælg alle</button>
+        </div>
+      </div>
+    </DockHoverCard>
+  );
+})}
         </div>
       </section>
 
       <section className="panel section">
         <div className="section-head">{tab === 'farm' ? 'Køb Dyr' : 'Køb Health units'}</div>
         <div className="section-body">
-          {availableAnimals.map(([key, def]) => (
-            <PurchaseRow
-              key={key}
-              def={def}
-              defs={defs}
-              aniId={`ani.${key}`}
-              toBuy={toBuy}
-              setQty={setQty}
-              availableCap={details?.availableCap || 0}
-              isHealth={isHealth}
-            />
-          ))}
+            
+
+          {availableAnimals.map(([key, def]) => {
+  const hoverContent = <StatsEffectsTooltip def={def} translations={data?.i18n?.current ?? {}} />;
+  return (
+    <DockHoverCard key={key} content={hoverContent}>
+      <PurchaseRow
+        def={def}
+        defs={defs}
+        aniId={`ani.${key}`}
+        toBuy={toBuy}
+        setQty={setQty}
+        availableCap={details?.availableCap || 0}
+        isHealth={isHealth}
+      />
+    </DockHoverCard>
+  );
+})}
           <div className="actions-bar" style={{ marginTop: '16px' }}>
             <div>
               <strong>Total:</strong> <ResourceCost cost={details?.totalCost || {}} /> &nbsp;
@@ -338,7 +348,7 @@ function renderCostInline(costLike, defs) {
     .join(' · ');
 }
 
-function PurchaseRow({ def, defs, aniId, toBuy, setQty, availableCap, isHealth }) {
+function PurchaseRow({ def, defs, aniId, toBuy, setQty, availableCap, isHealth, ...rest }) {
   const per = isHealth
     ? Math.abs(Number(def?.stats?.healthUnitUsage ?? 0) || 0)
     : Math.abs(Number(def?.stats?.animal_cap ?? 1) || 1);
@@ -360,8 +370,9 @@ function PurchaseRow({ def, defs, aniId, toBuy, setQty, availableCap, isHealth }
   const maxVal = per > 0 ? Math.floor(remainingCap / per) : 999999;
   const currentVal = Math.min(Number(toBuy[aniId] || 0), maxVal);
 
+  // NOTE: spread 'rest' onto the root div so injected onMouseEnter/onMouseLeave reach the DOM node
   return (
-    <div className="item">
+    <div className="item" {...rest}>
       <div className="icon">{def.emoji || (isHealth ? '🏥' : '🐄')}</div>
       <div className="grow">
         <div className="title">{def.name}</div>
