@@ -82217,6 +82217,7 @@ Array
     [adultsHomeless] => 31
     [crimeHomeless] => 0
 )
+<<<<<<< HEAD
 NOTICE: using fallback birthRates
 BEFORE #0
 Array
@@ -86992,3 +86993,5 @@ Array
     [adultsHomeless] => 26
     [crimeHomeless] => 0
 )
+=======
+>>>>>>> 66ec336caf4e37377739473ac1c744ef96bb195d

@@ -304,33 +304,6 @@
     <durability>20.0</durability>
     <upgradesTo>bld.storage.l2</upgradesTo>
   </building>
-
-    <building id="bld.storage.l2" family="storage" type="storageSolid" lvl="2" stage="2">
-    <stats>footprint=-5;storageSolidCap=25,storageLiquidCap=25</stats>
-    <cost>
-      <res id="res.money" amount="200" />
-      <res id="res.hide" amount="20" />
-      <res id="res.wood" amount="200" />
-    </cost>
-    <require>rsd.betterstorage.l1</require>
-    <durability>40.0</durability>
-    <upgradesTo>bld.storage.l3</upgradesTo>
-  </building>
-
-<!-- HEALTH-->
-
-    <building id="bld.health.l1" family="health" type="health" lvl="1" stage="1">
-    <stats>footprint=-5;healthCapacity=10;healthUnitCapacity=10</stats>
-    <cost>
-      <res id="res.money" amount="125" />
-      <res id="res.hide" amount="22" />
-      <res id="res.wood" amount="50" />
-    </cost>
-    <require>rsd.herbalism.l1</require>
-    <durability>40.0</durability>
-    <upgradesTo>bld.health.l2</upgradesTo>
-    </building>
-
   
   
 </buildings>
