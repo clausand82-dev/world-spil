@@ -5,7 +5,7 @@ export default function Quickbar({ activePage }) {
         { page: 'dashboard', title: 'Dashboard', icon: '🏠' },
         { page: 'buildings', title: 'Buildings', icon: '🏗️' },
         { page: 'research', title: 'Research', icon: '🔬' },
-        { page: 'animals', title: 'Animals', icon: '🐄' },
+        { page: 'unit', title: 'Animals', icon: '🐄' },
         { page: 'inventory', title: 'Inventory', icon: '📦' },
         { page: 'production', title: 'Productions', icon: '🏭' },
         { page: 'overview', title: 'Overview', icon: '📂' },

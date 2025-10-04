@@ -78,8 +78,9 @@ function metrics_registry(): array {
       'label' => 'Health',
       'usageField' => 'useHealth',
       'capacityField' => 'healthCapacity',
-      'capacityStatKeys' => ['healthCapacity'],
-      'usageStatKeys' => ['healthUsage'],
+      // Tilføj nye stat keys fra defs (både bld og ani kan bidrage)
+      'capacityStatKeys' => ['healthCapacity','healthUnitCapacity'],
+      'usageStatKeys'    => ['healthUsage','healthUnitUsage'],
       'sources' => ['bld'=>true,'add'=>true,'rsd'=>true,'ani'=>true,'res'=>true],
       'stage' => ['unlock_at'=>1,'visible_at'=>1],
       'happiness' => ['enabled'=>true, 'weight_key'=>'healthHappinessWeight'],

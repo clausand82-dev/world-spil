@@ -22,6 +22,7 @@ import MapPage from './pages/MapPage.jsx';
 import { BoardProvider } from './components/ui/BoardProvider.jsx';
 import PopulationTickPage from './pages/PopulationTickPage.jsx';
 import CitizensAssignmentsPage from './pages/CitizensAssignmentsPage.jsx';
+import UnitPage from './pages/UnitPage.jsx';
 
 function App() {
   const { isLoading, data, error } = useGameData();
@@ -52,7 +53,7 @@ function App() {
   const renderPage = () => {
     switch (page) {
       case 'dashboard': return <DashboardPage />;
-      case 'animals': return <AnimalsPage />;
+      case 'unit': return <UnitPage />;
       case 'research': return <ResearchPage />;
       case 'inventory': return <InventoryPage />;
       case 'buildings': return <BuildingsPage />;

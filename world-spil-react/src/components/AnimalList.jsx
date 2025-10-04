@@ -4,49 +4,69 @@ import ItemRow from './ItemRow.jsx';
 import { fmt } from '../services/helpers.js';
 
 /**
- * En specialiseret komponent, der kan vise en liste af ejede dyr
- * i to forskellige formater: 'simple' (for sidebar) og 'detailed' (for inventory).
+ * Viser ejede "ani."-items. Kan filtrere på family:
+ * - family="farm"  => klassiske dyr (animal_cap)
+ * - family="health"=> health units (healthUnitUsage)
  */
-export default function AnimalList({ format = 'simple' }) {
-    const { data } = useGameData();
-    if (!data) return null;
+export default function AnimalList({ format = 'simple', family = null }) {
+  const { data } = useGameData();
+  if (!data) return null;
 
-    const ownedAnimals = Object.entries(data.state.ani || {})
-        .filter(([id, a]) => (a?.quantity || 0) > 0)
-        .sort();
+  const owned = Object.entries(data.state.ani || {})
+    .filter(([_, a]) => (a?.quantity || 0) > 0)
+    .sort();
 
-    if (ownedAnimals.length === 0) {
-        return <div className="sub">Ingen</div>;
+  const filtered = owned.filter(([id]) => {
+    const key = id.replace(/^ani\./, '');
+    const def = data.defs.ani?.[key];
+    if (!def) return false;
+    if (!family) return true;
+    const fam = String(def.family || '').split(',').map(s => s.trim()).filter(Boolean);
+    return fam.includes(family);
+  });
+
+  if (filtered.length === 0) {
+    return <div className="sub">Ingen</div>;
+  }
+
+  return filtered.map(([id, animalData]) => {
+    const key = id.replace(/^ani\./, '');
+    const def = data.defs.ani?.[key];
+    if (!def) return null;
+
+    const qty = Number(animalData.quantity || 0);
+    const animalCapPer = Math.abs(Number(def.stats?.animal_cap ?? 0));
+    const healthUsePer = Math.abs(Number(def.stats?.healthUnitUsage ?? 0));
+
+    if (format === 'simple') {
+      return (
+        <div className="row" key={id}>
+          <div className="left"><span>{def.emoji}</span><span>{def.name}</span></div>
+          <div className="right"><strong>{fmt(qty)}</strong></div>
+        </div>
+      );
     }
 
-    return ownedAnimals.map(([id, animalData]) => {
-        const key = id.replace(/^ani\./, '');
-        const def = data.defs.ani?.[key];
-        if (!def) return null;
+    if (format === 'detailed') {
+      const isHealthUnit = healthUsePer > 0;
+      const subtitle = isHealthUnit
+        ? `Forbruger ${healthUsePer} health-unit pr. stk`
+        : `Optager ${animalCapPer} staldplads pr. stk`;
+      const total = isHealthUnit
+        ? `${fmt(qty)} stk / Forbrug ${fmt(healthUsePer * qty)} health-units i alt`
+        : `${fmt(qty)} stk / Fylder ${fmt(animalCapPer * qty)} staldpladser i alt`;
 
-        if (format === 'simple') {
-            // Simpel visning til sidebaren
-            return (
-                <div className="row" key={id}>
-                    <div className="left"><span>{def.emoji}</span><span>{def.name}</span></div>
-                    <div className="right"><strong>{fmt(animalData.quantity)}</strong></div>
-                </div>
-            );
-        }
+      return (
+        <ItemRow
+          key={id}
+          icon={def.emoji}
+          title={def.name}
+          subtitle={subtitle}
+          value={total}
+        />
+      );
+    }
 
-        if (format === 'detailed') {
-            // Detaljeret visning til inventory-siden
-            return (
-                <ItemRow
-                    key={id}
-                    icon={def.emoji}
-                    title={def.name}
-                    subtitle={`Optager ${Math.abs(def.stats?.animal_cap) || 0} staldplads pr stk`}
-                    value={`${fmt(animalData.quantity)} stk / Fylder ${Math.abs(def.stats?.animal_cap) * fmt(animalData.quantity)} staldpladser ialt`}
-                />
-            );
-        }
-        
-        return null;
-    });
+    return null;
+  });
 }
