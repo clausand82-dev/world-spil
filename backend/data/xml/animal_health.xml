@@ -5,8 +5,8 @@
   <animal id="ani.health_groundbed1"  family="health" stage="1">
   <stats>healthUnitUsage=1;provisionUsage=2;waterUsage=2;healthCapacity=1</stats>
     <cost>
-      <res id="res.money" amount="10"/>
-      <res id="res.food" amount="6"/>
+      <res id="res.money" amount="100"/>
+      <res id="res.iron" amount="6"/>
     </cost>
     <emoji>🛏</emoji>
 

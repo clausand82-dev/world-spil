@@ -48,7 +48,7 @@
   </building>
 
   <building id="bld.basecamp.l3" family="basecamp" type="base" lvl="3" stage="1">
-    <stats>footprint=70; housing=35;provision_cap=75; 
+    <stats>footprint=80; housing=35;provision_cap=75; 
     heatFossilCapacity=10;healthCapacity=100;
     adultsPoliceCapacity=10;kidsStudentCapacity=7;youngStudentCapacity=5</stats>
     <cost>
@@ -193,7 +193,7 @@
     <yield period="1h">
       <res id="res.wood" amount="2"/>
     </yield>
-    <require>rsd.forestry.l1</require>
+    <require>rsd.forestry.l1, bld.farm.l1</require>
     <time>5s</time>
     <durability>10.0</durability>
     <upgradesTo>bld.forest.l2</upgradesTo>

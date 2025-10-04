@@ -421,4 +421,12 @@
   <entry key="ani.duck.desc">And giver lidt kød, fjer og æg</entry>
   <entry key="ani.goat.name">Ged</entry>
   <entry key="ani.goat.desc">Ged giver lidt kød og skind</entry>
+
+<!-- HEALTH UNITS-->
+
+  <entry key="ani.health_groundbed1.name">Simpel syge sengeplads</entry>
+  <entry key="ani.health_groundbed1.desc">Meget primitiv syge senge plads</entry>
+
+
+
 </language>

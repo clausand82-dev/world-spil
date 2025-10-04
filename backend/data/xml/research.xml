@@ -335,15 +335,15 @@
 
 <!-- HEALTH RESEARCH -->
 
-  <research id="rsd.herbalism.l1" family="health" type="basecamp,health" lvl="1" stage="2">
+  <research id="rsd.herbalism.l1" family="basecamp,health" type="basecamp,health" lvl="1" stage="2">
     <cost>
       <res id="res.money" amount="175"/>
     </cost>
     <time>10m</time>
-    <require>bld.health.l1</require>
+    <require>bld.basecamp.l3</require>
   </research>
 
-    <research id="rsd.herbalism.l2" family="health" type="basecamp,health" lvl="2" stage="2">
+    <research id="rsd.herbalism.l2" family="basecamp,health" type="basecamp,health" lvl="2" stage="2">
     <cost>
       <res id="res.money" amount="250"/>
     </cost>
@@ -351,7 +351,7 @@
     <require>rsd.herbalism.l1</require>
   </research>
 
-    <research id="rsd.medicinstorage.l1" family="health" type="basecamp,health" lvl="1" stage="2">
+    <research id="rsd.medicinstorage.l1" family="basecamp,health" type="basecamp,health" lvl="1" stage="2">
     <cost>
       <res id="res.money" amount="150"/>
     </cost>
