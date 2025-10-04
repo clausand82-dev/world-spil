@@ -49,7 +49,7 @@
 
   <building id="bld.basecamp.l3" family="basecamp" type="base" lvl="3" stage="1">
     <stats>footprint=80; housing=35;provision_cap=75; 
-    heatFossilCapacity=10;healthCapacity=125;adultsHealthCapacity=12;
+    heatFossilCapacity=10;healthCapacity=100;
     adultsPoliceCapacity=10;kidsStudentCapacity=7;youngStudentCapacity=5</stats>
     <cost>
       <res id="res.money" amount="500" />
@@ -320,7 +320,7 @@
 <!-- HEALTH-->
 
     <building id="bld.health.l1" family="health" type="health" lvl="1" stage="1">
-    <stats>footprint=-5;healthCapacity=10;healthUnitCapacity=10</stats>
+    <stats>footprint=-5;healthCapacity=10;healthUnitCapacity=10;adultsHealthCapacity=10</stats>
     <cost>
       <res id="res.money" amount="125" />
       <res id="res.hide" amount="22" />

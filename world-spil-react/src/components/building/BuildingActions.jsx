@@ -157,7 +157,7 @@ function BuildingActions({ actionItem, canStart, jobActiveId, buildingId, repair
       ) : (
         <button className="btn" disabled>{t("ui.btn.repair.h1")}</button>
       )}
-      <button className="btn" disabled>{t("ui.btn.demolish.h1")}</button>
+      {/* <button className="btn" disabled>{t("ui.btn.demolish.h1")}</button> */}
     </div>
   );
 }

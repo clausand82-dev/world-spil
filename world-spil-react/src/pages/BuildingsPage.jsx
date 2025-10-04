@@ -6,7 +6,7 @@ import ActionButton from '../components/ActionButton.jsx';
 import BuildProgress from '../components/BuildProgress.jsx';
 import LevelStatus from '../components/requirements/LevelStatus.jsx';
 import { useRequirements as useReqAgg } from '../components/requirements/Requirements.jsx';
-import HoverCard from '../components/ui/HoverCard.jsx';
+import DockHoverCard from '../components/ui/DockHoverCard.jsx';
 import StatsEffectsTooltip from '../components/ui/StatsEffectsTooltip.jsx';
 
 /*function _page_canAfford(price, state) {
@@ -82,9 +82,9 @@ function BuildingRow({ bld, state, defs }) {
 
   // Wrapper: HoverCard skal fylde hele rækken, så vi sætter style display:block,width:100%
   return (
-    <HoverCard content={hoverContent} style={{ display: 'block', width: '100%' }}>
+    <DockHoverCard  content={hoverContent} style={{ display: 'block', width: '100%' }}>
       {row}
-    </HoverCard>
+    </DockHoverCard >
   );
 
 }

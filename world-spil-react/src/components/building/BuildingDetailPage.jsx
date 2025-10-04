@@ -12,7 +12,7 @@ import { useT } from "../../services/i18n.js";
 
 import { computeOwnedMap, requirementInfo, collectActiveBuffs, computeResearchOwned } from '../../services/requirements.js';
 
-const DETAIL_TABS = ['addons', 'research', 'recipes', 'special'];
+const DETAIL_TABS = ['addons', 'research', 'recipes']; // add "", 'special'" for special tab
 
 function canonicalizeBuildingId(param) {
   if (!param) return null;

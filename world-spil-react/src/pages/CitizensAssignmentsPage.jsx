@@ -10,6 +10,17 @@ const ROLE_ORDER = [
   { key: 'adultsWorker', label: 'Worker' },
 ];
 
+// Strikt mapping: rolle → korrekt kapacitetsfelt
+const CAP_KEY_MAP = {
+  adultsPolice:     'adultsPoliceCapacity',
+  adultsFire:       'adultsFireCapacity',
+  adultsHealth:     'adultsHealthCapacity',
+  adultsSoldier:    'adultsSoldierCapacity',
+  adultsGovernment: 'adultsGovernmentCapacity',
+  adultsPolitician: 'adultsPoliticianCapacity',
+  adultsWorker:     'adultsWorkerCapacity',
+};
+
 export default function CitizenAssignmentsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -62,19 +73,23 @@ export default function CitizenAssignmentsPage() {
     return { totalAdults, totalNonHomeless, sumAssign, unemployedWillBe };
   }, [state, assign]);
 
- const clampForView = (key) => {
-  if (!state) return { cap: 0, max: 0 };
-  const cap = Number(state?.caps?.[`${key}Capacity`] ?? 0);
-  const current = Number(state?.citizens?.[key] ?? 0);
-  // Politician: tag også hensyn til ratio-limit i UI
-  if (key === 'adultsPolitician') {
-    const polMax = Number(state?.limits?.politicianMax ?? 0);
-    const effCap = Math.max(cap, current, polMax);
+  // Brug eksplicit kapacitetsnøgle – ingen wildcard '*Capacity'
+  const clampForView = (key) => {
+    if (!state) return { cap: 0, max: 0 };
+    const capKey = CAP_KEY_MAP[key];
+    const capRaw = capKey ? Number(state?.caps?.[capKey] ?? 0) : 0;
+    const current = Number(state?.citizens?.[key] ?? 0);
+
+    // Politician: tag også hensyn til ratio-limit i UI
+    if (key === 'adultsPolitician') {
+      const polMax = Number(state?.limits?.politicianMax ?? 0);
+      const effCap = Math.max(capRaw, current, polMax);
+      return { cap: effCap, max: effCap };
+    }
+
+    const effCap = Math.max(capRaw, current);
     return { cap: effCap, max: effCap };
-  }
-  const effCap = Math.max(cap, current);
-  return { cap: effCap, max: effCap };
-};
+  };
 
   const onChange = (key, val) => {
     const v = Math.max(0, Math.floor(Number(val) || 0));

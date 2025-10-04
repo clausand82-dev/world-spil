@@ -3,7 +3,7 @@ import ActionButton from '../../ActionButton.jsx';
 import BuildProgress from '../../BuildProgress.jsx';
 import RequirementSummary from '../RequirementSummary.jsx';
 import { requirementInfo } from '../../../services/requirements.js';
-import HoverCard from '../../ui/HoverCard.jsx';
+import DockHoverCard from '../../../components/ui/DockHoverCard.jsx';
 import StatsEffectsTooltip from '../../ui/StatsEffectsTooltip.jsx';
 import { useT } from "../../../services/i18n.js";
 import { useGameData } from '../../../context/GameDataContext.jsx';
@@ -86,9 +86,9 @@ function ResearchRow({ entry, state, baseOwned, requirementCaches }) {
 
   // Wrapper: HoverCard skal fylde hele rækken, så vi sætter style display:block,width:100%
   return (
-    <HoverCard content={hoverContent} style={{ display: 'block', width: '100%' }}>
+    <DockHoverCard  content={hoverContent} style={{ display: 'block', width: '100%' }}>
       {row}
-    </HoverCard>
+    </DockHoverCard>
   );
 
 }

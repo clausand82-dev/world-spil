@@ -96,7 +96,7 @@ function compute_crime_distribution(array $newCit, array $ratios): array {
   $baseline = 0.03;
   $r = $baseline + 0.6*$unempRatio + 0.2*max(0.0, 1.0 - ($ratios['provision'] ?? 1.0)) + 0.2*max(0.0, 1.0 - ($ratios['housing'] ?? 1.0)) - 0.6*$polSuppression;
   $r = max(0.0, min(0.25, $r));
-  
+
     $minBaseline = 0.005; // 0.5% minimum crime rate
   $r = max($r, $minBaseline);
 
@@ -148,23 +148,25 @@ function compute_basic_ratios(PDO $pdo, int $uid, array $branches): array {
   return ['provisionCapacity'=>$provCap, 'housingCapacity'=>$houseCap];
 }
 
-/** Byg caps til sliders. */
+/** Byg caps til sliders (STRIKS pr. rolle – ingen generiske felter blandes ind). */
 function build_caps(PDO $pdo, int $uid, array $branches): array {
   $caps = [];
-  $caps['adultsPoliceCapacity']     = sum_role_capacity($pdo,$uid,$branches, ['adultsPoliceCapacity','policeCapacity','police_cap']);
-  $caps['adultsFireCapacity']       = sum_role_capacity($pdo,$uid,$branches, ['adultsFireCapacity','fireCapacity','fire_cap']);
-  $caps['adultsHealthCapacity']     = sum_role_capacity($pdo,$uid,$branches, ['adultsHealthCapacity','healthCapacity','health_cap']);
-  $caps['adultsSoldierCapacity']    = sum_role_capacity($pdo,$uid,$branches, ['adultsSoldierCapacity','soldierCapacity','soldier_cap']);
-  $caps['adultsGovernmentCapacity'] = sum_role_capacity($pdo,$uid,$branches, ['adultsGovernmentCapacity','governmentCapacity','govermentCapacity','government_cap','goverment_cap']);
-  $caps['adultsPoliticianCapacity'] = sum_role_capacity($pdo,$uid,$branches, ['adultsPoliticianCapacity','politicianCapacity','politician_cap']);
-  $caps['adultsWorkerCapacity']     = sum_role_capacity($pdo,$uid,$branches, ['adultsWorkerCapacity','workerCapacity','worker_cap']);
-  // Studenter-capaciteter til auto-korrektion
-  $caps['kidsStudentCapacity']  = sum_role_capacity($pdo,$uid,$branches, ['kidsStudentCapacity']);
-  $caps['youngStudentCapacity'] = sum_role_capacity($pdo,$uid,$branches, ['youngStudentCapacity']);
+  // Kun rolle-specifikke kapacitetsnøgler
+  $caps['adultsPoliceCapacity']     = sum_role_capacity($pdo,$uid,$branches, ['adultsPoliceCapacity','police_cap']);
+  $caps['adultsFireCapacity']       = sum_role_capacity($pdo,$uid,$branches, ['adultsFireCapacity','fire_cap']);
+  $caps['adultsHealthCapacity']     = sum_role_capacity($pdo,$uid,$branches, ['adultsHealthCapacity','health_adults_cap','healthAdultsCapacity']);
+  $caps['adultsSoldierCapacity']    = sum_role_capacity($pdo,$uid,$branches, ['adultsSoldierCapacity','soldier_cap']);
+  $caps['adultsGovernmentCapacity'] = sum_role_capacity($pdo,$uid,$branches, ['adultsGovernmentCapacity','government_cap','goverment_cap']);
+  $caps['adultsPoliticianCapacity'] = sum_role_capacity($pdo,$uid,$branches, ['adultsPoliticianCapacity','politician_cap']);
+  $caps['adultsWorkerCapacity']     = sum_role_capacity($pdo,$uid,$branches, ['adultsWorkerCapacity','worker_cap']);
+
+  // Studenter-kapaciteter (bruges både til clamp ned og “fyld op”)
+  $caps['kidsStudentCapacity']      = sum_role_capacity($pdo,$uid,$branches, ['kidsStudentCapacity']);
+  $caps['youngStudentCapacity']     = sum_role_capacity($pdo,$uid,$branches, ['youngStudentCapacity']);
   return $caps;
 }
 
-/** Auto-korriger students mod caps (overflow -> street/worker). */
+/** Auto-korriger students mod caps (overflow -> street/worker). (Uændret) */
 function adjust_students_against_caps(array &$c, array $caps): void {
   $ksCap = max(0, (int)($caps['kidsStudentCapacity'] ?? 0));
   $ysCap = max(0, (int)($caps['youngStudentCapacity'] ?? 0));
@@ -174,7 +176,36 @@ function adjust_students_against_caps(array &$c, array $caps): void {
   if ($ys > $ysCap) { $over = $ys - $ysCap; $c['youngStudent'] = $ysCap; $c['youngWorker'] = max(0, (int)($c['youngWorker'] ?? 0) + $over); }
 }
 
-/** GET */
+/** NYT: Fyld students op til kapacitet (underflow -> træk fra street/worker). */
+function fill_students_to_capacity(array &$c, array $caps): void {
+  // Kids: flyt fra kidsStreet -> kidsStudent
+  $ksCap = max(0, (int)($caps['kidsStudentCapacity'] ?? 0));
+  $ks    = max(0, (int)($c['kidsStudent'] ?? 0));
+  $kStreet = max(0, (int)($c['kidsStreet'] ?? 0));
+  if ($ks < $ksCap && $kStreet > 0) {
+    $need = $ksCap - $ks;
+    $move = min($need, $kStreet);
+    if ($move > 0) {
+      $c['kidsStudent'] = $ks + $move;
+      $c['kidsStreet']  = $kStreet - $move;
+    }
+  }
+
+  // Young: flyt fra youngWorker -> youngStudent
+  $ysCap = max(0, (int)($caps['youngStudentCapacity'] ?? 0));
+  $ys    = max(0, (int)($c['youngStudent'] ?? 0));
+  $yWork = max(0, (int)($c['youngWorker'] ?? 0));
+  if ($ys < $ysCap && $yWork > 0) {
+    $need = $ysCap - $ys;
+    $move = min($need, $yWork);
+    if ($move > 0) {
+      $c['youngStudent'] = $ys + $move;
+      $c['youngWorker']  = $yWork - $move;
+    }
+  }
+}
+
+/** GET handler (uændret bortset fra build_caps ovenfor) */
 function handle_get(PDO $pdo, int $uid): void {
   [$bld,$add,$rsd,$ani,$res,$cfg] = _load_defs_branches();
   $branches = [$bld,$add,$rsd,$ani,$res];
@@ -193,6 +224,8 @@ function handle_get(PDO $pdo, int $uid): void {
       'adultsGovernmentCapacity' => $caps['adultsGovernmentCapacity'],
       'adultsPoliticianCapacity' => $caps['adultsPoliticianCapacity'],
       'adultsWorkerCapacity'     => $caps['adultsWorkerCapacity'],
+      'kidsStudentCapacity'      => $caps['kidsStudentCapacity'],
+      'youngStudentCapacity'     => $caps['youngStudentCapacity'],
     ],
     'limits'   => [ 'politicianMax' => $polMax ],
   ]);
@@ -251,14 +284,16 @@ function handle_post(PDO $pdo, int $uid): void {
   // Sæt ny adultsUnemployed som rest
   $newUnemp = max(0, $nonHomeless - $sumTargets);
 
-  // Opbyg ny tilstand
+  // Opbyg $newCit med adults* roller + unemployed rest
   $newCit = $cit;
   foreach ($roles as $r) $newCit[$r] = (int)$req[$r];
   $newCit['adultsUnemployed'] = (int)$newUnemp;
-  // adultsHomeless beholdes indtil rehousing (nedenfor)
 
-  // Auto-korriger kids/young students
+  // 1) Clamp elever ned mod cap (ingen overflow)
   adjust_students_against_caps($newCit, $caps);
+
+  // 2) NYT: Fyld elever op mod cap (brug street/worker som kilde)
+  fill_students_to_capacity($newCit, $caps);
 
   // Crime init baseret på ratior
   $capRatios  = compute_basic_ratios($pdo, $uid, $branches);

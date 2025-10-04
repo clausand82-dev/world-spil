@@ -47,6 +47,9 @@ function defaultLabelMap() {
     'kidsStudentCapacity': { label: 'Kids (stud.)', desc: 'Plads til børn i skole.' },
     'youngStudentCapacity': { label: 'Young (stud.)', desc: 'Plads til unge i skole.' },
     'heatFossilCapacity': { label: 'Varme (fossil)', desc: 'Varmekapacitet (fossil).' },
+    'healthUnitCapacity': { label: 'Sundhedsenhed', desc: 'Kapacitet til sundhedsenheder.' },
+    'storageSolidCap': { label: 'Lagerplads (fast)', desc: 'Lagerplads til faste varer.' },
+    'storageLiquidCap': { label: 'Lagerplads (flydende)', desc: 'Lagerplads til flydende varer.' },
     // ... tilføj flere efter behov
   };
 }
