@@ -30,7 +30,7 @@ function DemandChip({ reqId }) {
     const d = defs?.rsd?.[k];
     label = d?.name || k;
     ok = H.hasResearch(reqId, state);
-    href = '#/research';
+    href = `#/research?focus=${encodeURIComponent(reqId)}`;
     tip = ok ? `Fuldført: ${label}` : `Kræver: ${label}`;
   } else if (reqId.startsWith('bld.')) {
     const p = H.parseBldKey(reqId);

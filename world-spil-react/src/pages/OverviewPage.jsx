@@ -11,7 +11,7 @@ export default function TechTreePage() {
     ];
 
     return (
-        <section className="panel section" style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 50px)' }}>
+        <section className="" style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 50px)' }}>
             <div className="section-head">
                 🌳 Teknologitræ
                 <div className="tabs" style={{ marginLeft: 'auto' }}>

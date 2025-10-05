@@ -5,9 +5,10 @@ import ResearchTreePage from './OverviewResearchPage.jsx';
 
 export default function MyUnitsHub() {
   const tabs = [
-    { key: 'techtree', label: 'TechTree', icon: '🐄', Component: TechTreePage },
     { key: 'research',   label: 'Research', icon: '🏥', Component: ResearchTreePage },
+    { key: 'techtree', label: 'TechTree', icon: '🐄', Component: TechTreePage },
+    
   ];
 
-  return <TabsTemplatePage tabs={tabs} defaultKey="techtree" preserve={false} className="my-tabs" />;
+  return <TabsTemplatePage tabs={tabs} defaultKey="research" preserve={false} className="my-tabs" />;
 }

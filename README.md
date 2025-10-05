@@ -5,22 +5,20 @@ STAGE 1:
 Grundlæggende spil mekanismer som byg, upgrade, byg addons, research og recipe samt passiv yield introduceres. Der kan købes dyr, som kan bruges til passiv og aktiv produktion og bygninger skal holdes ved lige via repairs.
 
 STAGE 2:
-Health, Happiness og borgere system indføres - dette udvides langsomt igennem de næste stages.
+Health, Happiness og borgere system (light) indføres - dette udvides langsomt igennem de næste stages.
 
 STAGE 3:
-Health indføres - som nævnt i stage 2 har det indflydelse på indbyggere der kommer til byen.
+
 
 STAGE 4:
-Popularitet indføres - har indflydelse på antal nye indbyggere. Visse bygninger/addons/research kan forbedre ens popularity.
+
 
 STAGE 5:
-Politi og kriminalitet indføres. Samtidig indføres UDSTYR og UNITS.
 
 
-STAGE 6 (Events)
-Indføres events og brandvæsen, samt hospital.
 
-Brandvæsen og hospital består kun af bygning/addons/research, som kan forbedre visse stats.
+STAGE 6
+
 
 
 
@@ -51,6 +49,9 @@ Change/update History
 - citymanagement system as housing, provision, medicin, water, heat, power, cloth, waste and health is unlocked
 - fixed error with storage not working as intended
 - education system coded - maybe for another stage
+- Introduced a more informativ hover to buildings, addons and research (located right lower corner)
+- Animal system has been rework and renamed to be a units system
+- Flowchart (research and overview) is now on one page - not done yet
 
 4.0
 - moving all code to react code instead

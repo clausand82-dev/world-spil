@@ -8,13 +8,12 @@ import StatsEffectsTooltip from '../../ui/StatsEffectsTooltip.jsx';
 import { useT } from "../../../services/i18n.js";
 import { useGameData } from '../../../context/GameDataContext.jsx';
 
-
 function ResearchRow({ entry, state, baseOwned, requirementCaches }) {
   const { def, fullId, stageReq, stageOk, ownedLevel, displayLevel } = entry;
   const t = useT();
 
-    const { data } = useGameData();
-    const translations = data?.i18n?.current ?? {};
+  const { data } = useGameData();
+  const translations = data?.i18n?.current ?? {};
 
   const requirement = requirementInfo(
     {
@@ -35,7 +34,6 @@ function ResearchRow({ entry, state, baseOwned, requirementCaches }) {
     isUpgrade: displayLevel > 1,
     isOwned: ownedLevel >= displayLevel,
     owned: ownedLevel >= displayLevel,
-    ownedMax: ownedLevel,
     stageLocked: !stageOk,
     stageReq,
     def,
@@ -55,7 +53,11 @@ function ResearchRow({ entry, state, baseOwned, requirementCaches }) {
         <div className="title">
           {def.name || fullId}
           {!stageOk && (
-            <span className="badge stage-locked price-bad" title={`${t("ui.text.demandingstage.h1")} ${stageReq}`} style={{ marginLeft: 8 }}>
+            <span
+              className="badge stage-locked price-bad"
+              title={`${t("ui.text.demandingstage.h1")} ${stageReq}`}
+              style={{ marginLeft: 8 }}
+            >
               {t("ui.text.stagelocked.h1")}
             </span>
           )}
@@ -72,25 +74,30 @@ function ResearchRow({ entry, state, baseOwned, requirementCaches }) {
         />
       </div>
       <div className="right">
-        {!baseOwned ? (
-          <button className="btn" disabled>{t("ui.btn.demandbuilding.h1")}</button>
-        ) : (
+        {(requirement.allOk && stageOk) ? (
           <>
-            <ActionButton item={actionItem} allOk={requirement.allOk && stageOk} />
+            <ActionButton item={actionItem} allOk={true} />
             <BuildProgress bldId={fullId} />
           </>
+        ) : (
+          <button
+            className="btn"
+            disabled
+            title={requirement.reqString || t("ui.btn.demandbuilding.h1")}
+          >
+            {t("ui.btn.demandbuilding.h1")}
+          </button>
         )}
       </div>
     </div>
   );
 
-  // Wrapper: HoverCard skal fylde hele rækken, så vi sætter style display:block,width:100%
+  // Docked hover nederst højre – fylder hele rækken
   return (
-    <DockHoverCard  content={hoverContent} style={{ display: 'block', width: '100%' }}>
+    <DockHoverCard content={hoverContent} style={{ display: 'block', width: '100%' }}>
       {row}
     </DockHoverCard>
   );
-
 }
 
 export default ResearchRow;

@@ -402,5 +402,11 @@ body{padding-bottom:72px} /* plads til quickbar */
   justify-content: flex-end;
 }
 
-
-
+.focus-highlight {
+  animation: focusPulse var(--focus-duration, 4.0s) ease forwards;
+}
+@keyframes focusPulse {
+  0%   { box-shadow: 0 0 0 6px rgb(255, 0, 0); }
+  60%  { box-shadow: 0 0 0 3px rgb(153, 6, 6); }
+  100% { box-shadow: 0 0 0 0 rgba(255,200,0,0); }
+}
