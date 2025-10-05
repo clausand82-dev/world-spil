@@ -7,8 +7,6 @@ import HeaderHappinessBadge from './header/HeaderHappinessBadge.jsx';
 import HoverCard from './ui/HoverCard.jsx';
 import CapHoverContent from './ui/CapHoverContent.jsx';
 import HeaderPopularityBadge from './header/HeaderPopularityBadge.jsx'; // NY
-// Hvis du stadig bruger buildStatsTitle andre steder, behold importen. Ellers kan den fjernes.
-// import { buildStatsTitle } from '../services/statsEffects.js';
 
 export default function Header() {
   const { data } = useGameData();
@@ -20,7 +18,6 @@ export default function Header() {
   const footprint = state?.cap?.footprint ?? {};
   const animal_cap = state?.cap?.animal_cap ?? {};
   const resDefs = defs?.res ?? {};
-
 
   // Nye hover-contents for cap-chips
   const animalCapHover = (
@@ -56,8 +53,14 @@ export default function Header() {
         </HoverCard>
       </div>
 
-      <div className="header-tools" style={{ marginLeft: 'auto' }}>
+      <div className="header-tools" style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
         STAGE: {state?.user?.currentstage || '0'}
+
+        {/* Hjælp-knap: linker til help-overlay via hash */}
+        <button className="icon-btn" onClick={() => window.location.hash = '#/help?topic=intro'} title="Hjælp">❓Hjælp</button>
+
+        {/* <button className="icon-btn" onClick={() => setShowHelp(true)}>❓ Hjælp</button> */}
+
         <TopbarAuth onAuthChange={() => window.location.reload()} />
       </div>
     </header>

@@ -97,7 +97,7 @@ function metrics_registry(): array {
       'capacityStatKeys' => ['healthUnitProvision'],
       'usageStatKeys' => ['healthUnitUsage'],
       'sources' => ['bld'=>true,'add'=>true,'rsd'=>true,'ani'=>true,'res'=>true],
-      'stage' => ['unlock_at'=>1,'visible_at'=>1],
+      'stage' => ['unlock_at'=>100,'visible_at'=>100],
       'happiness' => ['enabled'=>false],
       'popularity'=> ['enabled'=>false],
       'subs' => [],

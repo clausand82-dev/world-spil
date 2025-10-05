@@ -1,0 +1,445 @@
+.help-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  backdrop-filter: blur(2px);
+  z-index: 9999;
+  display: grid;
+  place-items: center;
+  padding: 2vh 2vw; /* fallback hvis viewport er lille */
+}
+
+.help-overlay-panel {
+  width: 90vw;
+  height: 90vh;
+  max-width: 1400px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 18px 60px rgba(0,0,0,0.45);
+  display: grid;
+  grid-template-rows: 50px 1fr;
+  overflow: hidden;
+}
+
+.help-overlay-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.help-overlay-body {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  height: 100%;
+}
+
+.help-overlay-sidebar {
+  border-right: 1px solid var(--border);
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: auto;
+}
+
+.help-overlay-search {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: #0b1220;
+  color: var(--text);
+}
+
+.help-topic-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.help-topic-item {
+  text-align: left;
+  background: transparent;
+  color: var(--text);
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 8px 10px;
+  cursor: pointer;
+}
+.help-topic-item:hover {
+  background: rgba(255,255,255,0.04);
+}
+.help-topic-item.active {
+  background: rgba(37, 99, 235, 0.12);
+  border-color: #2b4ea4;
+}
+
+.help-overlay-content {
+  overflow: auto;
+  padding: 14px 16px;
+}
+
+.help-article {
+  line-height: 1.5;
+}
+.help-article h1, .help-article h2, .help-article h3 {
+  margin: 0.4em 0 0.3em;
+}
+.help-article p { margin: 0.5em 0; }
+.help-article img, .help-article video, .help-article iframe {
+  max-width: 100%;
+  border-radius: 8px;
+}
+
+/* Mobil: brug 100% i stedet for 90% */
+@media (max-width: 900px) {
+  .help-overlay {
+    padding: 0;
+  }
+  .help-overlay-panel {
+    width: 100vw;
+    height: 100vh;
+    border-radius: 0;
+  }
+  .help-overlay-body {
+    grid-template-columns: 1fr; /* stack */
+  }
+  .help-overlay-sidebar {
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+}
+
+/* Hierarki/nesting */
+.help-topic-item.depth-1 { padding-left: 18px; }
+.help-topic-item.depth-2 { padding-left: 32px; }
+.help-topic-item.depth-3 { padding-left: 46px; }
+
+/* Gruppe-header i venstreside */
+.help-topic-group { margin-top: 8px; }
+.help-topic-group-title {
+  font-weight: 700;
+  opacity: 0.9;
+  padding: 6px 6px;
+  border-left: 3px solid var(--border);
+  margin-bottom: 4px;
+}
+.unread-badge {
+  margin-left: 8px;
+  font-size: 12px;
+  color: #f59e0b; /* warn */
+}
+.dot-unread {
+  margin-left: 6px;
+  color: #f59e0b;
+  font-weight: 900;
+}
+
+/* Hjælp: force konsistent link-farve (og hover/focus styling) */
+.help-article a,
+.help-overlay-sidebar a,
+.help-overlay-content a,
+.help-topic-item a,
+.help-topic-group-title a {
+  color: #62a0ff;                /* ønsket link-farve */
+  text-decoration: none;         /* eller 'underline' hvis du vil have underline */
+  transition: color 120ms ease;
+}
+
+/* Samme farve for 'besøgte' links */
+.help-article a:visited,
+.help-overlay-sidebar a:visited,
+.help-overlay-content a:visited,
+.help-topic-item a:visited,
+.help-topic-group-title a:visited {
+  color: #62a0ff;                /* samme som ovenfor for at undgå "visited" farveændring */
+}
+
+/* Hover / focus state (valgfrit - lidt kraftigere) */
+.help-article a:hover,
+.help-overlay-sidebar a:hover,
+.help-overlay-content a:hover,
+.help-topic-item a:hover,
+.help-topic-group-title a:hover,
+.help-article a:focus,
+.help-overlay-sidebar a:focus {
+  color: #9ec8ff;
+  outline: none;
+  text-decoration: underline;
+  box-shadow: 0 0 0 4px rgba(98,160,255,0.08);
+  border-radius: 4px;
+}
+
+/* Hvis du bruger data-topic-link i links (interne links), sørg for at de også får styling */
+.help-article a[data-topic-link],
+.help-overlay-sidebar a[data-topic-link] {
+  color: #62a0ff;
+}
+
+/* Ensure help links are clickable and show pointer */
+.help-overlay-content a,
+.help-article a {
+  pointer-events: auto !important;
+  cursor: pointer !important;
+  color: #62a0ff;
+  text-decoration: none;
+}
+
+.help-overlay-content a:focus,
+.help-article a:focus {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(98,160,255,0.08);
+  border-radius: 4px;
+}
+
+/* SCROLLBAR LØSNING - KAN DROPPES HVIS JEG GÅR MERE ADVANCERET
+/* Ensure sidebar reserves space and list scrolls internally */
+.help-overlay-sidebar {
+  display: flex;
+  flex-direction: column;
+  width: 280px; /* eller max-width */
+  min-width: 220px;
+  /* Sørg for sidebar ikke vokser med hele panelet */
+  overflow: hidden; /* containeren holder height */
+}
+
+.help-overlay-search {
+  flex: 0 0 auto;
+  margin-bottom: 6px;
+}
+
+/* Make the list take remaining space and scroll */
+.help-topic-list {
+  flex: 1 1 auto;
+  overflow: auto;
+  padding: 6px;
+}
+
+/* lidt padding i bunden så sidste element ikke sidder op ad kant */
+.help-topic-list::after { content: ''; display:block; height: 18px; }
+
+/* --- Help overlay layout fixes: single-column sidebar + working scroll --- */
+/* Sørg for panel har fast max-højde og skjuler overflow så indre scroll virker */
+.help-overlay-panel {
+  width: 90vw;
+  height: 90vh;               /* begræns højden til viewport */
+  max-width: 1400px;
+  display: grid;
+  grid-template-rows: 50px 1fr; /* header + body */
+  overflow: hidden;           /* vigtig: indre kolonner må scrolle, ikke panelet vokse */
+}
+
+/* Body: to kolonner, venstre = sidebar, højre = indhold */
+.help-overlay-body {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  height: 100%;               /* fyld resten af panelet */
+  overflow: hidden;           /* sørg for at children håndterer deres egen scroll */
+}
+
+/* Sidebar: kolonne-layout og indre scroll */
+.help-overlay-sidebar {
+  border-right: 1px solid var(--border);
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  /* IMPORTANT: skjul overflow på container, men giv listen selv scroll */
+  overflow: hidden;
+  min-width: 220px;
+}
+
+/* Searchbar holder plads og ikke vokser */
+.help-overlay-search {
+  flex: 0 0 auto;
+  margin-bottom: 6px;
+}
+
+/* Topic-list fylder resterende plads i sidebar og scroller internt */
+.help-topic-list {
+  flex: 1 1 auto;
+  overflow: auto;
+  padding: 6px 4px;
+  margin: 0;
+  display: block;            /* vigtig: ikke flex med wrap */
+}
+
+/* Force items til at være blokke i en enkelt kolonne */
+.help-topic-item,
+.help-topic-group-title {
+  display: block;
+  width: 100%;
+  text-align: left;
+  white-space: normal;       /* tillad linjeskift, undgå at skabe flere kolonner */
+  box-sizing: border-box;
+}
+
+/* små layoutjusteringer for gruppering og indryk */
+.help-topic-group {
+  margin-top: 8px;
+}
+.help-topic-group-title {
+  font-weight: 700;
+  opacity: 0.95;
+  padding: 6px 6px;
+  border-left: 3px solid var(--border);
+  margin-bottom: 6px;
+  display: flex;             /* chevron + title på samme linje */
+  align-items: center;
+  gap: 8px;
+}
+
+/* Chip + unread badges */
+.unread-badge {
+  margin-left: 8px;
+  font-size: 12px;
+  color: #f59e0b;
+}
+.dot-unread { margin-left: 6px; color: #f59e0b; font-weight: 900; }
+
+/* Indryk for child items (depth) — bruges i JS via depth-N klasser */
+.help-topic-item.depth-0 { padding-left: 6px; }
+.help-topic-item.depth-1 { padding-left: 18px; }
+.help-topic-item.depth-2 { padding-left: 32px; }
+.help-topic-item.depth-3 { padding-left: 46px; }
+
+/* Content panel: sørg for intern scrolling */
+.help-overlay-content {
+  overflow: auto;
+  padding: 14px 16px;
+  height: 100%;             /* fyld højde af body-column */
+  box-sizing: border-box;
+}
+
+/* Sørg for at help-article indeholder indhold korrekt og kan bryde */
+.help-article {
+  line-height: 1.5;
+  min-width: 0;             /* vigtig når parent er flex/grid for at undgå overflow issues */
+  word-wrap: break-word;
+}
+
+/* Hvis du har knapper/anchors i sidebar: sikre at de fylder i én kolonne */
+.help-topic-item button,
+.help-topic-item a {
+  display: inline-block;
+  width: 100%;
+  text-align: left;
+}
+
+/* Diskrete scrollbars: usynlige som default, vises ved hover */
+/* Firefox */
+.help-topic-list,
+.help-overlay-content {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.06) transparent;
+}
+
+/* WebKit */
+.help-topic-list::-webkit-scrollbar,
+.help-overlay-content::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.help-topic-list::-webkit-scrollbar-track,
+.help-overlay-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+.help-topic-list::-webkit-scrollbar-thumb,
+.help-overlay-content::-webkit-scrollbar-thumb {
+  background: transparent;           /* skjult som default */
+  border-radius: 8px;
+  transition: background 120ms ease;
+}
+/* Ved hover vises thumb let */
+.help-topic-list:hover::-webkit-scrollbar-thumb,
+.help-overlay-content:hover::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.06); /* diskret */
+}
+.help-topic-list:hover::-webkit-scrollbar,
+.help-overlay-content:hover::-webkit-scrollbar {
+  background: transparent;
+}
+
+/* For Firefox: make thumb visible on hover using :hover + a forced color */
+.help-topic-list:hover,
+.help-overlay-content:hover {
+  scrollbar-color: rgba(255,255,255,0.06) transparent;
+}
+
+/* Ensuring single-column list (no wrapping) */
+.help-topic-list {
+  display: block;
+  overflow: auto; /* internal scroll */
+}
+
+/* Ensure topic items are block-level and fill width */
+.help-topic-item,
+.help-topic-group-title {
+  display: block;
+  width: 100%;
+  text-align: left;
+}
+
+/* Small improvement: show a subtle hover on items to indicate they are clickable */
+.help-topic-item:hover {
+  background: rgba(255,255,255,0.02);
+}
+
+/* helper for help articles */
+.help-article { overflow: hidden; /* contain floats */ }
+
+/* image that floats right and allows text wrap */
+.help-image.help-right {
+  float: right;
+  margin: 0 0 8px 12px; /* top/right/bottom/left -> give left margin so text doesn't touch */
+  max-width: 38%; /* or set a px value like 260px */
+  width: auto;
+  height: auto;
+  border: 1px solid #666;
+  border-radius: 8px;
+}
+
+/* responsive: on narrow screens make image full width above text */
+@media (max-width: 720px) {
+  .help-image.help-right {
+    float: none;
+    display: block;
+    margin: 10px auto;
+    max-width: 100%;
+  }
+}
+
+/* Gør tekst i help-artikler "justified" og få sidste linje til at strække sig */
+.help-article { overflow: hidden; }
+
+/* Anvend på alle afsnit i help-artiklen */
+.help-article p {
+  text-align: justify;
+  text-justify: inter-word;     /* forbedrer fordeling af mellemrum */
+  hyphens: auto;               /* automatisk ordopdeling (hvis tilgængelig) */
+  -webkit-hyphens: auto;
+  -ms-hyphens: auto;
+  margin-bottom: 0.9em;
+}
+
+/* Hack: tving sidste linje til justification ved at indsætte en fuldbredde inline-element */
+.help-article .justify-fix:after {
+  content: "";
+  display: inline-block;
+  width: 100%;
+}
+
+/* Eksempel: billedet til højre (behagelig wrap) */
+.help-image.help-right {
+  float: right;
+  margin: 0 0 8px 12px;
+  max-width: 38%;
+}
+
+/* Responsive */
+@media (max-width: 720px) {
+  .help-image.help-right { float: none; display:block; margin:10px auto; max-width:100%; }
+}

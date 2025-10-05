@@ -242,9 +242,24 @@ function handle_post(PDO $pdo, int $uid): void {
     fail('E_PAYLOAD', 'Forventede { assignments: { adultsPolice, adultsFire, ... } }');
   }
 
-  $cit = load_citizens_row($pdo, $uid);
-  $caps = build_caps($pdo, $uid, $branches);
-  $polMax = compute_politician_max($cfg, $cit);
+$cit = load_citizens_row($pdo, $uid);
+$caps = build_caps($pdo, $uid, $branches);
+$polMax = compute_politician_max($cfg, $cit);
+
+$caps['adultsPoliticianCapacity'] = max(
+  (int)($caps['adultsPoliticianCapacity'] ?? 0),
+  (int)$polMax,
+  (int)($cit['adultsPolitician'] ?? 0)
+);
+
+  // DEBUG: log input + state for troubleshooting politician cap
+  //error_log('CA DEBUG: raw payload=' . $raw);
+  //error_log('CA DEBUG: incoming assignments keys=' . json_encode(array_keys($payload['assignments'] ?? [])));
+  //error_log('CA DEBUG: citizens row=' . json_encode($cit));
+  //error_log('CA DEBUG: caps=' . json_encode($caps));
+  //error_log('CA DEBUG: polMax=' . json_encode($polMax));
+
+  //error_log('CA DEBUG: raw payload=' . $raw);
 
   $roles = ['adultsPolice','adultsFire','adultsHealth','adultsSoldier','adultsGovernment','adultsPolitician','adultsWorker'];
   $req = [];
@@ -260,11 +275,24 @@ function handle_post(PDO $pdo, int $uid): void {
     if ($req[$r] > $cap) { $req[$r] = $cap; $warnings[] = "Clamped {$r} til cap={$cap}"; }
   }
 
+$polReq  = (int)$req['adultsPolitician'];
+$polCap  = (int)($caps['adultsPoliticianCapacity'] ?? 0);
+$polMax  = (int)$polMax; // fra compute_politician_max(...)
+$polCurr = (int)($cit['adultsPolitician'] ?? 0);
+
   // Politician-regel
   if ($req['adultsPolitician'] > $polMax) {
     $req['adultsPolitician'] = $polMax;
     $warnings[] = "Clamped adultsPolitician til politicianMax={$polMax}";
   }
+
+
+
+// Effektiv cap: respekter ratio og eksisterende niveau
+$effPolCap = max($polCap, $polMax, $polCurr);
+
+// Clamp til effPolCap
+$req['adultsPolitician'] = min($polReq, $effPolCap);
 
   // Ikke-hjemløse voksne og sum targets
   $totalAdults = (int)$cit['adultsUnemployed'] + (int)$cit['adultsWorker'] + (int)$cit['adultsPolice']

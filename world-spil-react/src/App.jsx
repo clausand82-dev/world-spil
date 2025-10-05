@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useGameData } from './context/GameDataContext.jsx';
 import { useRouter } from './services/useRouter.jsx';
 
@@ -21,14 +21,31 @@ import MapPage from './pages/MapPage.jsx';
 import { BoardProvider } from './components/ui/BoardProvider.jsx';
 import UnitPage from './pages/UnitPage.jsx';
 import CitizensPage from './pages/CitizensPage.jsx';
+import HelpOverlay from './pages/HelpOverlay.jsx';
+import { HELP_TOPICS } from './config/helpTopics.jsx';
 
 function App() {
   const { isLoading, data, error } = useGameData();
   const { page, param } = useRouter();
+  const [showHelp, setShowHelp] = useState(false);
+
+  // Husk sidste ikke-help-hash så vi kan gå tilbage ved luk
+  const lastNonHelpHashRef = useRef('#/map');
+
+  useEffect(() => {
+    const capture = () => {
+      const h = window.location.hash || '#/map';
+      if (!h.startsWith('#/help')) {
+        lastNonHelpHashRef.current = h;
+      }
+    };
+    // fang nuværende straks og på fremtidige ændringer
+    capture();
+    window.addEventListener('hashchange', capture);
+    return () => window.removeEventListener('hashchange', capture);
+  }, []);
 
   // Redirect-regler:
-  // 1) Hvis x/y mangler => tving til #/map
-  // 2) Hvis x/y findes, men "map" ikke er set før => vis #/map én gang
   useEffect(() => {
     if (!data) return;
 
@@ -61,7 +78,6 @@ function App() {
       case 'userpage': return <UserPage />;
       case 'map': return <MapPage />;
       case 'citizens': return <CitizensPage />;
-      //case 'citizensassignment': return <CitizensAssignmentsPage />;
       default: return <h1>Side ikke fundet: {page}</h1>;
     }
   };
@@ -79,6 +95,8 @@ function App() {
     mainContent = renderPage();
   }
 
+  const isHelpHashOpen = (window.location.hash || '').startsWith('#/help');
+
   return (
     <BoardProvider>
       <>
@@ -92,6 +110,9 @@ function App() {
 
         <Header />
 
+        {/* Valgfri ekstra knap, hvis du også vil have den her i layoutet */}
+        {/* <button className="icon-btn" onClick={() => setShowHelp(true)}>❓ Hjælp</button> */}
+
         <div className="content">
           <main id="main">
             {mainContent}
@@ -101,9 +122,23 @@ function App() {
         </div>
 
         {data && page !== 'map' && <Quickbar activePage={page} />}
+
+        <HelpOverlay
+          isOpen={showHelp || isHelpHashOpen}
+          onClose={() => {
+            setShowHelp(false);
+            // Hvis vi er på #/help, gå tilbage til sidste kendte rute i stedet for "#/"
+            if (isHelpHashOpen) {
+              const backTo = lastNonHelpHashRef.current || '#/map';
+              window.location.hash = backTo;
+            }
+          }}
+          topics={HELP_TOPICS}
+          // initialTopicId="intro"
+        />
       </>
     </BoardProvider>
-  )
+  );
 }
 
 export default App;

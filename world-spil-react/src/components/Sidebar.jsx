@@ -22,7 +22,7 @@ export default function Sidebar() {
   return (
     <aside id="sidebar">
       <section className="panel section res-panel">
-        <div className="section-head">Data:</div>
+        <div className="section-head">Stats:</div>
         <div className="section-body">
           <HeaderCapacities />
         </div>

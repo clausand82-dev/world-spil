@@ -53,6 +53,7 @@ Change/update History
 - Animal system has been rework and renamed to be a units system
 - Flowchart (research and overview) is now on one page - not done yet
 - Link to research now go to and mark the research
+- Helping system in work (only danish for know)
 
 4.0
 - moving all code to react code instead
