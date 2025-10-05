@@ -1,21 +1,13 @@
 // Datadrevet beskrivelse af unit-grupper.
-// Tilføj nye entries for fremtidige grupper.
-
-// Hvis jeg vil bruge plads delen (udover animal_cap) andre steder, så skal jeg tilføje dataen i backend også.
-// F.eks. healthUnitUsage, policeUnitUsage, fireUnitUsage, militaryUnitUsage
-// Er pt gjort for health så se denne (health unit)
-
-
+// Tabs vises kun hvis spilleren ejer mindst én bygning i 'family' (se UnitPage).
 export const UNIT_GROUPS = [
   {
     key: 'farm',
     label: 'Dyr',
     emoji: '🐾',
     family: 'farm',
-    // Hver enhed bruger dette stat i ani-defs
-    perItemStat: 'animal_cap',
-    // Kapacitetsmodus for denne gruppe (special-case for dyr)
-    capacityMode: 'animalCap', // læs fra state.cap.animal_cap
+    perItemStat: 'animal_cap',     // per item “pladsforbrug”
+    capacityMode: 'animalCap',     // brug state.cap.animal_cap
     capacityLabel: 'Staldplads',
   },
   {
@@ -24,14 +16,14 @@ export const UNIT_GROUPS = [
     emoji: '🏥',
     family: 'health',
     perItemStat: 'healthUnitUsage',
-    headerCapacityKey: 'healthUnitCapacity',
-    headerUsageKey: 'healthUnitUsage',
-    buildingCapacityStat: 'healthUnitCapacity', // fallback sum fra ejede bygninger
+    headerCapacityKey: 'healthUnitCapacity',  // header.capacities.healthUnitCapacity
+    headerUsageKey: 'healthUnitUsage',        // header.usages.healthUnitUsage
+    buildingCapacityStat: 'healthUnitCapacity',
     capacityLabel: 'Health units',
   },
   {
     key: 'police',
-    label: 'Police',
+    label: 'Politi',
     emoji: '👮',
     family: 'police',
     perItemStat: 'policeUnitUsage',
@@ -42,7 +34,7 @@ export const UNIT_GROUPS = [
   },
   {
     key: 'fire',
-    label: 'Fire',
+    label: 'Brand',
     emoji: '🚒',
     family: 'fire',
     perItemStat: 'fireUnitUsage',
@@ -53,7 +45,7 @@ export const UNIT_GROUPS = [
   },
   {
     key: 'military',
-    label: 'Military',
+    label: 'Militær',
     emoji: '🪖',
     family: 'military',
     perItemStat: 'militaryUnitUsage',

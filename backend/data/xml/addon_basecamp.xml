@@ -67,7 +67,7 @@
   </addon>
 
   <addon id="add.tailorspot.l1" family="basecamp" type="addons" lvl="1" stage="1">
-  <stats>footprint=-1;clothCapacity=4</stats>
+  <stats>footprint=-1;productClothCapacity=4</stats>
     <cost>
       <res id="res.money" amount="50"/>
       <res id="res.wood" amount="10"/>
@@ -76,7 +76,7 @@
   </addon>
 
     <addon id="add.tailorspot.l2" family="basecamp" type="addons" lvl="2" stage="1">
-  <stats>footprint=-1;clothCapacity=25</stats>
+  <stats>footprint=-1;productClothCapacity=25</stats>
     <cost>
       <res id="res.money" amount="75"/>
       <res id="res.wood" amount="15"/>

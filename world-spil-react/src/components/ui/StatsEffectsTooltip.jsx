@@ -1,4 +1,5 @@
 import React from 'react';
+import { useT } from "../../services/i18n.js";
 
 /**
  * StatsEffectsTooltip
@@ -33,26 +34,33 @@ function parseStatsField(stats) {
 function defaultLabelMap() {
   // Her hardcode vi labels + (valgfri) korte forklaringer.
   // Byt senere med i18n keys / oversætterfunktion.
+  const t = useT();
+
   return {
-    'footprint': { label: 'Byggeplads', desc: 'Plads på kortet (m²).' },
-    'animal_cap': { label: 'Dyreplads', desc: 'Plads til dyr (hvor mange dyr). Nogle dyr fylder mere end andre dyr.' },
-    'housing': { label: 'Indbygger plads', desc: 'Plads til indbyggere (hvor mange indbyggere).' },
-    'provision_cap': { label: 'Provision', desc: 'Forsyningskapacitet (hvor mange borgere).' },
-    'provisionCapacity': { label: 'Provision', desc: 'Forsyningskapacitet (hvor mange borgere).' },
-    'healthCapacity': { label: 'Sundhed', desc: 'Kapacitet til helbred/medicin.' },
-    'adultsPoliceCapacity': { label: 'Politi', desc: 'Hvor mange politifolk bygningen understøtter.' },
-    'adultsFireCapacity': { label: 'Brandvæsen', desc: 'Brandkapacitet.' },
-    'adultsHealthCapacity': { label: 'Sundhedspersonale', desc: 'Sundhedspersonale-kapacitet.' },
-    'adultsSoldierCapacity': { label: 'Soldater', desc: 'Militærkapacitet.' },
-    'kidsStudentCapacity': { label: 'Kids (stud.)', desc: 'Plads til børn i skole.' },
-    'youngStudentCapacity': { label: 'Young (stud.)', desc: 'Plads til unge i skole.' },
-    'heatFossilCapacity': { label: 'Varme (fossil)', desc: 'Varmekapacitet (fossil).' },
-    'healthUnitCapacity': { label: 'Sundhedsenhed', desc: 'Kapacitet til sundhedsenheder.' },
-    'storageSolidCap': { label: 'Lagerplads (fast)', desc: 'Lagerplads til faste varer.' },
-    'storageLiquidCap': { label: 'Lagerplads (flydende)', desc: 'Lagerplads til flydende varer.' },
-    'healthUnitUsage': { label: 'Health Unit Forbrug', desc: 'Hvor mange health units der forbruges pr. enhed.' },
-    'waterUsage': { label: 'Vandforbrug', desc: 'Hvor meget vand der forbruges pr. enhed.' },
-    'provisionUsage': { label: 'Provision forbrug', desc: 'Hvor meget provision der forbruges pr. enhed.' },
+    'footprint': { label: t("ui.emoji.footprint.h1")+'Byggeplads', desc: 'Plads på kortet (m²).' },
+    'animal_cap': { label: t("ui.emoji.animalcap.h1")+'Dyreplads', desc: 'Plads til dyr (hvor mange dyr). Nogle dyr fylder mere end andre dyr.' },
+    'housing': { label: t("ui.emoji.housing.h1")+'Indbygger plads', desc: 'Plads til indbyggere (hvor mange indbyggere).' },
+    'provision_cap': { label: t("ui.emoji.provision.h1")+'Provision', desc: 'Forsyningskapacitet (hvor mange borgere).' },
+    'provisionCapacity': { label: t("ui.emoji.provision.h1")+'Provision', desc: 'Forsyningskapacitet (hvor mange borgere).' },
+    'healthCapacity': { label: t("ui.emoji.health.h1")+'Sundhed', desc: 'Kapacitet til helbred/medicin.' },
+    'adultsPoliceCapacity': { label: t("ui.emoji.adults_police.h1")+'Politi', desc: 'Hvor mange politifolk bygningen understøtter.' },
+    'adultsFireCapacity': { label: t("ui.emoji.adults_fire.h1")+'Brandvæsen', desc: 'Brandkapacitet.' },
+    'adultsHealthCapacity': { label: t("ui.emoji.adults_health.h1")+'Sundhedspersonale', desc: 'Sundhedspersonale kapacitet.' },
+    'adultsSoldierCapacity': { label: t("ui.emoji.adults_soldier.h1")+'Soldater', desc: 'Militærkapacitet.' },
+    'kidsStudentCapacity': { label: t("ui.emoji.kids_student.h1")+'Børn (stud.)', desc: 'Plads til børn i skole.' },
+    'youngStudentCapacity': { label: t("ui.emoji.young_student.h1")+'Unge (stud.)', desc: 'Plads til unge i skole.' },
+    'heatFossilCapacity': { label: t("ui.emoji.heat.h1")+'Varme (fossil)', desc: 'Varmekapacitet (fossil).' },
+    'healthUnitCapacity': { label: t("ui.emoji.health_unit.h1")+'Udstyr Kapacitet', desc: 'Kapacitet til sundheds udstyr.' },
+    'storageSolidCap': { label: t("ui.emoji.storage_solid.h1")+'Lagerplads (fast)', desc: 'Lagerplads til faste varer.' },
+    'storageLiquidCap': { label: t("ui.emoji.storage_liquid.h1")+'Lagerplads (flydende)', desc: 'Lagerplads til flydende varer.' },
+    'healthUnitUsage': { label: t("ui.emoji.health_unit.h1")+'Udstyr Forbrug', desc: 'Hvor meget udstyrsplads, der forbruges pr. enhed.' },
+    'waterUsage': { label: t("ui.emoji.water.h1")+'Vandforbrug', desc: 'Hvor meget vand der forbruges pr. enhed.' },
+    'waterCapacity': { label: t("ui.emoji.water.h1")+'Vandkapacitet', desc: 'Kapacitet til vand (hvor meget vand der kan leveres).' },
+    'provisionUsage': { label: t("ui.emoji.provision.h1")+'Provision forbrug', desc: 'Hvor meget provision der forbruges pr. enhed.' },
+    'wasteOtherUsage': { label: t("ui.emoji.waste.h1")+'Affalds (andet) forbrug', desc: 'Hvor meget affald (andet) laves.' },
+    'wasteOtherCapacity': { label: t("ui.emoji.waste.h1")+'Affald (andet) kapacitet', desc: 'Hvor meget affald (andet) der kan opbevares og behandles.' },
+    'productClothUsage': { label: t("ui.emoji.cloth.h1")+'Tøj forbrug', desc: 'Mængde tøj der er brug for.' },
+    'productClothCapacity': { label: t("ui.emoji.cloth.h1")+'Tøj Kapacitet', desc: 'Kapacitet til tøj.' },
 
     // ... tilføj flere efter behov
   };

@@ -8,7 +8,7 @@ export default function Quickbar({ activePage }) {
         { page: 'unit', title: 'Animals', icon: '🐄' },
         { page: 'inventory', title: 'Inventory', icon: '📦' },
         { page: 'production', title: 'Productions', icon: '🏭' },
-        { page: 'overview', title: 'Overview', icon: '📂' },
+        { page: 'flowchart', title: 'Flowchart', icon: '📂' },
         { page: 'userpage', title: 'User', icon: '👤' },
         { page: 'population-tick', title: 'Befolkningstjek', icon: '👤' },
         { page: 'citizensassignment', title: 'Borgertildeling', icon: '🧑‍💼' },

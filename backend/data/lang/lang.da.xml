@@ -73,7 +73,41 @@
   <entry key="ui.emoji.desc.h1">🔍</entry>
   <entry key="ui.emoji.animalcap.h1">🐾</entry>
   <entry key="ui.emoji.footprint.h1">⬛</entry>
-  
+  <entry key="ui.emoji.police.h1">👮</entry>
+  <entry key="ui.emoji.fire.h1">🚨</entry>
+  <entry key="ui.emoji.health.h1">💊</entry>
+  <entry key="ui.emoji.police_unit.h1">🚓</entry>
+  <entry key="ui.emoji.fire_unit.h1">🚒</entry>
+  <entry key="ui.emoji.health_unit.h1">🚑</entry>
+  <entry key="ui.emoji.provision.h1">🥘</entry>
+  <entry key="ui.emoji.heat.h1">🔥</entry>
+  <entry key="ui.emoji.housing.h1">🏠</entry>
+  <entry key="ui.emoji.capacity.h1">📦</entry>
+  <entry key="ui.emoji.durability.h1">🛠️</entry>
+  <entry key="ui.emoji.production.h1">🏭</entry>
+  <entry key="ui.emoji.storage_liquid.h1">💧</entry>
+  <entry key="ui.emoji.storage_solid.h1">🧱</entry>
+  <entry key="ui.emoji.water.h1">💦</entry>
+  <entry key="ui.emoji.cloth.h1">👕</entry>
+  <entry key="ui.emoji.waste.h1">💩</entry>
+
+  <entry key="ui.emoji.baby.h1">👶</entry>
+  <entry key="ui.emoji.kids_street.h1">🧢</entry>
+  <entry key="ui.emoji.kids_student.h1">⛪</entry>
+  <entry key="ui.emoji.young_worker.h1">🙎</entry>
+  <entry key="ui.emoji.young_student.h1">🎓</entry>
+  <entry key="ui.emoji.adults_worker.h1">👷</entry>
+  <entry key="ui.emoji.adults_politician.h1">👔</entry>
+  <entry key="ui.emoji.adults_fire.h1">🔥</entry>
+  <entry key="ui.emoji.adults_police.h1">👮</entry>
+  <entry key="ui.emoji.adults_health.h1">🏥</entry>
+  <entry key="ui.emoji.adults_unemployed.h1">🤷</entry>
+  <entry key="ui.emoji.adults_homeless.h1">👤</entry>
+  <entry key="ui.emoji.adults_soldier.h1">🪖</entry>
+  <entry key="ui.emoji.government.h1">🏢</entry>
+  <entry key="ui.emoji.old.h1">🧓</entry>
+
+
 <!--BUILDINGS-->
   <entry key="bld.basecamp.l1.name">Lejrbål</entry>
   <entry key="bld.basecamp.l1.desc">Spillets starter base</entry>
@@ -405,6 +439,8 @@
   <entry key="res.firewood.desc">Kan bruges til øge varmen i din by</entry>
   <entry key="res.rawfish.name">Rå fisk</entry>
   <entry key="res.rawfish.desc">Kan bruges som foder eller forarbejdes til mad</entry>
+  <entry key="res.rawcommonfish.name">Rå almindelig fisk</entry>
+  <entry key="res.rawcommonfish.desc">Kan bruges som foder eller forarbejdes til mad</entry>
 
 <!--ANIMALS-->
   <entry key="ani.cow.name">Kalv</entry>

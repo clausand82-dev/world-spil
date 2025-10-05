@@ -16,7 +16,7 @@ import InventoryPage from './pages/InventoryPage.jsx';
 import BuildingsPage from './pages/BuildingsPage.jsx';
 import BuildingDetailPage from './components/building/BuildingDetailPage.jsx';
 import ProductionPage from "./pages/ProductionPage.jsx";
-import OverviewPage from "./pages/OverviewPage.jsx";
+import FlowChartPage from "./pages/FlowChartPage.jsx";
 import UserPage from './components/user/UserPage.jsx';
 import MapPage from './pages/MapPage.jsx';
 import { BoardProvider } from './components/ui/BoardProvider.jsx';
@@ -59,7 +59,7 @@ function App() {
       case 'buildings': return <BuildingsPage />;
       case 'building': return <BuildingDetailPage buildingId={param} />;
       case 'production': return <ProductionPage />;
-      case 'overview': return <OverviewPage />;
+      case 'flowchart': return <FlowChartPage />;
       case 'userpage': return <UserPage />;
       case 'map': return <MapPage />;
       case 'population-tick': return <PopulationTickPage />;
