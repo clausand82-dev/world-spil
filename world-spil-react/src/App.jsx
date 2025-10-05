@@ -10,7 +10,6 @@ import GlobalJobsTicker from './components/GlobalJobsTicker.jsx';
 import ResourceAutoRefresh from './components/ResourceAutoRefresh.jsx';
 
 import DashboardPage from './pages/DashboardPage.jsx';
-import AnimalsPage from './pages/AnimalsPage.jsx';
 import ResearchPage from './pages/ResearchPage.jsx';
 import InventoryPage from './pages/InventoryPage.jsx';
 import BuildingsPage from './pages/BuildingsPage.jsx';
@@ -20,9 +19,8 @@ import FlowChartPage from "./pages/FlowChartPage.jsx";
 import UserPage from './components/user/UserPage.jsx';
 import MapPage from './pages/MapPage.jsx';
 import { BoardProvider } from './components/ui/BoardProvider.jsx';
-import PopulationTickPage from './pages/PopulationTickPage.jsx';
-import CitizensAssignmentsPage from './pages/CitizensAssignmentsPage.jsx';
 import UnitPage from './pages/UnitPage.jsx';
+import CitizensPage from './pages/CitizensPage.jsx';
 
 function App() {
   const { isLoading, data, error } = useGameData();
@@ -62,8 +60,8 @@ function App() {
       case 'flowchart': return <FlowChartPage />;
       case 'userpage': return <UserPage />;
       case 'map': return <MapPage />;
-      case 'population-tick': return <PopulationTickPage />;
-      case 'citizensassignment': return <CitizensAssignmentsPage />;
+      case 'citizens': return <CitizensPage />;
+      //case 'citizensassignment': return <CitizensAssignmentsPage />;
       default: return <h1>Side ikke fundet: {page}</h1>;
     }
   };

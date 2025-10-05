@@ -10,8 +10,8 @@ export default function Quickbar({ activePage }) {
         { page: 'production', title: 'Productions', icon: '🏭' },
         { page: 'flowchart', title: 'Flowchart', icon: '📂' },
         { page: 'userpage', title: 'User', icon: '👤' },
-        { page: 'population-tick', title: 'Befolkningstjek', icon: '👤' },
-        { page: 'citizensassignment', title: 'Borgertildeling', icon: '🧑‍💼' },
+        { page: 'citizens', title: 'Befolkning', icon: '👤' },
+        //{ page: 'citizensassignment', title: 'Borgertildeling', icon: '🧑‍💼' },
     ];
 
     return (

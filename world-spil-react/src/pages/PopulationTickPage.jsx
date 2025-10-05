@@ -43,7 +43,7 @@ export default function PopulationTickPage() {
       </button>
       {error && <div style={{ color: 'red', marginTop: 8 }}>{error}</div>}
       {result && (
-        <div className="pop-tick-result" style={{ marginTop: 24, padding: 20, background: '#f6f9ff', borderRadius: 10 }}>
+        <div className="pop-tick-result" style={{ marginTop: 24, padding: 20, background: '#1f2937', borderRadius: 10 }}>
           <div>
             <strong>Cycles:</strong> {result.cycles}
           </div>

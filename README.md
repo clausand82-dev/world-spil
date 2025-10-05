@@ -40,7 +40,7 @@ Et sådant system kræver en info i xml - måske noget ala at lvl 1 blokeres - m
 Change/update History
 
 4.1
-- STAGE 2 INTRODUCTION
+- STAGE 2 and 3 system introduced
 - citizens system is introduced
 - citizens rebirth, death and growing is handled manual
 - health system is introduced
@@ -52,6 +52,7 @@ Change/update History
 - Introduced a more informativ hover to buildings, addons and research (located right lower corner)
 - Animal system has been rework and renamed to be a units system
 - Flowchart (research and overview) is now on one page - not done yet
+- Link to research now go to and mark the research
 
 4.0
 - moving all code to react code instead

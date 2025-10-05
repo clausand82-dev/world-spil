@@ -128,7 +128,7 @@ export default function CitizenAssignmentsPage() {
   const polVal = Number(assign.adultsPolitician || 0);
 
   return (
-    <div className="panel" style={{margin: '0 auto' }}>
+    <div className="" style={{margin: '0 auto' }}>
       <div className="section-head">Borgere – Tildeling (Adults)</div>
 
       <div className="section-body">
