@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useT } from "../services/i18n.js";
 
 const ROLE_ORDER = [
   { key: 'adultsPolice', label: 'Police' },
@@ -27,6 +28,7 @@ export default function CitizenAssignmentsPage() {
   const [err, setErr] = useState('');
   const [state, setState] = useState(null);
   const [assign, setAssign] = useState({});
+  const t = useT();
 
   const fetchState = async () => {
     setLoading(true);
@@ -126,7 +128,7 @@ export default function CitizenAssignmentsPage() {
 
   const polMax = Number(state?.limits?.politicianMax || 0);
   const polVal = Number(assign.adultsPolitician || 0);
-
+ 
   return (
     <div className="" style={{margin: '0 auto' }}>
       <div className="section-head">Borgere – Tildeling (Adults)</div>
@@ -134,19 +136,20 @@ export default function CitizenAssignmentsPage() {
       <div className="section-body">
 
               <div style={{ margin: '10px 0', padding: 10, background: '#1f2937', borderRadius: 8, textAlign: 'center' }}>
-      👶 {state?.citizens?.baby} |
-      🧢 {state?.citizens?.kidsStreet}  |
-      ⛪ {state?.citizens?.kidsStudent}  |
-      🙎 {state?.citizens?.youngWorker}  |
-      🎓 {state?.citizens?.youngStudent}  |
-      👮 {state?.citizens?.adultsPolice} |
-      🔥 {state?.citizens?.adultsFire} |
-      💊 {state?.citizens?.adultsHealth} |
-        🪖 {state?.citizens?.adultsSoldier} |
-      🏢 {state?.citizens?.adultsGovernment} |
-      👔 {state?.citizens?.adultsPolitician} |
-      👷 {state?.citizens?.adultsWorker} |
-      🧓 {state?.citizens?.old}
+
+      <span title={t("ui.citizens.baby.h1")} aria-label={t('ui.emoji.baby.h1')}>{t("ui.emoji.baby.h1")} {state?.citizens?.baby} | </span>
+      <span title={t("ui.citizens.kids_street.h1")} aria-label={t('ui.emoji.kids_street.h1')}>{t("ui.emoji.kids_street.h1")} {state?.citizens?.kidsStreet} | </span>
+      <span title={t("ui.citizens.kids_student.h1")} aria-label={t('ui.emoji.kids_student.h1')}>{t("ui.emoji.kids_student.h1")} {state?.citizens?.kidsStudent} | </span>
+      <span title={t("ui.citizens.young_worker.h1")} aria-label={t('ui.emoji.young_worker.h1')}>{t("ui.emoji.young_worker.h1")} {state?.citizens?.youngWorker} | </span>
+      <span title={t("ui.citizens.young_student.h1")} aria-label={t('ui.emoji.young_student.h1')}>{t("ui.emoji.young_student.h1")} {state?.citizens?.youngStudent} | </span>
+      <span title={t("ui.citizens.adults_police.h1")} aria-label={t('ui.emoji.adults_police.h1')}>{t("ui.emoji.adults_police.h1")} {state?.citizens?.adultsPolice} | </span>
+      <span title={t("ui.citizens.adults_fire.h1")} aria-label={t('ui.emoji.adults_fire.h1')}>{t("ui.emoji.adults_fire.h1")} {state?.citizens?.adultsFire} | </span>
+      <span title={t("ui.citizens.adults_health.h1")} aria-label={t('ui.emoji.adults_health.h1')}>{t("ui.emoji.adults_health.h1")} {state?.citizens?.adultsHealth} | </span>
+      <span title={t("ui.citizens.adults_soldier.h1")} aria-label={t('ui.emoji.adults_soldier.h1')}>{t("ui.emoji.adults_soldier.h1")} {state?.citizens?.adultsSoldier} | </span>
+      <span title={t("ui.citizens.adults_government.h1")} aria-label={t('ui.emoji.adults_government.h1')}>{t("ui.emoji.adults_government.h1")} {state?.citizens?.adultsGovernment} | </span>
+      <span title={t("ui.citizens.adults_politician.h1")} aria-label={t('ui.emoji.adults_politician.h1')}>{t("ui.emoji.adults_politician.h1")} {state?.citizens?.adultsPolitician} | </span>
+      <span title={t("ui.citizens.adults_worker.h1")} aria-label={t('ui.emoji.adults_worker.h1')}>{t("ui.emoji.adults_worker.h1")} {state?.citizens?.adultsWorker} | </span>
+      <span title={t("ui.citizens.old.h1")} aria-label={t('ui.emoji.old.h1')}>{t("ui.emoji.old.h1")} {state?.citizens?.old} | </span>
       </div>
         <div style={{ marginBottom: 12, fontSize: 14 }}>
           - adultsHomeless styres automatisk og kan ikke tildeles.<br/>

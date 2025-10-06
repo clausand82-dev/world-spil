@@ -38,7 +38,9 @@ export default function Header() {
       <div className="header-resources">
         <HeaderPopularityBadge />
         <HeaderHappinessBadge />
-        <span className="res-chip"><HeaderCitizensBadge /></span>
+
+        {/* Fjern ekstra wrapper for at undgå dobbelt chip-indpakning */}
+        <HeaderCitizensBadge />
 
         <HoverCard content={animalCapHover}>
           <span className="res-chip">
@@ -58,8 +60,6 @@ export default function Header() {
 
         {/* Hjælp-knap: linker til help-overlay via hash */}
         <button className="icon-btn" onClick={() => window.location.hash = '#/help?topic=intro'} title="Hjælp">❓Hjælp</button>
-
-        {/* <button className="icon-btn" onClick={() => setShowHelp(true)}>❓ Hjælp</button> */}
 
         <TopbarAuth onAuthChange={() => window.location.reload()} />
       </div>

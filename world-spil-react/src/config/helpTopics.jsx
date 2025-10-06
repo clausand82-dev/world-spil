@@ -33,15 +33,27 @@ export const HELP_TOPICS = [
         title: 'Ressourcer Generelt',
         render: ({ defs, t }) => {
           const emoji = defs?.res?.water?.emoji || (t?.('ui.emoji.water') ?? '💧');
+          const res = defs?.res || {};
+          const ids = Object.keys(res).sort();
+          const rows = ids.map((id) => {
+            const r = res[id] || {};
+            const name = r.name || id;
+            const emoji = r.emoji || '';
+            return `<li>${emoji ? emoji + ' ' : ''}${name} <small class="muted">(${id})</small></li>`;
+          });
           return `<h2>Ressourcer</h2>
           <p>Ressourcer bruges i spillet til at købe bygninger, addons og research med. Derudover bruges de i recipes (produktion), hvor en eller flere ressourcer bliver til en eller flere andre ressourcer (f.eks. 1xtræ --> 10 brænde).</p>
           <p>Der findes to hovedtyper af ressourcer: faste (solid) og flydende (liquid). Faste ressourcer er ting som træ, sten, jern og brænde. Flydende ressourcer er ting som <a data-topic-link="res-water">vand</a>, mælk og olie.</p>
           <p>Grundlæggende ressourcer er ting som kr (money), <a data-topic-link="res-water">vand</a>, kød, træ, sten, fjer, skind og bearbejdet skind mf. Se de forskellige ressourcer herunder.</p>
-          <p>For at få ressourcer skal du bygge bygninger som producerer dem, eller købe dem via markedet (kommer senere). Ressourcer kan midlertidig give bonus i forskellige <a data-topic-link="stats-overview">stats</a>. F.eks. kan vand man har på lager giver vand i stats vand (den vand ens borgere kræver - se borger for mere info). Når ressourcer bruges og forsvinder fra ens inventory, så forsvinder dens bonus også.</p>`;
+          <p>For at få ressourcer skal du bygge bygninger som producerer dem, eller købe dem via markedet (kommer senere). Ressourcer kan midlertidig give bonus i forskellige <a data-topic-link="stats-overview">stats</a>. F.eks. kan vand man har på lager giver vand i stats vand (den vand ens borgere kræver - se borger for mere info). Når ressourcer bruges og forsvinder fra ens inventory, så forsvinder dens bonus også.</p>
+
+            <p>Liste over spillets nuværende ressourcer:</p>
+            <ul>${rows.join('')}</ul>`;
         },
         searchText: 'ressourcer vand træ sten',
       }),
 
+      
       // JSX component for mere kontrol (filen er .jsx så dette er OK)
       topic({
         id: 'res-water',
@@ -53,7 +65,7 @@ export const HELP_TOPICS = [
               <h2>Vand {emoji}</h2>
               <p>Vand bruges i produktion og forbrug, men vand giver også en bonus ind i stats vand (vand som borgerne i ens by kræver for at være glade osv - se borger for yderligere info).</p>
               
-              <p>Se også <a data-topic-link="resources-overview">Ressourcer -- overblik</a>.</p>
+              <p>Se også <a data-topic-link="resources-overview">Ressourcer Generelt</a>.</p>
             </div>
           );
         },searchText: 'ressource vand water forbrug',
@@ -102,6 +114,185 @@ export const HELP_TOPICS = [
           );
         }, searchText: 'stats vand water',
       }),
+// Housing
+      leaf(
+        'stats-housing',
+        'Housing',
+        `
+          <h2>Housing</h2>
+          <p>Housing er antal pladser til borgere. Øges typisk af baser og beboelsesbygninger (telt/lejre mv.).</p>
+          <p>Hvis housing er lavere end antallet af borgere, vil nye borgere ikke have plads og kan skabe utilfredshed.</p>
+          <p>Find kilden ved at se stats i hover på bygninger/addons, eller i stats-panelet.</p>
+        `,
+        { minStage: 1, tags: ['stats', 'housing', 'kapacitet'], searchText: 'housing plads borgere kapacitet' }
+      ),
+
+      // Provision
+      leaf(
+        'stats-provision',
+        'Provision (mad)',
+        `
+          <h2>Provision</h2>
+          <p>Provision dækker basismad. Visse ressourcer (fx <b>mad</b>, mælk, æg) giver <em>provisionCapacity</em> mens de er på lager.</p>
+          <p>Borgerne forbruger provision løbende; sørg for at kapacitet/yield overstiger forbrug.</p>
+          <p>Relateret: se <a data-topic-link="resources-all">Alle ressourcer</a> for hvilke der bidrager.</p>
+        `,
+        { minStage: 1, tags: ['stats', 'provision', 'mad'], searchText: 'provision mad food kapacitet forbrug' }
+      ),
+
+      // Health
+      leaf(
+        'stats-health',
+        'Health',
+        `
+          <h2>Health</h2>
+          <p>Health handler om sundhedskapacitet samt efterspørgsel hos borgerne. Visse bygninger giver <em>healthCapacity</em>, og nogle aktiviteter/forhold kan øge efterspørgslen.</p>
+          <p>Hold et passende forhold mellem kapacitet og brug for at undgå negative effekter.</p>
+        `,
+        { minStage: 1, tags: ['stats', 'health', 'sundhed'], searchText: 'health sundhed kapacitet efterspørgsel' }
+      ),
+
+      // Cloth
+      leaf(
+        'stats-cloth',
+        'Cloth',
+        `
+          <h2>Cloth</h2>
+          <p>Cloth dækker beklædning/udstyr, som kan påvirke trivsel/komfort. Produceres typisk af tailors (læder/uld m.m.).</p>
+          <p>Afhænger af spilstatus kan cloth indgå i borgeres behov og/eller buffs.</p>
+        `,
+        { minStage: 1, tags: ['stats', 'cloth', 'beklædning'], searchText: 'cloth tøj læder uld komfort' }
+      ),
+
+      // Medicin
+      leaf(
+        'stats-medicine',
+        'Medicin',
+        `
+          <h2>Medicin</h2>
+          <p>Medicin supplerer sundhedsbehov og kan afhjælpe negative effekter. Kan produceres eller anskaffes via spillogik senere (afhænger af progression).</p>
+          <p>Hold lager for at kunne dække spidsbelastninger.</p>
+        `,
+        { minStage: 1, tags: ['stats', 'medicin', 'sundhed'], searchText: 'medicin health sundhed behov lager' }
+      ),
+
+      // Heat (overview + 3 typer)
+      leaf(
+        'stats-heat',
+        'Heat (overblik)',
+        `
+          <h2>Heat</h2>
+          <p>Heat findes i tre typer energikilder: <a data-topic-link="stats-heat-green">Green</a>, <a data-topic-link="stats-heat-nuclear">Nuclear</a> og <a data-topic-link="stats-heat-fossil">Fossil</a>.</p>
+          <p>Nogle borgere/bygninger kræver varme; kilder og caps kan komme fra bygninger/addons og evt. ressourcer.</p>
+        `,
+        { minStage: 1, tags: ['stats', 'heat'], searchText: 'heat varme grøn kerne fossil' }
+      ),
+      leaf(
+        'stats-heat-green',
+        'Heat — Green',
+        `
+          <h2>Heat — Green</h2>
+          <p>Grøn varme (fx biomasse, geotermi mv.). Bruges til at opfylde varmebehov med grøn profil.</p>
+          <p>Kan have synergier med grøn strøm og bæredygtige kæder.</p>
+        `,
+        { minStage: 1, tags: ['stats', 'heat', 'green'], searchText: 'varme grøn heat green' }
+      ),
+      leaf(
+        'stats-heat-nuclear',
+        'Heat — Nuclear',
+        `
+          <h2>Heat — Nuclear</h2>
+          <p>Kernebaseret varme. Normalt høj stabil kapacitet, men kan have særlige krav/omkostninger.</p>
+        `,
+        { minStage: 1, tags: ['stats', 'heat', 'nuclear'], searchText: 'varme nuclear kerne' }
+      ),
+      leaf(
+        'stats-heat-fossil',
+        'Heat — Fossil',
+        `
+          <h2>Heat — Fossil</h2>
+          <p>Fossil varme (kul/olie/gas). Typisk billig at starte med, men kan have negative sideeffekter.</p>
+        `,
+        { minStage: 1, tags: ['stats', 'heat', 'fossil'], searchText: 'varme fossil heat' }
+      ),
+
+      // Power (overview + 3 typer)
+      leaf(
+        'stats-power',
+        'Power (overblik)',
+        `
+          <h2>Power</h2>
+          <p>Power (energi/strøm) findes i tre typer: <a data-topic-link="stats-power-green">Green</a>, <a data-topic-link="stats-power-nuclear">Nuclear</a> og <a data-topic-link="stats-power-fossil">Fossil</a>.</p>
+          <p>Bruges af bygninger/produktion; balancér produktion og forbrug.</p>
+        `,
+        { minStage: 1, tags: ['stats', 'power'], searchText: 'power strøm energi grøn kerne fossil' }
+      ),
+      leaf(
+        'stats-power-green',
+        'Power — Green',
+        `
+          <h2>Power — Green</h2>
+          <p>Grøn strøm (fx vind/sol/vand). Giver grøn profil — kan variere over tid.</p>
+        `,
+        { minStage: 1, tags: ['stats', 'power', 'green'], searchText: 'power green grøn strøm' }
+      ),
+      leaf(
+        'stats-power-nuclear',
+        'Power — Nuclear',
+        `
+          <h2>Power — Nuclear</h2>
+          <p>Kernebaseret strøm. Stabil produktion, særlige krav.</p>
+        `,
+        { minStage: 1, tags: ['stats', 'power', 'nuclear'], searchText: 'power nuclear kerne' }
+      ),
+      leaf(
+        'stats-power-fossil',
+        'Power — Fossil',
+        `
+          <h2>Power — Fossil</h2>
+          <p>Fossil strøm (kul/olie/gas). Ofte effektiv i starten, men med ulemper.</p>
+        `,
+        { minStage: 1, tags: ['stats', 'power', 'fossil'], searchText: 'power fossil strøm' }
+      ),
+
+      // Waste (3 typer)
+      leaf(
+        'stats-waste',
+        'Waste (overblik)',
+        `
+          <h2>Waste</h2>
+          <p>Affald håndteres i tre spor i den nuværende model: <a data-topic-link="stats-waste-organic">Organisk</a>, <a data-topic-link="stats-waste-water">Spildevand</a> og <a data-topic-link="stats-waste-other">Anden</a>.</p>
+          <p>Dyr og produktion kan generere affald (fx gødning, spildevand); korrekt håndtering kan afhjælpe negative effekter.</p>
+        `,
+        { minStage: 1, tags: ['stats', 'waste', 'affald'], searchText: 'waste affald organisk spildevand other' }
+      ),
+      leaf(
+        'stats-waste-organic',
+        'Waste — Organisk',
+        `
+          <h2>Waste — Organisk</h2>
+          <p>Organisk affald (fx gødning/biomasse). Kan genanvendes/nyttiggøres i visse kæder.</p>
+        `,
+        { minStage: 1, tags: ['stats', 'waste', 'organisk'], searchText: 'affald organisk gødning biomasse' }
+      ),
+      leaf(
+        'stats-waste-water',
+        'Waste — Spildevand',
+        `
+          <h2>Waste — Spildevand</h2>
+          <p>Spildevand og vandbårent affald. Håndteres via relevante faciliteter for at undgå negative effekter.</p>
+        `,
+        { minStage: 1, tags: ['stats', 'waste', 'vand'], searchText: 'affald spildevand waste water' }
+      ),
+      leaf(
+        'stats-waste-other',
+        'Waste — Anden',
+        `
+          <h2>Waste — Anden</h2>
+          <p>Øvrigt affald (blandet/fraktioner der ikke er organisk eller spildevand). Kræver passende håndtering.</p>
+        `,
+        { minStage: 1, tags: ['stats', 'waste', 'other'], searchText: 'affald andet plast glas metal other' }
+      ),
     ],
   }),
 
@@ -179,22 +370,6 @@ group({
     searchText: 'addons liste alle udvidelser udvidelsestyper',
     }),
 
-        topic({
-        id: 'ressource-list',
-        title: 'Alle ressourcer',
-        render: ({ defs }) => {
-          const res = defs?.res || {};
-          const rows = Object.keys(res).sort().map(id => {
-          const name = res[id]?.name || id;
-          const emoji = res[id]?.emoji || '';
-          // link -> interne help links eller direkte til building-siden
-          return `<li>${emoji || ''} ${name} <small class="muted">(${id})</small></li>`;
-          });
-    return `<h2>Ressourcer</h2><p>Her er en liste over alle definerede ressourcer, der pt er mulige:</p><ul>${rows.join('')}</ul>`;
-       },
-    searchText: 'ressourcer liste alle resourcer res',
-    }),
-
     topic({
         id: 'animals-list',
         title: 'Alle dyr',
@@ -213,9 +388,5 @@ group({
 
 
     ],
-}),
-
-
-
+  }),
 ];
-

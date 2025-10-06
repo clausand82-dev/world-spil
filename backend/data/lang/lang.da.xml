@@ -104,8 +104,26 @@
   <entry key="ui.emoji.adults_unemployed.h1">🤷</entry>
   <entry key="ui.emoji.adults_homeless.h1">👤</entry>
   <entry key="ui.emoji.adults_soldier.h1">🪖</entry>
-  <entry key="ui.emoji.government.h1">🏢</entry>
+  <entry key="ui.emoji.adults_government.h1">🏢</entry>
   <entry key="ui.emoji.old.h1">🧓</entry>
+  <entry key="ui.emoji.crime.h1">🦹</entry>
+
+  <entry key="ui.citizens.baby.h1">Baby</entry>
+  <entry key="ui.citizens.kids_street.h1">Gadebørn</entry>
+  <entry key="ui.citizens.kids_student.h1">Skoleelev</entry>
+  <entry key="ui.citizens.young_worker.h1">Ung Arbejder</entry>
+  <entry key="ui.citizens.young_student.h1">Ung Studerende</entry>
+  <entry key="ui.citizens.adults_worker.h1">Voksen Arbejder</entry>
+  <entry key="ui.citizens.adults_politician.h1">Politiker</entry>
+  <entry key="ui.citizens.adults_fire.h1">Brandmand</entry>
+  <entry key="ui.citizens.adults_police.h1">Politi</entry>
+  <entry key="ui.citizens.adults_health.h1">Sundhedsarbejder</entry>
+  <entry key="ui.citizens.adults_unemployed.h1">Arbejdsløs</entry>
+  <entry key="ui.citizens.adults_homeless.h1">Hjemløs</entry>
+  <entry key="ui.citizens.adults_soldier.h1">Soldat</entry>
+  <entry key="ui.citizens.adults_government.h1">Offentlig/stats ansat</entry>
+  <entry key="ui.citizens.old.h1">Pensionist</entry>
+  <entry key="ui.citizens.crime.h1">Kriminel</entry>
 
 
 <!--BUILDINGS-->
@@ -161,8 +179,13 @@
   <entry key="add.bigfireplace.l1.desc">Øger lejrens føde en smule.</entry>
   <entry key="add.saltbowl.l1.name">Saltkar</entry>
   <entry key="add.saltbowl.l1.desc">Giver en smule salt hele tiden</entry>
+
   <entry key="add.well.l1.name">Brønd</entry>
   <entry key="add.well.l1.desc">Tilføjer en brønd til lejren</entry>
+  <entry key="add.well.l2.name">Stor Brønd</entry>
+  <entry key="add.well.l2.desc">Tilføjer en større brønd til lejren</entry>
+  <entry key="add.well_bucket.l1.name">Brøndspand</entry>
+  <entry key="add.well_bucket.l1.desc">Bruges til at hente vand fra brønden</entry>
 
 <!--ADDONS FARM-->  
   <entry key="add.barn.l1.name">Lille stald</entry>
@@ -225,6 +248,10 @@
   <entry key="add.storagesolid.l1.desc">Øger opbevarings for solide ressourcer</entry>
   <entry key="add.storagesolid.l2.name">Stor opbevaringstønde til solide ressourcer</entry>
   <entry key="add.storagesolid.l2.desc">Øger opbevarings for solide ressourcer yderligere</entry>
+  <entry key="add.storageliquid.l3.name">Stor opbevaringstønde til flydende ressourcer</entry>
+  <entry key="add.storageliquid.l3.desc">Øger opbevarings for flydende ressourcer yderligere</entry>
+  <entry key="add.storagesolid.l3.name">Stor opbevaringstønde til solide ressourcer</entry>
+  <entry key="add.storagesolid.l3.desc">Øger opbevarings for solide ressourcer yderligere</entry>
 
   <entry key="add.stacking.l1.name">Bedre pakning</entry>
   <entry key="add.stacking.l1.desc">Forbedre opbevarings muligheder</entry>  
@@ -237,8 +264,23 @@
   <entry key="add.field_scarecrow.l1.desc">Beskytter marker mod fugle og reducerer afgrødetab.</entry>
   <entry key="add.mole.l1.name">Fiske mole</entry>
   <entry key="add.mole.l1.desc">Giver mulighed for at fiske i søen.</entry>
+
+  <entry key="add.mole.l2.name">Større fiske mole</entry>
+  <entry key="add.mole.l2.desc">Giver mulighed for at fiske i søen med større kapacitet.</entry>
   <entry key="add.mole_net.l1.name">Fiske net</entry>
   <entry key="add.mole_net.l1.desc">Forbedre fiskeri.</entry>
+
+  <entry key="add.hunterscabin.l1.name">Jægerhytte</entry>
+  <entry key="add.hunterscabin.l1.desc">Giver mulighed for at jage dyr i området.</entry>
+  <entry key="add.brickmolding.l1.name">Murstenstøbeform</entry>
+  <entry key="add.brickmolding.l1.desc">Giver mulighed for at lave mursten.</entry>
+  <entry key="add.bronzemolding.l1.name">Bronzestøbeform</entry>
+  <entry key="add.bronzemolding.l1.desc">Giver mulighed for at lave bronzegenstande.</entry>
+  <entry key="add.ironmolding.l1.name">Jernstøbeform</entry>
+  <entry key="add.ironmolding.l1.desc">Giver mulighed for at lave jerngenstande.</entry>
+  <entry key="add.undergroundshelter.l1.name">Underjordisk ly</entry>
+  <entry key="add.undergroundshelter.l1.desc">Giver mulighed for at bygge et ly under jorden.</entry>
+
 
 <!--RESEARCH-->
   <entry key="rsd.tools.l1.name">Basis værktøjs kendskab</entry>

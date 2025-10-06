@@ -135,123 +135,105 @@ export default function ResearchPage() {
   const [activeFamily, setActiveFamily] = useState(familyKeys[0] || 'misc');
   const pendingFocusRef = useRef(null);
 
-  // DEBUG: log families når de ændrer sig
+  // --- helpers (flyttet ud af effect så flere effects kan bruge dem) ---
+  function parseFocusFromHash(hash) {
+    if (!hash) return null;
+    const qIndex = hash.indexOf('?');
+    if (qIndex !== -1) {
+      const qs = hash.slice(qIndex + 1);
+      const params = new URLSearchParams(qs);
+      return params.get('focus');
+    }
+    const parts = hash.split('#');
+    if (parts.length > 2) return decodeURIComponent(parts[2]);
+    return null;
+  }
+
+  function findElement(id) {
+    if (!id) return null;
+    const byId = document.getElementById(id);
+    if (byId) return byId;
+    try {
+      const byData = document.querySelector(`[data-fullid="${CSS && CSS.escape ? CSS.escape(id) : id}"]`);
+      if (byData) return byData;
+    } catch (e) { /* ignore */ }
+    try {
+      const byAttr = document.querySelector(`[id="${CSS && CSS.escape ? CSS.escape(id) : id}"]`);
+      if (byAttr) return byAttr;
+    } catch (e) { /* ignore */ }
+    return document.getElementById(id.replace(/\./g, '__'));
+  }
+
+  const FOCUS_HIGHLIGHT_MS = 4000;
+  function scrollElementIntoView(el) {
+    if (!el) return false;
+    try { el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' }); } catch (e) { el.scrollIntoView(); }
+    el.style.setProperty('--focus-duration', `${FOCUS_HIGHLIGHT_MS / 1000}s`);
+    const onEnd = () => { el.classList.remove('focus-highlight'); el.removeEventListener('animationend', onEnd); };
+    el.classList.add('focus-highlight');
+    el.addEventListener('animationend', onEnd, { once: true });
+    return true;
+  }
+
+  function tryScrollOnce(focus) {
+    if (!focus) return false;
+    const el = findElement(focus);
+    if (el) {
+      requestAnimationFrame(() => scrollElementIntoView(el));
+      pendingFocusRef.current = null;
+      return true;
+    }
+    return false;
+  }
+
   useEffect(() => {
-    //console.log('ResearchPage: families keys', Object.keys(families || {}));
-    // list first 30 ids for quick check
-    const allIds = Object.values(families || {}).flatMap(arr => arr.map(e => e.fullId));
-    //console.log('ResearchPage: all research ids (sample)', allIds.slice(0, 50));
-  }, [families]);
-
-  useEffect(() => {
-    function parseFocusFromHash(hash) {
-      if (!hash) return null;
-      const qIndex = hash.indexOf('?');
-      if (qIndex !== -1) {
-        const qs = hash.slice(qIndex + 1);
-        const params = new URLSearchParams(qs);
-        return params.get('focus');
-      }
-      const parts = hash.split('#');
-      if (parts.length > 2) return decodeURIComponent(parts[2]);
-      return null;
-    }
-
-    function findElement(id) {
-      if (!id) return null;
-      const byId = document.getElementById(id);
-      if (byId) return byId;
-      try {
-        const byData = document.querySelector(`[data-fullid="${CSS && CSS.escape ? CSS.escape(id) : id}"]`);
-        if (byData) return byData;
-      } catch (e) { /* ignore */ }
-      try {
-        const byAttr = document.querySelector(`[id="${CSS && CSS.escape ? CSS.escape(id) : id}"]`);
-        if (byAttr) return byAttr;
-      } catch (e) { /* ignore */ }
-      return document.getElementById(id.replace(/\./g, '__'));
-    }
-
-    const FOCUS_HIGHLIGHT_MS = 4000; // kan ændres her
-function scrollElementIntoView(el) {
-  if (!el) return false;
-  try { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (e) { el.scrollIntoView(); }
-
-  el.style.setProperty('--focus-duration', `${FOCUS_HIGHLIGHT_MS / 1000}s`);
-  const onEnd = () => { el.classList.remove('focus-highlight'); el.removeEventListener('animationend', onEnd); };
-  el.classList.add('focus-highlight');
-  el.addEventListener('animationend', onEnd, { once: true });
-  return true;
-}
-
-    function tryScroll(focus) {
-      if (!focus) return false;
-      const el = findElement(focus);
-      //console.log('ResearchPage: tryScroll to', focus, 'found:', !!el, el);
-      if (el) {
-        requestAnimationFrame(() => scrollElementIntoView(el));
-        pendingFocusRef.current = null;
-        return true;
-      }
-      return false;
-    }
-
     function handleHashChange() {
       const focus = parseFocusFromHash(window.location.hash);
       if (!focus) return;
-      //console.log('ResearchPage: hash focus requested ->', focus);
+
+      // undgå at gen-sætte samme pending focus flere gange
+      if (pendingFocusRef.current === focus) return;
       pendingFocusRef.current = focus;
 
       const fam = Object.keys(families || {}).find(f => (families[f] || []).some(e => e.fullId === focus));
-      if (fam && fam !== activeFamily) {
-        console.log('ResearchPage: switching to family', fam, 'before scrolling');
+      if (fam) {
+        // skift til familien — selve scroll forsøges først efter familien er aktiv (i anden effect)
         setActiveFamily(fam);
         return;
       }
 
-      const ok = tryScroll(focus);
+      // hvis element findes allerede i DOM, scroll nu
+      const ok = tryScrollOnce(focus);
       if (!ok) {
-        // schedule retries: after next paint and after 300ms, 800ms (covers late mounts)
-        requestAnimationFrame(() => tryScroll(focus));
-        setTimeout(() => tryScroll(focus), 300);
-        setTimeout(() => tryScroll(focus), 800);
-        //console.warn('ResearchPage: element not found yet, scheduled retries');
+        // retries hvis element ikke findes endnu
+        requestAnimationFrame(() => tryScrollOnce(focus));
+        setTimeout(() => tryScrollOnce(focus), 300);
+        setTimeout(() => tryScrollOnce(focus), 800);
       }
     }
 
-    // initial + listener
+    // initial check + listener
     handleHashChange();
     window.addEventListener('hashchange', handleHashChange);
     return () => window.removeEventListener('hashchange', handleHashChange);
-  }, [families, activeFamily]);
+  }, [families]); // kun families her
 
-  // when activeFamily changes (tab switched), attempt pending scroll
+  // --- effect: når activeFamily ændrer sig, prøv at scrolle til pending focus (hvis der er en) ---
   useEffect(() => {
     const focus = pendingFocusRef.current;
     if (!focus) return;
-    // small delays to allow render
-    requestAnimationFrame(() => tryFindAndScroll(focus));
-    setTimeout(() => tryFindAndScroll(focus), 200);
-    setTimeout(() => tryFindAndScroll(focus), 600);
-
-    function tryFindAndScroll(id) {
-      const el = document.querySelector(`[data-fullid="${CSS && CSS.escape ? CSS.escape(id) : id}"]`) || document.getElementById(id);
-      if (el) {
-        console.log('ResearchPage: found pending focus after tab switch', id);
-        try { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (e) { el.scrollIntoView(); }
-        el.classList.add('focus-highlight');
-        setTimeout(() => el.classList.remove('focus-highlight'), 1400);
-        pendingFocusRef.current = null;
-      } else {
-        console.warn('ResearchPage: still could not find element for', id);
-      }
-    }
+    // forsøg at scrolle et par gange (elementet bør nu være renderet)
+    const attempt = () => tryScrollOnce(focus);
+    requestAnimationFrame(attempt);
+    const t1 = setTimeout(attempt, 120);
+    const t2 = setTimeout(attempt, 500);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
   }, [activeFamily, families]);
 
   return (
-    <div className="page research-page">
-      <h1>{t?.('page.research') ?? 'Research'}</h1>
-
+           <section className="panel section">
+            <div className="section-head">Research</div>
+<div className="section-body">
       <div className="tabs-bar" role="tablist" style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
         {familyKeys.map((f) => (
           <button
@@ -281,7 +263,8 @@ function scrollElementIntoView(el) {
             </div>
           ))
         )}
-      </div>
-    </div>
+      </div></div>
+   
+          </section>
   );
 }
