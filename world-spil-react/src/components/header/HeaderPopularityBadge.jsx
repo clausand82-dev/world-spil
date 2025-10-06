@@ -1,20 +1,14 @@
 import React, { useMemo, useState } from 'react';
 import useHeaderSummary from '../../hooks/useHeaderSummary.js';
 import HoverCard from '../ui/HoverCard.jsx';
+import { useGameData } from '../../context/GameDataContext.jsx';
+import {useStatsLabels, popularityEmojiFromScore} from '../../hooks/useStatsLabels.js';
 
 // Simpel farvekodning/emoji som i happiness
-function emojiFromScore(x) {
-  const s = Number(x || 0);
-  if (s >= 0.85) return '🏆';
-  if (s >= 0.70) return '😊';
-  if (s >= 0.55) return '🙂';
-  if (s >= 0.40) return '😐';
-  if (s >= 0.25) return '😕';
-  return '😟';
-}
+
 
 // Venlige labels for kendte metrics
-const LABELS = {
+/*const LABELS = {
   housing: 'Housing',
   food: 'Provision',
   water: 'Vand',
@@ -30,18 +24,19 @@ const LABELS = {
   cloth: 'Tøj',
   medicin: 'Medicin',
   wasteOther: 'Affald (Andet)',
-};
+};*/
 
 export default function HeaderPopularityBadge() {
   const { data, loading, err } = useHeaderSummary();
   const [hoverKey, setHoverKey] = useState(null);
+  const LABELS = useStatsLabels(); // Henter LABELS fra hook
 
   if (err) return null;
   const p = data?.popularity ?? { impacts: {}, weightTotal: 0, impactTotal: 0, popularity: 0 };
 
   const score01 = Number(p.popularity || 0);
   const pct = Math.round(score01 * 100);
-  const emoji = emojiFromScore(score01);
+  const emoji = popularityEmojiFromScore(score01);
 
   // Lav rækker ud fra backend-impacts
   const rows = useMemo(() => {
@@ -62,7 +57,7 @@ export default function HeaderPopularityBadge() {
     // Sortér efter impact (desc), derefter vægt
     list.sort((a, b) => (b.impact - a.impact) || (b.weight - a.weight));
     return list;
-  }, [p.impacts]);
+  }, [p.impacts, LABELS]);
 
   const hover = (
     <div style={{ minWidth: 260, maxWidth: 420 }}>
@@ -102,7 +97,7 @@ export default function HeaderPopularityBadge() {
             </li>
           ))}
         </ul>
-      )}
+      )}<span style={{ margin: 0, paddingLeft: 0, listStyle: 'none' }}><hr></hr>Se detaljer i <a href="#/help?topic=stats-popularity">Hjælp: Popularity</a> og <a href="#/help?topic=stats-overview">Hjælp: Stats</a>.</span>
     </div>
   );
 

@@ -66,7 +66,7 @@
     <require>bld.farm.l2,rsd.irrigation.l1</require>
     </research>
 
-    <research id="rsd.fishing.l1" family="basecamp,lake" type="storage" lvl="1" stage="1">
+    <research id="rsd.fishing.l1" family="lake" type="storage" lvl="1" stage="1">
     <cost>
       <res id="res.money" amount="75"/>
     </cost>
@@ -74,7 +74,7 @@
     <require>bld.lake.l1,rsd.irrigation.l1</require>
   </research>
 
-      <research id="rsd.fishing.l2" family="basecamp,lake" type="storage" lvl="2" stage="1">
+      <research id="rsd.fishing.l2" family="lake" type="storage" lvl="2" stage="1">
     <cost>
       <res id="res.money" amount="75"/>
     </cost>
@@ -85,7 +85,7 @@
     <require>rsd.fishing.l1,add.mole.l1</require>
   </research>
 
-  <research id="rsd.fishing.l3" family="basecamp,lake" type="storage" lvl="3" stage="2">
+  <research id="rsd.fishing.l3" family="lake" type="storage" lvl="3" stage="2">
     <cost>
       <res id="res.money" amount="150"/>
     </cost>
@@ -98,7 +98,7 @@
 
 <!--  FOREST  -->
 
-  <research id="rsd.forestry.l1" family="basecamp,forest" type="agri" lvl="1" stage="1">
+  <research id="rsd.forestry.l1" family="forest" type="agri" lvl="1" stage="1">
     <cost>
       <res id="res.money" amount="100"/>
       <res id="res.wood" amount="10"/>
@@ -107,7 +107,7 @@
     <require>bld.basecamp.l2,rsd.tools.l1</require>
   </research>
 
-    <research id="rsd.forestry.l2" family="basecamp,forest" type="agri" lvl="2" stage="2">
+    <research id="rsd.forestry.l2" family="forest" type="agri" lvl="2" stage="2">
     <cost>
       <res id="res.money" amount="200"/>
       <res id="res.wood" amount="15"/>
@@ -118,7 +118,7 @@
 
  <!-- Farming related resarch--> 
   
-    <research id="rsd.animalhusbandry.l1" family="basecamp,farm" type="animal" lvl="1" stage="1">
+    <research id="rsd.animalhusbandry.l1" family="farm" type="animal" lvl="1" stage="1">
     <cost>
       <res id="res.money" amount="100"/>
       <res id="res.water" amount="25"/>
@@ -127,7 +127,7 @@
     <require>bld.basecamp.l1</require>
   </research>
 
-      <research id="rsd.animalhusbandry.l2" family="basecamp,farm" type="animal" lvl="2" stage="1">
+      <research id="rsd.animalhusbandry.l2" family="farm" type="animal" lvl="2" stage="1">
     <cost>
       <res id="res.money" amount="150"/>
       <res id="res.water" amount="45"/>
@@ -136,7 +136,7 @@
     <require>add.barn.l1,rsd.animalhusbandry.l1</require>
   </research>
 
-  <research id="rsd.animalhusbandry.l3" family="basecamp,farm" type="animal" lvl="3" stage="2">
+  <research id="rsd.animalhusbandry.l3" family="farm" type="animal" lvl="3" stage="2">
     <cost>
       <res id="res.money" amount="225"/>
       <res id="res.water" amount="56"/>
@@ -145,7 +145,7 @@
     <require>rsd.farming.l2</require>
   </research>
 
-  <research id="rsd.farming.l1" family="basecamp,farm" type="agri" lvl="1" stage="1">
+  <research id="rsd.farming.l1" family="farm" type="agri" lvl="1" stage="1">
     <cost>
       <res id="res.money" amount="100"/>
     </cost>
@@ -153,7 +153,7 @@
     <require>bld.farm.l1,rsd.animalhusbandry.l1</require>
   </research>
 
-    <research id="rsd.farming.l2" family="basecamp,farm" type="agri" lvl="2" stage="2">
+    <research id="rsd.farming.l2" family="farm" type="agri" lvl="2" stage="2">
     <cost>
       <res id="res.money" amount="150"/>
     </cost>
@@ -161,7 +161,7 @@
     <require>bld.farm.l1,rsd.farming.l1</require>
   </research>
 
-   <research id="rsd.betterfeeding.l1" family="basecamp,farm" type="agri" lvl="1" stage="1">
+   <research id="rsd.betterfeeding.l1" family="farm" type="agri" lvl="1" stage="1">
     <cost>
       <res id="res.money" amount="150"/>
     </cost>
@@ -169,7 +169,7 @@
     <require>rsd.animalhusbandry.l1</require>
   </research>
 
-      <research id="rsd.fertilizer.l1" family="basecamp,farm" type="storage" lvl="1" stage="1">
+      <research id="rsd.fertilizer.l1" family="farm" type="storage" lvl="1" stage="1">
     <cost>
       <res id="res.money" amount="75"/>
     </cost>
@@ -177,7 +177,7 @@
     <require>add.barn.l1,rsd.animalhusbandry.l1</require>
   </research>
 
-   <research id="rsd.bedding.l1" family="basecamp,farm" type="storage" lvl="1" stage="1">
+   <research id="rsd.bedding.l1" family="farm" type="storage" lvl="1" stage="1">
     <cost>
       <res id="res.money" amount="75"/>
     </cost>
@@ -185,7 +185,7 @@
     <require>add.barn.l1,rsd.animalhusbandry.l1</require>
   </research>
 
-     <research id="rsd.oats.l1" family="basecamp,farm" type="storage" lvl="1" stage="2">
+     <research id="rsd.oats.l1" family="farm" type="storage" lvl="1" stage="2">
     <cost>
       <res id="res.money" amount="75"/>
     </cost>
@@ -195,7 +195,7 @@
   
 <!--MINING-->    
   
-    <research id="rsd.mining.l1" family="basecamp,mine" type="storage" lvl="1" stage="1">
+    <research id="rsd.mining.l1" family="mine" type="storage" lvl="1" stage="1">
     <cost>
       <res id="res.money" amount="100"/>
     </cost>
@@ -203,7 +203,7 @@
     <require>rsd.tools.l1,bld.basecamp.l2</require>
   </research>
 
-  <research id="rsd.mining.l2" family="basecamp,mine" type="storage" lvl="2" stage="2">
+  <research id="rsd.mining.l2" family="mine" type="storage" lvl="2" stage="2">
     <cost>
       <res id="res.money" amount="150"/>
     </cost>
@@ -211,7 +211,7 @@
     <require>rsd.mining.l1,bld.mine.l2</require>
   </research>
 
-  <research id="rsd.useclay.l1" family="basecamp,mine" type="storage" lvl="1" stage="2">
+  <research id="rsd.useclay.l1" family="mine" type="storage" lvl="1" stage="2">
     <cost>
       <res id="res.money" amount="100"/>
     </cost>
@@ -219,7 +219,7 @@
     <require>rsd.mining.l2</require>
   </research>
 
-    <research id="rsd.stonebricks.l1" family="basecamp,mine" type="storage" lvl="1" stage="2">
+    <research id="rsd.stonebricks.l1" family="mine" type="storage" lvl="1" stage="2">
     <cost>
       <res id="res.money" amount="100"/>
     </cost>
@@ -227,7 +227,7 @@
     <require>rsd.useclay.l1</require>
   </research>
 
-      <research id="rsd.bronze.l1" family="basecamp,mine" type="storage" lvl="1" stage="2">
+      <research id="rsd.bronze.l1" family="mine" type="storage" lvl="1" stage="2">
     <cost>
       <res id="res.money" amount="100"/>
     </cost>
@@ -235,7 +235,7 @@
     <require>rsd.stonebricks.l1</require>
   </research>
 
-      <research id="rsd.iron.l1" family="basecamp,mine" type="storage" lvl="1" stage="2">
+      <research id="rsd.iron.l1" family="mine" type="storage" lvl="1" stage="2">
     <cost>
       <res id="res.money" amount="100"/>
     </cost>
@@ -243,7 +243,7 @@
     <require>rsd.bronze.l1</require>
   </research>
 
-  <research id="rsd.bronzemolding.l1" family="basecamp,mine" type="storage" lvl="1" stage="2">
+  <research id="rsd.bronzemolding.l1" family="mine" type="storage" lvl="1" stage="2">
     <cost>
       <res id="res.money" amount="100"/>
     </cost>
@@ -251,7 +251,7 @@
     <require>rsd.bronze.l1</require>
   </research>
 
-  <research id="rsd.ironmolding.l1" family="basecamp,mine" type="storage" lvl="1" stage="2">
+  <research id="rsd.ironmolding.l1" family="mine" type="storage" lvl="1" stage="2">
     <cost>
       <res id="res.money" amount="100"/>
     </cost>
@@ -261,7 +261,7 @@
 
 <!-- STORAGE-->
 
-  <research id="rsd.betterstorage.l1" family="basecamp,storage" type="storage" lvl="1" stage="1">
+  <research id="rsd.betterstorage.l1" family="storage" type="storage" lvl="1" stage="1">
     <cost>
       <res id="res.money" amount="100"/>
     </cost>
@@ -269,7 +269,7 @@
     <require>bld.storage.l1,rsd.tools.l2</require>
   </research>
 
-  <research id="rsd.betterstorage.l2" family="basecamp,storage" type="storage" lvl="2" stage="2">
+  <research id="rsd.betterstorage.l2" family="storage" type="storage" lvl="2" stage="2">
     <cost>
       <res id="res.money" amount="165"/>
     </cost>
@@ -335,7 +335,7 @@
 
 <!-- HEALTH RESEARCH -->
 
-  <research id="rsd.herbalism.l1" family="basecamp,health" type="basecamp,health" lvl="1" stage="2">
+  <research id="rsd.herbalism.l1" family="health" type="basecamp,health" lvl="1" stage="2">
     <cost>
       <res id="res.money" amount="175"/>
     </cost>
@@ -343,7 +343,7 @@
     <require>bld.basecamp.l3</require>
   </research>
 
-    <research id="rsd.herbalism.l2" family="basecamp,health" type="basecamp,health" lvl="2" stage="2">
+    <research id="rsd.herbalism.l2" family="health" type="basecamp,health" lvl="2" stage="2">
     <cost>
       <res id="res.money" amount="250"/>
     </cost>
@@ -351,7 +351,7 @@
     <require>rsd.herbalism.l1</require>
   </research>
 
-    <research id="rsd.medicinstorage.l1" family="basecamp,health" type="basecamp,health" lvl="1" stage="2">
+    <research id="rsd.medicinstorage.l1" family="health" type="basecamp,health" lvl="1" stage="2">
     <cost>
       <res id="res.money" amount="150"/>
     </cost>

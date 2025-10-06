@@ -98,6 +98,38 @@ export const HELP_TOPICS = [
         searchText: 'stats ',
       }),
 
+// Happiness
+      leaf(
+        'stats-happiness',
+        'Happiness',
+        `
+          <h2>Happiness</h2>
+          <p>Happiness repræsenterer den generelle tilfredshed blandt borgerne. Det påvirkes af mange faktorer, herunder bolig, mad, vand og sundhed.</p>
+          <p>For at øge happiness, skal du sikre, at borgerne har adgang til de ressourcer, de har brug for, og at deres behov bliver opfyldt.</p>
+          <p>Find kilden ved at se stats i hover på bygninger/addons, eller i stats-panelet.</p>
+          <p>Happiness påvirker også andre aspekter af spillet, såsom produktivitet og befolkningstilvækst.</p>
+          <p>Faktorer der påvirker happiness kan ændre sig igennem spillet.</p>
+          <p>Se også <a data-topic-link="stats-popularity">Popularity</a> for hvordan borgernes behov påvirker deres popularity.</p>
+        `,
+        { minStage: 1, tags: ['stats', 'housing', 'kapacitet'], searchText: 'housing plads borgere kapacitet' }
+      ),
+
+      // Popularity
+      leaf(
+        'stats-popularity',
+        'Popularity',
+        `
+          <h2>Popularity</h2>
+          <p>Popularity repræsenterer, hvor meget borgerne kan lide deres by og dens faciliteter. Det påvirkes af faktorer som boligkvalitet, tilgængelighed af ressourcer og sociale interaktioner.</p>
+          <p>For at øge populariteten, skal du fokusere på at forbedre borgernes livskvalitet og sikre, at deres behov bliver opfyldt.</p>
+          <p>Find kilden ved at se stats i hover på bygninger/addons, eller i stats-panelet.</p>
+          <p>Happiness påvirker også andre aspekter af spillet, såsom produktivitet og befolkningstilvækst.</p>
+          <p>Faktorer der påvirker happiness kan ændre sig igennem spillet.</p>
+          <p>Se også <a data-topic-link="stats-happiness">Happiness</a> for hvordan borgernes behov påvirker deres happiness.</p>
+        `,
+        { minStage: 1, tags: ['stats', 'housing', 'kapacitet'], searchText: 'housing plads borgere kapacitet' }
+      ),
+
       // JSX component for mere kontrol (filen er .jsx så dette er OK)
       topic({
         id: 'stats-water',
@@ -182,79 +214,39 @@ export const HELP_TOPICS = [
         'Heat (overblik)',
         `
           <h2>Heat</h2>
-          <p>Heat findes i tre typer energikilder: <a data-topic-link="stats-heat-green">Green</a>, <a data-topic-link="stats-heat-nuclear">Nuclear</a> og <a data-topic-link="stats-heat-fossil">Fossil</a>.</p>
+          <p>Heat findes i tre typer energikilder: Green (som repræsenterer bæredygtige kilder), Nuclear (som repræsenterer kerneenergi) og Fossil (som repræsenterer fossile brændstoffer). Borgerne kan have forskellige max værdier de tillader, før den generelle happiness påvirkes.</p>
           <p>Nogle borgere/bygninger kræver varme; kilder og caps kan komme fra bygninger/addons og evt. ressourcer.</p>
+          
+          <h3>Heat — Fossil</h3>
+          <p>Fossil varme (kul/olie/gas). Typisk billig at starte med, men kan have negative sideeffekter såsom høj forurening, hvilket en del borger IKKE bryder sig om.</p>
+          <h3>Heat — Green</h3>
+          <p>Grøn varme (fx solopvarmet vand). Bruges til at opfylde varmebehov med grøn profil. Grøn varme er særlig populær, men kan være dyrere at implementere. Har færrest bivirkninger.</p>
+          <h3>Heat — Nuclear</h3>
+          <p>Kernebaseret varme. Normalt høj stabil kapacitet, men kan have særlige krav/omkostninger. Ikke alle borgerne er vilde med kerneenergi, og nogle kan have bekymringer om sikkerhed og affaldshåndtering.</p>
+
         `,
         { minStage: 1, tags: ['stats', 'heat'], searchText: 'heat varme grøn kerne fossil' }
       ),
-      leaf(
-        'stats-heat-green',
-        'Heat — Green',
-        `
-          <h2>Heat — Green</h2>
-          <p>Grøn varme (fx biomasse, geotermi mv.). Bruges til at opfylde varmebehov med grøn profil.</p>
-          <p>Kan have synergier med grøn strøm og bæredygtige kæder.</p>
-        `,
-        { minStage: 1, tags: ['stats', 'heat', 'green'], searchText: 'varme grøn heat green' }
-      ),
-      leaf(
-        'stats-heat-nuclear',
-        'Heat — Nuclear',
-        `
-          <h2>Heat — Nuclear</h2>
-          <p>Kernebaseret varme. Normalt høj stabil kapacitet, men kan have særlige krav/omkostninger.</p>
-        `,
-        { minStage: 1, tags: ['stats', 'heat', 'nuclear'], searchText: 'varme nuclear kerne' }
-      ),
-      leaf(
-        'stats-heat-fossil',
-        'Heat — Fossil',
-        `
-          <h2>Heat — Fossil</h2>
-          <p>Fossil varme (kul/olie/gas). Typisk billig at starte med, men kan have negative sideeffekter.</p>
-        `,
-        { minStage: 1, tags: ['stats', 'heat', 'fossil'], searchText: 'varme fossil heat' }
-      ),
-
+      
       // Power (overview + 3 typer)
       leaf(
         'stats-power',
         'Power (overblik)',
         `
           <h2>Power</h2>
-          <p>Power (energi/strøm) findes i tre typer: <a data-topic-link="stats-power-green">Green</a>, <a data-topic-link="stats-power-nuclear">Nuclear</a> og <a data-topic-link="stats-power-fossil">Fossil</a>.</p>
+          <p>Power (energi/strøm) findes i tre typer: Green (Grøn energi), Nuclear (Kerneenergi) og Fossil (Fossile brændstoffer).</p>
           <p>Bruges af bygninger/produktion; balancér produktion og forbrug.</p>
+          <h3>Power — Fossil</h3>
+          <p>Fossil strøm (kul/olie/gas). Ofte effektiv i starten, men med ulemper.</p>
+          <h3>Power — Green</h3>
+          <p>Grøn strøm (fx vind/sol/vand). Giver grøn profil — kan variere over tid.</p>
+          <h3>Power — Nuclear</h3>
+          <p>Kernebaseret strøm. Stabil produktion, særlige krav.</p>
+
         `,
         { minStage: 1, tags: ['stats', 'power'], searchText: 'power strøm energi grøn kerne fossil' }
       ),
-      leaf(
-        'stats-power-green',
-        'Power — Green',
-        `
-          <h2>Power — Green</h2>
-          <p>Grøn strøm (fx vind/sol/vand). Giver grøn profil — kan variere over tid.</p>
-        `,
-        { minStage: 1, tags: ['stats', 'power', 'green'], searchText: 'power green grøn strøm' }
-      ),
-      leaf(
-        'stats-power-nuclear',
-        'Power — Nuclear',
-        `
-          <h2>Power — Nuclear</h2>
-          <p>Kernebaseret strøm. Stabil produktion, særlige krav.</p>
-        `,
-        { minStage: 1, tags: ['stats', 'power', 'nuclear'], searchText: 'power nuclear kerne' }
-      ),
-      leaf(
-        'stats-power-fossil',
-        'Power — Fossil',
-        `
-          <h2>Power — Fossil</h2>
-          <p>Fossil strøm (kul/olie/gas). Ofte effektiv i starten, men med ulemper.</p>
-        `,
-        { minStage: 1, tags: ['stats', 'power', 'fossil'], searchText: 'power fossil strøm' }
-      ),
-
+      
       // Waste (3 typer)
       leaf(
         'stats-waste',
@@ -300,7 +292,7 @@ export const HELP_TOPICS = [
     id: 'gameplay',
     title: 'Spilmekanik',
     children: [
-      leaf('buildings', 'Bygninger', `
+      leaf('buildings', '🏠Bygninger', `
         <h2>Bygninger</h2>
         <p>Bygninger har forskellige levels og kræver en opgradering, for at blive højere level. Se du ikke muligheden er bygningen måske allerede i højeste level. Du kan også risikerer at en bygning (eller addon/research) kræver en anden bygning eller research først. Du kan også risikerer at den er "stage-locked" hvilket betyder du skal låse op for næste stage, for at kan opgraderer den bygning yderligere. </p>
         <p>Bygninger kan have forskellige effekter, såsom at producere ressourcer, give stats, give borgere, give plads til dyr eller units, eller noget helt andet. Nogle bygninger har også addons, som er udvidelser, og nogle af disse udvidelser kan have yderligere addons. En udvidelse til en udvidelse kaldes også en subaddon.</p>
@@ -317,6 +309,23 @@ export const HELP_TOPICS = [
           return `<h2>Befolkning (stage ${st})</h2><p>Tildel roller mm.</p>`;
         },
       }),
+    ],
+  }),
+
+    group({
+    id: 'units',
+    title: 'Enheder',
+    children: [
+      leaf('animals', 'Dyr', `
+        <h2>Dyr</h2>
+        <p>Dyr genererer nogle forskellige ressourcer pr time, og kan også give nogle bonuser i forskellige stats imens man har dem. Dyr bruges også i forskellige recipes, for at producerer andre ressourcer. Dyr kan slagtes og giver dermed et engangs udbytte (og evt. stats bonuser forsvinder). Nye dyr kan købes på unit siden. Dyr købes for ressourcer.</p>
+
+      `, { minStage: 1, tags: ['dyr', 'animal', 'recipe'], searchText: 'dyr slagtes engangs udbytte' }),
+      leaf('units_health', 'Sundheds enheder', `
+        <h2>Sundheds enheder</h2>
+        <p>Sunheds enheder kan være alt fra sengeplads til udstyr til ambulancer afhængig af, hvor langt man er nået i spillet. Disse units bruges til at forbedre sundheds mæssige stats, men nogle units koster også i stats. Se i hover hvad der forskellige ting gør. Unit købes for ressourcer.</p>
+      `),
+      
     ],
   }),
 

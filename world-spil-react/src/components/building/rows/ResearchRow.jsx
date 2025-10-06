@@ -83,9 +83,9 @@ function ResearchRow({ entry, state, baseOwned, requirementCaches }) {
           <button
             className="btn"
             disabled
-            title={requirement.reqString || t("ui.btn.demandbuilding.h1")}
+            title={requirement.reqString || t("ui.btn.needmore.h1")}
           >
-            {t("ui.btn.demandbuilding.h1")}
+            {t("ui.btn.needmore.h1")}
           </button>
         )}
       </div>

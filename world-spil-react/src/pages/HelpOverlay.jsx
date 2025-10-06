@@ -196,36 +196,31 @@ export default function HelpOverlay({
   // Compute flattened visible topics (with groups)
   const flat = useMemo(() => flattenTopics(topics, ctx, true), [topics, ctx]);
 
-  // Derived lists for sidebar (flat search)
-  const sidebarItems = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return flat;
-    return flat.filter((it) => {
-      const title = (it.title || '').toLowerCase();
-      const tags = (it.tags || []).join(' ').toLowerCase();
-      const text = typeof it.searchText === 'string' ? it.searchText.toLowerCase() : '';
-      return title.includes(q) || tags.includes(q) || text.includes(q);
-    });
-  }, [flat, search]);
+  // Build a static search index (title + tags + searchText + html content stripped)
+  const staticSearchIndex = useMemo(() => {
+    const idx = new Map(); // id -> lowercased text blob
+    for (const it of flat) {
+      if (it.isGroup) continue;
+      const id = it.id || it.key;
+      if (!id) continue;
+      const parts = [];
+      if (it.title) parts.push(String(it.title));
+      const tags = it.tags || it.opts?.tags || [];
+      if (Array.isArray(tags) && tags.length) parts.push(tags.join(' '));
+      const stext = it.searchText || it.opts?.searchText || '';
+      if (typeof stext === 'string' && stext) parts.push(stext);
+      if (typeof it.html === 'string') parts.push(stripHtmlToText(it.html));
+      idx.set(id, parts.join(' ').toLowerCase());
+    }
+    return idx;
+  }, [flat]);
 
-  // Find current active topic node
+  // Dynamic content text captured from rendered article (for topics that render JSX/component)
+  const [dynamicSearchText, setDynamicSearchText] = useState({}); // id -> raw text
   const activeTopic = useMemo(() => {
     if (!activeId) return null;
     return flat.find((x) => !x.isGroup && (x.id || x.key) === activeId) || null;
   }, [flat, activeId]);
-
-  // Mark as read when active changes
-  useEffect(() => {
-    if (!isOpen || !activeTopic || !trackRead) return;
-    const id = activeTopic.id || activeTopic.key;
-    if (!id) return;
-    setReadMap((prev) => {
-      if (prev[id]) return prev;
-      const next = { ...prev, [id]: Date.now() };
-      saveReadMap(next);
-      return next;
-    });
-  }, [isOpen, activeTopic, trackRead]);
 
   const panelRef = useRef(null);
 
@@ -298,7 +293,59 @@ export default function HelpOverlay({
     };
   }, [openTopic, activeId]);
 
-  // Render helpers for different topic kinds
+  // After content render/update, capture dynamic text for search (if any)
+  useEffect(() => {
+    if (!isOpen || !activeTopic) return;
+    const root = contentRef.current;
+    if (!root) return;
+    const readText = () => {
+      const art = root.querySelector('.help-article') || root;
+      const txt = (art.textContent || '').trim();
+      if (txt) {
+        setDynamicSearchText(prev => {
+          const id = activeTopic.id || activeTopic.key;
+          if (!id) return prev;
+          if (prev[id] === txt) return prev;
+          return { ...prev, [id]: txt };
+        });
+      }
+    };
+    // ensure DOM is painted
+    const raf = requestAnimationFrame(readText);
+    return () => cancelAnimationFrame(raf);
+  }, [isOpen, activeTopic]);
+
+  // Derived lists for sidebar (flat search)
+  const sidebarItems = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return flat;
+
+    // Match leaf items using static index (title/tags/searchText/html)
+    // plus dynamic text (rendered content) if we have it
+    return flat.filter((it) => {
+      if (it.isGroup) return false; // søgeresultater skal være klikbare leafs
+      const id = it.id || it.key;
+      if (!id) return false;
+      const base = staticSearchIndex.get(id) || '';
+      const dyn = (dynamicSearchText[id] || '').toLowerCase();
+      return base.includes(q) || dyn.includes(q);
+    });
+  }, [flat, search, staticSearchIndex, dynamicSearchText]);
+
+  // Mark as read when active changes
+  useEffect(() => {
+    if (!isOpen || !activeTopic || !trackRead) return;
+    const id = activeTopic.id || activeTopic.key;
+    if (!id) return;
+    setReadMap((prev) => {
+      if (prev[id]) return prev;
+      const next = { ...prev, [id]: Date.now() };
+      saveReadMap(next);
+      return next;
+    });
+  }, [isOpen, activeTopic, trackRead]);
+
+  // Render helpers for different topic kinds (declare before JSX to avoid ref errors)
   const renderStringHtml = (html) => {
     const sanitized = DOMPurify.sanitize(html || '', {
       ADD_ATTR: ['target', 'rel', 'style', 'data-topic-link'],
@@ -307,7 +354,7 @@ export default function HelpOverlay({
     return <article className="help-article" dangerouslySetInnerHTML={{ __html: sanitized }} />;
   };
 
-  const renderTopic = (topic) => {
+  function renderTopic(topic) {
     if (!topic) return <div className="muted">Vælg et emne i venstre side.</div>;
     if (topic.component && typeof topic.component === 'function') {
       const Comp = topic.component;
@@ -322,9 +369,9 @@ export default function HelpOverlay({
       return renderStringHtml(topic.html);
     }
     return <div className="muted">Ingen indhold.</div>;
-  };
+  }
 
-  // Unread indicators and group badge counts
+  // Unread indicators and group badge counts helpers (used by sidebar renderers)
   const isUnread = (id) => trackRead && id && !readMap[id];
   const groupUnreadCount = (groupId) => {
     if (!groupId) return 0;
@@ -337,19 +384,21 @@ export default function HelpOverlay({
     return c;
   };
 
-  // Reset unread
-  const resetUnread = () => {
-    setReadMap({});
-    saveReadMap({});
-  };
-
   // Sidebar recursive renderer (used for collapsible mode)
   const renderSidebarTopics = (list, depth = 0) => {
     return (list || []).map((node) => {
       if (node.children && node.children.length) {
         const gid = node.id || node.key || node.title;
         const expanded = expandedGroups.has(gid);
-        const unread = groupUnreadCount(gid);
+
+        // unread badge for group: count direct children leaves
+        const children = flat.filter((x) => !x.isGroup && x.parentId === gid);
+        let unreadCount = 0;
+        for (const ch of children) {
+          const cid = ch.id || ch.key;
+          if (trackRead && cid && !readMap[cid]) unreadCount++;
+        }
+
         return (
           <div key={gid} className="help-topic-group">
             <div className="help-topic-group-title" style={{ paddingLeft: depth * 12 }}>
@@ -363,7 +412,7 @@ export default function HelpOverlay({
                 {expanded ? '▾' : '▸'}
               </button>
               <span style={{ marginLeft: 8 }}>{node.title}</span>
-              {unread > 0 && <span className="unread-badge">(! {unread})</span>}
+              {unreadCount > 0 && <span className="unread-badge">(! {unreadCount})</span>}
             </div>
             {expanded && <div>{renderSidebarTopics(node.children, depth + 1)}</div>}
           </div>
@@ -373,7 +422,7 @@ export default function HelpOverlay({
       // leaf node
       const id = node.id || node.key;
       const isActive = id === activeId;
-      const unreadDot = isUnread(id) ? <span className="dot-unread">•</span> : null;
+      const unreadDot = (trackRead && id && !readMap[id]) ? <span className="dot-unread">•</span> : null;
       return (
         <button
           key={id}
@@ -393,18 +442,24 @@ export default function HelpOverlay({
   };
 
   // Flat list renderer (used when collapseMenu is false OR when searching)
-  // This preserves group headers and shows their children under them, but without chevrons.
   const renderFlatTopics = (list, depth = 0) => {
     return (list || []).map((node) => {
       if (node.children && node.children.length) {
-        // render group header (no chevron) and then children expanded in order
         const gid = node.id || node.key || node.title;
-        const unread = groupUnreadCount(gid);
+
+        // unread for group (same as above)
+        const children = flat.filter((x) => !x.isGroup && x.parentId === gid);
+        let unreadCount = 0;
+        for (const ch of children) {
+          const cid = ch.id || ch.key;
+          if (trackRead && cid && !readMap[cid]) unreadCount++;
+        }
+
         return (
           <div key={gid} className="help-topic-group">
             <div className="help-topic-group-title" style={{ paddingLeft: depth * 12 }}>
               <span style={{ marginLeft: 8 }}>{node.title}</span>
-              {unread > 0 && <span className="unread-badge">(! {unread})</span>}
+              {unreadCount > 0 && <span className="unread-badge">(! {unreadCount})</span>}
             </div>
             <div>
               {renderFlatTopics(node.children, depth + 1)}
@@ -416,7 +471,7 @@ export default function HelpOverlay({
       // leaf
       const id = node.id || node.key;
       const isActive = id === activeId;
-      const unreadDot = isUnread(id) ? <span className="dot-unread">•</span> : null;
+      const unreadDot = (trackRead && id && !readMap[id]) ? <span className="dot-unread">•</span> : null;
       return (
         <button
           key={id}
@@ -438,6 +493,12 @@ export default function HelpOverlay({
   // Decide whether to show flat list or collapsible groups
   const flatLeaves = sidebarItems.filter(it => !it.isGroup);
   const showFlat = !!search.trim() || !collapseMenu;
+
+  // Reset unread (declare before JSX usage)
+  function resetUnread() {
+    setReadMap({});
+    saveReadMap({});
+  }
 
   if (!isOpen) return null;
 
@@ -475,18 +536,38 @@ export default function HelpOverlay({
               onChange={(e) => setSearch(e.target.value)}
             />
             <div className="help-topic-list" role="listbox" aria-label="Emneliste">
-              { showFlat
-                ? (
-                  // when showing flat list (search active OR user chose long list),
-                  // render groups and children expanded in a single column (preserves nesting)
-                  renderFlatTopics(topics)
-                )
-                : (
-                  // collapsible mode (user chose collapsible) - top-level groups can be collapsed
-                  renderSidebarTopics(topics)
-                )
-              }
-              {!sidebarItems.length && <div className="muted small" style={{ padding: '8px 10px' }}>Ingen match.</div>}
+              {search.trim().length > 0 ? (
+                // Søgning aktiv: vis KUN de filtrerede LEAF-emner i en flad liste
+                sidebarItems
+                  .filter((it) => !it.isGroup)
+                  .map((item) => {
+                    const id = item.id || item.key;
+                    const active = id === activeId;
+                    const unread = (trackRead && id && !readMap[id]);
+                    return (
+                      <button
+                        key={id}
+                        className={`help-topic-item depth-${item.depth} ${active ? 'active' : ''}`}
+                        onClick={() => {
+                          setActiveId(id);
+                          if (rememberHash) setHelpHashTopic(id);
+                        }}
+                        aria-selected={active}
+                        title={item.title}
+                      >
+                        {item.title}
+                        {unread && <span className="dot-unread" aria-hidden>•</span>}
+                      </button>
+                    );
+                  })
+              ) : (
+                // Ingen søgning: behold eksisterende toggle mellem grupper/flat
+                showFlat ? renderFlatTopics(topics) : renderSidebarTopics(topics)
+              )}
+
+              {search.trim().length > 0 && flatLeaves.length === 0 && (
+                <div className="muted small" style={{ padding: '8px 10px' }}>Ingen match.</div>
+              )}
             </div>
           </aside>
 

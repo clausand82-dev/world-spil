@@ -39,6 +39,12 @@ Et sådant system kræver en info i xml - måske noget ala at lvl 1 blokeres - m
 
 Change/update History
 
+4.2
+- fixed research page where it did scroll effect more then once
+- fixed research page to only show higest lvl of research (so no more downgrade research)
+- fixed research time on research page to show correct time when buff changes research time
+- fixed messy citizens hover to a more clean one
+
 4.1
 - STAGE 2 and 3 system introduced
 - citizens system is introduced

@@ -149,7 +149,7 @@ function Row({ label, value, mono, strong }) {
     <li style={{ padding: '4px 6px', borderRadius: 6 }}>
       <div style={{ display: 'flex', gap: 8, justifyContent: 'space-between', alignItems: 'baseline' }}>
         <div style={{ display: 'flex', flexDirection: 'column' }}>
-          {label ? (strong ? <strong>{label}</strong> : <span style={{ opacity: 0.7 }}>{label}</span>) : null}
+          {label ? (strong ? <strong>{label}</strong> : <span style={{ opacity: 0.9 }}>{label}</span>) : null}
         </div>
         <div style={{ textAlign: 'right', fontVariantNumeric: mono ? 'tabular-nums' : 'normal' }}>
           {value}

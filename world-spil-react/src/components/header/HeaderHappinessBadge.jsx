@@ -3,18 +3,19 @@ import useHeaderSummary from '../../hooks/useHeaderSummary.js';
 import HoverCard from '../ui/HoverCard.jsx';
 import { fmt } from '../../services/helpers.js';
 import { useGameData } from '../../context/GameDataContext.jsx';
+import {useStatsLabels, happinessEmojiFromScore} from '../../hooks/useStatsLabels.js';
 
-function emojiFromScore(score01) {
+/*function emojiFromScore(score01) {
   if (score01 >= 0.90) return '😊';
   if (score01 >= 0.80) return '😐';
   if (score01 >= 0.70) return '😞';
   if (score01 >= 0.60) return '😢';
   if (score01 >= 0.50) return '😠';
   return '😡';
-}
+}*/
 
 // Labels til visning
-const LABELS = {
+/*const LABELS = {
   housing: 'Housing',
   food: 'Provision',
   water: 'Vand',
@@ -31,7 +32,7 @@ const LABELS = {
   powerNuclear: 'Strøm (Nuclear)',
   cloth: 'Tøj',
   medicin: 'Medicin',
-};
+};*/
 
 // Hoved → sub nøgler
 const GROUPS = {
@@ -69,6 +70,27 @@ export default function HeaderHappinessBadge() {
   const { data: gameData } = useGameData();
   const [hoverMain, setHoverMain] = useState(null);
 
+  const LABELS = useStatsLabels();
+
+  /*const LABELS = {
+  housing: t("ui.emoji.housing.h1") + ' ' + t("ui.stats.housing.h1") || 'Housing',
+  food: t("ui.emoji.provision.h1") + ' ' + t("ui.stats.provision.h1") || 'Provision',
+  water: t("ui.emoji.water.h1") + ' ' + t("ui.stats.water.h1") || 'Vand',
+  health: t("ui.emoji.health.h1") + ' ' + t("ui.stats.health.h1") || 'Sundhed',
+  // Aggregerede
+  heat: t("ui.emoji.heat.h1") + ' ' + t("ui.stats.heat.h1") || 'Varme',
+  power: t("ui.emoji.power.h1") + ' ' + t("ui.stats.power.h1") || 'Strøm',
+  // Subkategorier
+  heatFossil: t("ui.emoji.heat_fossil.h1") + ' ' + t("ui.stats.heat_fossil.h1") || 'Varme (Fossil)',
+  heatGreen: t("ui.emoji.heat_green.h1") + ' ' + t("ui.stats.heat_green.h1") || 'Varme (Green)',
+  heatNuclear: t("ui.emoji.heat_nuclear.h1") + ' ' + t("ui.stats.heat_nuclear.h1") || 'Varme (Nuclear)',
+  powerFossil: t("ui.emoji.power_fossil.h1") + ' ' + t("ui.stats.power_fossil.h1") || 'Strøm (Fossil)',
+  powerGreen: t("ui.emoji.power_green.h1") + ' ' + t("ui.stats.power_green.h1") || 'Strøm (Green)',
+  powerNuclear: t("ui.emoji.power_nuclear.h1") + ' ' + t("ui.stats.power_nuclear.h1") || 'Strøm (Nuclear)',
+  cloth: t("ui.emoji.product_cloth.h1") + ' ' + t("ui.stats.product_cloth.h1") || 'Tøj',
+  medicin: t("ui.emoji.product_medicin.h1") + ' ' + t("ui.stats.product_medicin.h1") || 'Medicin',
+};*/
+
   const h       = data?.happiness ?? { impacts: {}, weightTotal: 0, impactTotal: 0, happiness: 0 };
   const usages  = data?.usages ?? {};
   const caps    = data?.capacities ?? {};
@@ -77,7 +99,7 @@ export default function HeaderHappinessBadge() {
 
   const score01 = Number(h.happiness || 0);
   const pct = Math.round(score01 * 100);
-  const emoji = emojiFromScore(score01);
+  const emoji = happinessEmojiFromScore(score01);
 
   // Hjælper: stage gating for UI (kun til fallback; impacts må vises hvis backend har valgt det)
   const getStage = (key) => {
@@ -230,10 +252,10 @@ export default function HeaderHappinessBadge() {
               );
             })}
           </ul>
-        )}
+        )}<span style={{ margin: 0, paddingLeft: 0, listStyle: 'none' }}><hr></hr>Se detaljer i <a href="#/help?topic=stats-happiness">Hjælp: Happiness</a> og <a href="#/help?topic=stats-overview">Hjælp: Stats</a>.</span>
       </div>
     );
-  }, [h, usages, caps, hoverMain, metaMap, stageCurrent]);
+  }, [h, usages, caps, hoverMain, metaMap, stageCurrent, LABELS]);
 
   // Nu må vi gerne "stille" os selv ved loading/fejl
   if (loading || err) return null;
