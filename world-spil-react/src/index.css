@@ -411,7 +411,50 @@ body{padding-bottom:72px} /* plads til quickbar */
   100% { box-shadow: 0 0 0 0 rgba(255,200,0,0); }
 }
 
+/* ====== Management group box (fieldset/legend stil) – JUSTERET ====== */
+.groupbox {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  margin-top: 22px;
+  position: relative;
+}
 
+/* Legend uden egen ramme – ligger "i" topkanten */
+.groupbox legend {
+  position: absolute;
+  top: -12px;           /* træk ned til kanten; justér ±1-2px hvis nødvendigt */
+  left: 16px;
+  padding: 0 8px;
+  font-weight: 800;
+  font-size: 14px;
+  line-height: 1.2;
+  color: var(--text);
+  background: var(--panel);  /* dækker stregen bag teksten */
+  border: none;              /* ingen egen ramme */
+  border-radius: 6px;        /* lille afrunding kun for at bløde overlap */
+}
+
+/* Indhold under legend */
+.groupbox__content {
+  margin-top: 0;   /* ingen ekstra offset nødvendig nu */
+  display: grid;
+  gap: 12px;
+}
+
+/* Fleksibelt grid (som før) */
+.mp-grid{display:grid;gap:12px;grid-auto-flow:row dense}
+.mp-grid.cols-1{grid-template-columns:repeat(1,minmax(0,1fr))}
+.mp-grid.cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.mp-grid.cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media (max-width: 980px){ .mp-grid.cols-3{grid-template-columns:repeat(2,minmax(0,1fr))} }
+@media (max-width: 640px){ .mp-grid.cols-2,.mp-grid.cols-3{grid-template-columns:repeat(1,minmax(0,1fr))} }
+
+/* Spans */
+.mp-item{grid-column:span 1}
+.mp-item.span-1{grid-column:span 1}
+.mp-item.span-2{grid-column:span 2}
+.mp-item.span-3{grid-column:span 3}
 
 
 
