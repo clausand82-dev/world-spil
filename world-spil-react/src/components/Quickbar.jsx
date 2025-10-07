@@ -11,6 +11,7 @@ export default function Quickbar({ activePage }) {
         { page: 'flowchart', title: 'Flowchart', icon: '📂' },
         { page: 'userpage', title: 'User', icon: '👤' },
         { page: 'citizens', title: 'Befolkning', icon: '👤' },
+        { page: 'management', title: 'Camp management', icon: '🗺️' },
         //{ page: 'citizensassignment', title: 'Borgertildeling', icon: '🧑‍💼' },
     ];
 

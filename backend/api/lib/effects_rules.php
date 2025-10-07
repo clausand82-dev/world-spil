@@ -42,7 +42,50 @@ function apply_effects(array $ctx): array {
     // $effects['usageAdjustments']['useInternet'] = ['mul' => $capP / max($useP, 1e-9)];
   }
 
-  
+  // BRUGES - HVIS POPULARITY ER OVER 75% SÅ GIVES +5% HAPPINESS
+      // Simplified popularity extraction + rule: popularity > 50% => happiness * 1.05
+      $raw = $ctx['popularity'] ?? null;
+
+      // ensure warnings array exists
+      if (!isset($effects['warnings'])) $effects['warnings'] = [];
+
+      // Resolve a single numeric popularity value (prefer named keys, no averaging)
+      $popVal = null;
+      if (is_numeric($raw)) {
+        $popVal = (float)$raw;
+      } elseif (is_array($raw)) {
+        foreach (['popularity','total','value','score','overall','percent','pct'] as $k) {
+          if (isset($raw[$k]) && is_numeric($raw[$k])) { $popVal = (float)$raw[$k]; break; }
+        }
+        // fallback: first numeric child (avoid averaging, less surprising)
+        if ($popVal === null) {
+          foreach ($raw as $v) {
+            if (is_numeric($v)) { $popVal = (float)$v; break; }
+          }
+        }
+      }
+      $popVal = $popVal ?? 0.0;
+
+      // normalize 0..100 -> 0..1 (only if value plausibly percentage)
+      if ($popVal > 1.0 && $popVal <= 1000.0) $popVal = $popVal / 100.0;
+
+      // ensure adjustments slot
+      if (!isset($effects['adjustments'])) $effects['adjustments'] = [];
+      if (!isset($effects['adjustments']['happiness'])) $effects['adjustments']['happiness'] = ['mult' => 1.0, 'add' => 0.0];
+
+      // rule parameters
+      $popThreshold = 0.75;   // 75%
+      $multiplier = 1.05;    // +5%
+
+      // concise logging of resolved value
+      $effects['warnings'][] = sprintf('DBG: popularity resolved=%.4f (threshold=%.2f)', $popVal, $popThreshold);
+
+      // apply rule
+      if ($popVal > $popThreshold) {
+        $effects['adjustments']['happiness']['mult'] *= $multiplier;
+        $effects['warnings'][] = sprintf('Effect applied: popularity=%.4f -> happiness * %.3f', $popVal, $multiplier);
+      }
+ 
 
   return $effects;
 }

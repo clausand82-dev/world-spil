@@ -30,6 +30,16 @@ export default function CitizenAssignmentsPage() {
   const [assign, setAssign] = useState({});
   const t = useT();
 
+  // Toast / confirmation UI state
+  const [toast, setToast] = useState({ show: false, msg: '', variant: 'success' });
+
+  // auto-hide toast
+  useEffect(() => {
+    if (!toast.show) return undefined;
+    const id = setTimeout(() => setToast(s => ({ ...s, show: false })), 3200);
+    return () => clearTimeout(id);
+  }, [toast.show]);
+
   const fetchState = async () => {
     setLoading(true);
     setErr('');
@@ -114,9 +124,20 @@ export default function CitizenAssignmentsPage() {
       if (!json?.ok) throw new Error(json?.error?.message || 'Ukendt fejl');
       // Refetch for at se serverens clamps/kriminalitets-fordeling m.m.
       await fetchState();
-      alert('Gemt.');
+      // Vis pæn bekræftelse i stedet for alert
+      setToast({
+        show: true,
+        msg: 'Tildeling gemt 🎉',
+        variant: 'success'
+      });
+      
     } catch (e) {
       setErr(e?.message || String(e));
+      setToast({
+        show: true,
+        msg: 'Fejl ved gem: ' + (e?.message || String(e)),
+        variant: 'error'
+      });
     } finally {
       setSaving(false);
     }
@@ -206,6 +227,53 @@ export default function CitizenAssignmentsPage() {
           Bemærk: Serveren dobbelttjekker caps og totaler og kan nedskalere dine valg samt sætte et skjult antal crime pr. rolle.
         </div>
       </div>
+
+      {/* Toast / confirmation (fixed, simple animation) */}
+      {toast.show && (
+        <div
+          role="status"
+          aria-live="polite"
+          style={{
+            position: 'fixed',
+            right: 20,
+            bottom: 20,
+            zIndex: 9999,
+            minWidth: 260,
+            maxWidth: 420,
+            background: toast.variant === 'success' ? 'linear-gradient(180deg,#0f1724,#07101a)' : 'linear-gradient(180deg,#3b0b0b,#2a0707)',
+            color: '#fff',
+            padding: '12px 14px',
+            borderRadius: 12,
+            boxShadow: '0 8px 30px rgba(2,6,23,0.6)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+            transform: toast.show ? 'translateY(0)' : 'translateY(8px)',
+            opacity: toast.show ? 1 : 0,
+            transition: 'transform 260ms cubic-bezier(.2,.9,.2,1), opacity 260ms ease'
+          }}
+        >
+          <div style={{ fontSize: 20 }}>{toast.variant === 'success' ? '🎉' : '⚠️'}</div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: 700, marginBottom: 4 }}>{toast.msg}</div>
+            <div style={{ fontSize: 12, opacity: 0.85 }}>Dine ændringer er gemt på serveren.</div>
+          </div>
+          <button
+            onClick={() => setToast(s => ({ ...s, show: false }))}
+            aria-label="Luk"
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: '#cbd5e1',
+              cursor: 'pointer',
+              fontSize: 16,
+              padding: 6
+            }}
+          >
+            ✕
+          </button>
+        </div>
+      )}
     </div>
   );
 }

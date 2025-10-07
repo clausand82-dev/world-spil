@@ -7,25 +7,6 @@ import {useStatsLabels, popularityEmojiFromScore} from '../../hooks/useStatsLabe
 // Simpel farvekodning/emoji som i happiness
 
 
-// Venlige labels for kendte metrics
-/*const LABELS = {
-  housing: 'Housing',
-  food: 'Provision',
-  water: 'Vand',
-  health: 'Sundhed',
-  heat: 'Varme',
-  power: 'Strøm',
-  powerGreen: 'Strøm (Grøn)',
-  powerNuclear: 'Strøm (Nuclear)',
-  powerFossil: 'Strøm (Fossil)',
-  heatGreen: 'Varme (Grøn)',
-  heatNuclear: 'Varme (Nuclear)',
-  heatFossil: 'Varme (Fossil)',
-  cloth: 'Tøj',
-  medicin: 'Medicin',
-  wasteOther: 'Affald (Andet)',
-};*/
-
 export default function HeaderPopularityBadge() {
   const { data, loading, err } = useHeaderSummary();
   const [hoverKey, setHoverKey] = useState(null);

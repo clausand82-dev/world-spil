@@ -197,7 +197,7 @@ generelArmor:
     <demandsVechicleTypeHitchHike></demandsVechicleTypeHitchHike>
     <demandsVechicleTypeBicycle></demandsVechicleTypeBicycle>
     <demandsVechicleTypeWalk></demandsVechicleTypeWalk>
-    <taxPay>0</taxPay>
+    <taxPay>0</taxPay>    
     <taxPayMax></taxPayMax>
     <taxPayRageRate></taxPayRageRate>
     <wastePlastic>0.5</wastePlastic>

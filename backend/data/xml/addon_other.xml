@@ -129,6 +129,9 @@
       <res id="res.money" amount="500"/>
       <res id="res.wood" amount="100"/>
     </cost>
+    <yield period="1h">
+      <res id="res.stonebricks" amount="2"/>
+      </yield>
     <require>rsd.useclay.l1,bld.mine.l2</require>
   </addon>
 
@@ -138,7 +141,10 @@
       <res id="res.money" amount="1000"/>
       <res id="res.wood" amount="100"/>
     </cost>
-    <require>rsd.stonebricks.l1</require>
+    <yield period="1h">
+      <res id="res.bronze" amount="2"/>
+      </yield>
+    <require>rsd.bronze.l1</require>
   </addon>
 
     <addon id="add.ironmolding.l1" family="mine" group="main" type="addons" lvl="1" stage="2">
@@ -147,7 +153,10 @@
       <res id="res.money" amount="1000"/>
       <res id="res.wood" amount="100"/>
     </cost>
-    <require>rsd.stonebricks.l1</require>
+    <yield period="1h">
+      <res id="res.iron" amount="2"/>
+      </yield>
+    <require>rsd.iron.l1</require>
   </addon>
 
    <addon id="add.undergroundshelter.l1" family="mine" group="main" type="addons" lvl="1" stage="2">

@@ -505,6 +505,8 @@
   <entry key="res.rawfish.desc">Kan bruges som foder eller forarbejdes til mad</entry>
   <entry key="res.rawcommonfish.name">Rå almindelig fisk</entry>
   <entry key="res.rawcommonfish.desc">Kan bruges som foder eller forarbejdes til mad</entry>
+  <entry key="res.maize.name">Majs</entry>
+  <entry key="res.maize.desc">Majs mark</entry>
 
 <!--ANIMALS-->
   <entry key="ani.cow.name">Kalv</entry>

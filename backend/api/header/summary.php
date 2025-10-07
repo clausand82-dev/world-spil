@@ -289,6 +289,45 @@ foreach ($registry as $id => $m) {
     'stage'      => $userStage,
   ]);
 
+// AFSNIT HER SKAL TJEKKE OG BRUGE EFFEKTER
+
+                // ----------------- NYT: Anvend effect-justeringer (enkelt, erstat baseline) -----------------
+      // Hvis effects indeholder adjustments for happiness -> anvend dem direkte og overskriv baseline
+      if (!empty($effects['adjustments']['happiness'])) {
+        $adj = $effects['adjustments']['happiness'];
+        $mult = (float)($adj['mult'] ?? 1.0);
+        $add  = (float)($adj['add'] ?? 0.0);
+
+        // Best-effort hent baseline fra almindelige keys, ellers 0
+        $happyBaseline = 0.0;
+        if (is_array($happinessData)) {
+          foreach (['total','value','score','overall','happiness','mean'] as $k) {
+            if (isset($happinessData[$k]) && is_numeric($happinessData[$k])) {
+              $happyBaseline = (float)$happinessData[$k];
+              break;
+            }
+          }
+        } elseif (is_numeric($happinessData)) {
+          $happyBaseline = (float)$happinessData;
+        }
+
+        // Beregn effektive værdi og overskriv baseline så frontend ikke skal ændres
+        $effective = $happyBaseline * $mult + $add;
+        // Gem både effective og overskriv total (frontend bruger total som før)
+        if (is_array($happinessData)) {
+          $happinessData['effective'] = $effective;
+          $happinessData['total'] = $effective;
+        } else {
+          // hvis happinessData er scalar, pak det i en struktur
+          $happinessData = ['total' => $effective, 'effective' => $effective];
+        }
+
+        // Kort warning til diagnostik (fjern senere hvis ikke ønsket)
+        $effects['warnings'][] = sprintf('Applied happiness adjustment: mult=%.3f add=%.3f (baseline=%.3f -> effective=%.3f)', $mult, $add, $happyBaseline, $effective);
+      }
+
+  // AFSLUTNING AF EFFECT TJEK OG ANVENDELSE
+
   // Meta til UI (labels, hierarki, stages)
   $metricsMeta = [];
   foreach ($registry as $id => $m) {
@@ -329,6 +368,8 @@ $ROUND_DECIMALS = 2;
 $capacities = round_numeric_recursive($capacities, $ROUND_DECIMALS);
 $parts      = round_numeric_recursive($parts, $ROUND_DECIMALS);
 $usages     = round_numeric_recursive($usages, $ROUND_DECIMALS);
+
+
 
   // Respond – udvidet payload (kompatibel med eksisterende UI)
   respond([
