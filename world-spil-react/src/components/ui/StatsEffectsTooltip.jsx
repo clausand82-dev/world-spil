@@ -105,8 +105,8 @@ export default function StatsEffectsTooltip({ def, translations = {} }) {
 
   return (
     <div style={{ maxWidth: 380 }}>
-      <div style={{ fontWeight: 700, marginBottom: 0 }}>{def?.display_name ?? def?.name ?? def?.id ?? 'Item'} </div>
-      <div style={{ fontWeight: 0, marginBottom: 8, fontSize: 11, color: '#666' }}>{def?.display_desc ?? def?.desc ?? def?.id ?? 'Item'}</div>
+      <div style={{ fontWeight: 700, marginBottom: 0 }}>{def?.display_name ?? def?.name ?? def?.id} </div>
+      <div style={{ fontWeight: 0, marginBottom: 8, fontSize: 11, color: '#666' }}>{def?.display_desc ?? def?.desc ?? def?.id}</div>
       <div style={{ display: 'grid', gap: 6 }}>
         {rows.map(r => (
           <div key={r.key} style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>

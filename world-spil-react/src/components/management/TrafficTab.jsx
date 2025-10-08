@@ -1,9 +1,9 @@
 import React from 'react';
-import * as MP from './managementparts.jsx';
-import DockHoverCard from '../ui/DockHoverCard.jsx';
+import ConfigRenderer from './ConfigRenderer.jsx';
+import { useGameData } from '../../context/GameDataContext.jsx';
+import useHeaderSummary from '../../hooks/useHeaderSummary.js';
 
-/* ===== Data og konstanter (ALT samlet ét sted) ===== */
-
+// Data til select/checkboxes
 const ZONES = [
   { value: 'center', label: 'Bycenter' },
   { value: 'north',  label: 'Nord' },
@@ -12,426 +12,181 @@ const ZONES = [
   { value: 'west',   label: 'Vest' },
 ];
 
-/**
- * FIELDS – definér hvert felt én gang.
- * - label: vises i MP.Row
- * - help: lille hjælpetekst
- * - hover: JSX eller (choices) => JSX (til DockHoverCard)
- * - render: (choices, setChoice) => JSX (selve input-kontrollen)
- */
-const FIELDS = {
-  traffic_lights_control: {
-    label: 'Lysregulering (on/off)',
-    help: 'Aktiver signalstyring i kryds. Forbedrer flow/sikkerhed, har driftomkostning.',
-    hover: (
-      <div style={{ maxWidth: 360 }}>
-        <strong>Lysregulering</strong>
-        <div style={{ marginTop: 6, fontSize: 13, opacity: 0.9 }}>
-          Koordinerer signaler i kryds for bedre fremkommelighed. Koster drift pr. kryds.
-        </div>
-      </div>
-    ),
-    render: (choices, setChoice) => (
-      <MP.Toggle
-        checked={!!choices.traffic_lights_control}
-        onChange={(v)=>setChoice('traffic_lights_control', v)}
-        label={choices.traffic_lights_control ? 'Aktiveret' : 'Deaktiveret'}
-      />
-    ),
-  },
-
-  traffic_adaptive_level: {
-    label: 'Adaptiv signalering',
-    help: '0 = fra, 1..3 = stigende aggressivitet.',
-    hover: (choices) => (
-      <div style={{ maxWidth: 360 }}>
-        <strong>Adaptiv signalering</strong>
-        <div style={{ marginTop: 6, fontSize: 13, opacity: 0.95 }}>
-          Højere niveau kan forbedre flow i komplekse kryds mod højere drift.
-        </div>
-        <div style={{ marginTop: 8, fontSize: 12, opacity: 0.8 }}>
-          Aktuelt niveau: {choices?.traffic_adaptive_level ?? 0}
-        </div>
-      </div>
-    ),
-    render: (choices, setChoice) => (
-      <MP.NumberInput
-        value={choices.traffic_adaptive_level ?? 0}
-        onChange={(v)=>setChoice('traffic_adaptive_level', v === '' ? 0 : Number(v))}
-        min={0}
-        max={3}
-        step={1}
-      />
-    ),
-  },
-
-  traffic_signal_density: {
-    label: 'Signal‑tæthed',
-    help: 'Antal signaler pr. område (0–10).',
-    hover: (
-      <div style={{ maxWidth: 360 }}>
-        <strong>Signal‑tæthed</strong>
-        <div style={{ marginTop: 6, fontSize: 13, opacity: 0.95 }}>
-          Flere signaler kan stabilisere flow men sænker gennemsnitshastighed.
-        </div>
-      </div>
-    ),
-    render: (choices, setChoice) => (
-      <MP.Slider
-        value={choices.traffic_signal_density}
-        onChange={(v)=>setChoice('traffic_signal_density', v)}
-        min={0}
-        max={10}
-        step={1}
-      />
-    ),
-  },
-
-  traffic_speed_limit_pct: {
-    label: 'Hastighedsgrænse (procent)',
-    help: '0% = meget lav, 100% = normal.',
-    hover: (
-      <div style={{ maxWidth: 360 }}>
-        <strong>Hastighedsgrænse</strong>
-        <div style={{ marginTop: 6, fontSize: 13, opacity: 0.95 }}>
-          Lavere værdi mindsker ulykker/emission men kan sænke flow.
-        </div>
-      </div>
-    ),
-    render: (choices, setChoice) => (
-      <MP.PercentSlider
-        value={choices.traffic_speed_limit_pct}
-        onChange={(v)=>setChoice('traffic_speed_limit_pct', v)}
-      />
-    ),
-  },
-
-  traffic_enforcement_pct: {
-    label: 'Enforcement intensitet',
-    help: 'Højere værdi = mere kontrol.',
-    hover: (
-      <div style={{ maxWidth: 360 }}>
-        <strong>Enforcement intensitet</strong>
-        <div style={{ marginTop: 6, fontSize: 13, opacity: 0.95 }}>
-          Øget kontrol kan forbedre sikkerhed og efterlevelse (kan påvirke popularitet).
-        </div>
-      </div>
-    ),
-    render: (choices, setChoice) => (
-      <MP.Slider
-        value={choices.traffic_enforcement_pct}
-        onChange={(v)=>setChoice('traffic_enforcement_pct', v)}
-        min={0}
-        max={100}
-        step={5}
-      />
-    ),
-  },
-
-  traffic_public_transport_subsidy_pct: {
-    label: 'Offentlig transport – tilskud',
-    help: 'Øger kollektiv brug (koster budgettet).',
-    hover: (
-      <div style={{ maxWidth: 360 }}>
-        <strong>Offentlig transport – tilskud</strong>
-        <div style={{ marginTop: 6, fontSize: 13, opacity: 0.95 }}>
-          Reducerer trængsel/emission; påvirker økonomi.
-        </div>
-      </div>
-    ),
-    render: (choices, setChoice) => (
-      <MP.PercentSlider
-        value={choices.traffic_public_transport_subsidy_pct}
-        onChange={(v)=>setChoice('traffic_public_transport_subsidy_pct', v)}
-      />
-    ),
-  },
-
-  traffic_parking_price: {
-    label: 'Parkering – pris pr. time',
-    help: 'Påvirker brug og indtjening.',
-    hover: (
-      <div style={{ maxWidth: 360 }}>
-        <strong>Parkering – pris</strong>
-        <div style={{ marginTop: 6, fontSize: 13, opacity: 0.95 }}>
-          For høj pris kan skubbe trafik væk fra centrum.
-        </div>
-      </div>
-    ),
-    render: (choices, setChoice) => (
-      <MP.NumberInput
-        value={choices.traffic_parking_price ?? 0}
-        onChange={(v)=>setChoice('traffic_parking_price', v === '' ? 0 : Number(v))}
-        min={0}
-        max={500}
-        step={1}
-        suffix="DKK"
-      />
-    ),
-  },
-
-  traffic_free_parking_zones: {
-    label: 'Gratis parkering (zoner)',
-    help: 'Vælg zoner med gratis parkering.',
-    hover: (
-      <div style={{ maxWidth: 360 }}>
-        <strong>Gratis parkering (zoner)</strong>
-        <div style={{ marginTop: 6, fontSize: 13, opacity: 0.95 }}>
-          Øger besøgende; kan sænke parkeringsindtægt.
-        </div>
-      </div>
-    ),
-    render: (choices, setChoice) => (
-      <MP.CheckboxGroup
-        value={choices.traffic_free_parking_zones}
-        onChange={(v)=>setChoice('traffic_free_parking_zones', v)}
-        options={ZONES}
-        columns={3}
-      />
-    ),
-  },
-
-  traffic_oneway_zones: {
-    label: 'One‑way streets (zoner)',
-    help: 'Aktiver envejs-regler i zoner.',
-    hover: (
-      <div style={{ maxWidth: 360 }}>
-        <strong>Envejs‑gader</strong>
-        <div style={{ marginTop: 6, fontSize: 13, opacity: 0.95 }}>
-          Kan forbedre lokalt flow i udvalgte kvarterer.
-        </div>
-      </div>
-    ),
-    render: (choices, setChoice) => (
-      <MP.CheckboxGroup
-        value={choices.traffic_oneway_zones}
-        onChange={(v)=>setChoice('traffic_oneway_zones', v)}
-        options={ZONES}
-        columns={3}
-      />
-    ),
-  },
-
-  traffic_cyclelane_zones: {
-    label: 'Cycle lanes (zoner)',
-    help: 'Cykelbaner i udvalgte zoner.',
-    hover: (
-      <div style={{ maxWidth: 360 }}>
-        <strong>Cykelbaner</strong>
-        <div style={{ marginTop: 6, fontSize: 13, opacity: 0.95 }}>
-          Forbedrer sikkerhed/bæredygtighed; kan påvirke bilkapacitet.
-        </div>
-      </div>
-    ),
-    render: (choices, setChoice) => (
-      <MP.CheckboxGroup
-        value={choices.traffic_cyclelane_zones}
-        onChange={(v)=>setChoice('traffic_cyclelane_zones', v)}
-        options={ZONES}
-        columns={3}
-      />
-    ),
-  },
-
-  traffic_mode: {
-    label: 'Trafik‑tilstand (strategi)',
-    help: 'Overordnet strategi.',
-    hover: (
-      <div style={{ maxWidth: 360 }}>
-        <strong>Trafik‑tilstand</strong>
-        <div style={{ marginTop: 6, fontSize: 13, opacity: 0.95 }}>
-          Balanceret, miljø eller hastigheds‑fokus.
-        </div>
-      </div>
-    ),
-    render: (choices, setChoice) => (
-      <MP.RadioGroup
-        value={choices.traffic_mode}
-        onChange={(v)=>setChoice('traffic_mode', v)}
-        options={[
+// ALT i én CONFIG: felter + layout
+const CONFIG = {
+  fields: {
+    traffic_lights_control: {
+      label: 'Lysregulering (on/off)',
+      help: 'Aktiver signalstyring i kryds.',
+      control: { type: 'toggle', key: 'traffic_lights_control', labelOn: 'Aktiveret', labelOff: 'Deaktiveret' },
+      tooltip: {
+        type: 'stats',
+        title: 'Lysregulering',
+        stats: (choices, ctx) => {
+          const persons = Number(ctx?.summary?.citizens?.totals?.totalPersons ?? 0);
+          return { traffic_flow: 'x1.05', safety: 0.01, est_cost: (persons * 0.005).toFixed(2) };
+        },
+      },
+    },
+    traffic_adaptive_level: {
+      label: 'Adaptiv signalering',
+      help: '0..3',
+      control: { type: 'number', key: 'traffic_adaptive_level', min: 0, max: 3, step: 1, default: 0 },
+      tooltip: {
+        type: 'stats',
+        title: 'Adaptiv signalering',
+        stats: (choices) => ({ level: Number(choices?.traffic_adaptive_level ?? 0) }),
+      },
+    },
+    traffic_signal_density: {
+      label: 'Signal‑tæthed',
+      help: '0–10',
+      control: { type: 'slider', key: 'traffic_signal_density', min: 0, max: 10, step: 1, default: 5 },
+      tooltip: {
+        type: 'stats',
+        title: 'Signal‑tæthed',
+        stats: { traffic_flow: '≈', speed: '↓' },
+      },
+    },
+    traffic_speed_limit_pct: {
+      label: 'Hastighedsgrænse (procent)',
+      help: '0% = lav, 100% = normal',
+      control: { type: 'percent', key: 'traffic_speed_limit_pct', default: 50 },
+      tooltip: {
+        type: 'stats',
+        title: 'Hastighedsgrænse',
+        stats: (choices) => {
+          const pct = Number(choices?.traffic_speed_limit_pct ?? 100);
+          const flow = 1 - (100 - pct) * 0.001;
+          const safety = (100 - pct) * 0.0005;
+          return { traffic_flow: `x${flow.toFixed(3)}`, safety: `+${(safety*100).toFixed(1)}%` };
+        },
+      },
+    },
+    traffic_enforcement_pct: {
+      label: 'Enforcement intensitet',
+      help: '0–100',
+      control: { type: 'slider', key: 'traffic_enforcement_pct', min: 0, max: 100, step: 5, default: 0 },
+      tooltip: { type: 'stats', title: 'Enforcement', stats: { safety: '+', popularity: '±', op_cost: '↑' } },
+    },
+    traffic_public_transport_subsidy_pct: {
+      label: 'Offentlig transport – tilskud',
+      help: 'Reducer trængsel, koster budget',
+      control: { type: 'percent', key: 'traffic_public_transport_subsidy_pct', default: 0 },
+      tooltip: {
+        type: 'stats',
+        title: 'Tilskud til kollektiv',
+        stats: (choices, ctx) => {
+          const persons = Number(ctx?.summary?.citizens?.totals?.totalPersons ?? 0);
+          const pct = Number(choices?.traffic_public_transport_subsidy_pct ?? 0);
+          return { traffic_flow: '+', emissions: '↓', est_cost: (persons * pct * 0.01).toFixed(2) };
+        },
+      },
+    },
+    traffic_parking_price: {
+      label: 'Parkering – pris pr. time',
+      help: 'Påvirker brug/indtægt',
+      control: { type: 'number', key: 'traffic_parking_price', min: 0, max: 500, step: 1, default: 0, suffix: 'DKK' },
+      tooltip: { type: 'stats', title: 'Parkering', stats: { revenue: '↑/↓', visitors: '±' } },
+    },
+    traffic_free_parking_zones: {
+      label: 'Gratis parkering (zoner)',
+      help: 'Vælg zoner',
+      control: { type: 'checkboxes', key: 'traffic_free_parking_zones', options: ZONES, columns: 3, default: [] },
+      tooltip: { type: 'stats', title: 'Gratis parkering', stats: { visitors: '↑', revenue: '↓' } },
+    },
+    traffic_oneway_zones: {
+      label: 'One‑way streets (zoner)',
+      help: 'Udvalgte zoner',
+      control: { type: 'checkboxes', key: 'traffic_oneway_zones', options: ZONES, columns: 3, default: [] },
+      tooltip: { type: 'stats', title: 'Envejs', stats: { local_flow: '↑', complexity: '↑' } },
+    },
+    traffic_cyclelane_zones: {
+      label: 'Cycle lanes (zoner)',
+      help: 'Udvalgte zoner',
+      control: { type: 'checkboxes', key: 'traffic_cyclelane_zones', options: ZONES, columns: 3, default: [] },
+      tooltip: { type: 'stats', title: 'Cykelbaner', stats: { safety: '↑', car_flow: '↓?' } },
+    },
+    traffic_mode: {
+      label: 'Trafik‑tilstand (strategi)',
+      help: 'Overordnet strategi',
+      control: {
+        type: 'radio',
+        key: 'traffic_mode',
+        columns: 3,
+        options: [
           { value: 'balanced', label: 'Balanceret' },
           { value: 'eco',      label: 'Miljø' },
           { value: 'speed',    label: 'Hurtighed' },
-        ]}
-        columns={3}
-      />
-    ),
+        ],
+        default: 'balanced',
+      },
+      tooltip: { type: 'stats', title: 'Strategi', stats: { flow: '±', emissions: '±', safety: '±' } },
+    },
+    traffic_campaign_safety: {
+      label: 'Kampagne: Trafiksikkerhed',
+      help: 'Midlertidigt tiltag',
+      control: { type: 'toggle', key: 'traffic_campaign_safety', labelOn: 'Aktiv', labelOff: 'Inaktiv', default: false },
+      tooltip: { type: 'stats', title: 'Kampagne', stats: { safety: '+', cost: '↑' } },
+    },
+    traffic_temp_speed_pct: {
+      label: 'Midlertidig hastighedsbegrænsning',
+      help: 'Ved events/vejarbejde',
+      control: { type: 'percent', key: 'traffic_temp_speed_pct', default: 0 },
+      tooltip: { type: 'stats', title: 'Midlertidig hastighed', stats: { safety: '+', flow: '↓' } },
+    },
   },
 
-  traffic_campaign_safety: {
-    label: 'Kampagne: Trafiksikkerhed',
-    help: 'Midlertidigt tiltag der øger safety.',
-    hover: (
-      <div style={{ maxWidth: 360 }}>
-        <strong>Kampagne: Trafiksikkerhed</strong>
-        <div style={{ marginTop: 6, fontSize: 13, opacity: 0.95 }}>
-          Koster løbende mens aktiv; forbedrer sikkerhed.
-        </div>
-      </div>
-    ),
-    render: (choices, setChoice) => (
-      <MP.Toggle
-        checked={!!choices.traffic_campaign_safety}
-        onChange={(v)=>setChoice('traffic_campaign_safety', v)}
-        label={choices.traffic_campaign_safety ? 'Aktiv' : 'Inaktiv'}
-      />
-    ),
-  },
-
-  traffic_temp_speed_pct: {
-    label: 'Midlertidig hastighedsbegrænsning',
-    help: 'Brug ved events/vejarbejde.',
-    hover: (
-      <div style={{ maxWidth: 360 }}>
-        <strong>Midlertidig hastighed</strong>
-        <div style={{ marginTop: 6, fontSize: 13, opacity: 0.95 }}>
-          Global midlertidig reduktion i hastighed.
-        </div>
-      </div>
-    ),
-    render: (choices, setChoice) => (
-      <MP.PercentSlider
-        value={choices.traffic_temp_speed_pct}
-        onChange={(v)=>setChoice('traffic_temp_speed_pct', v)}
-      />
-    ),
-  },
+  // Layout – kan referere til id’er eller stacks
+  sections: [
+    {
+      title: 'Trafik regulering',
+      cols: 3,
+      items: [
+        { id: 'traffic_lights_control',  span: 1 },
+        { id: 'traffic_adaptive_level',  span: 1 },
+        { id: 'traffic_signal_density',  span: 1 },
+        { id: 'traffic_speed_limit_pct', span: 2 },
+        { id: 'traffic_enforcement_pct', span: 1 },
+      ],
+    },
+    {
+      title: 'Infrastruktur & politik',
+      cols: 3,
+      items: [
+        { stack: ['traffic_free_parking_zones', 'traffic_cyclelane_zones'], span: 1 },
+        { id: 'traffic_public_transport_subsidy_pct', span: 1 },
+        { id: 'traffic_parking_price',                span: 1 },
+        { id: 'traffic_oneway_zones',                 span: 2 },
+        { id: 'traffic_mode',                         span: 3 },
+      ],
+    },
+    {
+      title: 'Kampagner & tiltag',
+      cols: 2,
+      items: [
+        { id: 'traffic_campaign_safety', span: 1 },
+        { id: 'traffic_temp_speed_pct',  span: 1 },
+      ],
+    },
+  ],
 };
 
-/**
- * SECTIONS – layoutet, nemt at ændre uden at røre felterne.
- * items kan være:
- * - { id, span } for enkelt felt
- * - { type: 'stack', span, items: [{ id }, { id }, ...] } for usynlig gruppe (vertikal stak)
- */
-const SECTIONS = [
-  {
-    title: 'Trafik regulering',
-    cols: 3,
-    items: [
-              {
-        type: 'stack',
-        span: 1,
-        items: [
-          { id: 'traffic_lights_control' },
-          { id: 'traffic_lights_control' },
-        ],
-      },
-      { id: 'traffic_lights_control',  span: 1 },
-      { id: 'traffic_adaptive_level',  span: 1 },
-      { id: 'traffic_signal_density',  span: 1 },
-      { id: 'traffic_speed_limit_pct', span: 2 },
-      { id: 'traffic_enforcement_pct', span: 1 },
-    ],
-  },
-  {
-    title: 'Infrastruktur & politik',
-    cols: 3,
-    items: [
-      // Eksempel på stak: flere checkbox-felter under hinanden i samme celle (span 1)
-      {
-        type: 'stack',
-        span: 1,
-        items: [
-          { id: 'traffic_free_parking_zones' },
-          { id: 'traffic_cyclelane_zones' },
-        ],
-      },
-      { id: 'traffic_public_transport_subsidy_pct', span: 1 },
-      { id: 'traffic_parking_price',                span: 1 },
-      { id: 'traffic_oneway_zones',                 span: 2 },
-      { id: 'traffic_mode',                         span: 3 },
-    ],
-  },
-  {
-    title: 'Kampagner & tiltag',
-    cols: 2,
-    items: [
-      { id: 'traffic_campaign_safety', span: 1 },
-      { id: 'traffic_temp_speed_pct',  span: 1 },
-    ],
-  },
-];
-
-/* ===== Hjælpere til rendering ===== */
-
-// Render ét felt (udenfor en stack): med DockHoverCard og mp-item (grid-celle)
-function FieldCell({ id, span, choices, setChoice }) {
-  const cfg = FIELDS[id];
-  if (!cfg) return null;
-  const hoverContent = typeof cfg.hover === 'function' ? cfg.hover(choices) : cfg.hover;
-
-  return (
-    <DockHoverCard content={hoverContent}>
-      <div className={`mp-item span-${Math.max(1, Math.min(3, span || 1))}`}>
-        <MP.Row label={cfg.label} help={cfg.help}>
-          {cfg.render(choices, setChoice)}
-        </MP.Row>
-      </div>
-    </DockHoverCard>
-  );
-}
-
-// Render en usynlig gruppe (stack) – flere felter under hinanden i samme celle
-function FieldStack({ span, items, choices, setChoice, gap = 10 }) {
-  return (
-    <div className={`mp-item span-${Math.max(1, Math.min(3, span || 1))}`}>
-      <div style={{ display: 'grid', gap }}>
-        {items.map((it, idx) => {
-          const cfg = FIELDS[it.id];
-          if (!cfg) return null;
-          const hoverContent = typeof cfg.hover === 'function' ? cfg.hover(choices) : cfg.hover;
-          return (
-            <DockHoverCard key={`${it.id}-${idx}`} content={hoverContent}>
-              <div>
-                <MP.Row label={cfg.label} help={cfg.help}>
-                  {cfg.render(choices, setChoice)}
-                </MP.Row>
-              </div>
-            </DockHoverCard>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-/* ===== Komponent ===== */
-
 export default function TrafficTab({ choices, setChoice }) {
+  const { data: summary } = useHeaderSummary();
+  const { data: gameData } = useGameData();
+  const translations = gameData?.i18n?.current ?? {};
+  const ctx = { summary, gameData };
+
   return (
     <div style={{ display: 'grid', gap: 12 }}>
-      {SECTIONS.map((sec) => (
-        <fieldset key={sec.title} className="groupbox">
-          <legend>{sec.title}</legend>
-          <div className="groupbox__content">
-            <div className={`mp-grid cols-${Math.max(1, Math.min(3, sec.cols || 1))}`}>
-              {sec.items.map((it, i) => {
-                if (it.type === 'stack') {
-                  return (
-                    <FieldStack
-                      key={`stack-${i}`}
-                      span={it.span}
-                      items={it.items || []}
-                      choices={choices}
-                      setChoice={setChoice}
-                    />
-                  );
-                }
-                return (
-                  <FieldCell
-                    key={it.id || `cell-${i}`}
-                    id={it.id}
-                    span={it.span || 1}
-                    choices={choices}
-                    setChoice={setChoice}
-                  />
-                );
-              })}
-            </div>
-          </div>
-        </fieldset>
-      ))}
+      <ConfigRenderer
+        config={CONFIG}
+        choices={choices}
+        setChoice={setChoice}
+        ctx={ctx}
+        translations={translations}
+      />
     </div>
   );
 }
