@@ -4,31 +4,13 @@ import { useGameData } from '../../context/GameDataContext.jsx';
 
 /**
  * TabLivePanel
- * Live panel tilknyttet aktivt tab. Understøtter:
  * - placement: 'bar' | 'dock' | 'inline'
- * - draggable (dock): brug header som "drag handle", gem position i localStorage
- * - collapsible: vis/skjul og husk tilstand i localStorage
- *
- * Props:
- * - placement: 'bar' | 'dock' | 'inline' (default: 'bar')
- * - choices: objekt med dine valg
- * - compute: (choices, ctx) => {
- *     title?: string,
- *     subtitle?: string,
- *     rows?: Array<{ label: string, value: any, desc?: string }>,
- *     total?: { label: string, value: any, desc?: string },
- *     notes?: string[],
- *   }
- * - draggable?: boolean (default: false) — kun relevant for placement='dock'
- * - collapsible?: boolean (default: true)
- * - initialCollapsed?: boolean (default: false)
- * - storageKey?: string (anbefales, fx 'health-tab-live')
- * - stickyTop?: number (kun for placement='bar', default 56)
- * - defaultPosition?: { right?: number, bottom?: number } — initial anchor-pos for dock (default { right:16, bottom:76 })
- * - className?: string, style?: object
+ * - visible: bool — hvis false, render intet (skjuler hele panelet)
+ * - compute(choices, ctx) => result
  */
 export default function TabLivePanel({
   placement = 'bar',
+  visible = true,
   choices,
   compute,
   draggable = false,
@@ -44,11 +26,14 @@ export default function TabLivePanel({
   const { data: gameData } = useGameData();
   const ctx = useMemo(() => ({ summary, gameData }), [summary, gameData]);
 
+  // Early exit: skjul helt
+  if (!visible) return null;
+
   const panelRef = useRef(null);
 
-  // "abs" = bruger top/left; "anchor" = bruger right/bottom fra defaultPosition indtil første drag
+  // position (dock)
   const [posMode, setPosMode] = useState('anchor'); // 'anchor' | 'abs'
-  const [pos, setPos] = useState({ top: 0, left: 0 }); // bruges kun når posMode === 'abs'
+  const [pos, setPos] = useState({ top: 0, left: 0 });
 
   const [collapsed, setCollapsed] = useState(!!initialCollapsed);
   const [dragging, setDragging] = useState(false);
@@ -66,9 +51,7 @@ export default function TabLivePanel({
         setPosMode('abs');
         setPos({ top: saved.top, left: saved.left });
       }
-    } catch (e) {
-      // ignore
-    }
+    } catch {}
   }, [storageKey]);
 
   const persist = useCallback((next) => {
@@ -78,28 +61,26 @@ export default function TabLivePanel({
       const base = prev ? JSON.parse(prev) : {};
       const data = { ...base, ...next };
       localStorage.setItem(`TabLivePanel:${storageKey}`, JSON.stringify(data));
-    } catch (e) {
-      // ignore
-    }
+    } catch {}
   }, [storageKey]);
 
-  // compute result
+  // compute result (altid “live”)
   const result = useMemo(() => {
     try {
-      return typeof compute === 'function' ? compute(choices, ctx) : null;
+      if (!compute) return null;
+      return compute(choices, ctx);
     } catch (e) {
       console.warn('TabLivePanel compute error', e);
       return null;
     }
   }, [choices, ctx, compute]);
 
-  // drag handlers (kun dock + draggable)
+  // drag handlers (dock + draggable)
   const onPointerDown = useCallback((e) => {
     if (placement !== 'dock' || !draggable) return;
     if (!panelRef.current) return;
 
     const rect = panelRef.current.getBoundingClientRect();
-    // Skift til absolut top/left ved første drag
     if (posMode !== 'abs') setPosMode('abs');
 
     setDragging(true);
@@ -109,7 +90,7 @@ export default function TabLivePanel({
       top: rect.top,
       left: rect.left,
     };
-    try { panelRef.current.setPointerCapture(e.pointerId); } catch (_) {}
+    try { panelRef.current.setPointerCapture(e.pointerId); } catch {}
     e.preventDefault();
   }, [placement, draggable, posMode]);
 
@@ -120,7 +101,6 @@ export default function TabLivePanel({
     const nextTop = Math.max(0, dragStart.current.top + dy);
     const nextLeft = Math.max(0, dragStart.current.left + dx);
 
-    // clamp til viewport
     const vw = window.innerWidth;
     const vh = window.innerHeight;
     const w = panelRef.current?.offsetWidth || 320;
@@ -135,25 +115,20 @@ export default function TabLivePanel({
   const endDrag = useCallback((e) => {
     if (!dragging) return;
     setDragging(false);
-    try { panelRef.current?.releasePointerCapture(e.pointerId); } catch (_) {}
-    // persist pos
+    try { panelRef.current?.releasePointerCapture(e.pointerId); } catch {}
     persist({ top: pos.top, left: pos.left });
   }, [dragging, pos, persist]);
 
   const toggleCollapsed = useCallback(() => {
-    if (!collapsible) return;
     setCollapsed((c) => {
       const next = !c;
       persist({ collapsed: next });
       return next;
     });
-  }, [collapsible, persist]);
+  }, [persist]);
 
-  // Render helpers
   const Title = result?.title ? <div style={{ fontWeight: 700 }}>{result.title}</div> : null;
-  const Subtitle = result?.subtitle ? (
-    <div style={{ fontSize: 12, opacity: 0.8, marginTop: 2 }}>{result.subtitle}</div>
-  ) : null;
+  const Subtitle = result?.subtitle ? <div style={{ fontSize: 12, opacity: 0.8, marginTop: 2 }}>{result.subtitle}</div> : null;
 
   const Rows = Array.isArray(result?.rows) && result.rows.length > 0 ? (
     <ul style={{ margin: 8, marginTop: 6, paddingLeft: 0, listStyle: 'none' }}>
@@ -217,7 +192,6 @@ export default function TabLivePanel({
           className="btn"
           style={{ padding: '2px 8px' }}
           aria-expanded={!collapsed}
-          aria-label={collapsed ? 'Expandér live panel' : 'Kollaps live panel'}
         >
           {collapsed ? '▸' : '▾'}
         </button>
@@ -280,7 +254,6 @@ export default function TabLivePanel({
     );
   }
 
-  // inline
   return Core;
 }
 

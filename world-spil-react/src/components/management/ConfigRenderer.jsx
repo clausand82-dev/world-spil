@@ -63,20 +63,31 @@ export default function ConfigRenderer({ config, choices, setChoice, ctx, transl
     const key = c.key || fieldId;
     const disabled = isFieldLocked(fieldCfg) || c.disabled;
 
-    switch (c.type) {
+    const labelOn = resolveControlValue(c.labelOn, choices, ctx) ?? 'Aktiv';
+    const labelOff = resolveControlValue(c.labelOff, choices, ctx) ?? 'Inaktiv';
+    const defaultValue = resolveControlValue(c.default, choices, ctx);
+    const min = resolveControlValue(c.min, choices, ctx);
+    const max = resolveControlValue(c.max, choices, ctx);
+    const step = resolveControlValue(c.step, choices, ctx) ?? c.step ?? 1;
+    const options = resolveControlValue(c.options, choices, ctx) ?? c.options;
+    const width = resolveControlValue(c.width, choices, ctx) ?? c.width;
+    const help = resolveControlValue(c.help, choices, ctx) ?? c.help;
+
+
+switch (c.type) {
       case 'toggle':
         return (
           <MP.Toggle
-            checked={!!effectiveGet(fieldId, fieldCfg, key, c.default || false)}
+            checked={!!effectiveGet(fieldId, fieldCfg, key, defaultValue ?? false)}
             onChange={set(key)}
-            label={effectiveGet(fieldId, fieldCfg, key, c.default || false) ? (c.labelOn || 'Aktiv') : (c.labelOff || 'Inaktiv')}
+            label={effectiveGet(fieldId, fieldCfg, key, defaultValue ?? false) ? labelOn : labelOff}
             disabled={disabled}
           />
         );
       case 'percent':
         return (
           <MP.PercentSlider
-            value={Number(effectiveGet(fieldId, fieldCfg, key, c.default ?? 0))}
+            value={Number(effectiveGet(fieldId, fieldCfg, key, defaultValue ?? 0))}
             onChange={set(key)}
             disabled={disabled}
           />
@@ -84,22 +95,22 @@ export default function ConfigRenderer({ config, choices, setChoice, ctx, transl
       case 'slider':
         return (
           <MP.Slider
-            value={Number(effectiveGet(fieldId, fieldCfg, key, c.default ?? c.min ?? 0))}
+            value={Number(effectiveGet(fieldId, fieldCfg, key, defaultValue ?? min ?? 0))}
             onChange={set(key)}
-            min={c.min ?? 0}
-            max={c.max ?? 100}
-            step={c.step ?? 1}
+            min={min ?? 0}
+            max={max ?? 100}
+            step={step}
             disabled={disabled}
           />
         );
       case 'number':
         return (
           <MP.NumberInput
-            value={effectiveGet(fieldId, fieldCfg, key, c.default ?? 0)}
+            value={effectiveGet(fieldId, fieldCfg, key, defaultValue ?? 0)}
             onChange={set(key)}
-            min={c.min}
-            max={c.max}
-            step={c.step ?? 1}
+            min={min}
+            max={max}
+            step={step}
             suffix={c.suffix}
             placeholder={c.placeholder}
             disabled={disabled}
@@ -108,19 +119,19 @@ export default function ConfigRenderer({ config, choices, setChoice, ctx, transl
       case 'select':
         return (
           <MP.Select
-            value={effectiveGet(fieldId, fieldCfg, key, c.default ?? (c.options?.[0]?.value ?? ''))}
+            value={effectiveGet(fieldId, fieldCfg, key, defaultValue ?? (options?.[0]?.value ?? ''))}
             onChange={set(key)}
-            options={c.options || []}
-            width={c.width ?? 220}
+            options={options || []}
+            width={width ?? 220}
             disabled={disabled}
           />
         );
       case 'checkboxes':
         return (
           <MP.CheckboxGroup
-            value={effectiveGet(fieldId, fieldCfg, key, c.default ?? [])}
+            value={effectiveGet(fieldId, fieldCfg, key, defaultValue ?? [])}
             onChange={set(key)}
-            options={c.options || []}
+            options={options || []}
             columns={c.columns ?? 1}
             disabled={disabled}
           />
@@ -128,9 +139,9 @@ export default function ConfigRenderer({ config, choices, setChoice, ctx, transl
       case 'radio':
         return (
           <MP.RadioGroup
-            value={effectiveGet(fieldId, fieldCfg, key, c.default ?? (c.options?.[0]?.value ?? ''))}
+            value={effectiveGet(fieldId, fieldCfg, key, defaultValue ?? (options?.[0]?.value ?? ''))}
             onChange={set(key)}
-            options={c.options || []}
+            options={options || []}
             columns={c.columns ?? 1}
             disabled={disabled}
           />
@@ -203,6 +214,10 @@ export default function ConfigRenderer({ config, choices, setChoice, ctx, transl
       ))}
     </>
   );
+}
+
+function resolveControlValue(val, choices, ctx) {
+  return (typeof val === 'function') ? val(choices, ctx) : val;
 }
 
 export function effectiveChoicesForConfig(config, choices, ctx) {

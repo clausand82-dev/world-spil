@@ -1,6 +1,5 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import ConfigRenderer from './ConfigRenderer.jsx';
-import TabLivePanel from './TabLivePanel.jsx';
 import useHeaderSummary from '../../hooks/useHeaderSummary.js';
 import { useGameData } from '../../context/GameDataContext.jsx';
 
@@ -15,13 +14,16 @@ const free_dentist_kids_cap = 100;
 const free_dentist_youth_cap = 80;
 const free_dentist_adults_cap = 50;
 
+
 const CONFIG = {
   fields: {
     health_free_dentist_kids: {
       label: 'Gratis tandlæge — børn',
       help: 'Ordning for børn.',
       stageMin: 1,
-      control: { type: 'toggle', key: 'health_free_dentist_kids', default: false, labelOn: 'Aktiv', labelOff: 'Inaktiv' },
+      control: { type: 'toggle', key: 'health_free_dentist_kids', default: false, 
+        labelOn: (choices, ctx) => `Aktiv (~${nf2.format((ctx?.summary?.citizens?.groupCounts?.kids)*free_dentist_kids_cost)} kr i udgift)`,
+  labelOff: 'Inaktiv' },
       tooltip: {
         type: 'statsEx',
         headerMode: 'wrapper',
@@ -48,7 +50,9 @@ const CONFIG = {
       label: 'Gratis tandlæge — unge',
       help: 'Ordning for unge.',
       stageMin: 1,
-      control: { type: 'toggle', key: 'health_free_dentist_youth', default: false, labelOn: 'Aktiv', labelOff: 'Inaktiv' },
+      control: { type: 'toggle', key: 'health_free_dentist_youth', default: false, 
+        labelOn: (choices, ctx) => `Aktiv (~${nf2.format((ctx?.summary?.citizens?.groupCounts?.young)*free_dentist_youth_cost)} kr i udgift)`,
+  labelOff: 'Inaktiv' },
       tooltip: {
         type: 'statsEx',
         headerMode: 'wrapper',
@@ -75,7 +79,9 @@ const CONFIG = {
       label: 'Gratis tandlæge — voksne',
       help: 'Ordning for voksne.',
       stageMin: 1,
-      control: { type: 'toggle', key: 'health_free_dentist_adults', default: false, labelOn: 'Aktiv', labelOff: 'Inaktiv' },
+      control: { type: 'toggle', key: 'health_free_dentist_adults', default: false, 
+        labelOn: (choices, ctx) => `Aktiv (~${nf2.format((ctx?.summary?.citizens?.groupCounts?.adults)*free_dentist_adults_cost)} kr i udgift)`,
+  labelOff: 'Inaktiv' },
       tooltip: {
         type: 'statsEx',
         headerMode: 'wrapper',
@@ -235,9 +241,9 @@ function computeHealthOverview(choices, ctx) {
     title: 'Sundhed – live oversigt',
     subtitle: 'Estimerede konsekvenser af dine nuværende valg',
     rows: [
-      { label: 'Børn tandlæge ('+ kids_amount +' børn) ',  value: costKids.toFixed(2),  desc: kidsOn ? 'Aktiv' : 'Inaktiv' },
-      { label: 'Unge tandlæge ('+ youth_amount +' unge) ',  value: costYouth.toFixed(2), desc: youthOn ? 'Aktiv' : 'Inaktiv' },
-      { label: 'Voksne tandlæge ('+ adults_amount +' voksne) ',        value: costAdults.toFixed(2),   desc: adultsOn ? 'Aktiv' : 'Inaktiv' },
+      { label: 'Børn tandlæge ('+ kids_amount +' børn) ',  value: nf2.format(costKids),  desc: costKids ? 'Aktiv' : 'Inaktiv' },
+      { label: 'Unge tandlæge ('+ youth_amount +' unge) ',  value: nf2.format(costYouth), desc: youthOn ? 'Aktiv' : 'Inaktiv' },
+      { label: 'Voksne tandlæge ('+ adults_amount +' voksne) ',        value: nf2.format(costAdults),   desc: adultsOn ? 'Aktiv' : 'Inaktiv' },
     ],
     total: { label: 'Omkostning ialt:', value: total.toFixed(2) },
     notes: [
@@ -247,28 +253,22 @@ function computeHealthOverview(choices, ctx) {
   };
 }
 
+
+
 export default function HealthTab({ choices, setChoice }) {
   const { data: summary } = useHeaderSummary();
   const { data: gameData } = useGameData();
-  const ctx = useMemo(() => ({ summary, gameData }), [summary, gameData]);
+  const translations = gameData?.i18n?.current ?? {};
+  const ctx = { summary, gameData };
 
   return (
     <div style={{ display: 'grid', gap: 12 }}>
-      <TabLivePanel
-        placement="dock"        // eller 'bar'
-        draggable               // gør flytbar (kun dock)
-        collapsible             // vis kollaps-knap
-        storageKey="health-live"
-        defaultPosition={{ right: 16, bottom: 76 }}
-        choices={choices}
-        compute={computeHealthOverview}
-      />
-
       <ConfigRenderer
         config={CONFIG}
         choices={choices}
         setChoice={setChoice}
         ctx={ctx}
+        translations={translations}
       />
     </div>
   );
