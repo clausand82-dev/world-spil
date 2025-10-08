@@ -38,7 +38,7 @@ export function Toggle({ checked, onChange, label }) {
   );
 }
 
-export function NumberInput({ value, onChange, min, max, step = 1, suffix, placeholder, width = 180 }) {
+export function NumberInput({ value, onChange, min, max, step = 1, suffix, placeholder, width = 60 }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
       <input

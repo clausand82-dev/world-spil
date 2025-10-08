@@ -298,6 +298,24 @@ function metrics_registry(): array {
       ],
     ],
 
+        'traffic' => [
+      'label' => 'Traffic',
+      'usageField' => 'useTraffic',
+      'capacityField' => 'trafficCapacity',
+      'capacityStatKeys' => ['trafficCapacity'],
+      'usageStatKeys' => ['trafficUsage'],
+      'sources' => ['bld'=>true,'add'=>true,'rsd'=>true,'ani'=>true,'res'=>true],
+      'stage' => ['unlock_at'=>4,'visible_at'=>4],
+      'happiness' => ['enabled'=>true, 'weight_key'=>'trafficHappinessWeight'], // eksempel
+      'popularity'=> ['enabled'=>false],
+      'subs' => [],
+      'demands' => [],
+      'flows' => [
+        // Eksempel på borger-flow du kan bruge senere:
+        // ['citizenField'=>'wastePlastic', 'unit'=>'per_hour'],
+      ],
+    ],
+
     
     
 

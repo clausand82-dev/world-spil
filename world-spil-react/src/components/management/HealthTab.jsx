@@ -1,6 +1,8 @@
 import React from 'react';
 import * as MP from './managementparts.jsx';
 import DockHoverCard from '../ui/DockHoverCard.jsx';
+import useHeaderSummary from '../../hooks/useHeaderSummary.js';
+import { useGameData } from '../../context/GameDataContext.jsx';
 
 /* ===== Data og konstanter (ALT samlet ét sted) ===== */
 
@@ -12,6 +14,8 @@ const ZONES = [
   { value: 'west',   label: 'Vest' },
 ];
 
+const APROX_TEXT = "Tallene er vejledende" // Ens tekst der bruges under hver hover overskrift
+
 /**
  * FIELDS – definér hvert felt én gang.
  * - label: vises i MP.Row
@@ -20,22 +24,59 @@ const ZONES = [
  * - render: (choices, setChoice) => JSX (selve input-kontrollen)
  */
 const FIELDS = {
-  traffic_lights_control: {
-    label: 'Lysregulering (on/off)',
-    help: 'Aktiver signalstyring i kryds. Forbedrer flow/sikkerhed, har driftomkostning.',
-    hover: (
-      <div style={{ maxWidth: 360 }}>
-        <strong>Lysregulering</strong>
-        <div style={{ marginTop: 6, fontSize: 13, opacity: 0.9 }}>
-          Koordinerer signaler i kryds for bedre fremkommelighed. Koster drift pr. kryds.
-        </div>
+  public_toilet_access: {
+    label: 'Gratis offentlige toiletter (on/off)',
+    help: 'Aktiverer om toiletter er gratis og tilgængelige for alle eller ej.',
+    hover: (choices, ctx) => {
+      const water_cap = Number(ctx?.summary?.capacities?.waterCapacity ?? 0);
+      const water_usage = Number(ctx?.summary?.usages?.useWater?.total ?? 0);
+      const water_new_usage = water_usage*0.01;
+      const water_dif = water_usage - water_cap;
+      return (
+    <div style={{ maxWidth: 380 }}>
+      <div style={{ fontWeight: 700, marginBottom: 0 }}>Gratis Offentlige toiletter</div>
+      <div style={{ fontWeight: 0, marginBottom: 8, fontSize: 11, color: '#666' }}>{APROX_TEXT}</div>
+      
+      <div style={{ display: 'grid', gap: 6 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
+            <div style={{ minWidth: 140 }}>
+              <div style={{ fontSize: 13, fontWeight: 600 }}>Hygiejne</div>
+              <div style={{ fontSize: 11, color: '#666' }}>Øger hygiejne med 1%</div>
+            </div>
+            <div style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums', minWidth: 60 }}>XXX</div>
+          </div>        
       </div>
-    ),
+
+      <div style={{ display: 'grid', gap: 6 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
+            <div style={{ minWidth: 140 }}>
+              <div style={{ fontSize: 13, fontWeight: 600 }}>Renlighed</div>
+              <div style={{ fontSize: 11, color: '#666' }}>Øger renlighed med 2%</div>
+            </div>
+            <div style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums', minWidth: 60 }}>XXX</div>
+          </div>        
+      </div>
+
+      <div style={{ display: 'grid', gap: 6 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
+            <div style={{ minWidth: 140 }}>
+              <div style={{ fontSize: 13, fontWeight: 600 }}>Vandforbrug</div>
+              <div style={{ fontSize: 11, color: '#666' }}>Øger vandforbrug med 1% (fra {water_usage} til {water_usage + water_new_usage})</div>
+            </div>
+            <div style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums', minWidth: 60 }}>+{water_new_usage}</div>
+          </div>
+        </div>
+
+    </div>
+
+    
+    );
+    },
     render: (choices, setChoice) => (
       <MP.Toggle
-        checked={!!choices.traffic_lights_control}
-        onChange={(v)=>setChoice('traffic_lights_control', v)}
-        label={choices.traffic_lights_control ? 'Aktiveret' : 'Deaktiveret'}
+        checked={!!choices.public_toilet_access}
+        onChange={(v)=>setChoice('public_toilet_access', v)}
+        label={choices.public_toilet_access ? 'Aktiveret' : 'Deaktiveret'}
       />
     ),
   },
@@ -131,14 +172,22 @@ const FIELDS = {
   traffic_public_transport_subsidy_pct: {
     label: 'Offentlig transport – tilskud',
     help: 'Øger kollektiv brug (koster budgettet).',
-    hover: (
-      <div style={{ maxWidth: 360 }}>
-        <strong>Offentlig transport – tilskud</strong>
-        <div style={{ marginTop: 6, fontSize: 13, opacity: 0.95 }}>
-          Reducerer trængsel/emission; påvirker økonomi.
+    hover: (choices, ctx) => {
+      const persons = Number(ctx?.summary?.citizens?.totals?.totalPersons ?? 0);
+      const pct = Number(choices?.traffic_public_transport_subsidy_pct ?? 0);
+      const est = persons * (pct / 100) * 0.01; // eksempel
+      return (
+        <div style={{ maxWidth: 360 }}>
+          <strong>Offentlig transport – tilskud</strong>
+          <div style={{ marginTop: 6, fontSize: 13, opacity: 0.95 }}>
+            Reducerer trængsel/emission; påvirker økonomi.
+          </div>
+          <div style={{ marginTop: 8, fontSize: 12, opacity: 0.8 }}>
+            Estimeret omkostning pr. tick: ~{est.toFixed(2)} DKK
+          </div>
         </div>
-      </div>
-    ),
+      );
+    },
     render: (choices, setChoice) => (
       <MP.PercentSlider
         value={choices.traffic_public_transport_subsidy_pct}
@@ -309,15 +358,7 @@ const SECTIONS = [
     title: 'Trafik regulering',
     cols: 3,
     items: [
-              {
-        type: 'stack',
-        span: 1,
-        items: [
-          { id: 'traffic_lights_control' },
-          { id: 'traffic_lights_control' },
-        ],
-      },
-      { id: 'traffic_lights_control',  span: 1 },
+      { id: 'public_toilet_access',  span: 1 },
       { id: 'traffic_adaptive_level',  span: 1 },
       { id: 'traffic_signal_density',  span: 1 },
       { id: 'traffic_speed_limit_pct', span: 2 },
@@ -328,7 +369,7 @@ const SECTIONS = [
     title: 'Infrastruktur & politik',
     cols: 3,
     items: [
-      // Eksempel på stak: flere checkbox-felter under hinanden i samme celle (span 1)
+      // Eksempel: stak – flere “bokse” under hinanden i samme kolonne
       {
         type: 'stack',
         span: 1,
@@ -353,39 +394,37 @@ const SECTIONS = [
   },
 ];
 
-/* ===== Hjælpere til rendering ===== */
+/* ===== Hjælpere til rendering (modtager ctx) ===== */
 
-// Render ét felt (udenfor en stack): med DockHoverCard og mp-item (grid-celle)
-function FieldCell({ id, span, choices, setChoice }) {
+function FieldCell({ id, span, choices, setChoice, ctx }) {
   const cfg = FIELDS[id];
   if (!cfg) return null;
-  const hoverContent = typeof cfg.hover === 'function' ? cfg.hover(choices) : cfg.hover;
+  const hoverContent = typeof cfg.hover === 'function' ? cfg.hover(choices, ctx) : cfg.hover;
 
   return (
     <DockHoverCard content={hoverContent}>
       <div className={`mp-item span-${Math.max(1, Math.min(3, span || 1))}`}>
         <MP.Row label={cfg.label} help={cfg.help}>
-          {cfg.render(choices, setChoice)}
+          {cfg.render(choices, setChoice, ctx)}
         </MP.Row>
       </div>
     </DockHoverCard>
   );
 }
 
-// Render en usynlig gruppe (stack) – flere felter under hinanden i samme celle
-function FieldStack({ span, items, choices, setChoice, gap = 10 }) {
+function FieldStack({ span, items, choices, setChoice, ctx, gap = 10 }) {
   return (
     <div className={`mp-item span-${Math.max(1, Math.min(3, span || 1))}`}>
       <div style={{ display: 'grid', gap }}>
         {items.map((it, idx) => {
           const cfg = FIELDS[it.id];
           if (!cfg) return null;
-          const hoverContent = typeof cfg.hover === 'function' ? cfg.hover(choices) : cfg.hover;
+          const hoverContent = typeof cfg.hover === 'function' ? cfg.hover(choices, ctx) : cfg.hover;
           return (
             <DockHoverCard key={`${it.id}-${idx}`} content={hoverContent}>
               <div>
                 <MP.Row label={cfg.label} help={cfg.help}>
-                  {cfg.render(choices, setChoice)}
+                  {cfg.render(choices, setChoice, ctx)}
                 </MP.Row>
               </div>
             </DockHoverCard>
@@ -399,6 +438,13 @@ function FieldStack({ span, items, choices, setChoice, gap = 10 }) {
 /* ===== Komponent ===== */
 
 export default function TrafficTab({ choices, setChoice }) {
+  // Hent data fra hooks (lovligt her)
+  const { data: summary } = useHeaderSummary();
+  const { data: gameData } = useGameData();
+
+  // Byg en ctx som sendes videre til alle felter
+  const ctx = { summary, gameData };
+
   return (
     <div style={{ display: 'grid', gap: 12 }}>
       {SECTIONS.map((sec) => (
@@ -415,6 +461,7 @@ export default function TrafficTab({ choices, setChoice }) {
                       items={it.items || []}
                       choices={choices}
                       setChoice={setChoice}
+                      ctx={ctx}
                     />
                   );
                 }
@@ -425,6 +472,7 @@ export default function TrafficTab({ choices, setChoice }) {
                     span={it.span || 1}
                     choices={choices}
                     setChoice={setChoice}
+                    ctx={ctx}
                   />
                 );
               })}

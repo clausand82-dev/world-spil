@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import TrafficTab from '../components/management/TrafficTab.jsx';
 import PoliceTab from '../components/management/PoliceTab.jsx';
 import PublicTab from '../components/management/PublicTab.jsx';
+import HealthTab from '../components/management/HealthTab.jsx';
 
 const LS_KEY = 'ws.management.choices.v1';
 
@@ -63,6 +64,7 @@ export default function ManagementPage() {
   const resetDefaults = () => setChoices({ ...DEFAULTS });
 
   const tabs = [
+    { key: 'health', label: 'Sundhed',  emoji: '🩺' },
     { key: 'traffic', label: 'Trafik',  emoji: '🚦' },
     { key: 'police',  label: 'Politi',  emoji: '👮' },
     { key: 'public',  label: 'Offentlig', emoji: '🏛️' },
@@ -100,6 +102,9 @@ export default function ManagementPage() {
         </div>
 
         {/* Faner – simpelt switch, matcher stil fra OverviewPage */}
+        {activeKey === 'health' && (
+          <HealthTab choices={choices} setChoice={setChoice} />
+        )}
         {activeKey === 'traffic' && (
           <TrafficTab choices={choices} setChoice={setChoice} />
         )}
