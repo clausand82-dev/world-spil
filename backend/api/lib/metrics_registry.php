@@ -300,7 +300,7 @@ function metrics_registry(): array {
 
         'dentist' => [
       'label' => 'Tandlæge',
-      'usageField' => 'useDentist',
+      'usageField' => 'useHealthDentist',
       'capacityField' => 'healthDentistCapacity',
       'capacityStatKeys' => ['healthDentistCapacity'],
       'usageStatKeys' => ['healthDentistUsage'],

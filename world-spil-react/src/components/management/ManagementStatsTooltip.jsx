@@ -2,22 +2,11 @@ import React from 'react';
 import StatsEffectsTooltip from '../ui/StatsEffectsTooltip.jsx';
 
 /**
- * ManagementStatsTooltip
- * Formål:
- * - Viser stats gennem StatsEffectsTooltip (med emoji/undertekst via kendte rå nøgler).
- * - Kan vise title/subtitle i samme header-stil som på bygninger (via headerMode='stats').
- * - Kan vise en ekstra sektion (extras) under stats – både fritekst og beregnede linjer.
- *
- * Props:
- * - title?: string
- * - subtitle?: string
- * - stats: object | string | (choices, ctx) => object|string
- * - extras?: Array<string | {label: string, value?: any, desc?: string}> | (choices, ctx) => samme
- * - translations?: object
- * - headerMode?: 'wrapper' | 'stats' (default 'wrapper')
- *   - 'stats': sender title/subtitle som def.name/def.desc og lader StatsEffectsTooltip tegne headeren
- *   - 'wrapper': viser egen header ovenfor og kalder StatsEffectsTooltip med showHeader={false}
- * - filterKeys?: string[] – fjern støjnøgler (default: ['item','items','title','name','desc'])
+ * Wrapper til konsistent hover på tværs af tabs:
+ * - headerMode="stats": StatsEffectsTooltip tegner titel/undertekst (samme look som bygninger)
+ * - headerMode="wrapper": vi tegner en simpel header, og StatsEffectsTooltip skjuler sin (showHeader=false)
+ * - extras: fritekst/beregningslinjer under stats
+ * - bevarer rå stats-nøgler (emoji/undertekst virker)
  */
 export default function ManagementStatsTooltip({
   title,
@@ -27,23 +16,15 @@ export default function ManagementStatsTooltip({
   translations,
   headerMode = 'wrapper',
   filterKeys = ['item', 'items', 'title', 'name', 'desc'],
-  choices,
-  ctx,
 }) {
-  const resolvedStats = resolveStats(stats, choices, ctx);
-  const filteredStats = filterStats(resolvedStats, filterKeys);
-
-  const resolvedExtras = resolveExtras(extras, choices, ctx);
-
-  // Header-tegning mode
+  const filtered = filterStats(stats, filterKeys);
   const useStatsHeader = headerMode === 'stats';
   const defForStats = useStatsHeader
-    ? { title, desc: subtitle, stats: filteredStats }
-    : { stats: filteredStats };
+    ? { title, desc: subtitle, stats: filtered }
+    : { stats: filtered };
 
   return (
     <div style={{ minWidth: 260, maxWidth: 520 }}>
-      {/* Egen header når headerMode='wrapper' */}
       {!useStatsHeader && (title || subtitle) ? (
         <div style={{ marginBottom: 8 }}>
           {title ? <div style={{ fontWeight: 700, marginBottom: 2 }}>{title}</div> : null}
@@ -51,18 +32,12 @@ export default function ManagementStatsTooltip({
         </div>
       ) : null}
 
-      {/* Stats – header vises kun i 'stats' mode */}
-      <StatsEffectsTooltip
-        def={defForStats}
-        translations={translations}
-        showHeader={useStatsHeader}
-      />
+      <StatsEffectsTooltip def={defForStats} translations={translations} showHeader={useStatsHeader} />
 
-      {/* Extras – hvis noget at vise, lav en divider og en lille liste */}
-      {Array.isArray(resolvedExtras) && resolvedExtras.length > 0 ? (
+      {Array.isArray(extras) && extras.length > 0 ? (
         <div style={{ marginTop: 10, paddingTop: 8, borderTop: '1px solid var(--border)' }}>
           <ul style={{ margin: 0, paddingLeft: 0, listStyle: 'none' }}>
-            {resolvedExtras.map((line, idx) => {
+            {extras.map((line, idx) => {
               if (typeof line === 'string') {
                 return (
                   <li key={idx} style={{ padding: '4px 0' }}>
@@ -71,19 +46,15 @@ export default function ManagementStatsTooltip({
                 );
               }
               const label = String(line?.label ?? '').trim();
-              const value = line?.value;
+              const value = fmtValue(line?.value);
               const desc = String(line?.desc ?? '').trim();
               return (
                 <li key={idx} style={{ padding: '4px 0' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
                     <span style={{ fontWeight: 600 }}>{label}</span>
-                    <span style={{ textAlign: 'right' }}>{fmtValue(value)}</span>
+                    <span style={{ textAlign: 'right' }}>{value}</span>
                   </div>
-                  {desc ? (
-                    <div style={{ fontSize: 12, opacity: 0.75, marginTop: 2 }}>
-                      {desc}
-                    </div>
-                  ) : null}
+                  {desc ? <div style={{ fontSize: 12, opacity: 0.75, marginTop: 2 }}>{desc}</div> : null}
                 </li>
               );
             })}
@@ -94,25 +65,28 @@ export default function ManagementStatsTooltip({
   );
 }
 
-function resolveStats(stats, choices, ctx) {
-  if (typeof stats === 'function') return stats(choices, ctx);
-  return stats || {};
-}
-function resolveExtras(extras, choices, ctx) {
-  if (typeof extras === 'function') return extras(choices, ctx);
-  return extras || [];
-}
 function filterStats(stats, filterKeys) {
-  const src = typeof stats === 'function' ? stats() : stats;
-  if (!src || typeof src !== 'object') return {};
+  if (!stats) return {};
+  if (typeof stats === 'string') return parseStatsString(stats, filterKeys);
+  if (typeof stats !== 'object') return {};
   const out = {};
-  for (const [k, v] of Object.entries(src)) {
-    if (v == null) continue;
-    if (typeof v === 'object') continue; // undgå nested
-    const key = String(k).trim();
+  for (const [k, v] of Object.entries(stats)) {
+    const key = String(k || '').trim();
     if (!key || filterKeys.includes(key)) continue;
-    // Bevar rå nøgle (fx healthCapacity) for at få emoji/undertekst
-    out[key] = v;
+    if (v == null) continue;
+    if (typeof v === 'object') continue;
+    out[key] = v; // rå nøgle bevares
+  }
+  return out;
+}
+function parseStatsString(s, filterKeys) {
+  const parts = String(s).split(';').map(x => x.trim()).filter(Boolean);
+  const out = {};
+  for (const p of parts) {
+    const [k, v = ''] = p.split('=', 2).map(x => x.trim());
+    if (!k || filterKeys.includes(k)) continue;
+    const num = Number(v);
+    out[k] = (!Number.isNaN(num) && v !== '') ? num : v;
   }
   return out;
 }
