@@ -1,11 +1,19 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import ConfigRenderer from './ConfigRenderer.jsx';
+import TabLivePanel from './TabLivePanel.jsx';
 import useHeaderSummary from '../../hooks/useHeaderSummary.js';
 import { useGameData } from '../../context/GameDataContext.jsx';
 
 const nf2 = new Intl.NumberFormat('da-DK', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 const TEXT ="Tal er cirka og kan varierer i endelig udregning.";
+
+const free_dentist_kids_cost = 75;
+const free_dentist_youth_cost = 125;
+const free_dentist_adults_cost = 175;
+const free_dentist_kids_cap = 100;
+const free_dentist_youth_cap = 80;
+const free_dentist_adults_cap = 50;
 
 const CONFIG = {
   fields: {
@@ -21,19 +29,16 @@ const CONFIG = {
         subtitle: 'Øger kapacitet og tilfredshed for børnefamilier.',
         stats: (choices, ctx) => {
           const kids = Number(ctx?.summary?.citizens?.groupCounts?.kids ?? 0);
-          const add_cap = 100;
-          const cost = 75;
           // vis som multiplikator på kapacitet (rå nøgle for emoji/desc)
           return {
-            healthDentistCapacity: add_cap, taxHealthUsage: nf2.format(cost * kids),
+            healthDentistCapacity: free_dentist_kids_cap, taxHealthUsage: nf2.format(free_dentist_kids_cost * kids),
           };
         },
         extras: (choices, ctx) => {
-          const add_cap = 100;
           const dentistUsage = Number(ctx?.summary?.usage?.useDentist ?? 0);
           return [
             { label: 'Kapacitet uden:', value: nf2.format(dentistUsage), desc: `Kapacitet før du aktiver "gratis tandlæge for børn"` },
-            { label: 'Estimeret kapacitet', value: nf2.format(dentistUsage + add_cap), desc: 'Anslået kapacitet efter aktivering' },
+            { label: 'Estimeret kapacitet', value: nf2.format(dentistUsage + free_dentist_kids_cap), desc: 'Anslået kapacitet efter aktivering' },
             TEXT,
           ];
         },
@@ -51,19 +56,16 @@ const CONFIG = {
         subtitle: 'Øger adgang og forebyggelse for unge.',
         stats: (choices, ctx) => {
           const young = Number(ctx?.summary?.citizens?.groupCounts?.young ?? 0);
-          const add_cap = 80;
-          const cost = 125;
           // vis som multiplikator på kapacitet (rå nøgle for emoji/desc)
           return {
-            healthDentistCapacity: add_cap, taxHealthUsage: nf2.format(cost * young),
+            healthDentistCapacity: free_dentist_youth_cap, taxHealthUsage: nf2.format(free_dentist_youth_cost * young),
           };
         },
         extras: (choices, ctx) => {
-          const add_cap = 80;
           const dentistUsage = Number(ctx?.summary?.usage?.useDentist ?? 0);
          return [
             { label: 'Kapacitet uden:', value: nf2.format(dentistUsage), desc: `Kapacitet før du aktiver "gratis tandlæge for unge"` },
-            { label: 'Estimeret kapacitet', value: nf2.format(dentistUsage + add_cap), desc: 'Anslået kapacitet efter aktivering' },
+            { label: 'Estimeret kapacitet', value: nf2.format(dentistUsage + free_dentist_youth_cap), desc: 'Anslået kapacitet efter aktivering' },
             TEXT,
           ];
         },
@@ -85,15 +87,14 @@ const CONFIG = {
           const cost = 175;
           // vis som multiplikator på kapacitet (rå nøgle for emoji/desc)
           return {
-            healthDentistCapacity: add_cap, taxHealthUsage: nf2.format(cost * adults),
+            healthDentistCapacity: free_dentist_adults_cap, taxHealthUsage: nf2.format(free_dentist_adults_cost * adults),
           };
         },
         extras: (choices, ctx) => {
-          const add_cap = 50;
           const dentistUsage = Number(ctx?.summary?.usage?.useDentist ?? 0);
          return [
             { label: 'Kapacitet uden:', value: nf2.format(dentistUsage), desc: `Kapacitet før du aktiver "gratis tandlæge for voksne"` },
-            { label: 'Estimeret kapacitet', value: nf2.format(dentistUsage + add_cap), desc: 'Anslået kapacitet efter aktivering' },
+            { label: 'Estimeret kapacitet', value: nf2.format(dentistUsage + free_dentist_adults_cap), desc: 'Anslået kapacitet efter aktivering' },
             TEXT,
           ];
         },
@@ -210,20 +211,64 @@ const CONFIG = {
   ],
 };
 
+// Eksempel: beregn "live" værdier til panelet ud fra choices + ctx
+function computeHealthOverview(choices, ctx) {
+  const kids_amount = ctx?.summary?.citizens?.groupCounts?.kids ?? 0;
+  const youth_amount = ctx?.summary?.citizens?.groupCounts?.young ?? 0;
+  const adults_amount = ctx?.summary?.citizens?.groupCounts?.adults ?? 0;
+
+  const persons = Number(ctx?.summary?.citizens?.totals?.totalPersons ?? 0);
+  const kidsOn   = !!choices?.health_free_dentist_kids;
+  const youthOn  = !!choices?.health_free_dentist_youth;
+  const adultsOn = !!choices?.health_free_dentist_adults;
+  const subsidy  = Number(choices?.health_subsidy_pct ?? 0);
+
+  // Dummy-model – justér til din egen
+  const costKids  = free_dentist_kids_cost * kids_amount;
+  const costYouth = free_dentist_youth_cost * youth_amount;
+  const costAdults   = free_dentist_adults_cost * adults_amount;
+
+  const total = costKids + costYouth + costAdults;
+
+
+  return {
+    title: 'Sundhed – live oversigt',
+    subtitle: 'Estimerede konsekvenser af dine nuværende valg',
+    rows: [
+      { label: 'Børn tandlæge ('+ kids_amount +' børn) ',  value: costKids.toFixed(2),  desc: kidsOn ? 'Aktiv' : 'Inaktiv' },
+      { label: 'Unge tandlæge ('+ youth_amount +' unge) ',  value: costYouth.toFixed(2), desc: youthOn ? 'Aktiv' : 'Inaktiv' },
+      { label: 'Voksne tandlæge ('+ adults_amount +' voksne) ',        value: costAdults.toFixed(2),   desc: adultsOn ? 'Aktiv' : 'Inaktiv' },
+    ],
+    total: { label: 'Omkostning ialt:', value: total.toFixed(2) },
+    notes: [
+      'Tallene er estimater for UI-forhåndsvisning.',
+      'Faktiske effekter beregnes i backend/effects_rules.',
+    ],
+  };
+}
+
 export default function HealthTab({ choices, setChoice }) {
   const { data: summary } = useHeaderSummary();
   const { data: gameData } = useGameData();
-  const translations = gameData?.i18n?.current ?? {};
-  const ctx = { summary, gameData };
+  const ctx = useMemo(() => ({ summary, gameData }), [summary, gameData]);
 
   return (
     <div style={{ display: 'grid', gap: 12 }}>
+      <TabLivePanel
+        placement="dock"        // eller 'bar'
+        draggable               // gør flytbar (kun dock)
+        collapsible             // vis kollaps-knap
+        storageKey="health-live"
+        defaultPosition={{ right: 16, bottom: 76 }}
+        choices={choices}
+        compute={computeHealthOverview}
+      />
+
       <ConfigRenderer
         config={CONFIG}
         choices={choices}
         setChoice={setChoice}
         ctx={ctx}
-        translations={translations}
       />
     </div>
   );
