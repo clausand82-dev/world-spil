@@ -3,13 +3,6 @@ import DockHoverCard from '../ui/DockHoverCard.jsx';
 import ManagementStatsTooltip from './ManagementStatsTooltip.jsx';
 import * as MP from './managementparts.jsx';
 
-/**
- * props:
- * - config: { fields, sections }
- * - choices, setChoice
- * - ctx: fx { summary, gameData }
- * - translations
- */
 export default function ConfigRenderer({ config, choices, setChoice, ctx, translations }) {
   const { fields = {}, sections = [] } = config || {};
 
@@ -27,29 +20,30 @@ export default function ConfigRenderer({ config, choices, setChoice, ctx, transl
   };
 
   const isFieldVisible = (cfg) => {
-    if (!isStageOk(cfg)) return !!cfg?.showWhenLocked; // vis evt disabled
+    if (!isStageOk(cfg)) return !!cfg?.showWhenLocked;
     if (typeof cfg?.visible === 'function') return !!cfg.visible(choices, ctx);
     return cfg?.visible !== false;
   };
-
   const isFieldLocked = (cfg) => !isStageOk(cfg);
 
   const renderTooltip = (fieldId, fieldCfg) => {
-    // stats-baseret tooltip
-    if (fieldCfg?.tooltip?.type === 'stats') {
-      const title = fieldCfg.tooltip.title || fieldCfg.label || fieldId;
-      const stats = typeof fieldCfg.tooltip.stats === 'function'
-        ? fieldCfg.tooltip.stats(choices, ctx)
-        : (fieldCfg.tooltip.stats || {});
+    // Stats-baseret tooltip + ekstra tekst
+    if (fieldCfg?.tooltip?.type === 'stats' || fieldCfg?.tooltip?.type === 'statsEx') {
+      const { title, subtitle, stats, extras, headerMode } = fieldCfg.tooltip;
       return (
         <ManagementStatsTooltip
-          title={title}
+          title={title || fieldCfg.label || fieldId}
+          subtitle={subtitle || ''}
           stats={stats}
+          extras={extras}
           translations={translations}
+          headerMode={headerMode || 'wrapper'}
+          choices={choices}
+          ctx={ctx}
         />
       );
     }
-    // fri hover (jsx eller function)
+    // Fri hover (jsx/funktion)
     if (fieldCfg?.hover) {
       return typeof fieldCfg.hover === 'function' ? fieldCfg.hover(choices, ctx) : fieldCfg.hover;
     }
@@ -57,7 +51,6 @@ export default function ConfigRenderer({ config, choices, setChoice, ctx, transl
   };
 
   const effectiveGet = (fieldId, cfg, controlKey, fallback) => {
-    // Locked => anvend default, ellers choices
     if (isFieldLocked(cfg)) return (cfg.control?.default ?? fallback);
     const v = choices?.[controlKey];
     return v === undefined ? (cfg.control?.default ?? fallback) : v;
@@ -169,7 +162,6 @@ export default function ConfigRenderer({ config, choices, setChoice, ctx, transl
   };
 
   const Cell = ({ item }) => {
-    // item: string id | { id, span } | { stack:[ids], span, gap? }
     const span = Math.max(1, Math.min(3, Number(item.span || 1)));
     if (typeof item === 'string' || item.id) {
       const id = typeof item === 'string' ? item : item.id;
@@ -191,9 +183,8 @@ export default function ConfigRenderer({ config, choices, setChoice, ctx, transl
     return null;
   };
 
-  // Sektion-level stage‑gating
   const sectionVisible = (sec) => {
-    if (!isStageOk(sec)) return !!sec.showWhenLocked; // evt. vis tom/disabled sektion
+    if (!isStageOk(sec)) return !!sec.showWhenLocked;
     if (typeof sec.visible === 'function') return !!sec.visible(choices, ctx);
     return sec.visible !== false;
   };
@@ -214,10 +205,6 @@ export default function ConfigRenderer({ config, choices, setChoice, ctx, transl
   );
 }
 
-/**
- * Hjælper: vend tilbage med “effektive” valg (locked felter erstattet med deres default).
- * Brug fx når du kalder preview-endpoint.
- */
 export function effectiveChoicesForConfig(config, choices, ctx) {
   const out = { ...(choices || {}) };
   const fields = config?.fields || {};

@@ -61,6 +61,9 @@ function defaultLabelMap() {
     'wasteOtherCapacity': { label: t("ui.emoji.waste.h1")+'Affald (andet) kapacitet', desc: 'Hvor meget affald (andet) der kan opbevares og behandles.' },
     'productClothUsage': { label: t("ui.emoji.cloth.h1")+'Tøj forbrug', desc: 'Mængde tøj der er brug for.' },
     'productClothCapacity': { label: t("ui.emoji.cloth.h1")+'Tøj Kapacitet', desc: 'Kapacitet til tøj.' },
+    'taxHealthUsage': { label: '💹Offentlig udgifter - sundhed', desc: 'Øger offentlige udgifter.' },
+    'healthDentistUsage': { label: '😁Belægning på tandlæger', desc: 'Forbruget af tandlæge kapaciteten' },
+    'healthDentistCapacity': { label: '😁Tandlæge kapacitet', desc: 'Øger mængden af tandlæge kapacitet' },
 
     // ... tilføj flere efter behov
   };

@@ -298,6 +298,24 @@ function metrics_registry(): array {
       ],
     ],
 
+        'dentist' => [
+      'label' => 'Tandlæge',
+      'usageField' => 'useDentist',
+      'capacityField' => 'healthDentistCapacity',
+      'capacityStatKeys' => ['healthDentistCapacity'],
+      'usageStatKeys' => ['healthDentistUsage'],
+      'sources' => ['bld'=>true,'add'=>true,'rsd'=>true,'ani'=>true,'res'=>true],
+      'stage' => ['unlock_at'=>2,'visible_at'=>2],
+      'happiness' => ['enabled'=>false, 'weight_key'=>'healthDentistHappinessWeight'], // eksempel
+      'popularity'=> ['enabled'=>false],
+      'subs' => [],
+      'demands' => [],
+      'flows' => [
+        // Eksempel på borger-flow du kan bruge senere:
+        // ['citizenField'=>'wastePlastic', 'unit'=>'per_hour'],
+      ],
+    ],
+
         'traffic' => [
       'label' => 'Traffic',
       'usageField' => 'useTraffic',
