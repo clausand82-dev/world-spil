@@ -85,9 +85,27 @@ function metrics_registry(): array {
       'stage' => ['unlock_at'=>1,'visible_at'=>1],
       'happiness' => ['enabled'=>true, 'weight_key'=>'healthHappinessWeight'],
       'popularity'=> ['enabled'=>true, 'weight_key'=>'healthPopularityWeight'],
-      'subs' => [],
+      'subs' => ['healthDentist'],
       'demands' => [],
       'flows' => [],
+
+    'healthDentist' => [
+      'label' => 'Tandlæge',
+      'usageField' => 'useHealthDentist',
+      'capacityField' => 'healthDentistCapacity',
+      'capacityStatKeys' => ['healthDentistCapacity'],
+      'usageStatKeys' => ['healthDentistUsage'],
+      'sources' => ['bld'=>true,'add'=>true,'rsd'=>true,'ani'=>true,'res'=>true],
+      'stage' => ['unlock_at'=>1,'visible_at'=>1],
+      'happiness' => ['enabled'=>true, 'weight_key'=>'healthDentistHappinessWeight'], 
+      'popularity'=> ['enabled'=>false],
+      'parent' => 'health',
+      'demands' => [
+        ['id'=>'demandsHealthDentist', 'type'=>'minShare', 'domain'=>'health', 'basis'=>'usage_share_in_parent', 'config_key'=>'demandsHealthDentist', 'parent'=>'useHealth'],
+      ],
+      'flows' => [],
+    ],
+
     ],
       // Tilføj under $metrics = [ ... ] som ny top-level metric:
     'healthUnit' => [
@@ -298,21 +316,7 @@ function metrics_registry(): array {
       ],
     ],
 
-        'dentist' => [
-      'label' => 'Tandlæge',
-      'usageField' => 'useHealthDentist',
-      'capacityField' => 'healthDentistCapacity',
-      'capacityStatKeys' => ['healthDentistCapacity'],
-      'usageStatKeys' => ['healthDentistUsage'],
-      'sources' => ['bld'=>true,'add'=>true,'rsd'=>true,'ani'=>true,'res'=>true],
-      'stage' => ['unlock_at'=>2,'visible_at'=>2],
-      'happiness' => ['enabled'=>false, 'weight_key'=>'healthDentistHappinessWeight'], // eksempel
-      'popularity'=> ['enabled'=>false],
-      'subs' => [],
-      'demands' => [],
-      'flows' => [
-      ],
-    ],
+
 
             'police' => [
       'label' => 'Politi',

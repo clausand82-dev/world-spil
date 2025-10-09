@@ -120,7 +120,7 @@ try {
   foreach ($CAP_KEYS as $capName => $keys) {
     $b = cu_table_exists($pdo, 'buildings')     ? cu_sum_capacity_from_table($pdo, $uid, $bldDefs, 'buildings', 'bld_id', 'level', $keys) : 0.0;
     $a = cu_table_exists($pdo, 'addon')         ? cu_sum_capacity_from_table($pdo, $uid, $addDefs, 'addon',     'add_id', 'level', $keys) : 0.0;
-    $r = cu_table_exists($pdo, 'user_research') ? cu_sum_capacity_from_research($pdo, $uid, $rsdDefs, $keys) : 0.0;
+    $r = cu_table_exists($pdo, 'research') ? cu_sum_capacity_from_research($pdo, $uid, $rsdDefs, $keys) : 0.0;
     $ani = cu_table_exists($pdo, 'animals')     ? cu_sum_capacity_from_animals($pdo, $uid, $aniDefs, $keys) : 0.0;
     $inv = cu_table_exists($pdo, 'inventory')   ? cu_sum_capacity_from_inventory($pdo, $uid, $resDefs, $keys) : 0.0;
 
@@ -138,7 +138,7 @@ try {
           ? cu_list_capacity_from_table($pdo, $uid, $bldDefs, 'buildings', 'bld_id', 'level', $keys, 'cu_def_name') : [];
     $listA = cu_table_exists($pdo, 'addon')
           ? cu_list_capacity_from_table($pdo, $uid, $addDefs, 'addon', 'add_id', 'level', $keys, 'cu_def_name') : [];
-    $listR = cu_table_exists($pdo, 'user_research')
+    $listR = cu_table_exists($pdo, 'research')
           ? cu_list_capacity_from_research($pdo, $uid, $rsdDefs, $keys, 'cu_def_name') : [];
     $listAni = cu_table_exists($pdo, 'animals')
           ? cu_list_capacity_from_animals($pdo, $uid, $aniDefs, $keys, 'cu_def_name') : [];
@@ -167,17 +167,24 @@ try {
     ($capacities['powerNuclearCapacity'] ?? 0) +
     ($capacities['powerCapacity']        ?? 0)
   );
+  $capacities['healthCapacity'] = (float)(
+    ($capacities['healthDentistCapacity']  ?? 0) +
+    ($capacities['healthCapacity']   ?? 0)
+  );
 
   // Usages (citizen-baseret)
   $USAGE_FIELDS = [
-    'useHousing','useProvision','useWater','useHeat','useHealth',
+    'useHousing','useProvision','useWater',
     'useCloth','useMedicin','wasteOther',
     'deathHealthExpose','deathHealthWeight','deathHealthBaseline',
-    'birthRate','movingIn','movingOut',
+    'birthRate','movingIn','movingOut', 'usePolice', 'useSocial',
 
     // Heat/Power sub uses
-    'useHeatFossil','useHeatGreen','useHeatNuclear',
+    'useHeat','useHeatFossil','useHeatGreen','useHeatNuclear',
     'usePower','usePowerFossil','usePowerGreen','usePowerNuclear',
+
+    // Health sub-uses
+    'useHealth','useHealthDentist',
   ];
   $usages = [];
   foreach ($USAGE_FIELDS as $field) {
@@ -208,7 +215,7 @@ foreach ($registry as $id => $m) {
   if (!empty($src['add']) && cu_table_exists($pdo, 'addon')) {
     $infra += cu_sum_capacity_from_table($pdo, $uid, $addDefs, 'addon', 'add_id', 'level', $usageKeys);
   }
-  if (!empty($src['rsd']) && cu_table_exists($pdo, 'user_research')) {
+  if (!empty($src['rsd']) && cu_table_exists($pdo, 'research')) {
     $infra += cu_sum_capacity_from_research($pdo, $uid, $rsdDefs, $usageKeys);
   }
   if (!empty($src['ani']) && cu_table_exists($pdo, 'animals')) {
@@ -233,8 +240,12 @@ foreach ($registry as $id => $m) {
   $useHeatTop  = (float)($usages['useHeat']['total']  ?? 0);
   $usePowerTop = (float)($usages['usePower']['total'] ?? 0);
 
+  $useHealthTop  = (float)($usages['useHealth']['total']  ?? 0);
+  $healthDen  = (float)($usages['useHealthDentist']['total'] ?? 0);
+
   $usages['useHeat']['total']  = $heatF + $heatG + $heatN + $useHeatTop;
   $usages['usePower']['total'] = $powerF + $powerG + $powerN + $usePowerTop;
+  $usages['useHealth']['total'] = $healthDen + $useHealthTop;
 
   // === Konfiguration ===
   $cfgIniPath = __DIR__ . '/../../data/config/config.ini';

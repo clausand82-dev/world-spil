@@ -8,6 +8,7 @@ export function useStatsLabels() {
   food: t("ui.emoji.provision.h1") + ' ' + t("ui.stats.provision.h1") || 'Provision',
   water: t("ui.emoji.water.h1") + ' ' + t("ui.stats.water.h1") || 'Vand',
   health: t("ui.emoji.health.h1") + ' ' + t("ui.stats.health.h1") || 'Sundhed',
+  healthDentist: t("ui.emoji.health.h1") + ' ' + t("ui.stats.health_dentist.h1") || 'Tandlæge',
   // Aggregerede
   heat: t("ui.emoji.heat.h1") + ' ' + t("ui.stats.heat.h1") || 'Varme',
   power: t("ui.emoji.power.h1") + ' ' + t("ui.stats.power.h1") || 'Strøm',
@@ -19,7 +20,7 @@ export function useStatsLabels() {
   powerGreen: t("ui.emoji.power_green.h1") + ' ' + t("ui.stats.power_green.h1") || 'Strøm (Green)',
   powerNuclear: t("ui.emoji.power_nuclear.h1") + ' ' + t("ui.stats.power_nuclear.h1") || 'Strøm (Nuclear)',
   cloth: t("ui.emoji.product_cloth.h1") + ' ' + t("ui.stats.product_cloth.h1") || 'Tøj',
-  medicin: t("ui.emoji.product_medicin.h1") + ' ' + t("ui.stats.product_medicin.h1") || 'Medicin',
+  medicin: t("ui.emoji.product_medicin.h1") + ' ' + t("ui.stats.product_medicin.h1") || 'Medicin',  
   }), [t]);
 }
 

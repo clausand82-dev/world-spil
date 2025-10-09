@@ -38,11 +38,12 @@ import {useStatsLabels, happinessEmojiFromScore} from '../../hooks/useStatsLabel
 const GROUPS = {
   heat:  ['heatGreen', 'heatNuclear', 'heatFossil'],
   power: ['powerGreen', 'powerNuclear', 'powerFossil'],
+  health: ['healthDentist'],
 };
 
 // Mapping af nøgle → usage/capacity keys fra summary (FALLBACK når impacts mangler)
 const MAP = {
-  health:       { usage: 'useHealth',       cap: 'healthCapacity' },
+  /*health:       { usage: 'useHealth',       cap: 'healthCapacity' },
   food:         { usage: 'useProvision',    cap: 'provisionCapacity' },
   water:        { usage: 'useWater',        cap: 'waterCapacity' },
   housing:      { usage: 'useHousing',      cap: 'housingCapacity' },
@@ -53,7 +54,7 @@ const MAP = {
   heatNuclear:  { usage: 'useHeatNuclear',  cap: 'heatNuclearCapacity' },
   powerFossil:  { usage: 'usePowerFossil',  cap: 'powerFossilCapacity' },
   powerGreen:   { usage: 'usePowerGreen',   cap: 'powerGreenCapacity' },
-  powerNuclear: { usage: 'usePowerNuclear', cap: 'powerNuclearCapacity' },
+  powerNuclear: { usage: 'usePowerNuclear', cap: 'powerNuclearCapacity' },*/
 };
 
 // Beregn score som i backend
