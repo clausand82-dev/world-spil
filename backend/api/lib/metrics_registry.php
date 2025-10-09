@@ -287,8 +287,8 @@ function metrics_registry(): array {
       'capacityStatKeys' => ['socialCapacity'],
       'usageStatKeys' => ['socialUsage'],
       'sources' => ['bld'=>true,'add'=>true,'rsd'=>true,'ani'=>true,'res'=>true],
-      'stage' => ['unlock_at'=>3,'visible_at'=>3],
-      'happiness' => ['enabled'=>true, 'weight_key'=>'socialHappinessWeight'], // eksempel
+      'stage' => ['unlock_at'=>2,'visible_at'=>2],
+      'happiness' => ['enabled'=>false, 'weight_key'=>'socialHappinessWeight'], // eksempel
       'popularity'=> ['enabled'=>false],
       'subs' => [],
       'demands' => [],
@@ -311,8 +311,22 @@ function metrics_registry(): array {
       'subs' => [],
       'demands' => [],
       'flows' => [
-        // Eksempel på borger-flow du kan bruge senere:
-        // ['citizenField'=>'wastePlastic', 'unit'=>'per_hour'],
+      ],
+    ],
+
+            'police' => [
+      'label' => 'Politi',
+      'usageField' => 'usePolice',
+      'capacityField' => 'policeCapacity',
+      'capacityStatKeys' => ['policeCapacity'],
+      'usageStatKeys' => ['policeUsage'],
+      'sources' => ['bld'=>true,'add'=>true,'rsd'=>true,'ani'=>true,'res'=>true],
+      'stage' => ['unlock_at'=>2,'visible_at'=>2],
+      'happiness' => ['enabled'=>false, 'weight_key'=>'policeHappinessWeight'], // eksempel
+      'popularity'=> ['enabled'=>false],
+      'subs' => [],
+      'demands' => [],
+      'flows' => [
       ],
     ],
 

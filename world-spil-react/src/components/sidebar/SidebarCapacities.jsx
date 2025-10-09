@@ -149,7 +149,7 @@ export default function SidebarCapacities() {
     if (metricsMeta) return null;
     if (!data) return null;
 
-    const rows = [
+    /*const rows = [
       { id: 'housing',    label: 'Housing',   used: usages.useHousing?.total,   cap: capacities.housingCapacity,        capField: 'housingCapacity' },
       { id: 'food',       label: 'Provision', used: usages.useProvision?.total, cap: capacities.provisionCapacity,      capField: 'provisionCapacity' },
       { id: 'water',      label: 'Water',     used: usages.useWater?.total,     cap: capacities.waterCapacity,          capField: 'waterCapacity' },
@@ -171,7 +171,7 @@ export default function SidebarCapacities() {
       { id: 'cloth',      label: 'Cloth',     used: usages.useCloth?.total,     cap: capacities.productClothCapacity,   capField: 'productClothCapacity' },
       { id: 'medicin',    label: 'Medicin',   used: usages.useMedicin?.total,   cap: capacities.productMedicinCapacity, capField: 'productMedicinCapacity' },
       { id: 'wasteOther', label: 'WasteOther',used: usages.wasteOther?.total,   cap: capacities.wasteOtherCapacity,     capField: 'wasteOtherCapacity' },
-    ];
+    ];*/
 
     const makeHoverForRow = (row) => {
       if (row.subs && row.subs.length) {

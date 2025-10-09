@@ -123,6 +123,7 @@ generelArmor:
     <usePower>0.1</usePower>
     <usePolice>0.1</usePolice>
     <useHealth>0.4</useHealth>
+    <useHealthDentist>0.5</useHealthDentist>
     <useFire>0.1</useFire>
     <useEducation>0.1</useEducation>
     <useCrime>0</useCrime>
@@ -197,7 +198,7 @@ generelArmor:
     <demandsVechicleTypeHitchHike></demandsVechicleTypeHitchHike>
     <demandsVechicleTypeBicycle></demandsVechicleTypeBicycle>
     <demandsVechicleTypeWalk></demandsVechicleTypeWalk>
-    <taxPay>0</taxPay>    
+    <taxPay>0</taxPay>
     <taxPayMax></taxPayMax>
     <taxPayRageRate></taxPayRageRate>
     <wastePlastic>0.5</wastePlastic>
@@ -236,6 +237,7 @@ generelArmor:
     <usePower>0.4</usePower>
     <usePolice>0.3</usePolice>
     <useHealth>0.6</useHealth>
+    <useHealthDentist>0.9</useHealthDentist>
     <useFire>0.2</useFire>
     <useEducation>0.2</useEducation>
     <useCrime>0.01</useCrime>
@@ -349,6 +351,7 @@ generelArmor:
     <usePower>0.4</usePower>
     <usePolice>0.1</usePolice>
     <useHealth>0.5</useHealth>
+    <useHealthDentist>1.2</useHealthDentist>
     <useFire>0.2</useFire>
     <useEducation>1</useEducation>
     <useCrime>0.15</useCrime>
@@ -462,6 +465,7 @@ generelArmor:
     <usePower>0.8</usePower>
     <usePolice>0.2</usePolice>
     <useHealth>0.4</useHealth>
+    <useHealthDentist>1.3</useHealthDentist>
     <useFire>0.3</useFire>
     <useEducation>1</useEducation>
     <useCrime>0.1</useCrime>
@@ -575,6 +579,7 @@ generelArmor:
     <usePower>1</usePower>
     <usePolice>0.3</usePolice>
     <useHealth>0.3</useHealth>
+    <useHealthDentist>0.8</useHealthDentist>
     <useFire>0.4</useFire>
     <useEducation>1</useEducation>
     <useCrime>0.4</useCrime>
@@ -688,6 +693,7 @@ generelArmor:
     <usePower>0.5</usePower>
     <usePolice>0.2</usePolice>
     <useHealth>1.2</useHealth>
+    <useHealthDentist>0.2</useHealthDentist>
     <useFire>0.3</useFire>
     <useEducation>0.1</useEducation>
     <useCrime>0.1</useCrime>
@@ -801,6 +807,7 @@ generelArmor:
     <usePower>1</usePower>
     <usePolice>0.1</usePolice>
     <useHealth>0.8</useHealth>
+    <useHealthDentist>0.8</useHealthDentist>
     <useFire>0.2</useFire>
     <useEducation>0.6</useEducation>
     <useCrime>0.05</useCrime>
@@ -914,6 +921,7 @@ generelArmor:
     <usePower>1.1</usePower>
     <usePolice>0.5</usePolice>
     <useHealth>1.1</useHealth>
+    <useHealthDentist>0.9</useHealthDentist>
     <useFire>0.8</useFire>
     <useEducation>0.1</useEducation>
     <useCrime>1.1</useCrime>
@@ -1027,6 +1035,7 @@ generelArmor:
     <usePower>0.9</usePower>
     <usePolice>0.5</usePolice>
     <useHealth>0.8</useHealth>
+    <useHealthDentist>0.95</useHealthDentist>
     <useFire>0.01</useFire>
     <useEducation>0.5</useEducation>
     <useCrime>0.2</useCrime>
@@ -1140,6 +1149,7 @@ generelArmor:
     <usePower>1.1</usePower>
     <usePolice>0.6</usePolice>
     <useHealth>0.8</useHealth>
+    <useHealthDentist>1.05</useHealthDentist>
     <useFire>0.03</useFire>
     <useEducation>0.2</useEducation>
     <useCrime>1.1</useCrime>
@@ -1253,6 +1263,7 @@ generelArmor:
     <usePower>1.1</usePower>
     <usePolice>0.2</usePolice>
     <useHealth>0.5</useHealth>
+    <useHealthDentist>1.1</useHealthDentist>
     <useFire>0.02</useFire>
     <useEducation>0.9</useEducation>
     <useCrime>0.3</useCrime>
@@ -1366,6 +1377,7 @@ generelArmor:
     <usePower>1</usePower>
     <usePolice>0.4</usePolice>
     <useHealth>0.9</useHealth>
+    <useHealthDentist>1.3</useHealthDentist>
     <useFire>0.04</useFire>
     <useEducation>0.7</useEducation>
     <useCrime>0.9</useCrime>
@@ -1479,6 +1491,7 @@ generelArmor:
     <usePower>0.5</usePower>
     <usePolice>0.1</usePolice>
     <useHealth>1.1</useHealth>
+    <useHealthDentist>0.6</useHealthDentist>
     <useFire>0.3</useFire>
     <useEducation>0.6</useEducation>
     <useCrime>0.4</useCrime>
@@ -1592,6 +1605,7 @@ generelArmor:
     <usePower>0.6</usePower>
     <usePolice>0.3</usePolice>
     <useHealth>1.3</useHealth>
+    <useHealthDentist>0.4</useHealthDentist>
     <useFire>0.9</useFire>
     <useEducation>0.4</useEducation>
     <useCrime>1.2</useCrime>
@@ -1705,6 +1719,7 @@ generelArmor:
     <usePower>1.2</usePower>
     <usePolice>0.1</usePolice>
     <useHealth>0.7</useHealth>
+    <useHealthDentist>1.6</useHealthDentist>
     <useFire>0.2</useFire>
     <useEducation>0.1</useEducation>
     <useCrime>0.4</useCrime>
@@ -1818,6 +1833,7 @@ generelArmor:
     <usePower>1.1</usePower>
     <usePolice>0.4</usePolice>
     <useHealth>0.4</useHealth>
+    <useHealthDentist>1.7</useHealthDentist>
     <useFire>0.8</useFire>
     <useEducation>0.05</useEducation>
     <useCrime>1.4</useCrime>
@@ -1931,6 +1947,7 @@ generelArmor:
     <usePower>1.2</usePower>
     <usePolice>0.7</usePolice>
     <useHealth>0.7</useHealth>
+    <useHealthDentist>1.8</useHealthDentist>
     <useFire>0.2</useFire>
     <useEducation>0.1</useEducation>
     <useCrime>0.4</useCrime>
@@ -2044,6 +2061,7 @@ generelArmor:
     <usePower>1.1</usePower>
     <usePolice>0.9</usePolice>
     <useHealth>0.4</useHealth>
+    <useHealthDentist>2</useHealthDentist>
     <useFire>0.9</useFire>
     <useEducation>0.07</useEducation>
     <useCrime>1.5</useCrime>
@@ -2157,6 +2175,7 @@ generelArmor:
     <usePower>1</usePower>
     <usePolice>0.15</usePolice>
     <useHealth>0.1</useHealth>
+    <useHealthDentist>0.8</useHealthDentist>
     <useFire>0.4</useFire>
     <useEducation>0.01</useEducation>
     <useCrime>0.8</useCrime>
@@ -2270,6 +2289,7 @@ generelArmor:
     <usePower>0.9</usePower>
     <usePolice>1.1</usePolice>
     <useHealth>0.1</useHealth>
+    <useHealthDentist>0.6</useHealthDentist>
     <useFire>0.5</useFire>
     <useEducation>0.01</useEducation>
     <useCrime>1.1</useCrime>
@@ -2383,6 +2403,7 @@ generelArmor:
     <usePower>1.1</usePower>
     <usePolice>0.4</usePolice>
     <useHealth>0.6</useHealth>
+    <useHealthDentist>0.7</useHealthDentist>
     <useFire>0.5</useFire>
     <useEducation>0.06</useEducation>
     <useCrime>0.3</useCrime>
@@ -2496,6 +2517,7 @@ generelArmor:
     <usePower>0.9</usePower>
     <usePolice>0.7</usePolice>
     <useHealth>0.7</useHealth>
+    <useHealthDentist>0.6</useHealthDentist>
     <useFire>0.6</useFire>
     <useEducation>0.06</useEducation>
     <useCrime>0.9</useCrime>
@@ -2609,6 +2631,7 @@ generelArmor:
     <usePower>0.01</usePower>
     <usePolice>0.8</usePolice>
     <useHealth>0.02</useHealth>
+    <useHealthDentist>0.4</useHealthDentist>
     <useFire>0.03</useFire>
     <useEducation>0</useEducation>
     <useCrime>0.6</useCrime>
@@ -2722,6 +2745,7 @@ generelArmor:
     <usePower>0.01</usePower>
     <usePolice>1.1</usePolice>
     <useHealth>0.03</useHealth>
+    <useHealthDentist>0.3</useHealthDentist>
     <useFire>0.03</useFire>
     <useEducation>0</useEducation>
     <useCrime>0.8</useCrime>
@@ -2828,4 +2852,5 @@ generelArmor:
     <generelStrength></generelStrength>
     <generelArmor></generelArmor>
   </citizens>
+
 </citizensData>
