@@ -27,6 +27,7 @@ export default function HeaderCitizensBadge() {
 
   const total  = toNum(data?.citizens?.totals?.totalPersons ?? popSum.total ?? popState.total);
   const adults = toNum(popSum.adultsTotal ?? popState.adults);
+  const adultsUnemployed = toNum(popGroups?.adultsUnemployed);
   const young  = toNum(popSum.young ?? popState.young);
   const kids   = toNum(popSum.kids ?? popState.kids);
   const baby   = toNum(popSum.baby ?? popState.baby);
@@ -98,9 +99,9 @@ export default function HeaderCitizensBadge() {
               <Row label={`${t("ui.emoji.adults_worker.h1")} ${t("ui.citizens.adults_worker.h1")}`}  value={fmt(adultsWorker)} />
               <Row label={`${t("ui.emoji.adults_soldier.h1")} ${t("ui.citizens.adults_soldier.h1")}`}  value={fmt(adultsSoldier)} />
               <Row label={`${t("ui.emoji.old.h1")} ${t("ui.citizens.old.h1")}`}  value={fmt(old)} />
-              <Row label={`${t("ui.emoji.adults_unemployed.h1")} ${t("ui.citizens.adults_unemployed.h1")}`}  value={fmt(adults)} />
+              <Row label={`${t("ui.emoji.adults_unemployed.h1")} ${t("ui.citizens.adults_unemployed.h1")}`}  value={fmt(adultsUnemployed)} />
               <Row label={`${t("ui.emoji.adults_homeless.h1")} ${t("ui.citizens.adults_homeless.h1")}`}  value={fmt(homeless)} />
-              <Row label={`${t("ui.emoji.crime.h1")} ${t("ui.citizens.crime.h1")}`}  value={fmt(crime)} />
+              {/*<Row label={`${t("ui.emoji.crime.h1")} ${t("ui.citizens.crime.h1")}`}  value={fmt(crime)} />*/}
               <hr></hr>
               <Row label="Unge:" strong/>
               <Row label={`${t("ui.emoji.young_student.h1")} ${t("ui.citizens.young_student.h1")}`}  value={fmt(youngStudent)} />

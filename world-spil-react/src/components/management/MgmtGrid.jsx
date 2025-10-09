@@ -1,6 +1,7 @@
 import React from 'react';
 import DockHoverCard from '../ui/DockHoverCard.jsx';
-import { renderControl } from './mgmtControlRender.js';
+import { renderControl } from './mgmtControlRender.jsx';
+import * as MP from './managementparts.jsx';
 
 /**
  * MgmtGrid – præsentationskomponent til management tabs
@@ -37,20 +38,15 @@ export default function MgmtGrid({ config, choices, setChoice, currentStage }) {
     if (!isFieldVisible(cfg)) return null;
 
     const locked = !isStageOk(cfg);
-    const tipContent = typeof cfg.tooltip === 'function' ? cfg.tooltip() : cfg.tooltip;
+    const controlEl = renderControl(id, cfg, { choices, setChoice, locked });
 
     const body = (
-      <div className="mp-row">
-        <div className="mp-row__label">
-          <div className="mp-row__title">{cfg.label || id}</div>
-          {cfg.help ? <div className="mp-row__help">{cfg.help}</div> : null}
-        </div>
-        <div className="mp-row__control">
-          {renderControl(id, cfg, { choices, setChoice, locked })}
-        </div>
-      </div>
+      <MP.Row label={cfg.label || id} help={cfg.help}>
+        {controlEl}
+      </MP.Row>
     );
 
+    const tipContent = typeof cfg.tooltip === 'function' ? cfg.tooltip() : cfg.tooltip;
     return tipContent ? (
       <DockHoverCard content={tipContent}>
         <div>{body}</div>

@@ -1,7 +1,7 @@
 import React from 'react';
 import DockHoverCard from '../ui/DockHoverCard.jsx';
 import StatsEffectsTooltip from '../ui/StatsEffectsTooltip.jsx';
-import { renderControl } from './mgmtControlRender.js';
+import { renderControl } from './mgmtControlRender.jsx';
 import MgmtGrid from './MgmtGrid.jsx';
 import ManagementStatsTooltip from './ManagementStatsTooltip.jsx';
 import useHeaderSummary from '../../hooks/useHeaderSummary.js';
@@ -14,6 +14,26 @@ import { useGameData } from '../../context/GameDataContext.jsx';
  *
  * CONFIG defineres inde i funktionen for fri adgang til hooks-data.
  */
+
+
+/* EKSEMPEL PÅ HVORDAN JEG KAN BRUGE EXTRAS I TOOLTIP
+        tooltip: (
+          <ManagementStatsTooltip
+            headerMode="wrapper"
+            title="Gratis tandlæge — voksne"
+            subtitle="Øger kapacitet og tilfredshed for voksne."
+            stats={{ healthDentistCapacity: free_dentist_adults_cap,
+              taxHealthUsage: free_dentist_adults_total }}
+              extras={[{ label: 'Kapacitet uden', value: nf2.format(dentistUsage), desc: 'Før aktivering' },
+                { label: 'Estimeret kapacitet', value: nf2.format(dentistUsage + free_dentist_adults_cap), desc: 'Efter aktivering' },NB,
+              ]}
+          />
+        ),
+      },
+      */
+
+
+const NB = "Bemærk: tal er estimater til UI - backend afgør endelig effekt.";
 
 
 export default function HealthTab({ choices, setChoice }) {
@@ -41,7 +61,7 @@ export default function HealthTab({ choices, setChoice }) {
     // Lille convenience til tooltips
   const Tip = (props) => <ManagementStatsTooltip translations={translations} {...props} />;
 
-  const kids = Number(summary?.citizens?.groupCounts?.kids ?? 0);
+  const kids = Number(summary?.citizens?.groupCounts?.kids) + Number(summary?.citizens?.groupCounts?.baby)  ?? 0;
   const free_dentist_kids_cap = 100;    // eksempel kapacitetsløft
   const free_dentist_kids_cost = 100; // eksempel takst pr. barn
   const free_dentist_kids_total = nf2.format(free_dentist_kids_cost * kids);
@@ -51,10 +71,17 @@ export default function HealthTab({ choices, setChoice }) {
   const free_dentist_young_cost = 125; // eksempel takst pr. ung
   const free_dentist_young_total = nf2.format(free_dentist_young_cost * young);
 
-  const adults = Number(summary?.citizens?.groupCounts?.adults ?? 0);
+  const adults = Number(summary?.citizens?.groupCounts?.adultsTotal) + Number(summary?.citizens?.groupCounts?.old) ?? 0;
   const free_dentist_adults_cap = 50;   // eksempel kapacitetsløft
   const free_dentist_adults_cost = 175; // eksempel takst pr. voksen
   const free_dentist_adults_total = nf2.format(free_dentist_adults_cost * adults);
+
+  const HP = summary?.capacities?.healthCapacity
+  const health_wait_target_days_max = 180;
+  const health_wait_target_days_min = 10;
+  const health_wait_target_default = 60;
+  const health_wait_target_rate = (HP/health_wait_target_default);
+  const health_wait_target_costtotal =  750 * Number(summary?.usages?.useHealth?.total) // Pris pr useHealth tryk
 
   const dentistUsage = Number(
     summary?.usages?.useDentist?.total ??
@@ -68,7 +95,7 @@ export default function HealthTab({ choices, setChoice }) {
       // Ordninger – børn
       health_free_dentist_kids: {
         label: 'Gratis tandlæge — børn',
-        help: 'Ordning for børn. For ' + kids + ' børn, vil det koste: ' + free_dentist_kids_total + 'kr. Du øger tandlæge kapacitet med ' + free_dentist_kids_cap + '.',
+        help: 'Ordningen gælder pt for ' + kids + ' børn.',
         stageMin: 1,
         control: { type: 'toggle', key: 'health_free_dentist_kids', default: false, labelOn: 'Aktiv', labelOff: 'Inaktiv' },
         tooltip: (
@@ -86,58 +113,37 @@ export default function HealthTab({ choices, setChoice }) {
       // Ordninger – unge
       health_free_dentist_young: {
         label: 'Gratis tandlæge — unge',
-        help: 'Ordning for unge. For ' + young + ' unge, vil det koste: ' + free_dentist_young_total + 'kr. Du øger tandlæge kapacitet med ' + free_dentist_young_cap + '.',
+        help: 'Ordningen gælder pt for ' + young + ' unge.',
         stageMin: 1,
         control: { type: 'toggle', key: 'health_free_dentist_young', default: false, labelOn: 'Aktiv', labelOff: 'Inaktiv' },
-        tooltip: (() => {
-          const adults = Number(summary?.citizens?.groupCounts?.adults ?? 0);
-          const free_dentist_adults_cap = 50;   // eksempel
-          const free_dentist_adults_cost = 175; // eksempel
-          const dentistUsage = Number(
-            summary?.usages?.useDentist?.total ??
-            summary?.usage?.useDentist ?? 0
-          );
-          return (
-            <ManagementStatsTooltip
-              headerMode="stats"
-              title="Gratis tandlæge — voksne"
-              subtitle="Øger adgang og forebyggelse for voksne."
-              stats={{
-                healthDentistCapacity: free_dentist_young_cap,
-              taxHealthUsage: free_dentist_young_total,
-              }}
-              extras={[
-                { label: 'Kapacitet uden', value: nf2.format(dentistUsage), desc: 'Før aktivering' },
-                { label: 'Estimeret kapacitet', value: nf2.format(dentistUsage + free_dentist_adults_cap), desc: 'Efter aktivering' },
-                'Bemærk: tal er estimater til UI – backend afgør endelig effekt.',
-              ]}
-            />
-          );
-        })(),
+          tooltip: (
+          <ManagementStatsTooltip
+            headerMode="wrapper"
+            title="Gratis tandlæge — unge"
+            subtitle="Øger kapacitet og tilfredshed for unge."
+            stats={{ healthDentistCapacity: free_dentist_young_cap,
+              taxHealthUsage: free_dentist_young_total }}
+              
+          />
+        ),
       },
+
 
       // Ordninger – voksne (eksempel-tal; tilpas efter dit spil)
       health_free_dentist_adults: {
         label: 'Gratis tandlæge — voksne',
-        help: 'Ordning for voksne. For ' + adults + ' voksne, vil det koste: ' + free_dentist_adults_total + 'kr. Du øger tandlæge kapacitet med ' + free_dentist_adults_cap + '.',
+        help: 'Ordningen gælder pt for ' + adults + ' voksne.',
         stageMin: 2,
         control: { type: 'toggle', key: 'health_free_dentist_adults', default: false, labelOn: 'Aktiv', labelOff: 'Inaktiv' },
-        tooltip: () => {
-;
-          return ManagementStatsTooltip({
-            title: 'Gratis tandlæge — voksne',
-            subtitle: 'Øger adgang og forebyggelse for voksne.',
-            stats: {
-              healthDentistCapacity: free_dentist_adults_cap,
-              taxHealthUsage: free_dentist_adults_total,
-            },
-            extras: [
-              { label: 'Kapacitet uden', value: nf2.format(dentistUsage), desc: 'Før aktivering' },
-              { label: 'Estimeret kapacitet', value: nf2.format(dentistUsage + free_dentist_adults_cap), desc: 'Efter aktivering' },
-              'Bemærk: tal er estimater til UI – backend afgør endelig effekt.',
-            ],
-          });
-        },
+        tooltip: (
+          <ManagementStatsTooltip
+            headerMode="wrapper"
+            title="Gratis tandlæge — voksne"
+            subtitle="Øger kapacitet og tilfredshed for voksne."
+            stats={{ healthDentistCapacity: free_dentist_adults_cap,
+              taxHealthUsage: free_dentist_adults_total }}
+          />
+        ),
       },
 
       // Økonomi/politik – tilskud i %
@@ -166,21 +172,23 @@ export default function HealthTab({ choices, setChoice }) {
         })(),
       },
 
+
+      
       // Mål – ventetid
       health_wait_target_days: {
         label: 'Ventetidsmål (dage)',
         help: 'Lavere mål kræver flere ressourcer.',
         stageMin: 2,
-        control: { type: 'slider', key: 'health_wait_target_days', min: 0, max: 180, step: 5, default: 60 },
+        control: { type: 'slider', key: 'health_wait_target_days', min: health_wait_target_days_min, max: health_wait_target_days_max, step: 5, default: health_wait_target_default },
         tooltip: (
           <ManagementStatsTooltip
             headerMode="stats"
             title="Ventetidsmål"
             subtitle="Sæt tydeligt mål for maksimal ventetid."
-            stats={{
-              target_days: Number(choices?.health_wait_target_days ?? 60),
-              resource_need: '↑',
-            }}
+            stats={{ healthCapacity: health_wait_target_rate * Number(choices?.health_wait_target_days),
+              taxHealthUsage: nf2.format(health_wait_target_costtotal / Number(choices?.health_wait_target_days) * 100),
+             }}
+
           />
         ),
       },
@@ -234,7 +242,7 @@ export default function HealthTab({ choices, setChoice }) {
         stageMin: 1,
         items: [
           // Stack: flere under hinanden i venstre kolonne
-          { stack: ['health_free_dentist_kids', 'health_free_dentist_young', 'health_free_dentist_adults'], span: 2 },
+          { stack: ['health_free_dentist_kids', 'health_free_dentist_young', 'health_free_dentist_adults'], span: 1 },
           // Tilskud i højre kolonne
           { id: 'health_subsidy_pct', span: 1 },
         ],
