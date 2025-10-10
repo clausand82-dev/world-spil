@@ -63,22 +63,23 @@ export default function StatsEffectsTooltip({ def, translations = {} }) {
     .map(([k, v]) => {
       const { label, desc } = getLabelDesc(k);
 
-      // afgør prefix ud fra key-navn (case-insensitive)
+      // afgør prefix ud fra key-navn (case-insensitive) footprint og housing er med seperat nævnt for at virke korrekt
       const lk = String(k).toLowerCase();
       let prefix = '';
-      if (lk.includes('cap') || lk.includes('capacity')) prefix = '+';
+      if (lk.includes('cap') || lk.includes('capacity') || lk.includes('footprint') || lk.includes('housing')) prefix = '+';
       else if (lk.includes('usage') || lk.includes('use')) prefix = '-';
 
-      // display: hvis numerisk, brug lokal formattering og behold negative tal med minus
-      let display;
-      if (typeof v === 'number') {
-        display = v < 0 ? fmtNum(v) : `${prefix}${fmtNum(v)}`;
-      } else {
-        display = `${prefix}${String(v)}`;
-      }
+let display;
+if (typeof v === 'number') {
+  // altid viste tegn: +10, -5, 0 => +0
+  const nf = new Intl.NumberFormat('da-DK', { maximumFractionDigits: 0, signDisplay: 'always' });
+  display = nf.format(v);
+} else {
+  display = `${prefix}${String(v)}`;
+}
 
       // farvelogik: plus = grøn, minus = rød; negative tal altid rød
-      let color = '#cbd5e1';
+      let color = '#000000ff';
       if (typeof v === 'number' && v < 0) color = '#ff6b6b';
       else if (prefix === '+') color = '#16a34a'; // grøn
       else if (prefix === '-') color = '#ef4444'; // rød

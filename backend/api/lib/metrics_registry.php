@@ -52,7 +52,7 @@ function metrics_registry(): array {
       'label' => 'Provision',
       'usageField' => 'useProvision',
       'capacityField' => 'provisionCapacity',
-      'capacityStatKeys' => ['provisionCapacity','provision_cap'],
+      'capacityStatKeys' => ['provisionCapacity','provision_cap', 'provision'],
       'usageStatKeys' => ['provisionUsage'],
       'sources' => ['bld'=>true,'add'=>true,'rsd'=>true,'ani'=>true,'res'=>true],
       'stage' => ['unlock_at'=>1,'visible_at'=>1],
@@ -325,8 +325,8 @@ function metrics_registry(): array {
 
 
 
-            'police' => [
-      'label' => 'Politi',
+      'police' => [
+      'label' => 'Police',
       'usageField' => 'usePolice',
       'capacityField' => 'policeCapacity',
       'capacityStatKeys' => ['policeCapacity'],

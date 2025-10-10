@@ -48,7 +48,7 @@
   </building>
 
   <building id="bld.basecamp.l3" family="basecamp" type="base" lvl="3" stage="1">
-    <stats>footprint=80; housing=35;provision_cap=75; 
+    <stats>footprint=80; housingCapacity=35;provisionCapacity=19; 
     heatFossilCapacity=10;
     adultsPoliceCapacity=10;kidsStudentCapacity=7;youngStudentCapacity=5;healthDentistCapacity=144</stats>
     <cost>
@@ -73,7 +73,7 @@
   </building>
 
    <building id="bld.basecamp.l4" family="basecamp" type="base" lvl="4" stage="2">
-    <stats>footprint=100; housing=50;provision_cap=100</stats>
+    <stats>footprint=100; housing=50;provisionCapacity=100;</stats>
     <cost>
       <res id="res.money" amount="1000" />
       <res id="res.wood" amount="100" />

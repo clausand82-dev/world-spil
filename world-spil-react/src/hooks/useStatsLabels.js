@@ -31,10 +31,11 @@ export function defaultLabelMap() {
   // Byt senere med i18n keys / oversætterfunktion.
   const t = useT();
 
-  return {
+  const map = {
     'footprint': { label: t("ui.emoji.footprint.h1")+t("ui.label.footprint.h1"), desc: t("ui.desc.footprint.h1") },
     'animal_cap': { label: t("ui.emoji.animalcap.h1")+t("ui.label.animalcap.h1"), desc: t("ui.desc.animalcap.h1") },
     'housing': { label: t("ui.emoji.housing.h1")+t("ui.label.housing.h1"), desc: t("ui.capdesc.housing.h1") },
+    'housingCapacity': { label: t("ui.emoji.housing.h1")+t("ui.label.housing.h1"), desc: t("ui.capdesc.housing.h1") },
 
     'provision_cap': { label: t("ui.emoji.provision.h1")+t("ui.label.provision.h1"), desc: t("ui.capdesc.provision.h1") },
     'provisionCapacity': { label: t("ui.emoji.provision.h1")+t("ui.label.provision.h1"), desc: t("ui.capdesc.provision.h1") },
@@ -74,6 +75,14 @@ export function defaultLabelMap() {
 
     // ... tilføj flere efter behov
   };
+
+  // alias: sørg for gamle/alternate nøgler peger på samme entry
+  map.provision_cap = map.provisionCapacity;
+  // hvis du vil aliasere flere varianter, tilføj dem her:
+  // map.provision = map.provisionCapacity;
+
+  return map;
+
 }
 
 export function happinessEmojiFromScore(score01) {
