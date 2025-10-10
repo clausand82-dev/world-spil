@@ -62,7 +62,7 @@ export default function StatsEffectsTooltip({ def, translations = {} }) {
     .filter(([k]) => k && k !== 'id')
     .map(([k, v]) => {
       const { label, desc } = getLabelDesc(k);
- 
+
       // afgør prefix ud fra key-navn (case-insensitive)
       const lk = String(k).toLowerCase();
       let prefix = '';
@@ -77,7 +77,13 @@ export default function StatsEffectsTooltip({ def, translations = {} }) {
         display = `${prefix}${String(v)}`;
       }
 
-      return { key: k, label, desc, value: v, display };
+      // farvelogik: plus = grøn, minus = rød; negative tal altid rød
+      let color = '#cbd5e1';
+      if (typeof v === 'number' && v < 0) color = '#ff6b6b';
+      else if (prefix === '+') color = '#16a34a'; // grøn
+      else if (prefix === '-') color = '#ef4444'; // rød
+
+      return { key: k, label, desc, value: v, display, color };
     });
 
   if (rows.length === 0) {
@@ -95,7 +101,9 @@ export default function StatsEffectsTooltip({ def, translations = {} }) {
               <div style={{ fontSize: 13, fontWeight: 600 }}>{r.label}</div>
               {r.desc ? <div style={{ fontSize: 11, color: '#666' }}>{r.desc}</div> : null}
             </div>
-            <div style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums', minWidth: 60 }}>{r.display}</div>
+            <div style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums', minWidth: 60, color: r.color }}>
+              {r.display}
+            </div>
           </div>
         ))}
       </div>
