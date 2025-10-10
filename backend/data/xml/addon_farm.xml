@@ -25,6 +25,16 @@
     <require>rsd.animalhusbandry.l2</require>
   </addon>
 
+  <addon id="add.barn.l3" family="farm" type="addons" lvl="3" stage="2">
+    <stats>animal_cap=50</stats>
+    <cost>
+      <res id="res.money" amount="500"/>
+      <res id="res.wood" amount="265"/>
+      <res id="res.stone" amount="75"/>
+    </cost>
+    <require>rsd.animalhusbandry.l3</require>
+  </addon>
+
 <!-- sub addons for barn -->
 
   <!--sub addon vandtrug - formål er at øge animal_cap -->
@@ -190,7 +200,18 @@
       </yield>
   </addon>
 
-   <addon id="add.field_scarecrow.l1" family="farm" group="wheatfield,maizefield" type="addons" lvl="1" stage="1">
+  <addon id="add.oatsfield.l1" family="farm" group="main" type="addons" lvl="1" stage="2">
+   <stats>footprint=-5;provision_cap=35</stats>
+    <cost>
+      <res id="res.money" amount="100"/>
+    </cost>
+    <require>rsd.oats.l1</require>
+        <yield period="1h">
+      <res id="res.oats" amount="2"/>
+      </yield>
+  </addon>
+
+   <addon id="add.wheatfield_scarecrow.l1" family="farm" group="wheatfield" type="addons" lvl="1" stage="1">
     <cost>
       <res id="res.money" amount="100"/>
     </cost>

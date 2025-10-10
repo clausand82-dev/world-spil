@@ -15,6 +15,18 @@
       </yield>
   </addon>
 
+  <addon id="add.bigfireplace.l2" family="basecamp" type="addons" lvl="2" stage="2">
+    <stats>footprint=-1;provision_cap=50;heatFossilCapacity=50;wasteOtherCapacity=100</stats>
+    <cost>
+      <res id="res.money" amount="225"/>
+      <res id="res.wood" amount="30"/>
+    </cost>
+    <require>rsd.social.l1</require>
+    <yield period="45m">
+      <res id="res.money" amount="7"/>
+      </yield>
+  </addon>
+
   <addon id="add.saltbowl.l1" family="basecamp" type="addons" lvl="1" stage="1">
      <cost>
       <res id="res.money" amount="25"/>
@@ -75,14 +87,24 @@
     <require>rsd.leatherwork.l1</require>
   </addon>
 
-    <addon id="add.tailorspot.l2" family="basecamp" type="addons" lvl="2" stage="1">
-  <stats>footprint=-1;productClothCapacity=25</stats>
+  <addon id="add.tailorspot.l2" family="basecamp" type="addons" lvl="2" stage="2">
+  <stats>footprint=-1;productClothCapacity=16</stats>
     <cost>
-      <res id="res.money" amount="75"/>
-      <res id="res.wood" amount="15"/>
+      <res id="res.money" amount="250"/>
+      <res id="res.wood" amount="55"/>
     </cost>
-    <require>add.tailorspot.l1</require>
+    <require>rsd.basiccloth.l1</require>
   </addon>
+
+  <addon id="add.sleepingbag.l1" family="basecamp" type="addons" lvl="1" stage="2">
+  <stats>footprint=-1;productClothCapacity=16</stats>
+    <cost>
+      <res id="res.money" amount="110"/>
+      <res id="res.hide" amount="4"/>
+    </cost>
+    <require>rsd.sleepingbag.l1,add.tailorspot.l2</require>
+  </addon>
+
 
   
 

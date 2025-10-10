@@ -22,7 +22,7 @@ export default function Sidebar() {
   return (
     <aside id="sidebar">
       <section className="panel section res-panel">
-        <div className="section-head">Stats:</div>
+        <div className="section-head">Stats <span style={{ fontSize: 8, opacity: 0.7 }}>(klik på bar for at låse hover - klik uden for hover for at deaktiverer):</span></div>
         <div className="section-body">
           <HeaderCapacities />
         </div>

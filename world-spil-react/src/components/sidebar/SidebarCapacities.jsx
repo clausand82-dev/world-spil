@@ -1,204 +1,178 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useGameData } from '../../context/GameDataContext.jsx';
 import useHeaderSummary from '../../hooks/useHeaderSummary.js';
-import CapacityBar from '../header/CapacityBar.jsx';
-import CitizensBadge from './CitizensBadge.jsx';
 import InlineCapacityBar from '../header/InlineCapacityBar.jsx';
+import { makeDefsNameResolver } from '../utils/nameResolver.js';
+import { useStatsLabels } from '../../hooks/useStatsLabels.js';
 
-// Hjælp: lav pænt navn ud fra defs + håndtér scope og ".lN"-suffix
-function resolveDefName(defs, branch, rawId, fallbackName) {
-  const id = String(rawId || '');
+const fmt = (v) => Number(v || 0).toLocaleString('da-DK', { maximumFractionDigits: 2 });
 
-  // Fjern scope først: bld.|add.|rsd.|ani.|res.
-  const idNoScope = id.replace(/^(?:bld|add|rsd|ani|res)\./i, '');
 
-  // Pil evt. level-suffix af for lookup, men udled level for visning
-  const lvlMatch = idNoScope.match(/\.l(\d+)$/i);
-  const lvl = lvlMatch ? Number(lvlMatch[1]) : null;
-  const baseId = idNoScope.replace(/\.l\d+$/i, '');
+// Map sidebar-sektion -> defs-gruppe-prefix
+const SECTION_FAMILY = {
+  buildings: 'bld',
+  addon: 'add',
+  research: 'rsd',
+  animals: 'ani',
+  inventory: 'res',
+};
 
-  const b = String(branch || '').toLowerCase();
-  const bucket = (b === 'buildings' || b === 'bld') ? 'bld'
-               : (b === 'addon'     || b === 'add') ? 'add'
-               : (b === 'research'  || b === 'rsd') ? 'rsd'
-               : (b === 'animals'   || b === 'ani') ? 'ani'
-               : (b === 'inventory' || b === 'res') ? 'res'
-               : null;
+function CapBreakdown({ label, list, defs, partsList }) {
+  if (!list) return null;
 
-  // PRØV først level-specifik def (fx basecamp.l3), derefter basis-def (basecamp)
-  const defLevel = (bucket && lvl) ? (defs?.[bucket]?.[`${baseId}.l${lvl}`] || null) : null;
-  const defBase  = bucket ? defs?.[bucket]?.[baseId] : null;
+const nameResolver = useMemo(() => makeDefsNameResolver(defs), [defs]);
 
-  const niceCore =
-    defLevel?.display_name || defLevel?.name ||
-    defBase?.display_name  || defBase?.name  ||
-    fallbackName || baseId;
+  const sections = [
+    ['buildings', 'Bygninger'],
+    ['addon', 'Addons'],
+    ['research', 'Forskning'],
+    ['animals', 'Dyr'],
+    ['inventory', 'Lager'],
+  ];
 
-  return (lvl && lvl > 0) ? `${niceCore} (L${lvl})` : niceCore;
-}
+  
+  const visibleSections = sections.filter(([key]) => Array.isArray(list?.[key]) && list[key].length > 0);
+  if (visibleSections.length === 0) return null;
 
-// Sektion til hover for én kapacitets partsList (bygninger/addon/research/animals/inventory)
-function makeSourceContent(partsListForCap, defs) {
-  if (!partsListForCap) return null;
-  const {
-    buildings = [], addon = [], research = [],
-    animals = [], inventory = [],
-  } = partsListForCap;
+  const SECTION_FAMILY = { buildings: 'bld', addon: 'add', research: 'rsd', animals: 'ani', inventory: 'res' };
 
-  const Section = ({ title, items, branch }) => {
-    if (!items || items.length === 0) return null;
+
+
+  const ItemList = ({ items, familyKey }) => {
+    if (!Array.isArray(items) || items.length === 0) return null;
     return (
-      <div style={{ marginBottom: 8 }}>
-        <div style={{ fontWeight: 600, marginBottom: 4 }}>{title}</div>
-        <ul style={{ margin: 0, paddingLeft: 16 }}>
-          {items.map((it, idx) => {
-            const label = resolveDefName(defs, branch, it.id, it.name);
-            return (
-              <li key={`${it.id}-${idx}`}>{label}: {it.amount}</li>
-            );
-          })}
-        </ul>
+      <div style={{ display: 'grid', gap: 4 }}>
+        {items.map((it, idx) => {
+          const fam = SECTION_FAMILY[familyKey];
+          const name = nameResolver.resolve(fam, it);
+          const amount = it?.amount ?? it?.value ?? it?.val ?? (typeof it === 'number' ? it : 0);
+          return (
+            <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{name}</span>
+              <span style={{ fontVariantNumeric: 'tabular-nums' }}>{Number(amount || 0).toLocaleString('da-DK', { maximumFractionDigits: 2 })}</span>
+            </div>
+          );
+        })}
       </div>
     );
   };
 
-  const totalCount =
-    (buildings?.length || 0) +
-    (addon?.length || 0) +
-    (research?.length || 0) +
-    (animals?.length || 0) +
-    (inventory?.length || 0);
-
-  if (totalCount === 0) {
-    return <div style={{ maxWidth: 360, opacity: 0.8 }}>Ingen kapacitetskilder fundet.</div>;
-  }
-
   return (
-    <div style={{ maxWidth: 360 }}>
-      <Section title="Bygninger" branch="bld" items={buildings} />
-      <Section title="Addons"    branch="add" items={addon} />
-      <Section title="Research"  branch="rsd" items={research} />
-      <Section title="Animals"   branch="ani" items={animals} />
-      <Section title="Inventory" branch="res" items={inventory} />
-    </div>
-  );
-}
-
-// Aggregat-hover for fx Heat/Power
-function makeAggregateContent(subLabelToPartsListMap, defs) {
-  const entries = Object.entries(subLabelToPartsListMap)
-    .filter(([_, pl]) => {
-      if (!pl) return false;
-      const b = pl.buildings?.length || 0;
-      const a = pl.addon?.length || 0;
-      const r = pl.research?.length || 0;
-      const an = pl.animals?.length || 0;
-      const inv = pl.inventory?.length || 0;
-      return (b + a + r + an + inv) > 0;
-    });
-
-  if (entries.length === 0) {
-    return <div style={{ maxWidth: 360, opacity: 0.8 }}>Ingen kapacitetskilder fundet.</div>;
-  }
-
-  return (
-    <div style={{ maxWidth: 420 }}>
-      {entries.map(([label, pl]) => (
-        <div key={label} style={{ marginBottom: 10 }}>
-          <div style={{ fontWeight: 700, marginBottom: 6 }}>{label}</div>
-          {makeSourceContent(pl, defs)}
+    <div style={{ display: 'grid', gap: 6 }}>
+      <div style={{ fontWeight: 700 }}>{label}</div>
+      {visibleSections.map(([key, title]) => (
+        <div key={key} style={{ display: 'grid', gap: 2 }}>
+          <div style={{ fontSize: 12, opacity: 0.7 }}>{title}</div>
+          <ItemList items={list?.[key]} familyKey={key} />
         </div>
       ))}
     </div>
   );
 }
 
-// Foretrukken rækkefølge for top-level metrics (bruges når de findes i metricsMeta)
-const PREFERRED_ORDER = [
-  'housing', 'food', 'water', 'heat', 'power', 'health', 'cloth', 'medicin', 'wasteOther',
-];
+function UsageBreakdown({ label, usage }) {
+  if (!usage) return null;
 
-function sortTopLevelMetrics(metaEntries) {
-  const indexOf = (id) => {
-    const i = PREFERRED_ORDER.indexOf(id);
-    return i === -1 ? Number.POSITIVE_INFINITY : i;
-  };
-  return metaEntries.sort((a, b) => {
-    const [idA, mA] = a;
-    const [idB, mB] = b;
-    const ia = indexOf(idA);
-    const ib = indexOf(idB);
-    if (ia !== ib) return ia - ib;
-    const la = (mA.label || idA).toLowerCase();
-    const lb = (mB.label || idB).toLowerCase();
-    return la.localeCompare(lb);
-  });
+  const breakdown = usage.breakdown || {};
+  const keys = ['baby', 'kids', 'young', 'adults', 'old', 'crime'];
+
+  const rows = keys
+    .map((k) => [k, Number(breakdown[k] || 0)])
+    .filter(([, v]) => v !== 0);
+
+  const infra = Number(usage.infra || 0);
+  const total = Number(usage.total || 0);
+
+  return (
+    <div style={{ display: 'grid', gap: 6 }}>
+      <div style={{ fontWeight: 700 }}>{label}</div>
+      <div style={{ display: 'grid', gap: 4 }}>
+        {rows.length === 0 ? (
+          <div style={{ opacity: 0.6 }}>—</div>
+        ) : (
+          rows.map(([k, v]) => (
+            <div key={k} style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+              <span style={{ textTransform: 'capitalize' }}>{k}</span>
+              <span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmt(v)}</span>
+            </div>
+          ))
+        )}
+        {infra !== 0 && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+            <span>Infra</span>
+            <span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmt(infra)}</span>
+          </div>
+        )}
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, borderTop: '1px solid #e5e7eb', paddingTop: 6, fontWeight: 600 }}>
+        <span>Total</span>
+        <span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmt(total)}</span>
+      </div>
+    </div>
+  );
+}
+
+function HoverPanel({ open, onClose, content, panelRef, locked }) {
+  const localRef = useRef(null);
+  const ref = panelRef || localRef;
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e) => { if (e.key === 'Escape') onClose?.(); };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [open, onClose]);
+
+  if (!open) return null;
+
+  return (
+    <div
+      ref={ref}
+      style={{
+        position: 'fixed',
+        right: 12,
+        bottom: 12,
+        zIndex: 50,
+        width: 420,
+        maxWidth: 'calc(100vw - 24px)',
+        maxHeight: '60vh',
+        overflow: 'auto',
+        background: '#ffffff',
+        color: '#0b1220',
+        boxShadow: '0 10px 25px rgba(0,0,0,0.15)',
+        border: '1px solid #e5e7eb',
+        borderRadius: 8,
+        padding: 12,
+        display: 'grid',
+        gap: 10,
+        fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial",
+        fontSize: 12,
+        lineHeight: 1.3,
+      }}
+      onMouseLeave={() => { if (!locked) onClose?.(); }}
+    >
+      <div style={{ display: 'grid', gap: 8 }}>
+        {content}
+      </div>
+    </div>
+  );
 }
 
 export default function SidebarCapacities() {
-  const { data, err, loading } = useHeaderSummary();
-  const { data: gameData } = useGameData();
+   const { data: header } = useHeaderSummary();
+   const { data: gameData } = useGameData();
+  // hent oversatte stat-navne (emoji + label strings)
+  const statLabels = useStatsLabels();
+
   const defs = gameData?.defs || {};
+  const usages = header?.usages || {};
+  const capacities = header?.capacities || {};
+  const partsList = header?.partsList || {};
+  const metaMap = header?.metricsMeta || {};
+  const stageCurrent = Number(gameData?.state?.user?.currentstage ?? 0);
 
-  const capacities = data?.capacities ?? {};
-  const usages = data?.usages ?? {};
-  const partsList = data?.partsList ?? {};
-  const metricsMeta = data?.metricsMeta ?? null;
-  const stageCurrent = Number(data?.stage?.current ?? data?.state?.user?.currentstage ?? 0);
-
-  const fallbackRows = useMemo(() => {
-    if (metricsMeta) return null;
-    if (!data) return null;
-
-    /*const rows = [
-      { id: 'housing',    label: 'Housing',   used: usages.useHousing?.total,   cap: capacities.housingCapacity,        capField: 'housingCapacity' },
-      { id: 'food',       label: 'Provision', used: usages.useProvision?.total, cap: capacities.provisionCapacity,      capField: 'provisionCapacity' },
-      { id: 'water',      label: 'Water',     used: usages.useWater?.total,     cap: capacities.waterCapacity,          capField: 'waterCapacity' },
-      { id: 'heat',       label: 'Heat',      used: usages.useHeat?.total,      cap: capacities.heatCapacity,           capField: 'heatCapacity',
-        subs: [
-          { id: 'heatGreen',   label: 'Heat (Green)',   capField: 'heatGreenCapacity' },
-          { id: 'heatNuclear', label: 'Heat (Nuclear)', capField: 'heatNuclearCapacity' },
-          { id: 'heatFossil',  label: 'Heat (Fossil)',  capField: 'heatFossilCapacity' },
-        ],
-      },
-      { id: 'power',      label: 'Power',     used: usages.usePower?.total,     cap: capacities.powerCapacity,          capField: 'powerCapacity',
-        subs: [
-          { id: 'powerGreen',   label: 'Power (Green)',   capField: 'powerGreenCapacity' },
-          { id: 'powerNuclear', label: 'Power (Nuclear)', capField: 'powerNuclearCapacity' },
-          { id: 'powerFossil',  label: 'Power (Fossil)',  capField: 'powerFossilCapacity' },
-        ],
-      },
-      { id: 'health',     label: 'Health',    used: usages.useHealth?.total,    cap: capacities.healthCapacity,         capField: 'healthCapacity' },
-      { id: 'cloth',      label: 'Cloth',     used: usages.useCloth?.total,     cap: capacities.productClothCapacity,   capField: 'productClothCapacity' },
-      { id: 'medicin',    label: 'Medicin',   used: usages.useMedicin?.total,   cap: capacities.productMedicinCapacity, capField: 'productMedicinCapacity' },
-      { id: 'wasteOther', label: 'WasteOther',used: usages.wasteOther?.total,   cap: capacities.wasteOtherCapacity,     capField: 'wasteOtherCapacity' },
-    ];*/
-
-    const makeHoverForRow = (row) => {
-      if (row.subs && row.subs.length) {
-        const map = {};
-        row.subs.forEach((s) => {
-          if (!s.capField) return;
-          map[s.label] = partsList[s.capField];
-        });
-        return makeAggregateContent(map, defs);
-      }
-      return makeSourceContent(partsList[row.capField], defs);
-    };
-
-    return rows.map(r => ({
-      key: r.id,
-      label: r.label,
-      used: Number(r.used || 0),
-      cap: Number(r.cap || 0),
-      hoverContent: makeHoverForRow(r),
-    }));
-  }, [metricsMeta, data, usages, capacities, partsList, defs]);
-
-  const dynamicRows = useMemo(() => {
-    if (!metricsMeta) return null;
-
-    const metaMap = metricsMeta;
+  const rows = useMemo(() => {
+    if (!metaMap) return [];
     const entries = Object.entries(metaMap);
 
     const topUnlocked = entries.filter(([id, m]) => {
@@ -209,76 +183,170 @@ export default function SidebarCapacities() {
       return isUnlocked && isTop && hasAnyField;
     });
 
-    const sortedTop = sortTopLevelMetrics(topUnlocked);
+    topUnlocked.sort((a, b) => {
+      const la = (a[1]?.label || a[0]).toLowerCase();
+      const lb = (b[1]?.label || b[0]).toLowerCase();
+      return la.localeCompare(lb);
+    });
 
-    const hoverForMetric = (id, m) => {
-      const capField = m?.capacityField || '';
-      const subs = Array.isArray(m?.subs) ? m.subs : [];
-
-      if (subs.length > 0) {
-        const map = {};
-        subs.forEach(subId => {
-          const subMeta = metaMap[subId];
-          if (!subMeta) return;
-          const unlockAt = Number(subMeta?.stage?.unlock_at ?? 1);
-          if (stageCurrent < unlockAt) return;
-          const subLabel = subMeta?.label || subId;
-          const subCapField = subMeta?.capacityField || '';
-          if (!subCapField) return;
-          map[subLabel] = partsList[subCapField];
-        });
-        return makeAggregateContent(map, defs);
-      }
-
-      if (capField) {
-        return makeSourceContent(partsList[capField], defs);
-      }
-      return null;
-    };
-
-    const rows = sortedTop.map(([id, m]) => {
-      const label = m?.label || id;
+    return topUnlocked.map(([id, m]) => {
+      const label = statLabels?.[id] || m?.label || id;
       const uKey = m?.usageField || '';
       const cKey = m?.capacityField || '';
       const used = uKey ? Number(usages[uKey]?.total || 0) : 0;
       const cap = cKey ? Number(capacities[cKey] || 0) : 0;
-      const hoverContent = hoverForMetric(id, m);
-
-      return { key: id, label, used, cap, hoverContent };
+      return { key: id, label, used, cap };
     });
+  }, [metaMap, stageCurrent, usages, capacities]);
 
-    const filtered = rows.filter(r => r.hoverContent || r.used > 0 || r.cap > 0);
-    return filtered;
-  }, [metricsMeta, stageCurrent, usages, capacities, partsList, defs]);
+  const [hoverKey, setHoverKey] = useState(null);
+  const [hoverLocked, setHoverLocked] = useState(false);
+  const hoverTimer = useRef(null);
+  const hoverPanelRef = useRef(null);
 
-  const rows = dynamicRows || fallbackRows || [];
+  const openHover = (key) => {
+    if (hoverTimer.current) clearTimeout(hoverTimer.current);
+    setHoverKey(key);
+  };
+  const closeHoverSoon = () => {
+    if (hoverTimer.current) clearTimeout(hoverTimer.current);
+    if (hoverLocked) return;
+    hoverTimer.current = setTimeout(() => setHoverKey(null), 120);
+  };
 
-  if (err) return <div style={{ color: 'red' }}>Fejl: {String(err)}</div>;
-  if (loading || !data) return null;
+  // unlock when clicking outside the hover panel while locked
+  useEffect(() => {
+    if (!hoverLocked) return undefined;
+    const onDocDown = (e) => {
+      const panelEl = hoverPanelRef.current;
+      if (panelEl && panelEl.contains(e.target)) return;
+      setHoverLocked(false);
+      setHoverKey(null);
+    };
+    document.addEventListener('mousedown', onDocDown);
+    return () => document.removeEventListener('mousedown', onDocDown);
+  }, [hoverLocked]);
 
-  const citizens = data.citizens;
+  // Build hover content
+  const hoverContent = useMemo(() => {
+    if (!hoverKey || !metaMap?.[hoverKey]) return null;
 
-  // find største absolute afvigelse fra 100%
-  const maxDelta = rows.reduce((m, r) => {
-    const used = Number(r.used || 0);
-    const cap = Number(r.cap || 0);
-    const rawPct = cap > 0 ? (used / cap) * 100 : (used > 0 ? 200 : 0);
-    const delta = Math.abs(rawPct - 100);
-    return Math.max(m, delta);
-  }, 0) || 0;
+    const buildForMetric = (id) => {
+      const m = metaMap[id] || {};
+      const label = statLabels?.[id] || m.label || id;
+      const uKey = m.usageField || '';
+      const cKey = m.capacityField || '';
+      const subIds = Array.isArray(m.subs) ? m.subs : [];
+
+      const usage = uKey ? usages[uKey] : null;
+      const capList = cKey ? partsList[cKey] : null;
+
+      const unlockedSubs = subIds.filter((sid) => {
+        const sm = metaMap[sid];
+        if (!sm) return false;
+        const unlockAt = Number(sm?.stage?.unlock_at ?? 1);
+        return stageCurrent >= unlockAt;
+      });
+
+      const used = uKey ? Number(usages[uKey]?.total || 0) : 0;
+      const cap = cKey ? Number(capacities[cKey] || 0) : 0;
+
+      return (
+        <div key={id} style={{ display: 'grid', gap: 12 }}>
+          <div style={{ fontSize: 13, fontWeight: 800 }}>{label}</div>
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+            <div style={{ flex: '1 1 180px', minWidth: 220 }}>
+              <div style={{ fontSize: 10, opacity: 0.7, marginBottom: 4 }}>Brug (usage)</div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span>Total</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmt(used)}</span>
+              </div>
+            </div>
+            <div style={{ flex: '1 1 180px', minWidth: 220 }}>
+              <div style={{ fontSize: 10, opacity: 0.7, marginBottom: 4 }}>Kapacitet (capacity)</div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span>Total</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmt(cap)}</span>
+              </div>
+            </div>
+          </div>
+
+          {usage && (
+            <UsageBreakdown label="Usage – opdeling" usage={usage} />
+          )}
+
+          {capList && (
+            <CapBreakdown label="Capacity – kilder" list={capList} defs={defs} partsList={partsList} />
+          )}
+
+          {unlockedSubs.length > 0 && (
+            <div style={{ display: 'grid', gap: 10 }}>
+              <div style={{ fontWeight: 700, marginTop: 6 }}>Underområder</div>
+              {unlockedSubs.map((sid) => {
+                const sm = metaMap[sid] || {};
+                const slabel = statLabels?.[sid] || sm.label || sid;
+                const suKey = sm.usageField || '';
+                const scKey = sm.capacityField || '';
+
+                const susage = suKey ? usages[suKey] : null;
+                const scapList = scKey ? partsList[scKey] : null;
+                const sused = suKey ? Number(usages[suKey]?.total || 0) : 0;
+                const scap = scKey ? Number(capacities[scKey] || 0) : 0;
+
+                return (
+                  <div key={sid} style={{ border: '1px solid #e5e7eb', borderRadius: 8, padding: 8, display: 'grid', gap: 8 }}>
+                    <div style={{ fontWeight: 700 }}>{slabel}</div>
+                    <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                      <div style={{ flex: '1 1 180px', minWidth: 220 }}>
+                        <div style={{ fontSize: 10, opacity: 0.7, marginBottom: 4 }}>Brug (usage)</div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <span>Total</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmt(sused)}</span>
+                        </div>
+                      </div>
+                      <div style={{ flex: '1 1 180px', minWidth: 220 }}>
+                        <div style={{ fontSize: 10, opacity: 0.7, marginBottom: 4 }}>Kapacitet (capacity)</div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <span>Total</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmt(scap)}</span>
+                        </div>
+                      </div>
+                    </div>
+                    {susage && <UsageBreakdown label="Usage – opdeling" usage={susage} />}
+                    {scapList && <CapBreakdown label="Capacity – kilder" list={scapList} defs={defs} partsList={partsList} />}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      );
+    };
+
+    return buildForMetric(hoverKey);
+  }, [hoverKey, metaMap, usages, capacities, partsList, defs, stageCurrent]);
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 10 }}>
-      {rows.map(r => (
-        <InlineCapacityBar
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      {rows.map((r) => (
+        <div
           key={r.key}
-          label={r.label}
-          used={r.used}
-          capacity={r.cap}
-          hoverContent={r.hoverContent}
-          scaleMaxDelta={maxDelta}
-        />
-      ))}
+          onMouseEnter={() => { if (!hoverLocked) openHover(r.key); }}
+          onMouseLeave={closeHoverSoon}
+          onClick={() => { if (!hoverLocked) { setHoverKey(r.key); setHoverLocked(true); } }}
+           style={{ cursor: 'pointer' }}
+         >
+           <InlineCapacityBar
+             label={r.label}
+             used={r.used}
+             capacity={r.cap}
+           />
+         </div>
+       ))}
+
+      <HoverPanel
+        open={!!hoverKey && !!hoverContent}
+        onClose={() => { setHoverKey(null); setHoverLocked(false); }}
+        content={hoverContent}
+        panelRef={hoverPanelRef}
+        locked={hoverLocked}
+      />
     </div>
   );
 }

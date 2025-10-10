@@ -247,6 +247,11 @@
   <entry key="ui.emoji.crime.h1">🦹</entry>
   <entry key="ui.citizens.crime.h1">Kriminel</entry>
 
+  <entry key="ui.emoji.social.h1">👭</entry>
+  <entry key="ui.label.social.h1">Social</entry>
+  <entry key="ui.capdesc.social.h1">Hvor mange sociale aktiviteter byen har.</entry>
+  <entry key="ui.usagedesc.social.h1">Hvor meget sociale aktivitet borgerne har brug for.</entry>
+
 
 <!--BUILDINGS-->
   <entry key="bld.basecamp.l1.name">Lejrbål</entry>
@@ -312,10 +317,10 @@
 <!--ADDONS FARM-->  
   <entry key="add.barn.l1.name">Lille stald</entry>
   <entry key="add.barn.l1.desc">Lille stald af simpelt træ, bruges til at holde dyr</entry>
-  <entry key="add.barn.l2.name">Stor stald </entry>
-  <entry key="add.barn.l2.desc">Stor stald af simpelt træ, bruges til at holde dyr</entry>
-  <entry key="add.barn.l3.name">Stor stald - STAGE 2</entry>
-  <entry key="add.barn.l3.desc">Stor stald af simpelt træ, bruges til at holde dyr</entry>
+  <entry key="add.barn.l2.name">Udvidet lille stald </entry>
+  <entry key="add.barn.l2.desc">Udvidet lille stald af simpelt træ, bruges til at holde dyr</entry>
+  <entry key="add.barn.l3.name">Stor stald</entry>
+  <entry key="add.barn.l3.desc">Stor stald af sten og træ, bruges til at holde dyr</entry>
 
   <entry key="add.barn_slaughterspot.l1.name">Lille Slagterbord</entry>
   <entry key="add.barn_slaughterspot.l1.desc">Muliggør slagteri af mindre dyr som høns og ænder</entry>
@@ -380,10 +385,16 @@
 
   <entry key="add.maizefield.l1.name">Majsmark</entry>
   <entry key="add.maizefield.l1.desc">Mark til at dyrke majs; giver majs som afgrøde.</entry>
+
+  <entry key="add.oatsfield.l1.name">Havremark</entry>
+  <entry key="add.oatsfield.l1.desc">Mark til at dyrke havre; øger madproduktionen.</entry>
+
   <entry key="add.wheatfield.l1.name">Hvedemark</entry>
   <entry key="add.wheatfield.l1.desc">Mark til at dyrke hvede; øger madproduktionen.</entry>
-  <entry key="add.field_scarecrow.l1.name">Fugleskræmsel</entry>
-  <entry key="add.field_scarecrow.l1.desc">Beskytter marker mod fugle og reducerer afgrødetab.</entry>
+
+  <entry key="add.wheatfield_scarecrow.l1.name">Fugleskræmsel</entry>
+  <entry key="add.wheatfield_scarecrow.l1.desc">Beskytter marker mod fugle og reducerer afgrødetab.</entry>
+
   <entry key="add.mole.l1.name">Fiske mole</entry>
   <entry key="add.mole.l1.desc">Giver mulighed for at fiske i søen.</entry>
 

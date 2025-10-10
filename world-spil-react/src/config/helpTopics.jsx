@@ -342,7 +342,7 @@ group({
           const rows = Object.keys(bld).sort().map(id => {
           const name = bld[id]?.name || id;
           // link -> interne help links eller direkte til building-siden
-          return `<li><a href="#/building/${encodeURIComponent(id)}">${name}</a> <small class="muted">(${id})</small></li>`;
+          return `<li>${name}</li>`;
           });
     return `<h2>Bygninger</h2><p>Her er en liste over alle definerede bygninger:</p><ul>${rows.join('')}</ul>`;
        },
@@ -357,7 +357,7 @@ group({
           const rows = Object.keys(rsd).sort().map(id => {
           const name = rsd[id]?.name || id;
           // link -> interne help links eller direkte til building-siden
-          return `<li>${name} <small class="muted">(${id})</small></li>`;
+          return `<li>${name}</li>`;
           });
     return `<h2>Research</h2><p>Her er en liste over alle definerede research, der pt er mulige:</p><ul>${rows.join('')}</ul>`;
        },
@@ -372,7 +372,7 @@ group({
           const rows = Object.keys(add).sort().map(id => {
           const name = add[id]?.name || id;
           // link -> interne help links eller direkte til building-siden
-          return `<li>${name} <small class="muted">(${id})</small></li>`;
+          return `<li>${name}</li>`;
           });
     return `<h2>Addons</h2><p>Her er en liste over alle definerede addons, der pt er mulige:</p><ul>${rows.join('')}</ul>`;
        },
@@ -388,7 +388,7 @@ group({
           const name = ani[id]?.name || id;
           const emoji = ani[id]?.emoji || '';
           // link -> interne help links eller direkte til building-siden
-          return `<li>${emoji || ''} ${name} <small class="muted">(${id})</small></li>`;
+          return `<li>${emoji || ''} ${name}</li>`;
           });
     return `<h2>Dyr</h2><p>Her er en liste over alle definerede dyr, der pt er mulige:</p><ul>${rows.join('')}</ul>`;
        },

@@ -22,6 +22,9 @@ export function useStatsLabels() {
   powerNuclear: t("ui.emoji.power_nuclear.h1") + ' ' + t("ui.label.power_nuclear.h1") || 'Power (Nuclear)',
   cloth: t("ui.emoji.product_cloth.h1") + ' ' + t("ui.label.product_cloth.h1") || 'Cloth',
   medicin: t("ui.emoji.product_medicin.h1") + ' ' + t("ui.label.product_medicin.h1") || 'Medicine',
+  social: t("ui.emoji.social.h1") + ' ' + t("ui.label.social.h1") || 'Social',
+  wasteOther: t("ui.emoji.waste_other.h1") + ' ' + t("ui.label.waste_other.h1") || 'Other Waste',
+
   }), [t]);
 }
 

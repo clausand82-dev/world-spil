@@ -333,6 +333,14 @@
     <require>rsd.iron.l1</require>
   </research>
 
+   <research id="rsd.social.l1" family="basecamp" type="stage" lvl="1" stage="2">
+    <cost>
+      <res id="res.money" amount="345"/>
+    </cost>
+    <time>30m</time>
+    <require>rsd.stage.l2, bld.basecamp.l3</require>
+  </research>
+
 <!-- HEALTH RESEARCH -->
 
   <research id="rsd.herbalism.l1" family="health" type="basecamp,health" lvl="1" stage="2">
