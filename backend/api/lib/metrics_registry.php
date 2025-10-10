@@ -2,6 +2,15 @@
 declare(strict_types=1);
 
 /**
+ * MANUAL TIL AT TILFØJE NYE TING:
+ * 1: TILFØJ HER I METRICS
+ * 2: TILFØJ I SUMMARY - $USAGE_FIELDS
+ * 3: TILFØJ I SUMMARY - $capacities (summer hvis noget er kædet sammen)
+ * 4: TILFØJ I SUMMARY - $usages (summer hvis noget er kædet sammen)
+ * 5: TILFØJ I STATSEFFECTSTOOLTIP (FRONTEND)
+ * 6: TILFØJ I LANG FIL (GØRES OFTE I FORBINDELSEN MED PUNKT 5)
+ * 
+ * 
  * Metrics Registry
  * - Én kilde til sandhed for capacity/use, hierarkier (parent/subs), stages, happiness/popularity,
  *   samt deklaration af demands og citizen-flows.
@@ -88,6 +97,7 @@ function metrics_registry(): array {
       'subs' => ['healthDentist'],
       'demands' => [],
       'flows' => [],
+      ],
 
     'healthDentist' => [
       'label' => 'Tandlæge',
@@ -96,17 +106,14 @@ function metrics_registry(): array {
       'capacityStatKeys' => ['healthDentistCapacity'],
       'usageStatKeys' => ['healthDentistUsage'],
       'sources' => ['bld'=>true,'add'=>true,'rsd'=>true,'ani'=>true,'res'=>true],
-      'stage' => ['unlock_at'=>1,'visible_at'=>1],
+      'stage' => ['unlock_at'=>2,'visible_at'=>2],
       'happiness' => ['enabled'=>true, 'weight_key'=>'healthDentistHappinessWeight'], 
       'popularity'=> ['enabled'=>false],
       'parent' => 'health',
-      'demands' => [
-        ['id'=>'demandsHealthDentist', 'type'=>'minShare', 'domain'=>'health', 'basis'=>'usage_share_in_parent', 'config_key'=>'demandsHealthDentist', 'parent'=>'useHealth'],
-      ],
+      'demands' => [],
       'flows' => [],
-    ],
+     ],
 
-    ],
       // Tilføj under $metrics = [ ... ] som ny top-level metric:
     'healthUnit' => [
       'label' => 'Health Units',

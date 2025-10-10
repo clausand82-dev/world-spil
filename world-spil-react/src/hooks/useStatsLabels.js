@@ -1,27 +1,79 @@
 import { useMemo } from 'react';
 import { useT } from '../services/i18n.js';
 
-export function useStatsLabels() {
+// BRUGES TIL HEADER HAPPINESS OG POPULARITY
+export function useStatsLabels() { 
   const t = useT();
   return useMemo(() => ({
-  housing: t("ui.emoji.housing.h1") + ' ' + t("ui.stats.housing.h1") || 'Housing',
-  food: t("ui.emoji.provision.h1") + ' ' + t("ui.stats.provision.h1") || 'Provision',
-  water: t("ui.emoji.water.h1") + ' ' + t("ui.stats.water.h1") || 'Vand',
-  health: t("ui.emoji.health.h1") + ' ' + t("ui.stats.health.h1") || 'Sundhed',
-  healthDentist: t("ui.emoji.health.h1") + ' ' + t("ui.stats.health_dentist.h1") || 'Tandlæge',
+  housing: t("ui.emoji.housing.h1") + ' ' + t("ui.label.housing.h1") || 'Housing',
+  food: t("ui.emoji.provision.h1") + ' ' + t("ui.label.provision.h1") || 'Provision',
+  water: t("ui.emoji.water.h1") + ' ' + t("ui.label.water.h1") || 'Water',
+  health: t("ui.emoji.health.h1") + ' ' + t("ui.label.health.h1") || 'Health',
+  healthDentist: t("ui.emoji.health.h1") + ' ' + t("ui.label.health_dentist.h1") || 'Dentist',
   // Aggregerede
-  heat: t("ui.emoji.heat.h1") + ' ' + t("ui.stats.heat.h1") || 'Varme',
-  power: t("ui.emoji.power.h1") + ' ' + t("ui.stats.power.h1") || 'Strøm',
+  heat: t("ui.emoji.heat.h1") + ' ' + t("ui.label.heat.h1") || 'Heat',
+  power: t("ui.emoji.power.h1") + ' ' + t("ui.label.power.h1") || 'Power',
   // Subkategorier
-  heatFossil: t("ui.emoji.heat_fossil.h1") + ' ' + t("ui.stats.heat_fossil.h1") || 'Varme (Fossil)',
-  heatGreen: t("ui.emoji.heat_green.h1") + ' ' + t("ui.stats.heat_green.h1") || 'Varme (Green)',
-  heatNuclear: t("ui.emoji.heat_nuclear.h1") + ' ' + t("ui.stats.heat_nuclear.h1") || 'Varme (Nuclear)',
-  powerFossil: t("ui.emoji.power_fossil.h1") + ' ' + t("ui.stats.power_fossil.h1") || 'Strøm (Fossil)',
-  powerGreen: t("ui.emoji.power_green.h1") + ' ' + t("ui.stats.power_green.h1") || 'Strøm (Green)',
-  powerNuclear: t("ui.emoji.power_nuclear.h1") + ' ' + t("ui.stats.power_nuclear.h1") || 'Strøm (Nuclear)',
-  cloth: t("ui.emoji.product_cloth.h1") + ' ' + t("ui.stats.product_cloth.h1") || 'Tøj',
-  medicin: t("ui.emoji.product_medicin.h1") + ' ' + t("ui.stats.product_medicin.h1") || 'Medicin',  
+  heatFossil: t("ui.emoji.heat_fossil.h1") + ' ' + t("ui.label.heat_fossil.h1") || 'Heat (Fossil)',
+  heatGreen: t("ui.emoji.heat_green.h1") + ' ' + t("ui.label.heat_green.h1") || 'Heat (Green)',
+  heatNuclear: t("ui.emoji.heat_nuclear.h1") + ' ' + t("ui.label.heat_nuclear.h1") || 'Heat (Nuclear)',
+  powerFossil: t("ui.emoji.power_fossil.h1") + ' ' + t("ui.label.power_fossil.h1") || 'Power (Fossil)',
+  powerGreen: t("ui.emoji.power_green.h1") + ' ' + t("ui.label.power_green.h1") || 'Power (Green)',
+  powerNuclear: t("ui.emoji.power_nuclear.h1") + ' ' + t("ui.label.power_nuclear.h1") || 'Power (Nuclear)',
+  cloth: t("ui.emoji.product_cloth.h1") + ' ' + t("ui.label.product_cloth.h1") || 'Cloth',
+  medicin: t("ui.emoji.product_medicin.h1") + ' ' + t("ui.label.product_medicin.h1") || 'Medicine',
   }), [t]);
+}
+
+// BRUGES TIL StatsEffectsTooltip
+export function defaultLabelMap() {
+  // Her hardcode vi labels + (valgfri) korte forklaringer.
+  // Byt senere med i18n keys / oversætterfunktion.
+  const t = useT();
+
+  return {
+    'footprint': { label: t("ui.emoji.footprint.h1")+t("ui.label.footprint.h1"), desc: t("ui.desc.footprint.h1") },
+    'animal_cap': { label: t("ui.emoji.animalcap.h1")+t("ui.label.animalcap.h1"), desc: t("ui.desc.animalcap.h1") },
+    'housing': { label: t("ui.emoji.housing.h1")+t("ui.label.housing.h1"), desc: t("ui.capdesc.housing.h1") },
+
+    'provision_cap': { label: t("ui.emoji.provision.h1")+t("ui.label.provision.h1"), desc: t("ui.capdesc.provision.h1") },
+    'provisionCapacity': { label: t("ui.emoji.provision.h1")+t("ui.label.provision.h1"), desc: t("ui.capdesc.provision.h1") },
+    'provisionUsage': { label: t("ui.emoji.provision.h1")+t("ui.label.provision.h1"), desc: t("ui.usagedesc.provision.h1") },
+
+    'healthCapacity': { label: t("ui.emoji.health.h1")+t("ui.label.health.h1"), desc: t("ui.capdesc.health.h1") },
+    'healthUnitUsage': { label: t("ui.emoji.health_unit.h1")+t("ui.label.health_unit.h1"), desc: t("ui.usagedesc.health_unit.h1") },
+    'healthUnitCapacity': { label: t("ui.emoji.health_unit.h1")+t("ui.label.health_unit.h1"), desc: t("ui.capdesc.health_unit.h1") },
+    'healthDentistUsage': { label: t("ui.emoji.health_dentist.h1")+t("ui.label.health_dentist.h1"), desc: t("ui.usagedesc.health_dentist.h1") },
+    'healthDentistCapacity': { label: t("ui.emoji.health_dentist.h1")+t("ui.label.health_dentist.h1"), desc: t("ui.capdesc.health_dentist.h1") },
+
+
+    'adultsPoliceCapacity': { label: t("ui.emoji.adults_police.h1")+t("ui.citizens.adults_police.h1"), desc: t("ui.capdesc.adults_police.h1") },
+    'adultsFireCapacity': { label: t("ui.emoji.adults_fire.h1")+t("ui.citizens.adults_fire.h1"), desc: t("ui.capdesc.adults_fire.h1") },
+    'adultsHealthCapacity': { label: t("ui.emoji.adults_health.h1")+t("ui.citizens.adults_health.h1"), desc: t("ui.capdesc.adults_health.h1") },
+    'adultsSoldierCapacity': { label: t("ui.emoji.adults_soldier.h1")+t("ui.citizens.adults_soldier.h1"), desc: t("ui.capdesc.adults_soldier.h1") },
+    'kidsStudentCapacity': { label: t("ui.emoji.kids_student.h1")+t("ui.citizens.kids_student.h1"), desc: t("ui.capdesc.kids_student.h1") },
+    'youngStudentCapacity': { label: t("ui.emoji.young_student.h1")+t("ui.citizens.young_student.h1"), desc: t("ui.capdesc.young_student.h1") },
+
+    'heatFossilCapacity': { label: t("ui.emoji.heat.h1")+t("ui.label.heat.h1"), desc: t("ui.capdesc.heat.h1") },    
+    
+    'storageSolidCap': { label: t("ui.emoji.storage_solid.h1")+t("ui.label.storage_solid.h1"), desc: t("ui.capdesc.storage_solid.h1") },
+    'storageLiquidCap': { label: t("ui.emoji.storage_liquid.h1")+t("ui.label.storage_liquid.h1"), desc: t("ui.capdesc.storage_liquid.h1") },
+    
+    'waterUsage': { label: t("ui.emoji.water.h1")+t("ui.label.water.h1"), desc: t("ui.usagedesc.water.h1") },
+    'waterCapacity': { label: t("ui.emoji.water.h1")+t("ui.label.water.h1"), desc: t("ui.capdesc.water.h1") },
+    
+    'wasteOtherUsage': { label: t("ui.emoji.waste_other.h1")+t("ui.label.waste_other.h1"), desc: t("ui.usagedesc.waste_other.h1") },
+    'wasteOtherCapacity': { label: t("ui.emoji.waste_other.h1")+t("ui.label.waste_other.h1"), desc: t("ui.capdesc.waste_other.h1") },
+
+    'productClothUsage': { label: t("ui.emoji.cloth.h1")+t("ui.label.product_cloth.h1"), desc: t("ui.usagedesc.product_cloth.h1") },
+    'productClothCapacity': { label: t("ui.emoji.cloth.h1")+t("ui.label.product_cloth.h1"), desc: t("ui.capdesc.product_cloth.h1") },
+
+    'taxHealthUsage': { label: t("ui.emoji.tax_health.h1")+t("ui.label.tax_health.h1"), desc: t("ui.capdesc.tax_health.h1") },
+    'taxHealthCapacity': { label: t("ui.emoji.tax_health.h1")+t("ui.label.tax_health.h1"), desc: t("ui.usagedesc.tax_health.h1") },
+
+
+    // ... tilføj flere efter behov
+  };
 }
 
 export function happinessEmojiFromScore(score01) {

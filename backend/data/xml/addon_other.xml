@@ -168,8 +168,27 @@
     <require>rsd.mining.l2</require>
   </addon>
 
+<!--HEALTH-->
 
+<addon id="add.storeherbs.l1" family="health" group="main" type="addons" lvl="2" stage="2">
+  <stats>healthCapacity=15, productMedicinCapacity=25</stats>
+    <cost>
+      <res id="res.money" amount="750"/>
+      <res id="res.wood" amount="100"/>
+    </cost>
+    <require>rsd.medicinstorage.l1</require>
+    <time>1h</time>
+  </addon>
 
+  <addon id="add.herbsgarden.l1" family="health" group="main" type="addons" lvl="2" stage="2">
+  <stats>healthCapacity=15, productMedicinCapacity=25</stats>
+    <cost>
+      <res id="res.money" amount="1000"/>
+      <res id="res.wood" amount="100"/>
+    </cost>
+    <require>rsd.medicinstorage.l1</require>
+    <time>1h</time>
+  </addon>
 
 
 

@@ -1,6 +1,6 @@
 import React from 'react';
 import DockHoverCard from '../ui/DockHoverCard.jsx';
-import StatsEffectsTooltip from '../ui/StatsEffectsTooltip.jsx';
+//import StatsEffectsTooltip from '../ui/StatsEffectsTooltip.jsx';
 import { renderControl } from './mgmtControlRender.jsx';
 import MgmtGrid from './MgmtGrid.jsx';
 import ManagementStatsTooltip from './ManagementStatsTooltip.jsx';

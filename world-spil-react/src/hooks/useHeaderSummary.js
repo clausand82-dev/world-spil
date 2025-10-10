@@ -9,6 +9,7 @@ const shared = {
   err: null,
   promise: null,
   at: 0,              // timestamp ms
+  unauthenticated: false,
 };
 
 function loadFromSession() {
@@ -35,27 +36,59 @@ function saveToSession(obj) {
     shared.data = cached.data;
     shared.at = cached.at || Date.now();
   }
+  if (cached && cached.unauthenticated) {
+    shared.unauthenticated = true;
+  }
 })();
 
 async function doFetch() {
   const res = await fetch(ENDPOINT, { credentials: 'include' });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const json = await res.json();
-  if (!json.ok) throw new Error(json.error?.message || 'Ukendt fejl');
-  return json.data;
+  const text = await res.text();
+  let json = null;
+  try { json = text ? JSON.parse(text) : null; } catch (e) { /* non-json response */ }
+
+  // 401: ikke autentificeret
+  if (res.status === 401) {
+    return { unauthenticated: true };
+  }
+
+  // HTTP error men ikke 401
+  if (!res.ok) {
+    const msg = json?.error?.message || json?.message || text || `HTTP ${res.status}`;
+    throw new Error(msg);
+  }
+
+  // Forvent shape: { ok:true, data: {...} }
+  if (!json || json.ok === false) {
+    const msg = (json && (json.error?.message || json.message)) || 'Ukendt serverfejl';
+    throw new Error(msg);
+  }
+
+  return { data: json.data ?? null };
 }
+
 function fetchSummary() {
   if (shared.promise) return shared.promise;
   shared.promise = doFetch()
-    .then((data) => {
-      shared.data = data;
+    .then((res) => {
+      if (res?.unauthenticated) {
+        shared.data = null;
+        shared.err = null;
+        shared.unauthenticated = true;
+        shared.at = Date.now();
+        saveToSession({ data: null, at: shared.at, unauthenticated: true });
+        return { unauthenticated: true };
+      }
+      shared.data = res.data ?? null;
       shared.err = null;
+      shared.unauthenticated = false;
       shared.at = Date.now();
-      saveToSession({ data, at: shared.at });
-      return data;
+      saveToSession({ data: shared.data, at: shared.at, unauthenticated: false });
+      return { data: shared.data };
     })
     .catch((err) => {
       shared.err = String(err?.message || err);
+      // Do not clobber unauthenticated flag on other errors
       throw err;
     })
     .finally(() => {
@@ -66,25 +99,33 @@ function fetchSummary() {
 
 /**
  * useHeaderSummary
- * - Returnerer { data, err, loading, refresh, lastUpdated }
+ * - Returnerer { data, err, loading, refresh, lastUpdated, unauthenticated }
  * - Viser øjeblikkeligt sidste kendte summary (fra memory/sessionStorage), mens den revaliderer i baggrunden.
- * - refresh() kan kaldes for at forny data manuelt.
  */
 export default function useHeaderSummary({ revalidateMs = 30000 } = {}) {
   const [data, setData] = useState(shared.data);
   const [err, setErr] = useState(shared.err);
   const [loading, setLoading] = useState(!shared.data && !shared.promise);
   const [lastUpdated, setLastUpdated] = useState(shared.at);
+  const [unauthenticated, setUnauthenticated] = useState(shared.unauthenticated);
 
   const mountedRef = useRef(true);
   useEffect(() => {
     mountedRef.current = true;
+
     // Start/tilslut fetch – revalidate altid i baggrunden
     fetchSummary()
-      .then((d) => {
+      .then((res) => {
         if (!mountedRef.current) return;
-        setData(d);
-        setErr(null);
+        if (res?.unauthenticated) {
+          setUnauthenticated(true);
+          setData(null);
+          setErr(null);
+        } else {
+          setData(res?.data ?? shared.data);
+          setErr(null);
+          setUnauthenticated(false);
+        }
         setLoading(false);
         setLastUpdated(shared.at);
       })
@@ -99,10 +140,17 @@ export default function useHeaderSummary({ revalidateMs = 30000 } = {}) {
     if (revalidateMs > 0) {
       timer = setInterval(() => {
         fetchSummary()
-          .then((d) => {
+          .then((res) => {
             if (!mountedRef.current) return;
-            setData(d);
-            setErr(null);
+            if (res?.unauthenticated) {
+              setUnauthenticated(true);
+              setData(null);
+              setErr(null);
+            } else {
+              setData(res?.data ?? shared.data);
+              setErr(null);
+              setUnauthenticated(false);
+            }
             setLastUpdated(shared.at);
           })
           .catch((e) => {
@@ -121,10 +169,17 @@ export default function useHeaderSummary({ revalidateMs = 30000 } = {}) {
   const refresh = async () => {
     setLoading(true);
     try {
-      const d = await fetchSummary();
+      const res = await fetchSummary();
       if (!mountedRef.current) return;
-      setData(d);
-      setErr(null);
+      if (res?.unauthenticated) {
+        setUnauthenticated(true);
+        setData(null);
+        setErr(null);
+      } else {
+        setData(res?.data ?? shared.data);
+        setErr(null);
+        setUnauthenticated(false);
+      }
       setLastUpdated(shared.at);
     } catch (e) {
       if (!mountedRef.current) return;
@@ -134,5 +189,5 @@ export default function useHeaderSummary({ revalidateMs = 30000 } = {}) {
     }
   };
 
-  return { data, err, loading, refresh, lastUpdated };
+  return { data, err, loading, refresh, lastUpdated, unauthenticated };
 }

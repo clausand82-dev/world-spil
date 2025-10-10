@@ -216,14 +216,33 @@ export default function HeaderHappinessBadge() {
                   {/* Subs – vises kun under parent – respekter stage for sub-rows også */}
                   {showSubs && (
                     <div style={{ marginTop: 6, paddingLeft: 8 }}>
-                      <ul style={{ margin: 0, paddingLeft: 14 }}>
+                      <ul style={{ margin: 0, paddingLeft: 0, listStyle: 'none' }}>
                         {subs.map(subKey => {
                           const subRow = makeRow(subKey);
                           if (!subRow) return null; // stage-gated eller mangler
+
                           return (
-                            <li key={subKey} style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
-                              <span>{LABELS[subKey] || subKey}</span>
-                              <span style={{ fontVariantNumeric: 'tabular-nums' }}>{subRow.scorePct}%</span>
+                            <li
+                              key={subKey}
+                              style={{
+                                padding: '4px 6px',
+                                borderRadius: 6,
+                                background: hoverMain === subKey ? 'rgba(44,123,229,0.04)' : 'transparent',
+                                marginBottom: 4,
+                              }}
+                            >
+                              <div style={{ display: 'flex', gap: 8, justifyContent: 'space-between', alignItems: 'baseline' }}>
+                                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                  <strong style={{ fontSize: 13 }}>{LABELS[subKey] || subKey}</strong>
+                                  <span style={{ fontSize: 12, opacity: 0.8 }}>
+                                    brug: {subRow.used.toLocaleString()} / {subRow.cap.toLocaleString()}
+                                  </span>
+                                </div>
+                                <div style={{ textAlign: 'right' }}>
+                                  <div style={{ fontVariantNumeric: 'tabular-nums' }}>{subRow.scorePct}%</div>
+                                  {subRow.fromImpact && <div style={{ fontSize: 12, opacity: 0.8 }}>Weight:{subRow.weight}</div>}
+                                </div>
+                              </div>
                             </li>
                           );
                         })}

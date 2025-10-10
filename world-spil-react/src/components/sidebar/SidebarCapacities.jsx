@@ -3,6 +3,7 @@ import { useGameData } from '../../context/GameDataContext.jsx';
 import useHeaderSummary from '../../hooks/useHeaderSummary.js';
 import CapacityBar from '../header/CapacityBar.jsx';
 import CitizensBadge from './CitizensBadge.jsx';
+import InlineCapacityBar from '../header/InlineCapacityBar.jsx';
 
 // Hjælp: lav pænt navn ud fra defs + håndtér scope og ".lN"-suffix
 function resolveDefName(defs, branch, rawId, fallbackName) {
@@ -257,15 +258,25 @@ export default function SidebarCapacities() {
 
   const citizens = data.citizens;
 
+  // find største absolute afvigelse fra 100%
+  const maxDelta = rows.reduce((m, r) => {
+    const used = Number(r.used || 0);
+    const cap = Number(r.cap || 0);
+    const rawPct = cap > 0 ? (used / cap) * 100 : (used > 0 ? 200 : 0);
+    const delta = Math.abs(rawPct - 100);
+    return Math.max(m, delta);
+  }, 0) || 0;
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-      {rows.map((r) => (
-        <CapacityBar
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 10 }}>
+      {rows.map(r => (
+        <InlineCapacityBar
           key={r.key}
           label={r.label}
           used={r.used}
           capacity={r.cap}
           hoverContent={r.hoverContent}
+          scaleMaxDelta={maxDelta}
         />
       ))}
     </div>
