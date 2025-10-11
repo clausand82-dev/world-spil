@@ -32,10 +32,12 @@ export default function Header() {
 
   return (
     <header className="topbar">
-      <div className="brand">
-        <span className="brand-emoji">🌍</span>
-        <span className="brand-name">World</span>
-        <span className="brand-name">{data?.config?.game_data?.version}</span>
+      <div className="brand" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <span className="brand-emoji" style={{ fontSize: 20 }}>🌍</span>
+        <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1 }}>
+          <span className="brand-name" style={{ fontWeight: 700 }}>World</span>
+          <span className="brand-version" style={{ fontSize: 12, color: '#9ca3af' }}>{data?.config?.game_data?.version}</span>
+        </div>
       </div>
 
       <div className="header-resources">

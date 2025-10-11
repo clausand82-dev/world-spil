@@ -24,7 +24,7 @@ a.link:hover{ text-decoration: underline; }
   position:sticky;top:0;z-index:10; position: fixed; width: 100%; 
 }
 .brand{display:flex;align-items:center;gap:10px;font-weight:800}
-.brand-emoji{font-size:20px}.brand-name{font-size:18px;letter-spacing:.3px}
+.brand-emoji{font-size:20px}.brand-name{font-size:14px;letter-spacing:.3px}
 .header-resources{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
 .res-chip{display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;background:var(--chip);color:var(--chipText);border:1px solid var(--border);font-weight:700}
 .res-chip .max{opacity:.65;font-weight:600}

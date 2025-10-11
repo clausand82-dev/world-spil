@@ -75,10 +75,18 @@ function UsageBreakdown({ label, usage }) {
   if (!usage) return null;
 
   const breakdown = usage.breakdown || {};
-  const keys = ['baby', 'kids', 'young', 'adults', 'old', 'crime'];
+
+  // crime skal ikke vises separat — gør den implicit i adults
+  const crime = Number(breakdown.crime || 0);
+  const keys = ['baby', 'kids', 'young', 'adults', 'old']; // fjern 'crime' fra visning
 
   const rows = keys
-    .map((k) => [k, Number(breakdown[k] || 0)])
+    .map((k) => {
+      let val = Number(breakdown[k] || 0);
+      // når vi behandler adults, tilføj crime implicit
+      if (k === 'adults') val += crime;
+      return [k, val];
+    })
     .filter(([, v]) => v !== 0);
 
   const infra = Number(usage.infra || 0);
