@@ -28,6 +28,7 @@ const nameResolver = useMemo(() => makeDefsNameResolver(defs), [defs]);
     ['research', 'Forskning'],
     ['animals', 'Dyr'],
     ['inventory', 'Lager'],
+    ['citizens', 'Borgere'], // NY
   ];
 
   

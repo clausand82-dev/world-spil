@@ -44,6 +44,11 @@ Change/update History
 - fixed research page to only show higest lvl of research (so no more downgrade research)
 - fixed research time on research page to show correct time when buff changes research time
 - fixed messy citizens hover to a more clean one
+- sidebar has new and more informativ hover
+- more stage 2 building, addons and research added
+- tax system slightly implimented
+- crime lite introduced
+- working on lang selection
 
 4.1
 - STAGE 2 and 3 system introduced

@@ -74,7 +74,7 @@ function apply_effects(array $ctx): array {
       if (!isset($effects['adjustments']['happiness'])) $effects['adjustments']['happiness'] = ['mult' => 1.0, 'add' => 0.0];
 
       // rule parameters
-      $popThreshold = 0.75;   // 75%
+      $popThreshold = 0.70;   // 70%
       $multiplier = 1.05;    // +5%
 
       // concise logging of resolved value

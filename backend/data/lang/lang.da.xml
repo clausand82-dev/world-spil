@@ -173,9 +173,10 @@
   <entry key="ui.capdesc.health_dentist.h1">Øger mængden af tandlæge kapacitet</entry>
   <entry key="ui.usagedesc.health_dentist.h1">Forbruget af tandlæge kapaciteten.</entry>
 
-
-    
-
+  <entry key="ui.emoji.tax.h1">💹</entry>
+  <entry key="ui.label.tax.h1">Skat</entry>
+  <entry key="ui.capdesc.tax.h1">Tilgængelig skatter</entry>
+  <entry key="ui.usagedesc.tax.h1">Udgifter der betales via skatten alt i alt.</entry>
 
   <entry key="ui.emoji.tax_health.h1">💹</entry>
   <entry key="ui.label.tax_health.h1">Offentlig udgifter - sundhed</entry>

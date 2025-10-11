@@ -47,6 +47,10 @@ try {
   $fine   = $counts['fine'];
   $totalPersons = (int)$macro['baby'] + (int)$macro['kids'] + (int)$macro['young'] + (int)$macro['adultsTotal'] + (int)$macro['old'];
 
+    // --- KONFIGURATION: indlæs tidligt så config_key virker for både capacity og usage blocks ---
+  $cfgIniPath = __DIR__ . '/../../data/config/config.ini';
+  $cfg = is_file($cfgIniPath) ? parse_ini_file($cfgIniPath, true, INI_SCANNER_TYPED) : [];
+
   // Byg hover-lister: kort/lang (uden crime i begge)
   $citLists = [
     'short' => [
@@ -172,6 +176,40 @@ try {
     ($capacities['healthCapacity']   ?? 0)
   );
 
+  // NYT: generisk borger-bidrag til capacities via registry
+  foreach ($registry as $id => $m) {
+    $capField = (string)($m['capacityField'] ?? '');
+    if ($capField === '') continue;
+    $rules = (array)($m['citizenCapacityContrib'] ?? []);
+    if (!$rules) continue;
+
+    foreach ($rules as $rule) {
+      $groupKey = (string)($rule['group'] ?? '');
+      $per      = (float)($rule['per'] ?? 0);
+      if ($groupKey === '' || ($per === 0.0 && empty($rule['config_key']))) continue;
+
+      $count = (int)($fine[$groupKey] ?? 0);
+      if ($count === 0) continue;
+
+      // optional per override fra config.ini (nu virker fordi $cfg er indlæst tidligere)
+      $cfgKey = (string)($rule['config_key'] ?? '');
+      if ($cfgKey !== '') {
+        // prøv sektionen 'tax' først, ellers top-niveau
+        $per = (float)($cfg['tax'][$cfgKey] ?? $cfg[$cfgKey] ?? $per);
+      }
+
+      $delta = $per * $count;
+      $capacities[$capField] = (float)($capacities[$capField] ?? 0) + $delta;
+
+      if (!isset($partsList[$capField])) $partsList[$capField] = [];
+      if (!isset($partsList[$capField]['citizens'])) $partsList[$capField]['citizens'] = [];
+      $partsList[$capField]['citizens'][] = [
+        'id'=>$groupKey, 'name'=>(string)($rule['label'] ?? $groupKey),
+        'amount'=>$delta, 'count'=>$count, 'per'=>$per
+      ];
+    }
+  }
+
   // Usages (citizen-baseret)
   $USAGE_FIELDS = [
     'useHousing','useProvision','useWater',
@@ -185,6 +223,9 @@ try {
 
     // Health sub-uses
     'useHealth','useHealthDentist',
+
+    // tax
+    'useTax',
   ];
   $usages = [];
   foreach ($USAGE_FIELDS as $field) {
@@ -252,6 +293,47 @@ foreach ($registry as $id => $m) {
   $cfg = is_file($cfgIniPath) ? parse_ini_file($cfgIniPath, true, INI_SCANNER_TYPED) : [];
   $happinessWeights  = $cfg['happiness']  ?? [];
   $popularityWeights = $cfg['popularity'] ?? [];
+
+/// NYT: Citizen-usage bidrag fra registry (fx budget-udgifter)
+  foreach ($registry as $id => $m) {
+    $unlockAt = (int)($m['stage']['unlock_at'] ?? 1);
+    if ($userStage < $unlockAt) continue;
+
+    $uField = (string)($m['usageField'] ?? '');
+    $rules  = (array)($m['citizenUsageContrib'] ?? []);
+    if ($uField === '' || !$rules) continue;
+
+    if (!isset($usages[$uField])) $usages[$uField] = ['total'=>0.0, 'breakdown'=>[], 'infra'=>0.0];
+
+    foreach ($rules as $rule) {
+      $group = (string)($rule['group'] ?? '');
+      $per   = (float)($rule['per'] ?? 0);
+      if ($group === '' || ($per === 0.0 && empty($rule['config_key']))) continue;
+
+      // valgfri toggle
+      $switchKey = (string)($rule['switch_key'] ?? '');
+      if ($switchKey !== '') {
+        $enabled = (int)($cfg['tax'][$switchKey] ?? 1);
+        if ($enabled !== 1) continue;
+      }
+
+      // override per fra config
+      $cfgKey = (string)($rule['config_key'] ?? '');
+      if ($cfgKey !== '') {
+        $per = (float)($cfg['tax'][$cfgKey] ?? $cfg[$cfgKey] ?? $per);
+      }
+
+      $count = (int)($fine[$group] ?? 0);
+      if ($count <= 0) continue;
+
+      $delta = $per * $count;
+      $usages[$uField]['total'] = (float)($usages[$uField]['total'] ?? 0) + $delta;
+
+      $usages[$uField]['citizens'][] = [
+        'id'=>$group, 'name'=>$rule['label'] ?? $group, 'count'=>$count, 'per'=>$per, 'amount'=>$delta
+      ];
+    }
+  }
 
   // === HAPPINESS: byg dynamisk fra registry + stage ===
   $happinessPairs = []; // key => ['used','capacity']

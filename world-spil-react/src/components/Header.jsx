@@ -7,6 +7,9 @@ import HeaderHappinessBadge from './header/HeaderHappinessBadge.jsx';
 import HoverCard from './ui/HoverCard.jsx';
 import CapHoverContent from './ui/CapHoverContent.jsx';
 import HeaderPopularityBadge from './header/HeaderPopularityBadge.jsx'; // NY
+import HeaderCrimeBadge from './header/HeaderCrimeBadge.jsx';
+import HeaderBudgetBadge from './header/HeaderBudgetBadge.jsx';
+import HeaderLangSelector from './header/HeaderLangSelector.jsx';
 
 export default function Header() {
   const { data } = useGameData();
@@ -36,6 +39,8 @@ export default function Header() {
       </div>
 
       <div className="header-resources">
+        <HeaderCrimeBadge />
+        <HeaderBudgetBadge />
         <HeaderPopularityBadge />
         <HeaderHappinessBadge />
 
@@ -62,6 +67,8 @@ export default function Header() {
         <button className="icon-btn" onClick={() => window.location.hash = '#/help?topic=intro'} title="Hjælp">❓Hjælp</button>
 
         <TopbarAuth onAuthChange={() => window.location.reload()} />
+          <HeaderLangSelector />
+          
       </div>
     </header>
   );

@@ -25,6 +25,9 @@ export function useStatsLabels() {
   social: t("ui.emoji.social.h1") + ' ' + t("ui.label.social.h1") || 'Social',
   wasteOther: t("ui.emoji.waste_other.h1") + ' ' + t("ui.label.waste_other.h1") || 'Other Waste',
 
+  tax: t("ui.emoji.tax.h1") + ' ' + t("ui.label.tax.h1") || 'Tax',
+  police: t("ui.emoji.adults_police.h1") + ' ' + t("ui.citizens.adults_police.h1") || 'Police',
+
   }), [t]);
 }
 

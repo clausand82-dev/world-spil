@@ -48,9 +48,13 @@
   </building>
 
   <building id="bld.basecamp.l3" family="basecamp" type="base" lvl="3" stage="1">
-    <stats>footprint=80; housingCapacity=35;provisionCapacity=19; 
+    <stats>footprint=80; housingCapacity=350;provisionCapacity=190; 
     heatFossilCapacity=10;
-    adultsPoliceCapacity=10;kidsStudentCapacity=7;youngStudentCapacity=5;healthDentistCapacity=144</stats>
+    adultsPoliceCapacity=10;
+    kidsStudentCapacity=7;
+    youngStudentCapacity=5;
+    healthDentistCapacity=144;
+    adultsWorkerCapacity=100</stats>
     <cost>
       <res id="res.money" amount="500" />
       <res id="res.wood" amount="100" />

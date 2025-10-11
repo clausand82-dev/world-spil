@@ -10,6 +10,9 @@ declare(strict_types=1);
  * 5: TILFØJ I STATSEFFECTSTOOLTIP (FRONTEND)
  * 6: TILFØJ I LANG FIL (GØRES OFTE I FORBINDELSEN MED PUNKT 5)
  * 
+ * adultsTotal er alle adults inc. crimes
+ * adults er alle adults uden crimes
+ * 
  * 
  * Metrics Registry
  * - Én kilde til sandhed for capacity/use, hierarkier (parent/subs), stages, happiness/popularity,
@@ -97,7 +100,12 @@ function metrics_registry(): array {
       'subs' => ['healthDentist'],
       'demands' => [],
       'flows' => [],
+      // NYT: borger-bidrag til kapacitet
+      'citizenCapacityContrib' => [
+        // hver adultsHealth giver +10 til healthCapacity
+        ['group'=>'adultsHealth', 'per'=>10, 'label'=>'Sundhedspersonale'],
       ],
+    ],
 
     'healthDentist' => [
       'label' => 'Tandlæge',
@@ -398,6 +406,41 @@ function metrics_registry(): array {
       'flows' => [],
     ],
 
+    // Traffic (eksempel demands)
+    'tax' => [
+      'label' => 'Skat',
+      'usageField' => 'useTax', // kunne være useTrafficFossil hvis du vil
+      'capacityField' => 'taxCapacity',
+      'capacityStatKeys' => 'taxCapacity',
+      'usageStatKeys' => 'taxUsage',
+      'sources' => ['bld'=>true,'add'=>true,'rsd'=>true,'ani'=>true,'res'=>true],
+      'stage' => ['unlock_at'=>2,'visible_at'=>2],
+      'happiness' => ['enabled'=>true, 'weight_key'=>'taxHappinessWeight'],
+      'popularity'=> ['enabled'=>true, 'weight_key'=>'taxPopularityWeight'],
+      'subs' => [],
+      'demands' => [],
+      'flows' => [],    
+
+    // Skatteindtægter (revenue) fra borgere => lægges på capacityField
+    'citizenCapacityContrib' => [
+      // Arbejdende betaler skat (eksempel)
+      ['group'=>'adultsWorker', 'config_key'=>'taxWorkerPer', 'label'=>'Skat fra arbejdende'],
+      // Tilføj evt. andre grupper (fx adultsGovernment, hvis du vil de også betaler skat)
+    ],
+
+    // Offentlige udgifter (expense) fra borgere => lægges på usageField
+    'citizenUsageContrib' => [
+      ['group'=>'adultsPolice',     'per'=>6,  'label'=>'Løn (politi)'],
+      ['group'=>'adultsFire',       'per'=>5,  'label'=>'Løn (brand)'],
+      ['group'=>'adultsHealth',     'config_key'=>'wageHealthPer',  'label'=>'Løn (sundhed)'], /// bruger config_key hvis du vil kunne ændre via config
+      ['group'=>'adultsGovernment', 'per'=>6,  'label'=>'Løn (offentlige)'],
+      ['group'=>'adultsPolitician', 'per'=>10, 'label'=>'Løn (politikere)'],
+
+      // Ydelser – kan styres med switch_key i config (valgfrit)
+      ['group'=>'adultsUnemployed', 'per'=>4,  'label'=>'Offentlig ydelse (arbejdsløse)', 'switch_key'=>'benefitUnemployedEnabled'],
+      ['group'=>'adultsHomeless',   'per'=>3,  'label'=>'Offentlig ydelse (hjemløse)',    'switch_key'=>'benefitHomelessEnabled'],
+    ],
+  ],
   ];
 
   return $metrics;
