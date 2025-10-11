@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import ConfirmModal from '../ConfirmModal.jsx';
 
 function Section({ title, children, style }) {
@@ -14,8 +14,20 @@ export default function StageUnlockModal({
   open,
   onClose,
   pages = [],              // [{ stage: number, title, desc, imageUrl, unlocked: [{id,label}] }]
+  initialIndex = 0,        // hvilken side modal skal starte på
 }) {
-  const [idx, setIdx] = useState(0);
+  const [idx, setIdx] = useState(() => {
+    const maxIdx = Math.max(0, pages.length - 1);
+    const wanted = Number.isFinite(initialIndex) ? initialIndex : 0;
+    return Math.min(Math.max(0, wanted), maxIdx);
+  });
+
+  // Reset index når modal åbner / antal sider ændrer sig / initialIndex ændrer sig
+  useEffect(() => {
+    const maxIdx = Math.max(0, pages.length - 1);
+    const wanted = Number.isFinite(initialIndex) ? initialIndex : 0;
+    setIdx(Math.min(Math.max(0, wanted), maxIdx));
+  }, [open, pages.length, initialIndex]);
 
   const page = pages[idx] || {};
   const isMulti = pages.length > 1;

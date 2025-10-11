@@ -4,8 +4,7 @@ import useHeaderSummary from '../../hooks/useHeaderSummary.js';
 import StageUnlockModal from './StageUnlockModal.jsx';
 import { STAGE_CONTENT } from '../../config/stageUnlockContent.js';
 
-const LS_KEY = (uid) => `ws:lastStageSeen:${uid || 'anon'}`;
-const STAGE_ASSETS = import.meta.glob('../../assets/stage/*.{png,jpg,jpeg}', { eager: true, as: 'url' });
+const LS_KEY = (uid) => `ws:lastStageSeen:${uid}`;
 
 function buildImageUrl(confPaths, raw) {
   if (!raw) return '';
@@ -21,15 +20,16 @@ export default function StageUnlockAnnouncer() {
   const { data: summary, loading, err } = useHeaderSummary();
   const { data: gameData } = useGameData();
 
-  // DEV hardcoded override: sæt til true for at ALTID vise modal (til test).
-  // Når true vises det normale indhold (hvis tilgængeligt) eller første entry fra STAGE_CONTENT.
-  const DEV_FORCE_SHOW = false;
+  // DEV: true => åbn normal stage-popup ved hver refresh; false => kun ved stage-stigning
+  const DEV_FORCE_SHOW = false; // sæt til false i prod
 
-  const userId = gameData?.state?.user?.userId || gameData?.state?.user?.user_id || 'anon';
+  // Vent på rigtigt userId – ingen 'anon' fallback
+  const userId = gameData?.state?.user?.userId ?? gameData?.state?.user?.user_id ?? null;
   const stageNow = Number(summary?.stage?.current ?? gameData?.state?.user?.currentstage ?? 0);
   const metricsMeta = summary?.metricsMeta || {};
   const confPaths = gameData?.config?.paths || gameData?.config?.Paths || {};
 
+  // Sidst sete stage (pr. user)
   const [lastSeen, setLastSeen] = useState(null);
   useEffect(() => {
     if (!userId) return;
@@ -41,8 +41,9 @@ export default function StageUnlockAnnouncer() {
     }
   }, [userId]);
 
+  // Normaltilstand: find stages vi lige er steget forbi
   const newlyReachedStages = useMemo(() => {
-    if (lastSeen === null) return [];
+    if (lastSeen === null) return []; // afvent init
     if (!Number.isFinite(stageNow)) return [];
     const prev = Number.isFinite(lastSeen) ? lastSeen : 0;
     if (stageNow <= prev) return [];
@@ -51,9 +52,13 @@ export default function StageUnlockAnnouncer() {
     return arr;
   }, [stageNow, lastSeen]);
 
+  // Byg pages:
+  // - DEV: åbn normal popup hver refresh; vis ALLE sider fra 1..stageNow (paging)
+  // - Normal: sider for alle nye stages siden lastSeen
   const pages = useMemo(() => {
-    if (!newlyReachedStages.length) return [];
-    return newlyReachedStages.map((s) => {
+    if (!userId || !Number.isFinite(stageNow) || stageNow <= 0) return [];
+
+    const mapStage = (s) => {
       const manual = STAGE_CONTENT[s] || {};
       const imageUrl = manual.image ? buildImageUrl(confPaths, manual.image) : '';
       const unlocked = Object.entries(metricsMeta)
@@ -62,78 +67,48 @@ export default function StageUnlockAnnouncer() {
       const title = manual.title || `Stage ${s} låst op`;
       const desc = manual.desc || (unlocked.length ? 'Nye muligheder er tilgængelige:' : 'Der er låst op for nye muligheder.');
       return { stage: s, title, desc, imageUrl, unlocked };
-    });
-  }, [newlyReachedStages, metricsMeta, confPaths]);
+    };
 
-  // UI state
-  const [open, setOpen] = useState(DEV_FORCE_SHOW);
-  const [imgSrc, setImgSrc] = useState(null);
-
-  // Lås sider for modal så vi undgår flicker ved at pages midlertidigt bliver tomme
-  const [modalPages, setModalPages] = useState([]);
-
-  useEffect(() => {
-    // hvis vi allerede har låst sider, behold dem indtil brugeren lukker
-    if (modalPages.length) return;
-
-    if (pages.length) {
-      setModalPages(pages);
-      setOpen(true);
-      return;
-    }
-
-    // DEV_FORCE_SHOW: hvis ingen pages fra backend, brug første STAGE_CONTENT entry
     if (DEV_FORCE_SHOW) {
-      const keys = Object.keys(STAGE_CONTENT || {});
-      if (keys.length) {
-        const k = keys[0];
-        const manual = STAGE_CONTENT[k] || {};
-        const imageUrl = manual.image ? buildImageUrl(confPaths, manual.image) : '';
-        const title = manual.title || `Stage ${k}`;
-        const desc = manual.desc || '';
-        setModalPages([{ stage: Number(k) || 0, title, desc, imageUrl, unlocked: [] }]);
-      }
-      setOpen(true);
+      // Ignorér lastSeen i DEV – vis alle sider fra 1..stageNow
+      const stages = Array.from({ length: stageNow }, (_, i) => i + 1);
+      return stages.map(mapStage);
     }
-  }, [pages.length, DEV_FORCE_SHOW, modalPages.length, confPaths]);
 
-  // Åbn kun når lastSeen læst (medmindre DEV_FORCE_SHOW er true)
+    // Normal drift
+    if (lastSeen === null) return [];
+    if (!newlyReachedStages.length) return [];
+    return newlyReachedStages.map(mapStage);
+  }, [DEV_FORCE_SHOW, userId, stageNow, lastSeen, newlyReachedStages, metricsMeta, confPaths]);
+
+  // Åbn modal når der er indhold (pages)
+  const [open, setOpen] = useState(false);
   useEffect(() => {
-    if (DEV_FORCE_SHOW) return;
     if (loading || err) return;
-    if (lastSeen === null) return;
-    if (newlyReachedStages.length > 0) setOpen(true);
-  }, [newlyReachedStages.length, loading, err, lastSeen, DEV_FORCE_SHOW]);
-
-  // Lås den fungerende billeder-src når modalPages først er sat
-  useEffect(() => {
-    if (!modalPages.length) return;
-    const p0 = modalPages[0];
-    const fallback = '/world-spil/public/assets/art/stage/stage-1.jpg';
-    const candidate = (p0 && p0.imageUrl) ? p0.imageUrl : fallback;
-    if (!candidate) return;
-    setImgSrc((prev) => prev || candidate);
-  }, [modalPages.length]);
+    if (!userId) return;
+    setOpen(pages.length > 0);
+  }, [pages.length, loading, err, userId]);
 
   const handleClose = () => {
     setOpen(false);
-    try { localStorage.setItem(LS_KEY(userId), String(stageNow)); } catch {}
-    setLastSeen(stageNow);
-    setModalPages([]);
-    setImgSrc(null);
+    // I DEV gemmer vi ikke lastSeen (skal åbne hver refresh)
+    if (!DEV_FORCE_SHOW && userId && Number.isFinite(stageNow) && stageNow > 0) {
+      try { localStorage.setItem(LS_KEY(userId), String(stageNow)); } catch {}
+      setLastSeen(stageNow);
+    }
   };
 
-  if (!modalPages.length || !open) return null;
+  if (!open || !pages.length) return null;
 
-  const pagesWithLockedImage = (imgSrc && Array.isArray(modalPages) && modalPages.length)
-    ? modalPages.map((p, i) => (i === 0 ? { ...p, imageUrl: imgSrc } : p))
-    : modalPages;
+  // Start altid på NYESTE stage – dvs. sidste side
+  const initialIndex = Math.max(0, pages.length - 1);
 
   return (
     <StageUnlockModal
       open={open}
       onClose={handleClose}
-      pages={pagesWithLockedImage}
+      pages={pages}
+      initialIndex={initialIndex}
     />
   );
 }

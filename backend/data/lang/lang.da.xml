@@ -303,8 +303,12 @@
 <!--ADDONS BASECAMP-->  
   <entry key="add.choppingblock.l1.name">Økseblok</entry>
   <entry key="add.choppingblock.l1.desc">Økseblok bruges til at hugge brænde på</entry>
+
   <entry key="add.bigfireplace.l1.name">Stor bål</entry>
   <entry key="add.bigfireplace.l1.desc">Øger lejrens føde en smule.</entry>
+  <entry key="add.bigfireplace.l2.name">Udvidet bålplads</entry>
+  <entry key="add.bigfireplace.l2.desc">Større bål betyder mere hygge; socialitet er en realitet!</entry>
+
   <entry key="add.saltbowl.l1.name">Saltkar</entry>
   <entry key="add.saltbowl.l1.desc">Giver en smule salt hele tiden</entry>
 
@@ -415,6 +419,22 @@
   <entry key="add.undergroundshelter.l1.name">Underjordisk ly</entry>
   <entry key="add.undergroundshelter.l1.desc">Giver mulighed for at bygge et ly under jorden.</entry>
 
+<!--ADDONS HEALTH-->
+
+
+
+  <entry key="add.storeherbs.l1.name">Urteopbevaring</entry>
+  <entry key="add.storeherbs.l1.desc">Giver mulighed for at opbevare urter sikkert.</entry>
+  <entry key="add.herbsgarden.l1.name">Urtehave</entry>
+  <entry key="add.herbsgarden.l1.desc">Giver mulighed for at dyrke urter.</entry>
+
+<!--ADDONS ANDET-->
+
+  <entry key="rsd.social.l1.name">Sociale interaktioner</entry>
+  <entry key="rsd.social.l1.desc">Giver mulighed for at interagere med andre spillere.</entry>
+
+  <entry key="add.sleepingbag.l1.name">Sovepose</entry>
+  <entry key="add.sleepingbag.l1.desc">Giver mulighed for at sove bedre om natten.</entry>
 
 <!--RESEARCH-->
   <entry key="rsd.tools.l1.name">Basis værktøjs kendskab</entry>

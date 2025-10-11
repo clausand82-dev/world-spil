@@ -16,7 +16,7 @@
   </addon>
 
   <addon id="add.bigfireplace.l2" family="basecamp" type="addons" lvl="2" stage="2">
-    <stats>footprint=-1;provision_cap=50;heatFossilCapacity=50;wasteOtherCapacity=100</stats>
+    <stats>footprint=-1;provision_cap=50;heatFossilCapacity=50;wasteOtherCapacity=100;socialCapacity=25</stats>
     <cost>
       <res id="res.money" amount="225"/>
       <res id="res.wood" amount="30"/>
@@ -96,14 +96,7 @@
     <require>rsd.basiccloth.l1</require>
   </addon>
 
-  <addon id="add.sleepingbag.l1" family="basecamp" type="addons" lvl="1" stage="2">
-  <stats>footprint=-1;productClothCapacity=16</stats>
-    <cost>
-      <res id="res.money" amount="110"/>
-      <res id="res.hide" amount="4"/>
-    </cost>
-    <require>rsd.sleepingbag.l1,add.tailorspot.l2</require>
-  </addon>
+
 
 
   

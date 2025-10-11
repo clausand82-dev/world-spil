@@ -190,6 +190,17 @@
     <time>1h</time>
   </addon>
 
+<!--OTHER-->
+
+    <addon id="add.sleepingbag.l1" family="tent" type="addons" lvl="1" stage="2">
+  <stats>footprint=-1;productClothCapacity=16</stats>
+    <cost>
+      <res id="res.money" amount="110"/>
+      <res id="res.hide" amount="4"/>
+    </cost>
+    <require>rsd.sleepingbag.l1,add.tailorspot.l2</require>
+  </addon>
+
 
 
 
