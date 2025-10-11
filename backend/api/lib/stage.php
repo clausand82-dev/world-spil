@@ -29,6 +29,12 @@ function is_stage_unlocked_by_research(PDO $pdo, int $userId, int $targetStage):
         $st->execute([$userId, 'rsd.stage.l2']);
         return (int)$st->fetchColumn() > 0;
     }
+    if ($targetStage === 3) {
+        // Skift 'user_research' + 'research_id' og 'completed' til dine rigtige kolonnenavne.
+        $st = $pdo->prepare('SELECT COUNT(1) FROM research WHERE user_id = ? AND rsd_id = ?');
+        $st->execute([$userId, 'rsd.stage.l3']);
+        return (int)$st->fetchColumn() > 0;
+    }
     // Udvid med flere stages her …
     return false;
 }

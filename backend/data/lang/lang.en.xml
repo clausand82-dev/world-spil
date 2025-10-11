@@ -1,189 +1,719 @@
-<?xml version='1.0' encoding='UTF-8'?>
-<language lang="da" source="World 2025.xlsx">
+<?xml version="1.0" encoding="utf-8"?>
+<language lang="en" source="World 2025.xlsx">
 <err>
-  <unknown_id>Unknown id.</unknown_id>
+  <unknown_id>Unknown ID.</unknown_id>
   <insufficient_resources>Not enough resources.</insufficient_resources>
-  <requires_missing>Requirements not met.</requires_missing>
-  <max_instance_reached>You already have the maximum amount.</max_instance_reached>
-  <already_researched>Already completed.</already_researched>
+  <requires_missing>Requirement not met.</requires_missing>
+  <max_instance_reached>You already have the maximum number.</max_instance_reached>
+  <already_researched>Already researched.</already_researched>
   <already_in_progress>Already in progress.</already_in_progress>
   <invalid_upgrade>Invalid upgrade target.</invalid_upgrade>
   <invalid_request>Invalid request.</invalid_request>
   <unknown_instance>Building instance not found.</unknown_instance>
   <error>An error occurred.</error>
 </err>
+
+<!--UI-->
+  <entry key="ui.liquid.h1">Liquid Resources</entry>
+  <entry key="ui.solid.h1">Solid Resources</entry>
+  <entry key="ui.building.h1">Building</entry>
+  <entry key="ui.buildings.h1">Buildings</entry>
+  <entry key="ui.production.h1">Production</entry>
+  <entry key="ui.capacity.h1">Capacity</entry>
+  <entry key="ui.durability.h1">Durability</entry>
+  <entry key="ui.requirements.h1">Requirements</entry>
+  <entry key="ui.time.h1">Time</entry>
+  <entry key="ui.btn.build.h1">Build</entry>
+  <entry key="ui.btn.upgrade.h1">Upgrade</entry>
+  <entry key="ui.btn.needmore.h1">Missing items</entry>
+  <entry key="ui.btn.owned.h1">Owned</entry>
+  <entry key="ui.btn.cancel.h1">Cancel</entry>
+  <entry key="ui.btn.repair.h1">Repair</entry>
+  <entry key="ui.btn.demolish.h1">Demolish</entry>
+  <entry key="ui.btn.demandbuilding.h1">Requires building</entry>
+  <entry key="ui.tip.researchdone.h1">You have already researched</entry>
+  <entry key="ui.tip.builddone.h1">You have already built</entry>
+
+  <entry key="ui.notbuild.h1">Not built</entry>
+  <entry key="ui.buildcost.h1">Build cost</entry>
+  <entry key="ui.upgradecost.h1">Upgrade cost</entry>
+  <entry key="ui.demands.h1">Requirements</entry>
+  <entry key="ui.footprint.h1">Footprint</entry>
+  <entry key="ui.bar.upgrade.h1">Upgrading</entry>
+
+  <entry key="ui.tabs.addons.h1">Addons</entry>
+  <entry key="ui.tabs.research.h1">Research</entry>
+  <entry key="ui.tabs.recipes.h1">Recipes</entry>
+  <entry key="ui.tabs.speciel.h1">Special</entry>
+
+  <entry key="ui.animals.h1">Animals</entry>
+  <entry key="ui.fills.h1"></entry>
+
+  <entry key="ui.text.main.h1">Main</entry>
+
+  <entry key="ui.text.demandingstage.h1">Requires Stage</entry>
+  <entry key="ui.text.stagelocked.h1">Stage locked</entry>
+  <entry key="ui.text.recipe.h1">Recipe</entry>
+
+  <entry key="ui.headers.recipe.h1">Jobs / Recipes</entry>
+  <entry key="ui.headers.addons.h1">Building Addons</entry>
+  <entry key="ui.headers.research.h1">Related Research</entry>
+
+  <entry key="ui.emoji.buildcost.h1">🔨</entry>
+  <entry key="ui.emoji.demands.h1">📜</entry>
+  <entry key="ui.emoji.time.h1">⏱</entry>
+  <entry key="ui.emoji.research.h1">🧪</entry>
+  <entry key="ui.emoji.recipe.h1">🧾</entry>
+  <entry key="ui.emoji.addon.h1">🧩</entry>
+  <entry key="ui.emoji.desc.h1">🔍</entry>
+
+  <entry key="ui.emoji.capacity.h1">📦</entry>
+  <entry key="ui.emoji.durability.h1">🛠️</entry>
+  <entry key="ui.emoji.production.h1">🏭</entry>
+
+  <entry key="ui.emoji.animalcap.h1">🐾</entry>
+  <entry key="ui.label.animalcap.h1">Animal Space</entry>
+  <entry key="ui.desc.animalcap.h1">Space for animals (how many animals). Some animals take up more space than others.</entry>
+
+  <entry key="ui.emoji.footprint.h1">⬛</entry>
+  <entry key="ui.label.footprint.h1">Building Area</entry>
+  <entry key="ui.desc.footprint.h1">Map space (m²).</entry>
+    <entry key="ui.emoji.storage_liquid.h1">💧</entry>
+  <entry key="ui.label.storage_liquid.h1">Storage (liquid)</entry>
+  <entry key="ui.capdesc.storage_liquid.h1">Capacity for liquid goods (how much can be stored).</entry>
+
+  <entry key="ui.emoji.storage_solid.h1">🧱</entry>
+  <entry key="ui.label.storage_solid.h1">Storage (solid)</entry>
+  <entry key="ui.capdesc.storage_solid.h1">Capacity for solid goods (how much can be stored).</entry>
+
+  <entry key="ui.emoji.housing.h1">🏠</entry>
+  <entry key="ui.label.housing.h1">Housing</entry>
+  <entry key="ui.capdesc.housing.h1">Space for citizens (how many residents).</entry>
+  <entry key="ui.usagedesc.housing.h1">How many citizens are used per unit.</entry>
+
+  <entry key="ui.emoji.provision.h1">🍽</entry>
+  <entry key="ui.label.provision.h1">Provision</entry>
+  <entry key="ui.capdesc.provision.h1">Provision capacity (how much food).</entry>
+  <entry key="ui.usagedesc.provision.h1">How much food is consumed.</entry>
+
+  <entry key="ui.emoji.health.h1">💊</entry>
+  <entry key="ui.label.health.h1">Health</entry>
+  <entry key="ui.capdesc.health.h1">Capacity for health (how much health can be generated).</entry>
+  <entry key="ui.usagedesc.health.h1">Total health consumption.</entry>
+
+  <entry key="ui.emoji.heat.h1">🔥</entry>
+  <entry key="ui.label.heat.h1">Heat</entry>
+  <entry key="ui.capdesc.heat.h1">Capacity for heat (how much can be generated).</entry>
+  <entry key="ui.usagedesc.heat.h1">Total heat consumption.</entry>
+
+  <entry key="ui.emoji.heat_fossil.h1">🔥</entry>
+  <entry key="ui.label.heat_fossil.h1">Heat (Fossil)</entry>
+  <entry key="ui.capdesc.heat_fossil.h1">Capacity for heat (Fossil) (how much can be generated).</entry>
+  <entry key="ui.usagedesc.heat_fossil.h1">Total heat (Fossil) consumption.</entry>
+
+  <entry key="ui.emoji.heat_green.h1">🌲</entry>
+  <entry key="ui.label.heat_green.h1">Heat (Green)</entry>
+  <entry key="ui.capdesc.heat_green.h1">Capacity for heat (Green) (how much can be generated).</entry>
+  <entry key="ui.usagedesc.heat_green.h1">Total heat (Green) consumption.</entry>
+
+  <entry key="ui.emoji.heat_nuclear.h1">☢️</entry>
+  <entry key="ui.label.heat_nuclear.h1">Heat (Nuclear)</entry>
+  <entry key="ui.capdesc.heat_nuclear.h1">Capacity for heat (Nuclear) (how much can be generated).</entry>
+  <entry key="ui.usagedesc.heat_nuclear.h1">Total heat (Nuclear) consumption.</entry>
+
+  <entry key="ui.emoji.power.h1">💡</entry>
+  <entry key="ui.label.power.h1">Power</entry>
+  <entry key="ui.capdesc.power.h1">Capacity for power (how much can be generated).</entry>
+  <entry key="ui.usagedesc.power.h1">Total power consumption.</entry>
+
+  <entry key="ui.emoji.power_fossil.h1">💡</entry>
+  <entry key="ui.label.power_fossil.h1">Power (Fossil)</entry>
+  <entry key="ui.capdesc.power_fossil.h1">Capacity for power (Fossil) (how much can be generated).</entry>
+  <entry key="ui.usagedesc.power_fossil.h1">Total power (Fossil) consumption.</entry>
+
+  <entry key="ui.emoji.power_green.h1">🔆</entry>
+  <entry key="ui.label.power_green.h1">Power (Green)</entry>
+  <entry key="ui.capdesc.power_green.h1">Capacity for power (Green) (how much can be generated).</entry>
+  <entry key="ui.usagedesc.power_green.h1">Total power (Green) consumption.</entry>
+
+  <entry key="ui.emoji.power_nuclear.h1">🛢️</entry>
+  <entry key="ui.label.power_nuclear.h1">Power (Nuclear)</entry>
+  <entry key="ui.capdesc.power_nuclear.h1">Capacity for power (Nuclear) (how much can be generated).</entry>
+  <entry key="ui.usagedesc.power_nuclear.h1">Total power (Nuclear) consumption.</entry>
+
+  <entry key="ui.emoji.water.h1">💦</entry>
+  <entry key="ui.label.water.h1">Water</entry>
+  <entry key="ui.capdesc.water.h1">Capacity for water (how much can be supplied).</entry>
+  <entry key="ui.usagedesc.water.h1">Total water consumption.</entry>
+
+  <entry key="ui.emoji.waste_other.h1">💩</entry>
+  <entry key="ui.label.waste_other.h1">Waste</entry>
+  <entry key="ui.capdesc.waste_other.h1">How much waste (other) can be stored and processed.</entry>
+  <entry key="ui.usagedesc.waste_other.h1">How much waste (other) can be produced.</entry>
+
+  <entry key="ui.emoji.product_cloth.h1">👕</entry>
+  <entry key="ui.label.product_cloth.h1">Clothing</entry>
+  <entry key="ui.capdesc.product_cloth.h1">Capacity for clothes (how much can be stored).</entry>
+  <entry key="ui.usagedesc.product_cloth.h1">Total clothing consumption.</entry>
+
+  <entry key="ui.emoji.product_medicin.h1">💉</entry>
+  <entry key="ui.label.product_medicin.h1">Medicine</entry>
+  <entry key="ui.capdesc.product_medicin.h1">Capacity for medicine (how much can be stored).</entry>
+  <entry key="ui.usagedesc.product_medicin.h1">Total medicine consumption.</entry>
+
+  <entry key="ui.emoji.health_dentist.h1">😁</entry>
+  <entry key="ui.label.health_dentist.h1">Dentist</entry>
+  <entry key="ui.capdesc.health_dentist.h1">Increases dental capacity.</entry>
+  <entry key="ui.usagedesc.health_dentist.h1">Use of dental capacity.</entry>
+
+  <entry key="ui.emoji.tax.h1">💹</entry>
+  <entry key="ui.label.tax.h1">Tax</entry>
+  <entry key="ui.capdesc.tax.h1">Available taxes.</entry>
+  <entry key="ui.usagedesc.tax.h1">Total expenses paid via taxes.</entry>
+
+  <entry key="ui.emoji.tax_health.h1">💹</entry>
+  <entry key="ui.label.tax_health.h1">Public Expenses - Health</entry>
+  <entry key="ui.capdesc.tax_health.h1">Increases public expenses.</entry>
+  <entry key="ui.usagedesc.tax_health.h1">Total public spending used.</entry>
+
+  <entry key="ui.emoji.baby.h1">👶</entry>
+  <entry key="ui.citizens.baby.h1">Baby</entry>
+
+  <entry key="ui.emoji.kids_street.h1">🧢</entry>
+  <entry key="ui.citizens.kids_street.h1">Street Child</entry>
+
+  <entry key="ui.emoji.kids_student.h1">⛪</entry>
+  <entry key="ui.citizens.kids_student.h1">School Student</entry>
+  <entry key="ui.capdesc.kids.h1">Educational capacity for children.</entry>
+  <entry key="ui.usagedesc.kids.h1">How many children are being educated.</entry>
+
+  <entry key="ui.emoji.young_worker.h1">🙎</entry>
+  <entry key="ui.citizens.young_worker.h1">Young Worker</entry>
+
+  <entry key="ui.emoji.young_student.h1">🎓</entry>
+  <entry key="ui.citizens.young_student.h1">Young Student</entry>
+
+  <entry key="ui.emoji.adults_worker.h1">👷</entry>
+  <entry key="ui.citizens.adults_worker.h1">Adult Worker</entry>
+
+  <entry key="ui.emoji.adults_politician.h1">👔</entry>
+  <entry key="ui.citizens.adults_politician.h1">Politician</entry>
+
+  <entry key="ui.emoji.adults_fire.h1">👩‍🚒</entry>
+  <entry key="ui.citizens.adults_fire.h1">Firefighter</entry>
+  <entry key="ui.capdesc.fire.h1">How many firefighters the city can house.</entry>
+  <entry key="ui.usagedesc.fire.h1">How many firefighters the city needs.</entry>
+  <entry key="ui.emoji.fire_unit.h1">🚒</entry>
+
+  <entry key="ui.emoji.adults_police.h1">👮</entry>
+  <entry key="ui.citizens.adults_police.h1">Police Officer</entry>
+  <entry key="ui.capdesc.fire.h1">How many police officers the city can house.</entry>
+  <entry key="ui.usagedesc.fire.h1">How many police officers the city needs.</entry>
+  <entry key="ui.emoji.police_unit.h1">🚓</entry>
+  <entry key="ui.label.health_unit.h1">Equipment</entry>
+  <entry key="ui.capdesc.health_unit.h1">Capacity for health equipment.</entry>
+  <entry key="ui.usagedesc.health_unit.h1">How much equipment space is used per unit.</entry>
+
+  <entry key="ui.emoji.adults_health.h1">🏥</entry>
+  <entry key="ui.citizens.adults_health.h1">Healthcare Worker</entry>
+  <entry key="ui.capdesc.health.h1">How many healthcare workers the city can house.</entry>
+  <entry key="ui.usagedesc.health.h1">How many healthcare workers the city needs.</entry>
+  <entry key="ui.emoji.health_unit.h1">🚑</entry>
+
+  <entry key="ui.emoji.adults_unemployed.h1">🤷</entry>
+  <entry key="ui.citizens.adults_unemployed.h1">Unemployed</entry>
+
+  <entry key="ui.emoji.adults_homeless.h1">👤</entry>
+  <entry key="ui.citizens.adults_homeless.h1">Homeless</entry>
+
+  <entry key="ui.emoji.adults_soldier.h1">🪖</entry>
+  <entry key="ui.citizens.adults_soldier.h1">Soldier</entry>
+  <entry key="ui.capdesc.soldier.h1">How many soldiers the city can house.</entry>
+  <entry key="ui.usagedesc.soldier.h1">How many soldiers the city needs.</entry>
+
+  <entry key="ui.emoji.adults_government.h1">🏢</entry>
+  <entry key="ui.citizens.adults_government.h1">Public Employee</entry>
+
+  <entry key="ui.emoji.old.h1">🧓</entry>
+  <entry key="ui.citizens.old.h1">Elderly</entry>
+
+  <entry key="ui.emoji.crime.h1">🦹</entry>
+  <entry key="ui.citizens.crime.h1">Criminal</entry>
+
+  <entry key="ui.emoji.social.h1">👭</entry>
+  <entry key="ui.label.social.h1">Social</entry>
+  <entry key="ui.capdesc.social.h1">How many social activities the city has.</entry>
+  <entry key="ui.usagedesc.social.h1">How much social activity the citizens require.</entry>
+
+  <!--BUILDINGS-->
   <entry key="bld.basecamp.l1.name">Campfire</entry>
-  <entry key="bld.basecamp.l1.desc">The game's starting base</entry>
-  <entry key="bld.basecamp.l2.name">Small campsite</entry>
-  <entry key="bld.basecamp.l2.desc">Increases the camp size from base camp to small camp</entry>
-  <entry key="bld.basecamp.l3.name">Medium campsite</entry>
-  <entry key="bld.basecamp.l3.desc">Increases the camp size from small camp to medium camp</entry>
-  <entry key="bld.basecamp.l4.name">Large campsite</entry>
-  <entry key="bld.basecamp.l4.desc">Increases the camp size from medium camp to large campsite</entry>
-  <entry key="bld.tent.l1.name">Small tent</entry>
-  <entry key="bld.tent.l1.desc">Provides space for 5 inhabitants per tent</entry>
-  <entry key="bld.tent.l2.name">Medium tent</entry>
-  <entry key="bld.tent.l2.desc">Provides space for 15 inhabitants per tent</entry>
-  <entry key="bld.tent.l3.name">Family tent</entry>
-  <entry key="bld.tent.l3.desc">Provides space for 25 inhabitants per tent</entry>
-  <entry key="bld.tent.l4.name">Large tents</entry>
-  <entry key="bld.tent.l4.desc">Provides space for 50 inhabitants per tent</entry>
-  <entry key="bld.barn.l1.name">[bld.barn.l1]</entry>
-  <entry key="bld.barn.l1.desc">Barn for animals. Higher levels allow space for more animals.</entry>
-  <entry key="bld.barn.l2.name">[bld.barn.l2]</entry>
-  <entry key="bld.barn.l2.desc">Barn for animals. Higher levels allow space for more animals.</entry>
-  <entry key="bld.field.wheat.l1.name">[bld.field.wheat.l1]</entry>
-  <entry key="bld.field.wheat.l1.desc">Field for growing wheat. Higher levels provide greater yield.</entry>
-  <entry key="bld.field.wheat.l2.name">[bld.field.wheat.l2]</entry>
-  <entry key="bld.field.wheat.l2.desc">Field for growing wheat. Higher levels provide greater yield.</entry>
-  <entry key="bld.field.oats.l1.name">[bld.field.oats.l1]</entry>
-  <entry key="bld.field.oats.l1.desc">Field for growing oats. Higher levels provide greater yield.</entry>
-  <entry key="bld.field.oats.l2.name">[bld.field.oats.l2]</entry>
-  <entry key="bld.field.oats.l2.desc">Field for growing oats. Higher levels provide greater yield.</entry>
-  <entry key="bld.forest.l1.name">[bld.forest.l1]</entry>
-  <entry key="bld.forest.l1.desc">Forest area that provides wood resources over time.</entry>
-  <entry key="bld.forest.l2.name">[bld.forest.l2]</entry>
-  <entry key="bld.forest.l2.desc">Forest area that provides wood resources over time.</entry>
-  <entry key="bld.lake.l1.name">[bld.lake.l1]</entry>
-  <entry key="bld.lake.l1.desc">A lake that can be expanded with important options. A lake provides water.</entry>
-  <entry key="bld.mine.l1.name">[bld.mine.l1]</entry>
-  <entry key="bld.mine.l1.desc">Mine that automatically provides some stone over time. Can be expanded to provide more and additional resources</entry>
-  <entry key="bld.storage.solid.l1.name">Storage tent (solid goods)</entry>
-  <entry key="bld.storage.solid.l1.desc">Increases storage space for solid goods</entry>
-  <entry key="bld.storage.liquid.l1.name">Storage tent (liquid goods)</entry>
-  <entry key="bld.storage.liquid.l1.desc">Increases storage space for liquid goods</entry>
-  <entry key="add.basecamp.choppingblock.l1.name">Chopping block</entry>
-  <entry key="add.basecamp.choppingblock.l1.desc">Chopping block used for cutting firewood</entry>
-  <entry key="add.basecamp.slaughterspot.l1.name">Butcher's table</entry>
-  <entry key="add.basecamp.slaughterspot.l1.desc">Enables slaughtering</entry>
-  <entry key="add.basecamp.bigfireplace.l1.name">Large bonfire</entry>
-  <entry key="add.basecamp.bigfireplace.l1.desc">Increases the camp's food slightly.</entry>
-  <entry key="add.basecamp.saltbowl.l1.name">Salt bowl</entry>
-  <entry key="add.basecamp.saltbowl.l1.desc">Provides a small amount of salt continuously</entry>
-  <entry key="add.basecamp.well.l1.name">Well</entry>
-  <entry key="add.basecamp.well.l1.desc">Adds a well to the camp</entry>
-  <entry key="add.basecamp.tailorspot.l1.name">Tailor's table</entry>
-  <entry key="add.basecamp.tailorspot.l1.desc">Enables processing of hides and leather</entry>
-  <entry key="add.basecamp.barrel.l1.name">Small storage barrel for liquid resources</entry>
-  <entry key="add.basecamp.barrel.l1.desc">Increases storage for liquid resources</entry>
-  <entry key="add.basecamp.barrel.l2.name">Large storage barrel for liquid resources</entry>
-  <entry key="add.basecamp.barrel.l2.desc">Further increases storage for liquid resources</entry>
-  <entry key="add.barn.yard.l1.name">Small barn</entry>
-  <entry key="add.barn.yard.l1.desc">Small barn with space for a few animals</entry>
-  <entry key="add.barn.yard.l2.name">Medium barn</entry>
-  <entry key="add.barn.yard.l2.desc">Space for a few more animals; upgrade from Small Barn</entry>
-  <entry key="add.barn.yard.l3.name">Large barn</entry>
-  <entry key="add.barn.yard.l3.desc">Space for many animals; upgrade from Medium Barn</entry>
-  <entry key="add.barn.fence.l1.name">Simple wooden fence</entry>
-  <entry key="add.barn.fence.l1.desc">[Beskrivelse mangler for add.barn.fence.l1]</entry>
-  <entry key="add.barn.fence.l2.name">Sturdy wooden fence</entry>
-  <entry key="add.barn.fence.l2.desc">[Beskrivelse mangler for add.barn.fence.l2]</entry>
-  <entry key="add.barn.feedingtrough.l1.name">Feeding trough</entry>
-  <entry key="add.barn.feedingtrough.l1.desc">Slightly increases possible number of animals</entry>
-  <entry key="add.barn.watertrough.l1.name">Water trough</entry>
-  <entry key="add.barn.watertrough.l1.desc">Reduces barn animals' water consumption by 10%</entry>
-  <entry key="add.barn.manurepit.l1.name">Manure</entry>
-  <entry key="add.barn.manurepit.l1.desc">Animals produce manure, which can be spread on fields to improve yield</entry>
-  <entry key="add.barn.bedding.l1.name">Bedding</entry>
-  <entry key="add.barn.bedding.l1.desc">Slightly increases the maximum number of animals</entry>
-  <entry key="add.barn.milkingshed.l1.name">Enables milking cows and goats</entry>
-  <entry key="add.barn.milkingshed.l1.desc">[Beskrivelse mangler for add.barn.milkingshed.l1]</entry>
-  <entry key="add.barn.shearingshed.l1.name">Enables shearing wool from sheep</entry>
-  <entry key="add.barn.shearingshed.l1.desc">[Beskrivelse mangler for add.barn.shearingshed.l1]</entry>
-  <entry key="add.storage.stacking.l1.name">Improves storage options</entry>
-  <entry key="add.storage.stacking.l1.desc">[Beskrivelse mangler for add.storage.stacking.l1]</entry>
-  <entry key="rsd.tools.l1.name">Basic tool knowledge</entry>
-  <entry key="rsd.tools.l1.desc">Grants the ability to use basic tools</entry>
+  <entry key="bld.basecamp.l1.desc">The starting base of the game.</entry>
+  <entry key="bld.basecamp.l2.name">Small Camp</entry>
+  <entry key="bld.basecamp.l2.desc">Expands the camp from base camp to small camp.</entry>
+  <entry key="bld.basecamp.l3.name">Medium Camp</entry>
+  <entry key="bld.basecamp.l3.desc">Expands the camp from small to medium camp.</entry>
+  <entry key="bld.basecamp.l4.name">Large Camp</entry>
+  <entry key="bld.basecamp.l4.desc">Expands the camp from medium to large camp.</entry>
+
+  <entry key="bld.tent.l1.name">Small Tent</entry>
+  <entry key="bld.tent.l1.desc">Provides space for 5 residents per tent.</entry>
+  <entry key="bld.tent.l2.name">Medium Tent</entry>
+  <entry key="bld.tent.l2.desc">Provides space for 15 residents per tent.</entry>
+  <entry key="bld.tent.l3.name">Family Tent</entry>
+  <entry key="bld.tent.l3.desc">Provides space for 25 residents per tent.</entry>
+  <entry key="bld.tent.l4.name">Large Tents</entry>
+  <entry key="bld.tent.l4.desc">Provides space for 50 residents per tent.</entry>
+
+  <entry key="bld.farm.l1.name">Farm</entry>
+  <entry key="bld.farm.l1.desc">Farm for animals and fields. Higher level allows more animals.</entry>
+  <entry key="bld.farm.l2.name">Larger Farm</entry>
+  <entry key="bld.farm.l2.desc">Farm for animals and fields. Higher level allows more animals.</entry>
+
+  <entry key="bld.field.l1.name">Small Grain Field</entry>
+  <entry key="bld.field.l1.desc">Field for growing wheat. Higher levels yield more.</entry>
+  <entry key="bld.field.l2.name">Large Grain Field</entry>
+  <entry key="bld.field.l2.desc">Field for growing wheat. Higher levels yield more.</entry>
+
+  <entry key="bld.forest.l1.name">Small Forest</entry>
+  <entry key="bld.forest.l1.desc">Forest area providing wood resources over time.</entry>
+  <entry key="bld.forest.l2.name">Large Forest</entry>
+  <entry key="bld.forest.l2.desc">Forest area providing wood resources over time.</entry>
+
+  <entry key="bld.lake.l1.name">Small Lake</entry>
+  <entry key="bld.lake.l1.desc">A lake that can be expanded with important options. Provides water.</entry>
+  <entry key="bld.lake.l2.name">Large Lake</entry>
+  <entry key="bld.lake.l2.desc">A larger lake where more fish can be caught. Provides even more water.</entry>
+
+  <entry key="bld.mine.l1.name">Small Mine</entry>
+  <entry key="bld.mine.l1.desc">A mine that automatically produces a bit of stone over time. Can be expanded to yield more.</entry>
+  <entry key="bld.mine.l2.name">Expanded Mine</entry>
+  <entry key="bld.mine.l2.desc">Produces more stone. Can be expanded to yield more and different resources.</entry>
+  <entry key="bld.mine.l3.name">Large Mine</entry>
+  <entry key="bld.mine.l3.desc">The mine can extract bronze and iron in addition to stone.</entry>
+
+  <entry key="bld.storage.l1.name">Storage Tent</entry>
+  <entry key="bld.storage.l1.desc">Increases storage capacity for all item types.</entry>
+  <entry key="bld.storage.l2.name">Large Storage Tent</entry>
+  <entry key="bld.storage.l2.desc">Further increases storage capacity.</entry>
+
+  <entry key="bld.health.l1.name">Medicine Tent</entry>
+  <entry key="bld.health.l1.desc">A medicine tent where basic first aid can be provided.</entry>
+
+<!--ADDONS BASECAMP-->
+  <entry key="add.choppingblock.l1.name">Chopping Block</entry>
+  <entry key="add.choppingblock.l1.desc">Used for chopping firewood.</entry>
+
+  <entry key="add.bigfireplace.l1.name">Large Bonfire</entry>
+  <entry key="add.bigfireplace.l1.desc">Slightly increases the camp’s food production.</entry>
+
+  <entry key="add.saltbowl.l1.name">Salt Bowl</entry>
+  <entry key="add.saltbowl.l1.desc">Provides a small, steady supply of salt.</entry>
+
+  <entry key="add.well.l1.name">Well</entry>
+  <entry key="add.well.l1.desc">Adds a well to the camp.</entry>
+  <entry key="add.well.l2.name">Large Well</entry>
+  <entry key="add.well.l2.desc">Adds a larger well to the camp.</entry>
+
+  <entry key="add.well_bucket.l1.name">Well Bucket</entry>
+  <entry key="add.well_bucket.l1.desc">Used to fetch water from the well.</entry>
+
+<!--ADDONS FARM-->
+  <entry key="add.barn.l1.name">Small Barn</entry>
+  <entry key="add.barn.l1.desc">Small wooden barn used for keeping animals.</entry>
+  <entry key="add.barn.l2.name">Expanded Small Barn</entry>
+  <entry key="add.barn.l2.desc">Expanded small wooden barn used for keeping animals.</entry>
+  <entry key="add.barn.l3.name">Large Barn</entry>
+  <entry key="add.barn.l3.desc">Large barn made of stone and wood, used for keeping animals.</entry>
+
+  <entry key="add.barn_slaughterspot.l1.name">Small Butcher Table</entry>
+  <entry key="add.barn_slaughterspot.l1.desc">Enables slaughtering of small animals such as chickens and ducks.</entry>
+  <entry key="add.barn_slaughterspot.l2.name">Medium Butcher Table</entry>
+  <entry key="add.barn_slaughterspot.l2.desc">Allows slaughtering of medium-sized animals such as pigs, goats, and sheep.</entry>
+  <entry key="add.barn_slaughterspot.l3.name">Large Butcher Table</entry>
+  <entry key="add.barn_slaughterspot.l3.desc">Allows slaughtering of large animals such as cows and deer.</entry>
+
+  <entry key="add.barn_yard.l1.name">Small Pen</entry>
+  <entry key="add.barn_yard.l1.desc">Small enclosure that increases animal capacity.</entry>
+  <entry key="add.barn_yard.l2.name">Medium Pen</entry>
+  <entry key="add.barn_yard.l2.desc">Holds a few more animals; upgrade of the small pen.</entry>
+  <entry key="add.barn_yard.l3.name">Large Pen</entry>
+  <entry key="add.barn_yard.l3.desc">Holds many more animals; upgrade of the medium pen.</entry>
+
+  <entry key="add.barn_fence.l1.name">Simple Wooden Fence</entry>
+  <entry key="add.barn_fence.l1.desc">Better fence for your enclosure.</entry>
+  <entry key="add.barn_fence.l2.name">Solid Wooden Fence</entry>
+  <entry key="add.barn_fence.l2.desc">The stronger the fence, the more animals can be kept.</entry>
+
+  <entry key="add.barn_feedingtrough.l1.name">Feeding Trough (Small)</entry>
+  <entry key="add.barn_feedingtrough.l1.desc">Slightly increases the number of possible animals.</entry>
+  <entry key="add.barn_feedingtrough.l2.name">Feeding Trough (Large)</entry>
+  <entry key="add.barn_feedingtrough.l2.desc">Increases the number of possible animals more than the small trough.</entry>
+
+  <entry key="add.barn_watertrough.l1.name">Water Trough (Small)</entry>
+  <entry key="add.barn_watertrough.l1.desc">Slightly increases the number of possible animals.</entry>
+  <entry key="add.barn_watertrough.l2.name">Water Trough (Large)</entry>
+  <entry key="add.barn_watertrough.l2.desc">Increases the number of possible animals more than the small trough.</entry>
+
+  <entry key="add.barn_manurepit.l1.name">Manure Pit</entry>
+  <entry key="add.barn_manurepit.l1.desc">Animals produce manure, which can be spread on fields to improve yield.</entry>
+
+  <entry key="add.barn_bedding.l1.name">Bedding</entry>
+  <entry key="add.barn_bedding.l1.desc">Slightly increases maximum number of animals.</entry>
+
+  <entry key="add.barn_milkingshed.l1.name">Milking Stand</entry>
+  <entry key="add.barn_milkingshed.l1.desc">Allows milking of cows and goats.</entry>
+
+  <entry key="add.barn_shearingshed.l1.name">Shearing Stall</entry>
+  <entry key="add.barn_shearingshed.l1.desc">Allows collecting wool from sheep.</entry>
+
+  <entry key="add.tailorspot.l1.name">Tailor’s Table</entry>
+  <entry key="add.tailorspot.l1.desc">Enables processing of hides and leather.</entry>
+  <entry key="add.tailorspot.l2.name">Advanced Tailor’s Table</entry>
+  <entry key="add.tailorspot.l2.desc">Improves ability to process hides and leather.</entry>
+
+  <entry key="add.storageliquid.l1.name">Small Liquid Storage Barrel</entry>
+  <entry key="add.storageliquid.l1.desc">Increases storage for liquid resources.</entry>
+  <entry key="add.storageliquid.l2.name">Large Liquid Storage Barrel</entry>
+  <entry key="add.storageliquid.l2.desc">Further increases storage for liquid resources.</entry>
+
+  <entry key="add.storagesolid.l1.name">Small Solid Storage Barrel</entry>
+  <entry key="add.storagesolid.l1.desc">Increases storage for solid resources.</entry>
+  <entry key="add.storagesolid.l2.name">Large Solid Storage Barrel</entry>
+  <entry key="add.storagesolid.l2.desc">Further increases storage for solid resources.</entry>
+
+  <entry key="add.storageliquid.l3.name">Extra Large Liquid Storage Barrel</entry>
+  <entry key="add.storageliquid.l3.desc">Even greater capacity for liquid storage.</entry>
+  <entry key="add.storagesolid.l3.name">Extra Large Solid Storage Barrel</entry>
+  <entry key="add.storagesolid.l3.desc">Even greater capacity for solid storage.</entry>
+
+  <entry key="add.stacking.l1.name">Better Stacking</entry>
+  <entry key="add.stacking.l1.desc">Improves storage efficiency.</entry>
+
+  <entry key="add.maizefield.l1.name">Corn Field</entry>
+  <entry key="add.maizefield.l1.desc">Field for growing corn; produces corn as a crop.</entry>
+
+  <entry key="add.oatsfield.l1.name">Oat Field</entry>
+  <entry key="add.oatsfield.l1.desc">Field for growing oats; increases food production.</entry>
+
+  <entry key="add.wheatfield.l1.name">Wheat Field</entry>
+  <entry key="add.wheatfield.l1.desc">Field for growing wheat; increases food production.</entry>
+
+  <entry key="add.wheatfield_scarecrow.l1.name">Scarecrow</entry>
+  <entry key="add.wheatfield_scarecrow.l1.desc">Protects fields from birds and reduces crop loss.</entry>
+
+  <entry key="add.mole.l1.name">Fishing Pier</entry>
+  <entry key="add.mole.l1.desc">Allows fishing in the lake.</entry>
+  <entry key="add.mole.l2.name">Large Fishing Pier</entry>
+  <entry key="add.mole.l2.desc">Allows fishing in the lake with higher capacity.</entry>
+  <entry key="add.mole_net.l1.name">Fishing Net</entry>
+  <entry key="add.mole_net.l1.desc">Improves fishing efficiency.</entry>
+
+  <entry key="add.hunterscabin.l1.name">Hunter’s Cabin</entry>
+  <entry key="add.hunterscabin.l1.desc">Allows hunting of animals in the area.</entry>
+
+  <entry key="add.brickmolding.l1.name">Brick Mold</entry>
+  <entry key="add.brickmolding.l1.desc">Allows production of bricks.</entry>
+
+  <entry key="add.bronzemolding.l1.name">Bronze Casting Mold</entry>
+  <entry key="add.bronzemolding.l1.desc">Allows production of bronze items.</entry>
+
+  <entry key="add.ironmolding.l1.name">Iron Casting Mold</entry>
+  <entry key="add.ironmolding.l1.desc">Allows production of iron items.</entry>
+
+  <entry key="add.undergroundshelter.l1.name">Underground Shelter</entry>
+  <entry key="add.undergroundshelter.l1.desc">Allows construction of a shelter beneath the ground.</entry>
+
+<!--RESEARCH-->
+  <entry key="rsd.tools.l1.name">Basic Tool Knowledge</entry>
+  <entry key="rsd.tools.l1.desc">Gives the ability to use simple basic tools.</entry>
+  <entry key="rsd.tools.l2.name">Advanced Tool Knowledge</entry>
+  <entry key="rsd.tools.l2.desc">Provides improved understanding and use of tools.</entry>
+  <entry key="rsd.tools.l3.name">Comprehensive Tool Knowledge</entry>
+  <entry key="rsd.tools.l3.desc">Gives full knowledge for using and crafting tools efficiently.</entry>
+
   <entry key="rsd.flintstone.l1.name">Flintstone</entry>
-  <entry key="rsd.flintstone.l1.desc">Grants the ability to use flintstone in tools (axe, pickaxe, etc.)</entry>
-  <entry key="rsd.animalhusbandry.l1.name">Animal husbandry</entry>
-  <entry key="rsd.animalhusbandry.l1.desc">Provides skills to keep animals for production and slaughter</entry>
+  <entry key="rsd.flintstone.l1.desc">Gives the ability to use flintstone in tools (axe, pickaxe, etc.).</entry>
+
+  <entry key="rsd.animalhusbandry.l1.name">Animal Husbandry</entry>
+  <entry key="rsd.animalhusbandry.l1.desc">Enables keeping animals for production and slaughter.</entry>
+  <entry key="rsd.animalhusbandry.l2.name">Advanced Animal Husbandry</entry>
+  <entry key="rsd.animalhusbandry.l2.desc">Expands the ability to manage animals for production and slaughter.</entry>
+  <entry key="rsd.animalhusbandry.l3.name">Improved Animal Husbandry</entry>
+  <entry key="rsd.animalhusbandry.l3.desc">Provides even better animal care and management.</entry>
+
   <entry key="rsd.farming.l1.name">Farming</entry>
-  <entry key="rsd.farming.l1.desc">Grants the ability to build and grow limited types of grain on fields</entry>
+  <entry key="rsd.farming.l1.desc">Gives the ability to build and cultivate limited grain crops.</entry>
+  <entry key="rsd.farming.l2.name">Advanced Farming</entry>
+  <entry key="rsd.farming.l2.desc">Improves the ability to cultivate multiple grain crops.</entry>
+
   <entry key="rsd.forestry.l1.name">Forestry</entry>
-  <entry key="rsd.forestry.l1.desc">Provides skills to build forests and conduct basic forestry</entry>
+  <entry key="rsd.forestry.l1.desc">Enables building forests and managing simple forestry.</entry>
+  <entry key="rsd.forestry.l2.name">Advanced Forestry</entry>
+  <entry key="rsd.forestry.l2.desc">Provides better skills to build and manage forest areas.</entry>
+
   <entry key="rsd.irrigation.l1.name">Irrigation</entry>
-  <entry key="rsd.irrigation.l1.desc">Provides skills to utilize water and create a lake</entry>
-  <entry key="rsd.prospecting.l1.name">Mining</entry>
-  <entry key="rsd.prospecting.l1.desc">Grants the ability to build a mine and extract stone</entry>
-  <entry key="rsd.storage.l1.name">Optimized storage</entry>
-  <entry key="rsd.storage.l1.desc">Provides opportunities to build and expand storage</entry>
-  <entry key="rsd.construction.l1.name">Improved construction ability</entry>
-  <entry key="rsd.construction.l1.desc">Provides better construction skills</entry>
-  <entry key="rcp.firewood.l1.name">Make firewood</entry>
-  <entry key="rcp.firewood.l1.desc">[Beskrivelse mangler for rcp.firewood.l1]</entry>
-  <entry key="rcp.meat.cook.l1.name">Cook food</entry>
-  <entry key="rcp.meat.cook.l1.desc">[Beskrivelse mangler for rcp.meat.cook.l1]</entry>
-  <entry key="rcp.hide.l1.name">Make processed hide</entry>
-  <entry key="rcp.hide.l1.desc">[Beskrivelse mangler for rcp.hide.l1]</entry>
-  <entry key="rcp.leather.l1.name">Make leather</entry>
-  <entry key="rcp.leather.l1.desc">Process hide into leather for use in crafting and clothing</entry>
-  <entry key="rcp.animal.cow.name">Slaughter cow</entry>
-  <entry key="rcp.animal.cow.desc">Slaughter a cow to obtain meat and hide</entry>
-  <entry key="rcp.animal.deer.name">Slaughter deer</entry>
-  <entry key="rcp.animal.deer.desc">Slaughter a deer to obtain meat and hide</entry>
-  <entry key="rcp.animal.pig.name">Slaughter pig</entry>
-  <entry key="rcp.animal.pig.desc">Slaughter a pig to obtain meat</entry>
-  <entry key="rcp.animal.goat.name">Slaughter goat</entry>
-  <entry key="rcp.animal.goat.desc">Slaughter a goat to obtain meat and hide</entry>
-  <entry key="rcp.animal.sheep.name">Slaughter sheep</entry>
-  <entry key="rcp.animal.sheep.desc">Slaughter a sheep to obtain meat and wool</entry>
-  <entry key="rcp.animal.chicken.name">Slaughter chicken</entry>
-  <entry key="rcp.animal.chicken.desc">Slaughter a chicken to obtain meat and feathers</entry>
-  <entry key="rcp.animal.rabbit.name">Slaughter rabbit</entry>
-  <entry key="rcp.animal.rabbit.desc">Slaughter a rabbit to obtain hide</entry>
+  <entry key="rsd.irrigation.l1.desc">Allows the use of water resources and creation of lakes.</entry>
+  <entry key="rsd.irrigation.l2.name">Advanced Irrigation</entry>
+  <entry key="rsd.irrigation.l2.desc">Provides better ability to utilize water and build lakes.</entry>
+
+  <entry key="rsd.prospecting.l1.name">Stone Mining</entry>
+  <entry key="rsd.prospecting.l1.desc">Gives the ability to build a mine and extract stone.</entry>
+
+  <entry key="rsd.storage.l1.name">Optimized Storage</entry>
+  <entry key="rsd.storage.l1.desc">Unlocks construction and expansion of storage facilities.</entry>
+
+  <entry key="rsd.construction.l1.name">Improved Construction Skill</entry>
+  <entry key="rsd.construction.l1.desc">Provides better building and construction abilities.</entry>
+
+  <entry key="rsd.fertilizer.l1.name">Enhanced Fertilization</entry>
+  <entry key="rsd.fertilizer.l1.desc">Increases manure and fertilizer output.</entry>
+
+  <entry key="rsd.bedding.l1.name">Bedding</entry>
+  <entry key="rsd.bedding.l1.desc">Bedding for animals increases manure production.</entry>
+
+  <entry key="rsd.mining.l1.name">Mining</entry>
+  <entry key="rsd.mining.l1.desc">Basic mining research increases stone output.</entry>
+  <entry key="rsd.mining.l2.name">Improved Mining</entry>
+  <entry key="rsd.mining.l2.desc">Research into better mining techniques increases stone yield.</entry>
+
+  <entry key="rsd.fishing.l1.name">Fishing</entry>
+  <entry key="rsd.fishing.l1.desc">Provides the ability to fish and use water resources.</entry>
+  <entry key="rsd.fishing.l2.name">Advanced Fishing</entry>
+  <entry key="rsd.fishing.l2.desc">Improves fishing and water resource utilization.</entry>
+  <entry key="rsd.fishing.l3.name">Enhanced Fishing</entry>
+  <entry key="rsd.fishing.l3.desc">Provides expert fishing techniques and resource use.</entry>
+
+  <entry key="rsd.leatherwork.l1.name">Leatherwork</entry>
+  <entry key="rsd.leatherwork.l1.desc">Allows processing of hides into leather.</entry>
+
+  <entry key="rsd.betterstorage.l1.name">Better Storage</entry>
+  <entry key="rsd.betterstorage.l1.desc">Improves available storage options.</entry>
+
+  <entry key="rsd.rope.l1.name">Rope Crafting</entry>
+  <entry key="rsd.rope.l1.desc">Gives the ability to create and use ropes.</entry>
+
+  <entry key="rsd.stage.l1.name">Stage 1</entry>
+  <entry key="rsd.stage.l1.desc">An era where the basics must be learned.</entry>
+  <entry key="rsd.stage.l2.name">Stage 2</entry>
+  <entry key="rsd.stage.l2.desc">A time focused on keeping citizens happy.</entry>
+  <entry key="rsd.stage.l3.name">Stage 3</entry>
+  <entry key="rsd.stage.l3.desc">A period focused on further development...</entry>
+
+  <entry key="rsd.betterfeeding.l1.name">Improved Feeding</entry>
+  <entry key="rsd.betterfeeding.l1.desc">Improves feeding efficiency and animal welfare.</entry>
+
+  <entry key="rsd.oats.l1.name">Oat Cultivation</entry>
+  <entry key="rsd.oats.l1.desc">Enables growing and using oats as a crop.</entry>
+
+  <entry key="rsd.useclay.l1.name">Clay Utilization</entry>
+  <entry key="rsd.useclay.l1.desc">Allows extraction and use of clay for construction and pottery.</entry>
+
+  <entry key="rsd.stonebricks.l1.name">Stone Bricks</entry>
+  <entry key="rsd.stonebricks.l1.desc">Enables production of stone bricks for stronger buildings.</entry>
+
+  <entry key="rsd.bronze.l1.name">Bronze</entry>
+  <entry key="rsd.bronze.l1.desc">Allows crafting and use of bronze tools and components.</entry>
+
+  <entry key="rsd.iron.l1.name">Iron</entry>
+  <entry key="rsd.iron.l1.desc">Gives the ability to extract and process iron.</entry>
+
+  <entry key="rsd.bronzemolding.l1.name">Bronze Casting</entry>
+  <entry key="rsd.bronzemolding.l1.desc">Allows casting of bronze parts using molds.</entry>
+
+  <entry key="rsd.ironmolding.l1.name">Iron Casting</entry>
+  <entry key="rsd.ironmolding.l1.desc">Allows casting and shaping of iron into tools and parts.</entry>
+
+  <entry key="rsd.betterstorage.l2.name">Improved Storage</entry>
+  <entry key="rsd.betterstorage.l2.desc">Further enhancements to storage capacity and efficiency.</entry>
+
+  <entry key="rsd.basiccloth.l1.name">Basic Textiles</entry>
+  <entry key="rsd.basiccloth.l1.desc">Allows production of basic fabrics and clothing.</entry>
+
+  <entry key="rsd.sleepingbag.l1.name">Sleeping Bag</entry>
+  <entry key="rsd.sleepingbag.l1.desc">Allows crafting or using sleeping bags for better rest.</entry>
+
+  <entry key="rsd.sleeping.l1.name">Sleep</entry>
+  <entry key="rsd.sleeping.l1.desc">Improves rest and recovery from sleep.</entry>
+
+  <entry key="rsd.campmanagement.l1.name">Camp Management</entry>
+  <entry key="rsd.campmanagement.l1.desc">Provides better control of camp resources and citizens.</entry>
+  <entry key="rsd.campmanagement.l2.name">Advanced Camp Management</entry>
+  <entry key="rsd.campmanagement.l2.desc">Adds further tools for efficient camp administration.</entry>
+
+  <entry key="rsd.herbalism.l1.name">Herbalism</entry>
+  <entry key="rsd.herbalism.l1.desc">Grants the ability to find and use medicinal plants.</entry>
+  <entry key="rsd.herbalism.l2.name">Improved Herbalism</entry>
+  <entry key="rsd.herbalism.l2.desc">Advanced knowledge of plants for medicine and treatment.</entry>
+
+  <entry key="rsd.medicinstorage.l1.name">Medical Storage</entry>
+  <entry key="rsd.medicinstorage.l1.desc">Allows safe storage of medicine and medical equipment.</entry>
+
+  <!--RECIPES-->
+  <entry key="rcp.firewood.l1.name">Make Firewood</entry>
+  <entry key="rcp.firewood.l1.desc">Produces firewood.</entry>
+
+  <entry key="rcp.cockedmeat.l1.name">Cook Food</entry>
+  <entry key="rcp.cockedmeat.l1.desc">Produces cooked food.</entry>
+
+  <entry key="rcp.hide.l1.name">Prepare Hide</entry>
+  <entry key="rcp.hide.l1.desc">Processes raw hides for use.</entry>
+
+  <entry key="rcp.leather.l1.name">Make Leather</entry>
+  <entry key="rcp.leather.l1.desc">Leather can be used for clothing.</entry>
+
+  <entry key="rcp.slaughtercow.l1.name">Slaughter Cow</entry>
+  <entry key="rcp.slaughtercow.l1.desc">Yields meat and hide.</entry>
+
+  <entry key="rcp.slaughterdeer.l1.name">Slaughter Deer</entry>
+  <entry key="rcp.slaughterdeer.l1.desc">Yields meat and hide.</entry>
+
+  <entry key="rcp.slaughterpig.l1.name">Slaughter Pig</entry>
+  <entry key="rcp.slaughterpig.l1.desc">Yields meat when slaughtered.</entry>
+
+  <entry key="rcp.slaughtergoat.l1.name">Slaughter Goat</entry>
+  <entry key="rcp.slaughtergoat.l1.desc">Yields meat and hide when slaughtered.</entry>
+
+  <entry key="rcp.slaughtersheep.l1.name">Slaughter Sheep</entry>
+  <entry key="rcp.slaughtersheep.l1.desc">Yields meat and wool when slaughtered.</entry>
+
+  <entry key="rcp.slaughterchicken.l1.name">Slaughter Chicken</entry>
+  <entry key="rcp.slaughterchicken.l1.desc">Yields meat and feathers when slaughtered.</entry>
+
+  <entry key="rcp.slaughterrabbit.l1.name">Slaughter Rabbit</entry>
+  <entry key="rcp.slaughterrabbit.l1.desc">Yields meat and hide when slaughtered.</entry>
+
+  <entry key="rcp.trimsheep.l1.name">Shear Sheep</entry>
+  <entry key="rcp.trimsheep.l1.desc">Produces wool from sheep.</entry>
+
+  <entry key="rcp.fishtofood.l1.name">Make Fish Meal</entry>
+  <entry key="rcp.fishtofood.l1.desc">Produces food from fish.</entry>
+
+<!--RESOURCES-->
   <entry key="res.wood.name">Wood</entry>
-  <entry key="res.wood.desc">Used for building; can be processed</entry>
+  <entry key="res.wood.desc">Used for construction; can be processed further.</entry>
+
   <entry key="res.stone.name">Stone</entry>
-  <entry key="res.stone.desc">Used for building; can be processed</entry>
+  <entry key="res.stone.desc">Used for building; can be refined.</entry>
+
   <entry key="res.water.name">Water</entry>
-  <entry key="res.water.desc">Used for animal husbandry</entry>
+  <entry key="res.water.desc">Used for animal husbandry.</entry>
+
   <entry key="res.money.name">Money</entry>
-  <entry key="res.money.desc">The in-game economy</entry>
+  <entry key="res.money.desc">Represents the in-game economy.</entry>
+
   <entry key="res.food.name">Food</entry>
-  <entry key="res.food.desc">Basic nourishment</entry>
-  <entry key="res.cowmilk.name">Cow milk</entry>
-  <entry key="res.cowmilk.desc">Raw milk from the cow</entry>
-  <entry key="res.goatmilk.name">Goat milk</entry>
-  <entry key="res.goatmilk.desc">Raw milk from the goat</entry>
+  <entry key="res.food.desc">Basic nourishment.</entry>
+
+  <entry key="res.cowmilk.name">Cow Milk</entry>
+  <entry key="res.cowmilk.desc">Raw milk from cows.</entry>
+
+  <entry key="res.goatmilk.name">Goat Milk</entry>
+  <entry key="res.goatmilk.desc">Raw milk from goats.</entry>
+
   <entry key="res.egg.name">Eggs</entry>
-  <entry key="res.egg.desc">Raw eggs from small animals that lay eggs</entry>
+  <entry key="res.egg.desc">Raw eggs from small egg-laying animals.</entry>
+
   <entry key="res.wool.name">Wool</entry>
-  <entry key="res.wool.desc">From sheep; later also from goats</entry>
+  <entry key="res.wool.desc">From sheep; later also from goats.</entry>
+
   <entry key="res.wheat.name">Wheat</entry>
-  <entry key="res.wheat.desc">From the field; can be used for bread</entry>
+  <entry key="res.wheat.desc">From fields; can be used for bread.</entry>
+
   <entry key="res.oats.name">Oats</entry>
-  <entry key="res.oats.desc">From the field; can be used for fodder</entry>
-  <entry key="res.salt.name">[res.salt]</entry>
-  <entry key="res.salt.desc">[Beskrivelse mangler for res.salt]</entry>
+  <entry key="res.oats.desc">From fields; can be used for feed.</entry>
+
+  <entry key="res.salt.name">Salt</entry>
+  <entry key="res.salt.desc">Common mineral used for preservation.</entry>
+
   <entry key="res.straw.name">Straw</entry>
-  <entry key="res.straw.desc">Byproduct that can improve animal conditions</entry>
+  <entry key="res.straw.desc">By-product that improves animal comfort.</entry>
+
   <entry key="res.fertilizer.name">Manure</entry>
-  <entry key="res.fertilizer.desc">Can be used as fertilizer on fields</entry>
-  <entry key="res.rawhide.name">Raw hide</entry>
-  <entry key="res.rawhide.desc">Can be made into leather and clothing</entry>
-  <entry key="res.rawmeat.name">Raw meat</entry>
-  <entry key="res.rawmeat.desc">Can be made into food</entry>
+  <entry key="res.fertilizer.desc">Can be used as fertilizer on fields.</entry>
+
+  <entry key="res.rawhide.name">Raw Hide</entry>
+  <entry key="res.rawhide.desc">Can be processed into leather and clothing.</entry>
+
+  <entry key="res.rawmeat.name">Raw Meat</entry>
+  <entry key="res.rawmeat.desc">Can be cooked into food.</entry>
+
   <entry key="res.feather.name">Feathers</entry>
-  <entry key="res.feather.desc">Can be used to increase well-being</entry>
+  <entry key="res.feather.desc">Used to increase comfort or decoration.</entry>
+
   <entry key="res.bone.name">Bone</entry>
-  <entry key="res.bone.desc">Byproduct whose use is not fully determined yet. But it is kept.</entry>
-  <entry key="res.animal.cow.name">Cows</entry>
-  <entry key="res.animal.cow.desc">Cows provide milk, and when slaughtered, they provide meat and hide</entry>
-  <entry key="res.animal.deer.name">Deer</entry>
-  <entry key="res.animal.deer.desc">Provides meat and hide</entry>
-  <entry key="res.animal.pig.name">Pigs</entry>
-  <entry key="res.animal.pig.desc">Provides meat</entry>
-  <entry key="res.animal.goat.name">Goats</entry>
-  <entry key="res.animal.goat.desc">Provide goat milk; provide hide and meat when slaughtered</entry>
-  <entry key="res.animal.sheep.name">Sheep</entry>
-  <entry key="res.animal.sheep.desc">Provide wool; provide meat when slaughtered</entry>
-  <entry key="res.animal.chicken.name">Chickens</entry>
-  <entry key="res.animal.chicken.desc">Provide eggs; meat and feathers when slaughtered</entry>
-  <entry key="res.animal.rabbit.name">Rabbits</entry>
-  <entry key="res.animal.rabbit.desc">Provide hide when slaughtered</entry>
-  <entry key="res.hide.name">Processed hide</entry>
-  <entry key="res.hide.desc">Can be used for clothing</entry>
+  <entry key="res.bone.desc">By-product kept for future use.</entry>
+
+  <entry key="res.cow.name">Cows</entry>
+  <entry key="res.cow.desc">Produce milk and provide meat and hides when slaughtered.</entry>
+
+  <entry key="res.deer.name">Deer</entry>
+  <entry key="res.deer.desc">Provide meat and hides.</entry>
+
+  <entry key="res.pig.name">Pigs</entry>
+  <entry key="res.pig.desc">Provide meat.</entry>
+
+  <entry key="res.goat.name">Goats</entry>
+  <entry key="res.goat.desc">Produce milk; provide hide and meat when slaughtered.</entry>
+
+  <entry key="res.sheep.name">Sheep</entry>
+  <entry key="res.sheep.desc">Provide wool and meat when slaughtered.</entry>
+
+  <entry key="res.chicken.name">Chickens</entry>
+  <entry key="res.chicken.desc">Lay eggs; provide meat and feathers when slaughtered.</entry>
+
+  <entry key="res.rabbit.name">Rabbits</entry>
+  <entry key="res.rabbit.desc">Provide hide when slaughtered.</entry>
+
+  <entry key="res.hide.name">Treated Hide</entry>
+  <entry key="res.hide.desc">Can be used for clothing.</entry>
+
   <entry key="res.leather.name">Leather</entry>
-  <entry key="res.leather.desc">Can be used for clothing and furniture</entry>
+  <entry key="res.leather.desc">Used for clothing and furniture.</entry>
+
+  <entry key="res.firewood.name">Firewood</entry>
+  <entry key="res.firewood.desc">Used to increase city warmth.</entry>
+
+  <entry key="res.rawfish.name">Raw Fish</entry>
+  <entry key="res.rawfish.desc">Can be used as feed or processed into food.</entry>
+
+  <entry key="res.rawcommonfish.name">Raw Common Fish</entry>
+  <entry key="res.rawcommonfish.desc">Can be used as feed or processed into food.</entry>
+
+  <entry key="res.maize.name">Corn</entry>
+  <entry key="res.maize.desc">Harvested from cornfields.</entry>
+
+  <entry key="res.iron.name">Iron</entry>
+  <entry key="res.iron.desc">Iron ore from mines.</entry>
+
+  <entry key="res.bronze.name">Bronze</entry>
+  <entry key="res.bronze.desc">Bronze alloy extracted from mines.</entry>
+
+<!--ANIMALS-->
+  <entry key="ani.cow.name">Calf</entry>
+  <entry key="ani.cow.desc">Calves grow up and become milk-producing adults.</entry>
+
+  <entry key="ani.chicken.name">Chicken</entry>
+  <entry key="ani.chicken.desc">Provides small amounts of meat, feathers, and eggs.</entry>
+
+  <entry key="ani.deer.name">Deer</entry>
+  <entry key="ani.deer.desc">Lives in forests and provides meat and hides.</entry>
+
+  <entry key="ani.sheep.name">Sheep</entry>
+  <entry key="ani.sheep.desc">Provides hide, wool, and some meat.</entry>
+
+  <entry key="ani.pig.name">Pig</entry>
+  <entry key="ani.pig.desc">Provides meat.</entry>
+
+  <entry key="ani.duck.name">Duck</entry>
+  <entry key="ani.duck.desc">Provides small amounts of meat, feathers, and eggs.</entry>
+
+  <entry key="ani.goat.name">Goat</entry>
+  <entry key="ani.goat.desc">Provides meat and hide.</entry>
+
+<!--HEALTH UNITS-->
+  <entry key="ani.health_groundbed1.name">Simple Sickbed</entry>
+  <entry key="ani.health_groundbed1.desc">A very primitive bed for the ill.</entry>
+
 </language>
+
+

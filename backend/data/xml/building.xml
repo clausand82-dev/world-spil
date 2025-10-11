@@ -54,7 +54,7 @@
     kidsStudentCapacity=7;
     youngStudentCapacity=5;
     healthDentistCapacity=144;
-    adultsWorkerCapacity=100</stats>
+    adultsWorkerCapacity=100</stats> <!-- EN MASSE HER ER DEMO ENDNU-->
     <cost>
       <res id="res.money" amount="500" />
       <res id="res.wood" amount="100" />

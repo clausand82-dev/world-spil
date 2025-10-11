@@ -122,6 +122,45 @@ function load_lang_xml(string $langDir, string $langCode): array {
   return $out;
 }
 
+/* === NY: vælg effektivt sprog (GET -> SESSION -> DB -> default fra config) === */
+function select_lang_code_effective(array $cfg, array $allowed = ['da','en']): string {
+  // 1) default fra config: kan være 'lang.da' eller 'da'
+  $cfgLangRaw = (string)($cfg['game_data']['lang'] ?? 'lang.da');
+  if (preg_match('~([a-z]{2})~i', $cfgLangRaw, $m)) {
+    $default = strtolower($m[1]);
+  } else {
+    $default = 'da';
+  }
+
+  // 2) GET parameter
+  $lang = null;
+  if (!empty($_GET['lang'])) {
+    $lang = strtolower(preg_replace('/[^a-z]/','', substr((string)$_GET['lang'], 0, 2)));
+  }
+
+  // 3) SESSION
+  if (!$lang && !empty($_SESSION['lang'])) {
+    $lang = strtolower(preg_replace('/[^a-z]/','', substr((string)$_SESSION['lang'], 0, 2)));
+  }
+
+  // 4) DB (valgfrit)
+  // if (!$lang && function_exists('auth_get_user_id_if_any')) {
+  //   $uid = auth_get_user_id_if_any();
+  //   if ($uid) {
+  //     $pdo = db();
+  //     $st = $pdo->prepare('SELECT preferred_lang FROM users WHERE user_id = ? LIMIT 1');
+  //     $st->execute([$uid]);
+  //     if ($row = $st->fetchColumn()) {
+  //       $lang = strtolower(preg_replace('/[^a-z]/','', substr((string)$row,0,2)));
+  //     }
+  //   }
+  // }
+
+  if (!$lang) $lang = $default;
+  if (!in_array($lang, $allowed, true)) $lang = $default;
+  return $lang;
+}
+
 /* ======================= DB ======================= */
 function db(): PDO {
   $ini = root_backend() . '/data/config/db.ini';
@@ -293,7 +332,9 @@ if (WS_RUN_MODE === 'run') {
         $cfg = load_config_ini();
         $xmlDir  = resolve_dir((string)($cfg['dirs']['xml_dir']  ?? ''), 'data/xml');
         $langDir = resolve_dir((string)($cfg['dirs']['lang_dir'] ?? ''), 'data/lang');
-        $langCode = (string)($cfg['game_data']['lang'] ?? 'da');
+
+        /* 1b) Vælg aktivt sprog (GET/SESSION/DB/CFG) og brug altid 2-bogstavskode herfra */
+        $langCode = select_lang_code_effective($cfg, ['da','en']);
 
         /* 2) defs fra XML (rekursiv scan) */
         $defs = ['res' => [], 'bld' => [], 'rsd' => [], 'rcp' => [], 'add' => [], 'ani' => []];
@@ -563,11 +604,9 @@ $data['yields_preview'] = $yields_preview;
 
         $defs['citizens'] = loadCitizens($xmlPath, true, 0);
 
-        // FJERNER NAME OG DESC FRA LANG, DA DE ALLEREDE LIGGER I DEFS
-        $defaultLangCode = (string)($cfg['game_data']['lang'] ?? 'lang.da');
-        $langCode = preg_replace('~^lang\.~i', '', $defaultLangCode);
-        $langRaw  = load_lang_xml($langDir, $langCode);
-        $langMap  = filter_lang_for_ui($langRaw);
+          // FJERN NAME/DESC FRA langMap (behold kun ui.*) – brug samme effektive langCode
+          $langRaw = load_lang_xml($langDir, $langCode);
+          $langMap = filter_lang_for_ui($langRaw);
 
                 // === CAP-BEREGNING ===
         $getResDef = function(array $defsRes, string $key) {

@@ -10,6 +10,7 @@ import HeaderPopularityBadge from './header/HeaderPopularityBadge.jsx'; // NY
 import HeaderCrimeBadge from './header/HeaderCrimeBadge.jsx';
 import HeaderBudgetBadge from './header/HeaderBudgetBadge.jsx';
 import HeaderLangSelector from './header/HeaderLangSelector.jsx';
+import StageUnlockAnnouncer from './stage/StageUnlockAnnouncer.jsx';
 
 export default function Header() {
   const { data } = useGameData();
@@ -45,6 +46,7 @@ export default function Header() {
         <HeaderBudgetBadge />
         <HeaderPopularityBadge />
         <HeaderHappinessBadge />
+        <StageUnlockAnnouncer />
 
         {/* Fjern ekstra wrapper for at undgå dobbelt chip-indpakning */}
         <HeaderCitizensBadge />
