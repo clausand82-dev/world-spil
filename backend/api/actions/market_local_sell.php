@@ -28,7 +28,10 @@ try {
 
   // Backend determines price (source of truth)
   $price = getEffectivePrice($pdo, $resId, ['context' => 'local', 'volatility' => 0.0]);
-  $total = $amount * $price;
+
+  // MONEY: we do not use decimals — round UP to nearest whole unit for paid
+  $totalFloat = $amount * $price;
+  $total = (int)ceil($totalFloat);
 
   $pdo->beginTransaction();
 
@@ -47,7 +50,7 @@ try {
   $upd = $pdo->prepare("UPDATE inventory SET amount = amount - ? WHERE user_id = ? AND res_id = ?");
   $upd->execute([$amount, $userId, $resId]);
 
-  // 3) Credit money to seller (upsert — requires UNIQUE(user_id, res_id))
+  // 3) Credit money to seller (upsert) — store integer amount
   $insMoney = $pdo->prepare("
     INSERT INTO inventory (user_id, res_id, amount)
     VALUES (?, 'res.money', ?)
@@ -61,14 +64,17 @@ try {
   // 5) Read new money balance to return
   $check = $pdo->prepare("SELECT amount FROM inventory WHERE user_id = ? AND res_id = 'res.money'");
   $check->execute([$userId]);
-  $newMoney = (float)($check->fetchColumn() ?? 0.0);
+  $newMoney = (int)round($check->fetchColumn() ?? 0);
 
   $pdo->commit();
+
+  // Return price rounded to 2 decimals (for consistent display), but paid/money_balance are whole ints
+  $priceRounded = round($price, 2);
 
   echo json_encode(['ok' => true, 'data' => [
     'res_id' => $resId,
     'sold' => $amount,
-    'price' => $price,
+    'price' => $priceRounded,
     'paid' => $total,
     'money_balance' => $newMoney
   ]], JSON_UNESCAPED_UNICODE);

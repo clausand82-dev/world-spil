@@ -12,8 +12,12 @@ export default function ResourceTradeController({ onChanged }) {
   const inv = gameData?.state?.inv || { solid: {}, liquid: {} };
 
   const [resId, setResId] = useState(null);
+  const [resName, setResName] = useState(null);
+  const [resEmoji, setResEmoji] = useState(null);
   const [flow, setFlow] = useState(null); // null | 'pick' | 'local' | 'global'
   const [anchorRect, setAnchorRect] = useState(null);
+  const [unitBackend, setUnitBackend] = useState(null);
+  const [loadingUnit, setLoadingUnit] = useState(false);
 
   useEffect(() => {
     const h = (e) => {
@@ -21,6 +25,8 @@ export default function ResourceTradeController({ onChanged }) {
       if (!id || id.startsWith('ani.')) return;
       setResId(id);
       setAnchorRect(e?.detail?.rect || null);
+      setResName(e?.detail?.resName || null);
+      setResEmoji(e?.detail?.resEmoji || null);
       setFlow('pick');
     };
     window.addEventListener('resources:trade', h);
@@ -36,8 +42,39 @@ export default function ResourceTradeController({ onChanged }) {
   }, [inv, resId]);
 
   const canGlobal = stage >= GLOBAL_MIN_STAGE;
-  const closeAll = () => { setFlow(null); setResId(null); setAnchorRect(null); };
+  const closeAll = () => {
+    setFlow(null);
+    setResId(null);
+    setAnchorRect(null);
+    setUnitBackend(null);
+    setLoadingUnit(false);
+    setResName(null);
+    setResEmoji(null);
+  };
 
+  // Når brugeren vælger lokal salg -> hent backend pris og vis modal
+  const openLocalSell = async (rId, maxAmt) => {
+    setResId(rId);
+    setAnchorRect(null);
+    setFlow('local');          // åbn modal (viser loading indtil pris hentet)
+    setUnitBackend(null);
+    setLoadingUnit(true);
+    try {
+      const resp = await fetch(`/world-spil/backend/api/resource_price.php?res_id=${encodeURIComponent(rId)}&context=local`, { credentials: 'include' });
+      const json = await resp.json();
+      if (json && json.ok && json.data?.price !== undefined) {
+        setUnitBackend(Number(json.data.price));
+      } else {
+        setUnitBackend(null); // fallback til klientestimat i modal
+      }
+    } catch (e) {
+      setUnitBackend(null);
+    } finally {
+      setLoadingUnit(false);
+    }
+  };
+
+  // Local accepted handler (sends res_id + amount only)
   const onLocalAccepted = async ({ qty }) => {
     try {
       const r = await fetch('/world-spil/backend/api/actions/market_local_sell.php', {
@@ -48,13 +85,14 @@ export default function ResourceTradeController({ onChanged }) {
       if (!r?.ok) throw new Error(r?.error?.message || 'Fejl');
       onChanged?.();
       await refetch?.();
+      closeAll();
     } catch (e) {
-      alert(e.message || String(e));
-    } finally {
+      alert(e.message || 'Salg fejlede');
       closeAll();
     }
   };
 
+  // Global listing submit (posts res_id, amount, price)
   const onGlobalSubmit = async ({ qty, price }) => {
     try {
       const r = await fetch('/world-spil/backend/api/actions/marketplace_create.php', {
@@ -65,9 +103,9 @@ export default function ResourceTradeController({ onChanged }) {
       if (!r?.ok) throw new Error(r?.error?.message || 'Fejl');
       onChanged?.();
       await refetch?.();
+      closeAll();
     } catch (e) {
-      alert(e.message || String(e));
-    } finally {
+      alert(e.message || 'Sæt til salg fejlede');
       closeAll();
     }
   };
@@ -77,21 +115,36 @@ export default function ResourceTradeController({ onChanged }) {
       <ResourceActionModal
         isOpen={flow === 'pick'}
         onClose={closeAll}
-        onPick={(k) => setFlow(k)}
+        // Hvis brugeren vælger "local", hent backendprisen først
+        onPick={(k) => {
+          if (k === 'local') {
+            openLocalSell(resId, maxAmount);
+          } else {
+            setFlow(k);
+          }
+        }}
         canGlobal={canGlobal}
         resId={resId}
+        resName={resName}
+        resEmoji={resEmoji}
         anchorRect={anchorRect}
       />
       <LocalSellModal
         isOpen={flow === 'local'}
         resId={resId}
+        resName={resName}
+        resEmoji={resEmoji}
         maxAmount={maxAmount}
         onCancel={closeAll}
         onAccepted={onLocalAccepted}
+        unitFromBackend={unitBackend}
+        loadingUnit={loadingUnit}
       />
       <GlobalListingModal
         isOpen={flow === 'global'}
         resId={resId}
+        resName={resName}
+        resEmoji={resEmoji}
         maxAmount={maxAmount}
         onCancel={closeAll}
         onSubmit={onGlobalSubmit}

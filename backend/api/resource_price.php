@@ -14,8 +14,10 @@ if ($resId === '') {
 
 try {
   $pdo = db();
+  // getEffectivePrice returns a float (internal precision); round for display to 2 decimals
   $price = getEffectivePrice($pdo, $resId, ['context' => ($_GET['context'] ?? 'local'), 'volatility' => 0.0]);
-  echo json_encode(['ok' => true, 'data' => ['res_id' => $resId, 'price' => $price]], JSON_UNESCAPED_UNICODE);
+  $priceRounded = round($price, 2); // display price with 2 decimals
+  echo json_encode(['ok' => true, 'data' => ['res_id' => $resId, 'price' => $priceRounded]], JSON_UNESCAPED_UNICODE);
   exit;
 } catch (Throwable $e) {
   http_response_code(500);

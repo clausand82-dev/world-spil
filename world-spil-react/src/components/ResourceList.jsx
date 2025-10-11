@@ -26,8 +26,8 @@ export default function ResourceList({ items, defs, format = 'detailed', columns
 
   if (sortedItems.length === 0) return <div className="sub">Ingen</div>;
 
-  // helper: hent click coords og rect
-  const handleClickWithRect = (e, fullResId) => {
+  // helper: hent click coords og rect - now også sender resource name
+  const handleClickWithRect = (e, fullResId, resName, resEmoji) => {
     // client coords relative to viewport
     const clickX = e.clientX ?? null;
     const clickY = e.clientY ?? null;
@@ -48,6 +48,9 @@ export default function ResourceList({ items, defs, format = 'detailed', columns
     if (typeof clickX === 'number' && typeof clickY === 'number') {
       payload.click = { x: clickX + window.scrollX, y: clickY + window.scrollY };
     }
+    // send resource name and emoji (fallbacks)
+    payload.resName = resName || fullResId;
+    payload.resEmoji = resEmoji || '';
     dispatchResourceTrade(fullResId, payload);
   };
 
@@ -85,8 +88,8 @@ export default function ResourceList({ items, defs, format = 'detailed', columns
             className="row"
             role="button"
             tabIndex={0}
-            onClick={(e) => handleClickWithRect(e, fullResId)}
-            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleClickWithRect(e, fullResId); } }}
+            onClick={(e) => handleClickWithRect(e, fullResId, def.name, def.emoji)}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleClickWithRect(e, fullResId, def.name, def.emoji); } }}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -131,8 +134,8 @@ export default function ResourceList({ items, defs, format = 'detailed', columns
           key={id}
           role="button"
           tabIndex={0}
-          onClick={(e) => handleClickWithRect(e, fullResId)}
-          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleClickWithRect(e, fullResId); } }}
+          onClick={(e) => handleClickWithRect(e, fullResId, def.name, def.emoji)}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleClickWithRect(e, fullResId, def.name, def.emoji); } }}
           style={{ cursor: 'pointer' }}
         >
           <ItemRow
