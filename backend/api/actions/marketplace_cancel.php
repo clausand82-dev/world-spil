@@ -4,49 +4,40 @@ require_once __DIR__ . '/../_init.php';
 if (session_status() !== PHP_SESSION_ACTIVE) session_start();
 header('Content-Type: application/json; charset=utf-8');
 
-function jout($ok, $payload){ echo json_encode($ok?['ok'=>true,'data'=>$payload]:['ok'=>false,'error'=>$payload], JSON_UNESCAPED_UNICODE); exit; }
-function jerr(string $msg, int $http=400){ http_response_code($http); jout(false, ['message'=>$msg]); }
-
 try {
   $pdo = db();
-  $uid = $_SESSION['uid'] ?? null;
-  if (!$uid) jerr('Not logged in', 401);
+  $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-  $body = json_decode(file_get_contents('php://input') ?: '', true) ?: [];
-  $id = (int)($body['id'] ?? 0);
-  if ($id <= 0) jerr('Invalid id');
+  $userId = $_SESSION['uid'] ?? null;
+  if (!$userId) { http_response_code(401); echo json_encode(['ok'=>false,'error'=>['message'=>'Not logged in']], JSON_UNESCAPED_UNICODE); exit; }
 
+  $id = (int)($_POST['id'] ?? ($_GET['id'] ?? 0));
+  if ($id <= 0) { http_response_code(400); echo json_encode(['ok'=>false,'error'=>['message'=>'Invalid id']], JSON_UNESCAPED_UNICODE); exit; }
+
+  $st = $pdo->prepare("SELECT * FROM marketplace WHERE id = ? FOR UPDATE");
+  $st->execute([$id]);
+  $m = $st->fetch(PDO::FETCH_ASSOC);
+  if (!$m) { http_response_code(404); echo json_encode(['ok'=>false,'error'=>['message'=>'Listing not found']], JSON_UNESCAPED_UNICODE); exit; }
+  if ((int)$m['user_id'] !== (int)$userId) { http_response_code(403); echo json_encode(['ok'=>false,'error'=>['message'=>'Not owner']], JSON_UNESCAPED_UNICODE); exit; }
+
+  // return resource to inventory
   $pdo->beginTransaction();
-  $sel = $pdo->prepare("SELECT id, user_id, res_id, amount, status, created_at FROM marketplace WHERE id = ? FOR UPDATE");
-  $sel->execute([$id]);
-  $row = $sel->fetch(PDO::FETCH_ASSOC);
-  if (!$row) { $pdo->rollBack(); jerr('Listing not found', 404); }
-  if ((int)$row['user_id'] !== (int)$uid) { $pdo->rollBack(); jerr('Not your listing', 403); }
-  if ($row['status'] !== 'forsale') { $pdo->rollBack(); jerr('Already finalized'); }
-
-  // 1 hour min before cancel
-  $createdTs = strtotime((string)$row['created_at']);
-  if (time() - $createdTs < 3600) { $pdo->rollBack(); jerr('Kan fortrydes efter 1 time'); }
-
-  $resId = (string)$row['res_id'];
-  $amount = (float)$row['amount'];
-  $return = floor($amount * 0.9); // minus 10%, afrundet ned
-  // mark canceled
-  $upd = $pdo->prepare("UPDATE marketplace SET status='canceled', canceled_at=NOW() WHERE id = ?");
-  $upd->execute([$id]);
-  // credit inventory
-  // Upsert
-  $u = $pdo->prepare("UPDATE inventory SET amount = amount + ? WHERE user_id = ? AND res_id = ?");
-  $u->execute([$return, $uid, $resId]);
-  if ($u->rowCount() === 0) {
-    $i = $pdo->prepare("INSERT INTO inventory (user_id, res_id, amount) VALUES (?,?,?)");
-    $i->execute([$uid, $resId, $return]);
+  $upd = $pdo->prepare("UPDATE inventory SET amount = amount + ? WHERE user_id = ? AND res_id = ?");
+  $upd->execute([(float)$m['amount'], $userId, $m['res_id']]);
+  if ($upd->rowCount() === 0) {
+    $ins = $pdo->prepare("INSERT INTO inventory (user_id, res_id, amount) VALUES (?, ?, ?)");
+    $ins->execute([$userId, $m['res_id'], (float)$m['amount']]);
   }
 
+  $pdo->prepare("UPDATE marketplace SET status='canceled', canceled_at=NOW() WHERE id = ?")->execute([$id]);
   $pdo->commit();
-  jout(true, ['id'=>$id, 'returned'=>$return]);
+
+  echo json_encode(['ok'=>true,'data'=>['id'=>$id]], JSON_UNESCAPED_UNICODE);
+  exit;
 
 } catch (Throwable $e) {
-  if ($pdo && $pdo->inTransaction()) $pdo->rollBack();
-  jerr($e->getMessage(), 500);
+  if (isset($pdo) && $pdo instanceof PDO && $pdo->inTransaction()) $pdo->rollBack();
+  http_response_code(500);
+  echo json_encode(['ok'=>false,'error'=>['message'=>$e->getMessage(),'file'=>$e->getFile(),'line'=>$e->getLine()]], JSON_UNESCAPED_UNICODE);
+  exit;
 }
