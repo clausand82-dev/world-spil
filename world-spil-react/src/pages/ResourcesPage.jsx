@@ -3,6 +3,7 @@ import { useT } from '../services/i18n.js';
 import Tabs from '../components/ui/Tabs.jsx';
 import InventoryTab from '../components/resources/InventoryTab.jsx';
 import MarketTab from '../components/resources/MarketTab.jsx';
+import ResourceTradeController from '../components/resources/ResourceTradeController.jsx';
 
 const TABS = [
   { key: 'inventory', label: 'Inventory', emoji: '🎒' },
@@ -59,6 +60,7 @@ export default function ResourcesPage() {
       <div className="section-body" style={{ display: 'grid', gap: 12 }}>
         {content}
       </div>
+        <ResourceTradeController onChanged={() => {/* valgfrit: toast */}} />
     </section>
   );
 }

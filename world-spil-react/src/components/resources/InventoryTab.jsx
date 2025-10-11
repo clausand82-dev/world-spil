@@ -6,6 +6,13 @@ import { fmt } from '../../services/helpers.js';
 import HoverCard from '../../components/ui/HoverCard.jsx';
 import CapHoverContent from '../../components/ui/CapHoverContent.jsx';
 
+function dispatchResourceTrade(resId) {
+  if (!resId) return;
+  // Ignore animals/units
+  if (String(resId).startsWith('ani.')) return;
+  window.dispatchEvent(new CustomEvent('resources:trade', { detail: { resId } }));
+}
+
 export default function InventoryPage() {
   const { data, isLoading, error } = useGameData();
 
