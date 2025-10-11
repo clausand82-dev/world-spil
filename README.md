@@ -49,6 +49,7 @@ Change/update History
 - tax system slightly implimented
 - crime lite introduced
 - working on lang selection
+- stage popup added and fixed
 
 4.1
 - STAGE 2 and 3 system introduced

@@ -1,10 +1,10 @@
 import React from 'react';
-import { useGameData } from '../context/GameDataContext.jsx';
-import ResourceList from '../components/ResourceList.jsx';
-import AnimalList from '../components/AnimalList.jsx';
-import { fmt } from '../services/helpers.js';
-import HoverCard from '../components/ui/HoverCard.jsx';
-import CapHoverContent from '../components/ui/CapHoverContent.jsx';
+import { useGameData } from '../../context/GameDataContext.jsx';
+import ResourceList from '../../components/ResourceList.jsx';
+import AnimalList from '../../components/AnimalList.jsx';
+import { fmt } from '../../services/helpers.js';
+import HoverCard from '../../components/ui/HoverCard.jsx';
+import CapHoverContent from '../../components/ui/CapHoverContent.jsx';
 
 export default function InventoryPage() {
   const { data, isLoading, error } = useGameData();

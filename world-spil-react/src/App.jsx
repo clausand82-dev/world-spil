@@ -11,7 +11,7 @@ import ResourceAutoRefresh from './components/ResourceAutoRefresh.jsx';
 
 import DashboardPage from './pages/DashboardPage.jsx';
 import ResearchPage from './pages/ResearchPage.jsx';
-import InventoryPage from './pages/InventoryPage.jsx';
+import ResourcesPage from './pages/ResourcesPage.jsx';
 import BuildingsPage from './pages/BuildingsPage.jsx';
 import BuildingDetailPage from './components/building/BuildingDetailPage.jsx';
 import ProductionPage from "./pages/ProductionPage.jsx";
@@ -71,7 +71,7 @@ function App() {
       case 'dashboard': return <DashboardPage />;
       case 'unit': return <UnitPage />;
       case 'research': return <ResearchPage />;
-      case 'inventory': return <InventoryPage />;
+      case 'resources': return <ResourcesPage />;
       case 'buildings': return <BuildingsPage />;
       case 'building': return <BuildingDetailPage buildingId={param} />;
       case 'production': return <ProductionPage />;
