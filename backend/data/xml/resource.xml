@@ -148,4 +148,12 @@
     <unitSpace>0.1</unitSpace>
     <emoji>🐟</emoji>
   </resource>
+
+  <resource id="res.stonebricks" family="product" type="product" lvl="1" stage="1">
+    <unit>pcs</unit>
+    <unitSpace>0.3</unitSpace>
+    <emoji>🪨</emoji>
+  </resource>
+
+
 </resources>

@@ -581,6 +581,8 @@
   <entry key="res.wood.desc">Bruges til at bygge med; kan bearbejdes</entry>
   <entry key="res.stone.name">Sten</entry>
   <entry key="res.stone.desc">Bruges til at bygge med; kan bearbejdes</entry>
+  <entry key="res.stonebricks.name">Stenblokke</entry>
+  <entry key="res.stonebricks.desc">Bruges til at bygge med; kan bearbejdes</entry>
   <entry key="res.water.name">Vand</entry>
   <entry key="res.water.desc">Bruges til dyrehold</entry>
   <entry key="res.money.name">Kr</entry>
