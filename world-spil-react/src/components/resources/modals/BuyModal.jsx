@@ -75,7 +75,7 @@ export default function BuyModal({
             <div>
               <div style={{ fontSize: 14, color: '#cbd5e1' }}>Ressource</div>
               <div style={{ fontSize: 16, color: '#fff', fontWeight: 700 }}>{displayName}</div>
-              {offer?.res_id ? <div style={{ fontSize: 12, color: '#94a3b8' }}>{offer.res_id}</div> : null}
+             
             </div>
           </div>
 
