@@ -6,8 +6,68 @@ import useHeaderSummary from '../hooks/useHeaderSummary.js';
 import { fetchOverrides, saveOverrides } from '../services/managementChoicesApi.js';
 import { fetchSchema } from '../services/managementSchemaApi.js';
 import { interpolate, computeFieldEffectsPreview } from '../components/utils/policyExpr.js';
-import ManagementStatsTooltip from '../components/management/ManagementStatsTooltip.jsx';
 import { projectSummaryWithChoices } from '../components/utils/policyProjector.js';
+import ManagementStatsTooltip from '../components/management/ManagementStatsTooltip.jsx';
+
+/**
+ * Tabs/families der kan vælges i toppen.
+ * Tilføj flere families ved at tilføje entries her (og oprette tilsvarende schema JSON i backend/data/policies/<family>.json).
+ */
+const TABS = [
+  { key: 'health', label: 'Sundhed', emoji: '🧺' },
+ { key: 'police',  label: 'Politi',   emoji: '👮' },
+  // { key: 'traffic', label: 'Trafik',   emoji: '🚦' },
+  // { key: 'public',  label: 'Offentligt', emoji: '🏛️' },
+];
+
+/**
+ * Sektioner pr. family (faneblad). Items refererer til field keys i det pågældende family‑schema.
+ * Tilføj en nøgle for hver ny family (fx "police") med egne sektioner/items.
+ */
+const sectionsByFamily = {
+  health: [
+    {
+      title: 'Ordninger',
+      cols: 2,
+      stageMin: 1,
+      items: [
+        { stack: ['health_free_dentist_kids', 'health_free_dentist_young', 'health_free_dentist_adults'], span: 1 },
+        { id: 'health_subsidy_pct', span: 1 },
+      ],
+    },
+    {
+      title: 'Mål & strategi',
+      cols: 2,
+      stageMin: 2,
+      items: [
+        { id: 'health_wait_target_days', span: 1 },
+        { id: 'health_mode',             span: 1 },
+        { id: 'health_campaign_prevention', span: 2 },
+      ],
+    },
+  ],
+
+  //Eksempel: (kræver backend/data/policies/police.json med de nævnte keys)
+  police: [
+    {
+      title: 'Politi-indsats',
+      cols: 2,
+      stageMin: 1,
+      items: [
+        { id: 'police_patrol_density', span: 1 },
+        { id: 'police_camera_toggle',  span: 1 },
+      ],
+    },
+    {
+      title: 'Strategi',
+      cols: 2,
+      stageMin: 2,
+      items: [
+        { id: 'police_strategy', span: 2 },
+      ],
+    },
+  ],
+};
 
 function defaultsFromSchema(schema) {
   const out = {};
@@ -19,6 +79,11 @@ function defaultsFromSchema(schema) {
   return out;
 }
 
+/**
+ * Adapter som laver schema.fields om til MgmtGrid config-fields
+ * - help interpoleres dynamisk med en projected summary + aktuelle valg
+ * - tooltip viser live beregnede effekter for det enkelte felt
+ */
 function adaptSchemaToConfig(schema, ctx, choices, projected) {
   const fieldsIn = schema?.fields || {};
   const fields = {};
@@ -26,17 +91,25 @@ function adaptSchemaToConfig(schema, ctx, choices, projected) {
     const baseHelp = def.help;
     fields[id] = {
       label: def.label || id,
-      help: (chs, tCtx) => {
-        const c = { summary: projected, choices: chs || {} }; // brug projected
+      help: (chs, _tCtx) => {
+        const c = { summary: projected, choices: chs || {} };
         return typeof baseHelp === 'string' ? interpolate(baseHelp, c) : baseHelp;
       },
+      stageMin: def.stageMin,
+      stageMax: def.stageMax,
+      showWhenLocked: def.showWhenLocked,
       control: { ...(def.control || {}), key: id },
       tooltip: (chs) => {
-        // Brug projected summary i preview
         const stats = computeFieldEffectsPreview(def, chs, projected);
         if (!stats || Object.keys(stats).length === 0) return null;
         return (
-          <ManagementStatsTooltip headerMode="stats" title={def.label || id} stats={stats} translations={ctx?.translations} />
+          <ManagementStatsTooltip
+            headerMode="stats"
+            title={def.label || id}
+            subtitle=""
+            stats={stats}
+            translations={ctx?.translations}
+          />
         );
       },
     };
@@ -48,26 +121,31 @@ export default function ManagementPageDynamic() {
   const { data: gameData } = useGameData();
   const { data: summary } = useHeaderSummary();
 
-  const [activeKey, setActiveKey] = useState('health');
-  const tabs = [{ key: 'health', label: 'Sundhed', emoji: '🧺' }];
+  const [activeKey, setActiveKey] = useState(TABS[0]?.key || 'health');
 
-  // --- STATE: sørg for at schema state er deklareret FØR noget bruger "schema" ---
+  // STATE for denne side
   const [schema, setSchema] = useState(null);
   const [defaults, setDefaults] = useState({});
   const [choices, setChoices] = useState({});
   const [snapshot, setSnapshot] = useState({});
   const dirty = useMemo(() => JSON.stringify(choices) !== JSON.stringify(snapshot), [choices, snapshot]);
 
-  // Projected summary skal oprettes EFTER schema state er lavet (så 'schema' findes)
+  // Beregn en projected summary i UI, så hover/help kan vise live tal ift. nuværende valg (før save)
   const projectedSummary = useMemo(() => {
     if (!schema) return summary || {};
     return projectSummaryWithChoices(schema, choices, summary || {});
   }, [schema, choices, summary]);
 
-  const ctx = useMemo(() => ({ summary: projectedSummary, gameData, translations: gameData?.i18n?.current ?? {} }), [projectedSummary, gameData]);
+  // Context til MgmtGrid/tooltip med projected summary
+  const ctx = useMemo(() => ({
+    summary: projectedSummary,
+    gameData,
+    translations: gameData?.i18n?.current ?? {}
+  }), [projectedSummary, gameData]);
 
   const setChoice = (k, v) => setChoices(prev => ({ ...prev, [k]: v }));
 
+  // Hent schema + overrides for aktivt faneblad (family)
   useEffect(() => {
     let mounted = true;
     (async () => {
@@ -94,6 +172,7 @@ export default function ManagementPageDynamic() {
     return () => { mounted = false; };
   }, [activeKey]);
 
+  // Gem kun differencer ift. defaults
   const onSave = async () => {
     const overrides = {};
     for (const [k, v] of Object.entries(choices)) {
@@ -104,28 +183,10 @@ export default function ManagementPageDynamic() {
   };
   const onRevert = () => setChoices(snapshot);
 
-  const uiSections = useMemo(() => [
-    {
-      title: 'Ordninger',
-      cols: 2,
-      stageMin: 1,
-      items: [
-        { stack: ['health_free_dentist_kids', 'health_free_dentist_young', 'health_free_dentist_adults'], span: 1 },
-        { id: 'health_subsidy_pct', span: 1 },
-      ],
-    },
-    {
-      title: 'Mål & strategi',
-      cols: 2,
-      stageMin: 2,
-      items: [
-        { id: 'health_wait_target_days', span: 1 },
-        { id: 'health_mode',             span: 1 },
-        { id: 'health_campaign_prevention', span: 2 },
-      ],
-    },
-  ], []);
+  // Vælg sektioner for den aktive family
+  const uiSections = useMemo(() => sectionsByFamily[activeKey] ?? [], [activeKey]);
 
+  // Byg MgmtGrid-config (fields + sections)
   const config = useMemo(() => {
     if (!schema) return null;
     const base = adaptSchemaToConfig(schema, ctx, choices, projectedSummary);
@@ -134,9 +195,17 @@ export default function ManagementPageDynamic() {
 
   return (
     <section className="panel section">
-      <div className="section-head" style={{ display:'flex', alignItems:'center', gap:8 }}>
-        <div style={{ fontWeight:700 }}>Management</div>
-        <Tabs tabs={tabs} value={activeKey} onChange={setActiveKey} showActions dirty={dirty} onSave={onSave} onRevert={onRevert} />
+      <div className="section-head" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ fontWeight: 700 }}>Management</div>
+        <Tabs
+          tabs={TABS}
+          value={activeKey}
+          onChange={setActiveKey}
+          showActions
+          dirty={dirty}
+          onSave={onSave}
+          onRevert={onRevert}
+        />
       </div>
       <div className="section-body">
         {config ? (

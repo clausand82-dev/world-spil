@@ -1,0 +1,35 @@
+{
+  "family": "police",
+  "fields": {
+    "police_patrol_density": {
+      "label": "Patruljetæthed",
+      "help": "Flere patruljer øger trygheden, men koster budgettet.",
+      "control": { "type": "slider", "default": 0, "min": 0, "max": 100, "step": 5 },
+      "effects": [
+        { "stat": "policePresence", "op": "add", "value": { "expr": "choice('police_patrol_density') * 2" } },
+        { "stat": "taxUsage", "op": "add", "value": { "expr": "choice('police_patrol_density') * 50" } }
+      ]
+    },
+    "police_camera_toggle": {
+      "label": "Kameraovervågning",
+      "control": { "type": "toggle", "default": false },
+      "effects": [
+        { "stat": "crimeDeterrence", "op": "add", "value": 10 },
+        { "stat": "taxUsage", "op": "add", "value": 1000 }
+      ]
+    },
+    "police_strategy": {
+      "label": "Strategi",
+      "control": {
+        "type": "radio",
+        "default": "balanced",
+        "options": [
+          { "value": "balanced", "label": "Balanceret" },
+          { "value": "hotspots", "label": "Hotspot‑fokus" },
+          { "value": "community", "label": "Nærpoliti" }
+        ]
+      },
+      "effects": []
+    }
+  }
+}

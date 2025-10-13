@@ -299,6 +299,54 @@ try {
   // Brug korrekt variabel ($uid), ikke $userId
   apply_user_policies_to_summary($pdo, $uid, $summary);
 
+// --- Merge policy capacity breakdown (capChoice) into parts/partsList ---
+if (!empty($summary['capChoice']) && is_array($summary['capChoice'])) {
+  foreach ($summary['capChoice'] as $capKey => $info) {
+    if (!is_array($info)) continue;
+
+    $choiceTotal = (float)($info['choice_total'] ?? 0);
+    if ($choiceTotal !== 0.0) {
+      // Sørg for struktur
+      if (!isset($parts[$capKey]) || !is_array($parts[$capKey]))       $parts[$capKey] = [];
+      if (!isset($partsList[$capKey]) || !is_array($partsList[$capKey])) $partsList[$capKey] = [];
+
+      // 1) Sum på parts (ny kilde 'choice' – ligesom 'buildings', 'addon', 'citizens')
+      $parts[$capKey]['choice'] = (float)($parts[$capKey]['choice'] ?? 0) + $choiceTotal;
+
+      // 2) Detaljer på partsList['choice'] (én post pr policy eller én fallback-post)
+      $rows = [];
+      $details = (array)($info['choiceDetails'] ?? []);
+      if ($details) {
+        foreach ($details as $d) {
+          $rows[] = [
+            'id'     => 'policy:' . (string)($d['policy'] ?? ($d['stat'] ?? '')),
+            'name'   => (string)($d['policy'] ?? ($d['stat'] ?? 'policy')),
+            'amount' => (float)($d['amount'] ?? 0),
+            'family' => (string)($d['family'] ?? ''),
+            'stat'   => (string)($d['stat'] ?? $capKey),
+          ];
+        }
+      } else {
+        $rows[] = [
+          'id'     => 'policy:',
+          'name'   => 'policy',
+          'amount' => $choiceTotal,
+          'family' => '',
+          'stat'   => $capKey,
+        ];
+      }
+
+      // Merge ind i partsList under "choice"
+      if (!isset($partsList[$capKey]['choice']) || !is_array($partsList[$capKey]['choice'])) {
+        $partsList[$capKey]['choice'] = [];
+      }
+      $partsList[$capKey]['choice'] = array_merge($partsList[$capKey]['choice'], $rows);
+    }
+  }
+}
+
+
+
   // Skriv effekter tilbage i dine lokale variabler, så resten af pipeline bruger opdaterede tal
   $capacities = $summary['capacities'] ?? $capacities;
   $usages     = $summary['usages']     ?? $usages;
@@ -438,6 +486,7 @@ try {
     'capacities'   => $capacities,
     'parts'        => $parts,
     'partsList'    => $partsList,
+    'capChoice'   => $capChoice = round_numeric_recursive(($summary['capChoice'] ?? []), $ROUND_DECIMALS),
     'happiness'    => $happinessData,
     'popularity'   => $popularityData,
     'demands'      => $demandsData,

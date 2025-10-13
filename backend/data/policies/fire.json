@@ -1,0 +1,32 @@
+{
+  "family": "fire",
+  "fields": {
+    "fire_free_dentist_kids": {
+      "label": "Gratis tandlæge — børn",
+      "help": "Ordningen gælder pt for ${summary.citizens.groupCounts.kids + summary.citizens.groupCounts.baby} børn.",
+      "control": { "type": "toggle", "default": false },
+      "effects": [
+        { "stat": "healthDentistCapacity", "op": "add", "value": 100 },
+        { "stat": "taxHealthUsage", "op": "add", "value": { "expr": "(summary.citizens.groupCounts.kids + summary.citizens.groupCounts.baby) * 100" } }
+      ]
+    },
+    "fire_free_dentist_young": {
+      "label": "Gratis tandlæge — unge",
+      "help": "Ordningen gælder pt for ${summary.citizens.groupCounts.young} unge.",
+      "control": { "type": "toggle", "default": false },
+      "effects": [
+        { "stat": "healthDentistCapacity", "op": "add", "value": 80 },
+        { "stat": "taxHealthUsage", "op": "add", "value": { "expr": "summary.citizens.groupCounts.young * 125" } }
+      ]
+    },
+    "fire_free_dentist_adults": {
+      "label": "Gratis tandlæge — voksne",
+      "help": "Ordningen gælder pt for ${(summary.citizens.groupCounts.adultsTotal + summary.citizens.groupCounts.old)} voksne.",
+      "control": { "type": "toggle", "default": false },
+      "effects": [
+        { "stat": "healthDentistCapacity", "op": "add", "value": 50 },
+        { "stat": "taxHealthUsage", "op": "add", "value": { "expr": "(summary.citizens.groupCounts.adultsTotal + summary.citizens.groupCounts.old) * 175" } }
+      ]
+    }
+  }
+}
