@@ -26,6 +26,7 @@ export function useStatsLabels() {
   wasteOther: t("ui.emoji.waste_other.h1") + ' ' + t("ui.label.waste_other.h1") || 'Other Waste',
 
   tax: t("ui.emoji.tax.h1") + ' ' + t("ui.label.tax.h1") || 'Tax',
+  taxHealth: t("ui.emoji.tax_health.h1") + ' ' + t("ui.label.tax_health.h1") || 'Skat (sundhed)',
   police: t("ui.emoji.adults_police.h1") + ' ' + t("ui.citizens.adults_police.h1") || 'Police',
 
   }), [t]);
@@ -74,6 +75,9 @@ export function defaultLabelMap() {
 
     'productClothUsage': { label: t("ui.emoji.cloth.h1")+t("ui.label.product_cloth.h1"), desc: t("ui.usagedesc.product_cloth.h1") },
     'productClothCapacity': { label: t("ui.emoji.cloth.h1")+t("ui.label.product_cloth.h1"), desc: t("ui.capdesc.product_cloth.h1") },
+
+    'taxUsage': { label: t("ui.emoji.tax.h1")+t("ui.label.tax.h1"), desc: t("ui.capdesc.tax.h1") },
+    'taxCapacity': { label: t("ui.emoji.tax.h1")+t("ui.label.tax.h1"), desc: t("ui.usagedesc.tax.h1") },
 
     'taxHealthUsage': { label: t("ui.emoji.tax_health.h1")+t("ui.label.tax_health.h1"), desc: t("ui.capdesc.tax_health.h1") },
     'taxHealthCapacity': { label: t("ui.emoji.tax_health.h1")+t("ui.label.tax_health.h1"), desc: t("ui.usagedesc.tax_health.h1") },

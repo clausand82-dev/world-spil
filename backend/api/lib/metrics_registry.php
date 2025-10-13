@@ -417,7 +417,7 @@ function metrics_registry(): array {
       'stage' => ['unlock_at'=>2,'visible_at'=>2],
       'happiness' => ['enabled'=>true, 'weight_key'=>'taxHappinessWeight'],
       'popularity'=> ['enabled'=>true, 'weight_key'=>'taxPopularityWeight'],
-      'subs' => [],
+      'subs' => ['taxHealth'],
       'demands' => [],
       'flows' => [],    
 
@@ -440,6 +440,21 @@ function metrics_registry(): array {
       ['group'=>'adultsUnemployed', 'per'=>4,  'label'=>'Offentlig ydelse (arbejdsløse)', 'switch_key'=>'benefitUnemployedEnabled'],
       ['group'=>'adultsHomeless',   'per'=>3,  'label'=>'Offentlig ydelse (hjemløse)',    'switch_key'=>'benefitHomelessEnabled'],
     ],
+  ],
+
+      'taxHealth' => [
+      'label' => 'Skat (sundhed)',
+      'usageField' => 'useTaxHealth', // kunne være useTrafficFossil hvis du vil
+      'capacityField' => 'taxHealthCapacity',
+      'capacityStatKeys' => 'taxHealthCapacity',
+      'usageStatKeys' => 'taxHealthUsage',
+      'sources' => ['bld'=>true,'add'=>true,'rsd'=>true,'ani'=>true,'res'=>true],
+      'stage' => ['unlock_at'=>2,'visible_at'=>2],
+      'happiness' => ['enabled'=>true, 'weight_key'=>'taxHealthHappinessWeight'],
+      'popularity'=> ['enabled'=>true, 'weight_key'=>'taxHealthPopularityWeight'],
+      'parent' => ['tax'],
+      'demands' => [],
+      'flows' => [],  
   ],
   ];
 

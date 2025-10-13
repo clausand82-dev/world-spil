@@ -9,6 +9,7 @@ require_once __DIR__ . '/../lib/popularity.php';
 require_once __DIR__ . '/../lib/metrics_registry.php';
 require_once __DIR__ . '/../lib/demands.php';
 require_once __DIR__ . '/../lib/effects_rules.php';
+// Integration af management/policy-effekter
 require_once __DIR__ . '/../lib/management_effects_integration.php';
 
 function respond($p, int $http=200): never {
@@ -48,7 +49,7 @@ try {
   $fine   = $counts['fine'];
   $totalPersons = (int)$macro['baby'] + (int)$macro['kids'] + (int)$macro['young'] + (int)$macro['adultsTotal'] + (int)$macro['old'];
 
-    // --- KONFIGURATION: indlæs tidligt så config_key virker for både capacity og usage blocks ---
+  // --- KONFIGURATION: indlæs tidligt så config_key virker for både capacity og usage blocks ---
   $cfgIniPath = __DIR__ . '/../../data/config/config.ini';
   $cfg = is_file($cfgIniPath) ? parse_ini_file($cfgIniPath, true, INI_SCANNER_TYPED) : [];
 
@@ -80,28 +81,8 @@ try {
     ],
   ];
 
-  // Capacity keys (hold eksisterende + sub-capacities for heat/power + mulighed for registry-udvidelser)
-  $CAP_KEYS = [
-    /*'housingCapacity'         => ['housing','housingCapacity'],
-    'provisionCapacity'       => ['provision_cap','provisionCapacity'],
-    'heatCapacity'            => ['heatCapacity'],
-    'healthCapacity'          => ['healthCapacity'],
-    'productClothCapacity'    => ['productClothCapacity','clothCapacity'],
-    'productMedicinCapacity'  => ['productMedicinCapacity','medicinCapacity'],
-    'wasteOtherCapacity'      => ['wasteOtherCapacity'],
-
-    // Heat sub-capacities
-    'heatFossilCapacity'      => ['heatFossilCapacity'],
-    'heatGreenCapacity'       => ['heatGreenCapacity'],
-    'heatNuclearCapacity'     => ['heatNuclearCapacity'],
-
-    // Power sub-capacities
-    'powerFossilCapacity'     => ['powerFossilCapacity'],
-    'powerGreenCapacity'      => ['powerGreenCapacity'],
-    'powerNuclearCapacity'    => ['powerNuclearCapacity'],*/
-  ];
-
-  // Udvid CAP_KEYS fra registry (så nye metrics bliver auto-summeret)
+  // Capacity keys (udvides dynamisk fra registry)
+  $CAP_KEYS = [];
   $registry = metrics_registry();
   foreach ($registry as $id => $m) {
     $capField = (string)($m['capacityField'] ?? '');
@@ -159,7 +140,7 @@ try {
     ];
   }
 
-  // Aggreger totals for heat/power
+  // Aggreger totals for heat/power/health
   $capacities['heatCapacity']  = (float)(
     ($capacities['heatFossilCapacity']  ?? 0) +
     ($capacities['heatGreenCapacity']   ?? 0) +
@@ -174,10 +155,14 @@ try {
   );
   $capacities['healthCapacity'] = (float)(
     ($capacities['healthDentistCapacity']  ?? 0) +
-    ($capacities['healthCapacity']   ?? 0)
+    ($capacities['healthCapacity']         ?? 0)
+  );
+    $capacities['taxCapacity'] = (float)(
+    ($capacities['taxHealthCapacity']  ?? 0) +
+    ($capacities['taxCapacity']         ?? 0)
   );
 
-  // NYT: generisk borger-bidrag til capacities via registry
+  // NYT: borger-bidrag via registry
   foreach ($registry as $id => $m) {
     $capField = (string)($m['capacityField'] ?? '');
     if ($capField === '') continue;
@@ -192,10 +177,8 @@ try {
       $count = (int)($fine[$groupKey] ?? 0);
       if ($count === 0) continue;
 
-      // optional per override fra config.ini (nu virker fordi $cfg er indlæst tidligere)
       $cfgKey = (string)($rule['config_key'] ?? '');
       if ($cfgKey !== '') {
-        // prøv sektionen 'tax' først, ellers top-niveau
         $per = (float)($cfg['tax'][$cfgKey] ?? $cfg[$cfgKey] ?? $per);
       }
 
@@ -216,7 +199,7 @@ try {
     'useHousing','useProvision','useWater',
     'useCloth','useMedicin','wasteOther',
     'deathHealthExpose','deathHealthWeight','deathHealthBaseline',
-    'birthRate','movingIn','movingOut', 'usePolice', 'useSocial',
+    'birthRate','movingIn','movingOut','usePolice','useSocial',
 
     // Heat/Power sub uses
     'useHeat','useHeatFossil','useHeatGreen','useHeatNuclear',
@@ -226,53 +209,53 @@ try {
     'useHealth','useHealthDentist',
 
     // tax
-    'useTax',
+    'useTax','useTaxHealth',
   ];
   $usages = [];
   foreach ($USAGE_FIELDS as $field) {
     $usages[$field] = cu_usage_breakdown($rawCit, $citDefs, $field, $USE_ALIAS);
   }
 
-  // === INFRA USAGE fra registry: læg ...Usage fra defs (bld/add/rsd/ani/res) oveni citizen-usage ===
-foreach ($registry as $id => $m) {
-  // Stage-gate
-  $unlockAt = (int)($m['stage']['unlock_at'] ?? 1);
-  if ($userStage < $unlockAt) continue;
+  // INFRA usage via registry
+  foreach ($registry as $id => $m) {
+    $unlockAt = (int)($m['stage']['unlock_at'] ?? 1);
+    if ($userStage < $unlockAt) continue;
 
-  $usageField = (string)($m['usageField'] ?? '');
-  if ($usageField === '') continue;
+    $usageField = (string)($m['usageField'] ?? '');
+    if ($usageField === '') continue;
 
-  // Hvis metrikken har subs, så skip parent for at undgå dobbelt-tælling — subs håndteres hver for sig
-  if (!empty($m['subs'])) continue;
+    // Hvis metrikken har subs, så skip parent (subs håndteres separat)
+    if (!empty($m['subs'])) continue;
 
-  $usageKeys = array_values(array_unique(array_filter((array)($m['usageStatKeys'] ?? []))));
-  if (empty($usageKeys)) continue;
+    $usageKeys = array_values(array_unique(array_filter((array)($m['usageStatKeys'] ?? []))));
+    if (empty($usageKeys)) continue;
 
-  $src = (array)($m['sources'] ?? []);
-  $infra = 0.0;
+    $src = (array)($m['sources'] ?? []);
+    $infra = 0.0;
 
-  if (!empty($src['bld']) && cu_table_exists($pdo, 'buildings')) {
-    $infra += cu_sum_capacity_from_table($pdo, $uid, $bldDefs, 'buildings', 'bld_id', 'level', $usageKeys);
-  }
-  if (!empty($src['add']) && cu_table_exists($pdo, 'addon')) {
-    $infra += cu_sum_capacity_from_table($pdo, $uid, $addDefs, 'addon', 'add_id', 'level', $usageKeys);
-  }
-  if (!empty($src['rsd']) && cu_table_exists($pdo, 'research')) {
-    $infra += cu_sum_capacity_from_research($pdo, $uid, $rsdDefs, $usageKeys);
-  }
-  if (!empty($src['ani']) && cu_table_exists($pdo, 'animals')) {
-    $infra += cu_sum_capacity_from_animals($pdo, $uid, $aniDefs, $usageKeys);
-  }
-  if (!empty($src['res']) && cu_table_exists($pdo, 'inventory')) {
-    $infra += cu_sum_capacity_from_inventory($pdo, $uid, $resDefs, $usageKeys);
+    if (!empty($src['bld']) && cu_table_exists($pdo, 'buildings')) {
+      $infra += cu_sum_capacity_from_table($pdo, $uid, $bldDefs, 'buildings', 'bld_id', 'level', $usageKeys);
+    }
+    if (!empty($src['add']) && cu_table_exists($pdo, 'addon')) {
+      $infra += cu_sum_capacity_from_table($pdo, $uid, $addDefs, 'addon', 'add_id', 'level', $usageKeys);
+    }
+    if (!empty($src['rsd']) && cu_table_exists($pdo, 'research')) {
+      $infra += cu_sum_capacity_from_research($pdo, $uid, $rsdDefs, $usageKeys);
+    }
+    if (!empty($src['ani']) && cu_table_exists($pdo, 'animals')) {
+      $infra += cu_sum_capacity_from_animals($pdo, $uid, $aniDefs, $usageKeys);
+    }
+    if (!empty($src['res']) && cu_table_exists($pdo, 'inventory')) {
+      $infra += cu_sum_capacity_from_inventory($pdo, $uid, $resDefs, $usageKeys);
+    }
+
+    if ($infra != 0.0) {
+      $usages[$usageField]['infra'] = (float)($usages[$usageField]['infra'] ?? 0) + (float)$infra;
+      $usages[$usageField]['total'] = (float)($usages[$usageField]['total'] ?? 0) + (float)$infra;
+    }
   }
 
-  if ($infra != 0.0) {
-    $usages[$usageField]['infra'] = (float)($usages[$usageField]['infra'] ?? 0) + (float)$infra;
-    $usages[$usageField]['total'] = (float)($usages[$usageField]['total'] ?? 0) + (float)$infra;
-  }
-}
-  // Aggreger useHeat/usePower fra sub-uses + evt. top-niveau (bevar kompatibilitet)
+  // Aggreger top use fra sub-uses
   $heatF   = (float)($usages['useHeatFossil']['total']   ?? 0);
   $heatG   = (float)($usages['useHeatGreen']['total']    ?? 0);
   $heatN   = (float)($usages['useHeatNuclear']['total']  ?? 0);
@@ -281,21 +264,22 @@ foreach ($registry as $id => $m) {
   $powerN  = (float)($usages['usePowerNuclear']['total'] ?? 0);
   $useHeatTop  = (float)($usages['useHeat']['total']  ?? 0);
   $usePowerTop = (float)($usages['usePower']['total'] ?? 0);
-
   $useHealthTop  = (float)($usages['useHealth']['total']  ?? 0);
   $healthDen  = (float)($usages['useHealthDentist']['total'] ?? 0);
 
-  $usages['useHeat']['total']  = $heatF + $heatG + $heatN + $useHeatTop;
-  $usages['usePower']['total'] = $powerF + $powerG + $powerN + $usePowerTop;
-  $usages['useHealth']['total'] = $healthDen + $useHealthTop;
+  $taxHealth = (float)($usages['useTaxHealth']['total'] ?? 0);
+  $taxOther  = (float)($usages['useTax']['total'] ?? 0);
+
+  $usages['useHeat']['total']    = $heatF + $heatG + $heatN + $useHeatTop;
+  $usages['usePower']['total']   = $powerF + $powerG + $powerN + $usePowerTop;
+  $usages['useHealth']['total']  = $healthDen + $useHealthTop;
+  $usages['useTax']['total']     = $taxHealth + $taxOther;
 
   // === Konfiguration ===
-  $cfgIniPath = __DIR__ . '/../../data/config/config.ini';
-  $cfg = is_file($cfgIniPath) ? parse_ini_file($cfgIniPath, true, INI_SCANNER_TYPED) : [];
   $happinessWeights  = $cfg['happiness']  ?? [];
   $popularityWeights = $cfg['popularity'] ?? [];
 
-/// NYT: Citizen-usage bidrag fra registry (fx budget-udgifter)
+  // Citizen-usage bidrag fra registry (fx budget-udgifter)
   foreach ($registry as $id => $m) {
     $unlockAt = (int)($m['stage']['unlock_at'] ?? 1);
     if ($userStage < $unlockAt) continue;
@@ -336,7 +320,27 @@ foreach ($registry as $id => $m) {
     }
   }
 
-apply_user_policies_to_summary($pdo, $userId, $summary);
+  // ===================== NYT: Apply management policies =====================
+  // Saml et summary-array af dine baseline-data, så policies kan anvendes direkte
+  $summary = [
+    'stage'      => ['current' => $userStage],
+    'citizens'   => [
+      'groupCounts' => $macro,
+      'totals'      => ['totalPersons' => $totalPersons],
+    ],
+    'capacities' => $capacities,
+    'usages'     => $usages,
+    'statSources'=> $summary['statSources'] ?? [], // tom/optional
+    'state'      => $summary['state'] ?? [],       // hvis du allerede lægger ejerskab andre steder
+  ];
+
+  // Brug korrekt variabel ($uid), ikke $userId
+  apply_user_policies_to_summary($pdo, $uid, $summary);
+
+  // Skriv effekter tilbage i dine lokale variabler, så resten af pipeline bruger opdaterede tal
+  $capacities = $summary['capacities'] ?? $capacities;
+  $usages     = $summary['usages']     ?? $usages;
+  // =================== /NYT: Apply management policies ======================
 
   // === HAPPINESS: byg dynamisk fra registry + stage ===
   $happinessPairs = []; // key => ['used','capacity']
@@ -372,10 +376,10 @@ apply_user_policies_to_summary($pdo, $userId, $summary);
   }
   $popularityData = popularity_calc_all($popularityPairs, $popularityWeights);
 
-  // === DEMANDS: evaluér eksempler (power/heat shares + pollution levels placeholder) ===
+  // === DEMANDS ===
   $demandsData = demands_evaluate_all($registry, $usages, $capacities, $counts, $cfg, $userStage);
 
-  // === EFFECTS/RULES: udfør tværgående checks (ændrer ikke tallene med mindre du selv vælger det) ===
+  // === EFFECTS/RULES (tværgående checks – ændrer ikke tallene med mindre du selv vælger det) ===
   $effects = apply_effects([
     'demands'    => $demandsData,
     'usages'     => $usages,
@@ -385,87 +389,27 @@ apply_user_policies_to_summary($pdo, $userId, $summary);
     'stage'      => $userStage,
   ]);
 
-// AFSNIT HER SKAL TJEKKE OG BRUGE EFFEKTER
+  // (Din eksisterende “AFSNIT HER SKAL TJEKKE …” kan blive, hvis du ønsker de ekstra justeringer)
 
-                // ----------------- NYT: Anvend effect-justeringer (enkelt, erstat baseline) -----------------
-      // Hvis effects indeholder adjustments for happiness -> anvend dem direkte og overskriv baseline
-      if (!empty($effects['adjustments']['happiness'])) {
-        $adj = $effects['adjustments']['happiness'];
-        $mult = (float)($adj['mult'] ?? 1.0);
-        $add  = (float)($adj['add'] ?? 0.0);
-
-        // Best-effort hent baseline fra almindelige keys, ellers 0
-        $happyBaseline = 0.0;
-        if (is_array($happinessData)) {
-          foreach (['total','value','score','overall','happiness','mean'] as $k) {
-            if (isset($happinessData[$k]) && is_numeric($happinessData[$k])) {
-              $happyBaseline = (float)$happinessData[$k];
-              break;
-            }
-          }
-        } elseif (is_numeric($happinessData)) {
-          $happyBaseline = (float)$happinessData;
-        }
-
-        // Beregn effektive værdi og overskriv baseline så frontend ikke skal ændres
-        $effective = $happyBaseline * $mult + $add;
-        // Gem både effective og overskriv total (frontend bruger total som før)
-        if (is_array($happinessData)) {
-          $happinessData['effective'] = $effective;
-          $happinessData['total'] = $effective;
-        } else {
-          // hvis happinessData er scalar, pak det i en struktur
-          $happinessData = ['total' => $effective, 'effective' => $effective];
-        }
-
-        // Kort warning til diagnostik (fjern senere hvis ikke ønsket)
-        $effects['warnings'][] = sprintf('Applied happiness adjustment: mult=%.3f add=%.3f (baseline=%.3f -> effective=%.3f)', $mult, $add, $happyBaseline, $effective);
-      }
-
-  // AFSLUTNING AF EFFECT TJEK OG ANVENDELSE
-
-  // Meta til UI (labels, hierarki, stages)
-  $metricsMeta = [];
-  foreach ($registry as $id => $m) {
-    $metricsMeta[$id] = [
-      'label'      => (string)($m['label'] ?? $id),
-      'parent'     => (string)($m['parent'] ?? ''),
-      'subs'       => array_values($m['subs'] ?? []),
-      'stage'      => [
-        'unlock_at'  => (int)($m['stage']['unlock_at'] ?? 1),
-        'visible_at' => (int)($m['stage']['visible_at'] ?? 1),
-        'locked'     => $userStage < (int)($m['stage']['unlock_at'] ?? 1),
-      ],
-      'usageField'    => (string)($m['usageField'] ?? ''),
-      'capacityField' => (string)($m['capacityField'] ?? ''),
-    ];
-  }
-
-/** Rekursiv afrunding af numeriske værdier i arrays/skalare */
-function round_numeric_recursive($val, int $decimals = 2) {
-  if (is_array($val)) {
-    foreach ($val as $k => $v) {
-      $val[$k] = round_numeric_recursive($v, $decimals);
+  // Afrunding helper
+  function round_numeric_recursive($val, int $decimals = 2) {
+    if (is_array($val)) {
+      foreach ($val as $k => $v) $val[$k] = round_numeric_recursive($v, $decimals);
+      return $val;
+    }
+    if (is_numeric($val)) {
+      $f = (float)$val;
+      $r = round($f, $decimals);
+      return (floor($r) == $r) ? (int)$r : $r;
     }
     return $val;
   }
-  if (is_numeric($val)) {
-    $f = (float)$val;
-    $r = round($f, $decimals);
-    // Return int hvis helt tal efter afrunding
-    if (floor($r) == $r) return (int)$r;
-    return $r;
-  }
-  return $val;
-}
 
-// --- Afslutningsvis: afrund de ønskede strukturer til maks 2 decimaler ---
-$ROUND_DECIMALS = 2;
-$capacities = round_numeric_recursive($capacities, $ROUND_DECIMALS);
-$parts      = round_numeric_recursive($parts, $ROUND_DECIMALS);
-$usages     = round_numeric_recursive($usages, $ROUND_DECIMALS);
-
-
+  // Afrund udgående numeric felter (valgfrit)
+  $ROUND_DECIMALS = 2;
+  $capacities = round_numeric_recursive($capacities, $ROUND_DECIMALS);
+  $parts      = round_numeric_recursive($parts, $ROUND_DECIMALS);
+  $usages     = round_numeric_recursive($usages, $ROUND_DECIMALS);
 
   // Respond – udvidet payload (kompatibel med eksisterende UI)
   respond([
@@ -486,11 +430,28 @@ $usages     = round_numeric_recursive($usages, $ROUND_DECIMALS);
     'capacities'   => $capacities,
     'parts'        => $parts,
     'partsList'    => $partsList,
-    'happiness'    => $happinessData,   // uændret form – frontend virker videre
-    'popularity'   => $popularityData,  // ny (samme struktur)
-    'demands'      => $demandsData,     // ny
-    'effects'      => $effects,         // ny – anvend når du vil
-    'metricsMeta'  => $metricsMeta,     // ny – labels/hierarki/stage til UI
+    'happiness'    => $happinessData,
+    'popularity'   => $popularityData,
+    'demands'      => $demandsData,
+    'effects'      => $effects,
+    'metricsMeta'  => (function() use ($registry, $userStage) {
+      $out = [];
+      foreach ($registry as $id => $m) {
+        $out[$id] = [
+          'label'      => (string)($m['label'] ?? $id),
+          'parent'     => (string)($m['parent'] ?? ''),
+          'subs'       => array_values($m['subs'] ?? []),
+          'stage'      => [
+            'unlock_at'  => (int)($m['stage']['unlock_at'] ?? 1),
+            'visible_at' => (int)($m['stage']['visible_at'] ?? 1),
+            'locked'     => $userStage < (int)($m['stage']['unlock_at'] ?? 1),
+          ],
+          'usageField'    => (string)($m['usageField'] ?? ''),
+          'capacityField' => (string)($m['capacityField'] ?? ''),
+        ];
+      }
+      return $out;
+    })(),
     'stage'        => ['current' => $userStage],
   ]);
 
