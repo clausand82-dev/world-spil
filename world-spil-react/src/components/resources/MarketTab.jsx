@@ -59,6 +59,11 @@ export default function MarketTab() {
   const [successOpen, setSuccessOpen] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
 
+  // error modal state (ny)
+  const [errorOpen, setErrorOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const showError = (msg) => { setErrorMessage(String(msg || 'Fejl')); setErrorOpen(true); };
+
   function ConfirmModal({ isOpen, title, message, onCancel, onConfirm }) {
     if (!isOpen) return null;
     return (
@@ -119,6 +124,28 @@ export default function MarketTab() {
         }}>
           <div style={{ fontWeight: 700, marginBottom: 6 }}>Færdig</div>
           <div style={{ color: '#cbd5e1', marginBottom: 10 }}>{message}</div>
+          <div style={{ textAlign: 'right' }}>
+            <button className="tab" onClick={onClose}>Ok</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Error modal (ny) — samme stil som SuccessModal men med fejltitel
+  function ErrorModal({ isOpen, message, onClose }) {
+    if (!isOpen) return null;
+    return (
+      <div style={{
+        position: 'fixed', inset: 0, zIndex: 30500, display: 'flex',
+        alignItems: 'center', justifyContent: 'center', pointerEvents: 'auto'
+      }}>
+        <div style={{
+          background: 'linear-gradient(180deg, #1b0214, #22061a)', color: '#fbeaec',
+          padding: 14, borderRadius: 10, boxShadow: '0 10px 30px rgba(2,6,23,0.6)', minWidth: 300
+        }}>
+          <div style={{ fontWeight: 700, marginBottom: 6 }}>Fejl</div>
+          <div style={{ color: '#ffd6d6', marginBottom: 10 }}>{message}</div>
           <div style={{ textAlign: 'right' }}>
             <button className="tab" onClick={onClose}>Ok</button>
           </div>
@@ -224,7 +251,7 @@ export default function MarketTab() {
       const json = await res.json().catch(() => null);
       if (!res.ok || !json?.ok) {
         console.warn('cancelOwn failed', res.status, json);
-        alert(json?.error?.message || json?.message || 'Kunne ikke fortryde opslaget');
+        showError(json?.error?.message || json?.message || 'Kunne ikke fortryde opslaget');
         return;
       }
       // Optimistisk UI-opdatering
@@ -239,7 +266,7 @@ export default function MarketTab() {
       fetchLocal(); fetchGlobal(); refetch?.();
     } catch (e) {
       console.error('cancelOwn error', e);
-      alert(e.message || String(e));
+      showError(e.message || String(e));
     }
   };
 
@@ -368,7 +395,7 @@ export default function MarketTab() {
                           <div style={{ fontSize:18, flex:'0 0 auto' }}>{norm.res_emoji}</div>
                           <div style={{ minWidth:0 }}>
                             <div className="res-name" style={{ fontSize:14, color:'#fff', fontWeight:700 }}>{norm.res_name}</div>
-                            <div style={{ fontSize:11, color:'#94a3b8' }}>{norm.res_id}</div>
+                            
                           </div>
                         </div>
                       </td>
@@ -417,8 +444,7 @@ export default function MarketTab() {
                           <div style={{ fontSize:18, flex:'0 0 auto' }}>{norm.res_emoji}</div>
                           <div style={{ minWidth:0 }}>
                             <div className="res-name" style={{ fontSize:14, color:'#fff', fontWeight:700 }}>{norm.res_name}</div>
-                            <div style={{ fontSize:11, color:'#94a3b8' }}>{norm.res_id}</div>
-                          </div>
+                                                    </div>
                         </div>
                       </td>
                       <td>{formatAmountAsInt(r.amount)}</td>
@@ -450,16 +476,29 @@ export default function MarketTab() {
         onCancel={() => { setBuyOpen(false); setBuyOffer(null); }}
         onBuy={async ({ qty }) => {
           try {
-            const r = await fetch('/world-spil/backend/api/actions/marketplace_buy.php', {
-              method: 'POST', credentials: 'include',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ id: buyOffer.id, amount: qty })
-            }).then(r => r.json());
-            if (!r?.ok) throw new Error(r?.error?.message || 'Fejl');
+            // prepare id (strip "local:" if present)
+            const rawId = buyOffer?.id ?? buyOffer?.Id ?? buyOffer?.identifier;
+            let sendId = String(rawId ?? '').replace(/^local:/, '');
+            const isLocal = String(rawId).startsWith('local:');
+            // prefer numeric id when possible
+            if (!isNaN(Number(sendId))) sendId = String(Number(sendId));
+            const params = new URLSearchParams();
+            params.set('id', sendId);
+            params.set('amount', String(Number(qty)));
+            if (isLocal) params.set('scope', 'local'); // hint for backend if needed
+
+            const res = await fetch('/world-spil/backend/api/actions/marketplace_buy.php', {
+              method: 'POST',
+              credentials: 'include',
+              headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+              body: params.toString()
+            });
+            const r = await res.json().catch(() => null);
+            if (!res.ok || !r?.ok) throw new Error(r?.error?.message || r?.message || 'Fejl ved køb');
             setBuyOpen(false); setBuyOffer(null);
             await refetch?.(); await fetchLocal(); await fetchGlobal();
           } catch (e) {
-            alert(e.message || String(e));
+            showError(e);
           }
         }}
       />
@@ -479,6 +518,8 @@ export default function MarketTab() {
         message={successMessage}
         onClose={() => setSuccessOpen(false)}
       />
+      {/* error modal */}
+      <ErrorModal isOpen={errorOpen} message={errorMessage} onClose={() => setErrorOpen(false)} />
     </div>
   );
 }

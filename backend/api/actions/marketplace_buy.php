@@ -138,7 +138,7 @@ try {
     $pdo->rollBack();
     http_response_code(400);
     echo json_encode(['ok'=>false,'error'=>[
-      'message'=>'Not enough storage space for this purchase',
+      'message'=>'Du har ikke nok plads i inventory til dit køb (du mangler '.($needSpace - $freeSpace).' enheder plads)',
       'details'=>[
         'res_id'=>$resId,
         'amount'=>$amount,
