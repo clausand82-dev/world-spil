@@ -1,13 +1,13 @@
 export async function fetchOverrides(family) {
   const params = family ? `?family=${encodeURIComponent(family)}` : '';
-  const res = await fetch(`/api/management/choices.php${params}`, { credentials: 'include' });
+  const res = await fetch(`/world-spil/backend/api/management/choices.php${params}`, { credentials: 'include' });
   const json = await res.json();
   if (!json.ok) throw new Error(json.error?.message || 'Failed to load overrides');
   return json.overrides || {};
 }
 
 export async function saveOverrides(family, overrides, { replaceFamily = true } = {}) {
-  const res = await fetch(`world-spil/backend/api/management/choices.php`, {
+  const res = await fetch(`/world-spil/backend/api/management/choices.php?debug=1`, {
     method: 'PUT',
     credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
@@ -15,5 +15,5 @@ export async function saveOverrides(family, overrides, { replaceFamily = true } 
   });
   const json = await res.json();
   if (!json.ok) throw new Error(json.error?.message || 'Failed to save overrides');
-  return true;
+  return json;
 }

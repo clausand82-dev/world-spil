@@ -4,18 +4,6 @@ import { renderControl } from './mgmtControlRender.jsx';
 import * as MP from './managementparts.jsx';
 import ManagementStatsTooltip from './ManagementStatsTooltip.jsx';
 
-/**
- * MgmtGrid – præsentationskomponent til management tabs
- * - Ens layout på tværs af tabs
- * - Ingen hooks – kun props
- *
- * Props:
- * - config: { fields: { [id]: cfg }, sections: [{ title, cols, items, stageMin?, stageMax?, showWhenLocked? }] }
- * - choices: object
- * - setChoice: (key, value) => void
- * - currentStage: number
- * - tooltipCtx: optional context for tooltip functions: { summary, gameData, translations, ... }
- */
 export default function MgmtGrid({ config, choices, setChoice, currentStage, tooltipCtx = {} }) {
   const fields = config?.fields || {};
   const sections = config?.sections || [];
@@ -71,8 +59,9 @@ export default function MgmtGrid({ config, choices, setChoice, currentStage, too
     const locked = !isStageOk(cfg);
     const controlEl = renderControl(id, cfg, { choices, setChoice, locked });
 
+    const helpText = typeof cfg.help === 'function' ? cfg.help(choices, tooltipCtx) : cfg.help;
     const body = (
-      <MP.Row label={cfg.label || id} help={cfg.help}>
+      <MP.Row label={cfg.label || id} help={helpText}>
         {controlEl}
       </MP.Row>
     );
