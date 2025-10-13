@@ -27,6 +27,7 @@ export function useStatsLabels() {
 
   tax: t("ui.emoji.tax.h1") + ' ' + t("ui.label.tax.h1") || 'Tax',
   taxHealth: t("ui.emoji.tax_health.h1") + ' ' + t("ui.label.tax_health.h1") || 'Skat (sundhed)',
+  taxCitizens: t("ui.emoji.tax_citizens.h1") + ' ' + t("ui.label.tax_citizens.h1") || 'Skat (borgere)',
   police: t("ui.emoji.adults_police.h1") + ' ' + t("ui.citizens.adults_police.h1") || 'Police',
 
   }), [t]);

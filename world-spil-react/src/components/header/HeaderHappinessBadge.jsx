@@ -39,6 +39,7 @@ const GROUPS = {
   heat:  ['heatGreen', 'heatNuclear', 'heatFossil'],
   power: ['powerGreen', 'powerNuclear', 'powerFossil'],
   health: ['healthDentist'],
+  tax: ['taxHealth', 'taxCitizens'],
 };
 
 // Mapping af nøgle → usage/capacity keys fra summary (FALLBACK når impacts mangler)

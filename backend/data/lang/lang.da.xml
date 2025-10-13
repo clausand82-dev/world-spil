@@ -178,11 +178,15 @@
   <entry key="ui.capdesc.tax.h1">Tilgængelig skatter</entry>
   <entry key="ui.usagedesc.tax.h1">Udgifter der betales via skatten alt i alt.</entry>
 
-  <entry key="ui.emoji.tax_health.h1">💹💹</entry>
+  <entry key="ui.emoji.tax_health.h1">💹</entry>
   <entry key="ui.label.tax_health.h1">Skat (sundhed)</entry>
   <entry key="ui.capdesc.tax_health.h1">Øger offentlige udgifter.</entry>
   <entry key="ui.usagedesc.tax_health.h1">Hvor meget offentlige udgifter der forbruges alt i alt.</entry>
 
+  <entry key="ui.emoji.tax_citizens.h1">💹</entry>
+  <entry key="ui.label.tax_citizens.h1">Skat (borgere)</entry>
+  <entry key="ui.capdesc.tax_citizens.h1">Øger offentlige udgifter til borgerne.</entry>
+  <entry key="ui.usagedesc.tax_citizens.h1">Hvor meget borgere koster i udgifter alt i alt.</entry>
 
   <entry key="ui.emoji.baby.h1">👶</entry>
   <entry key="ui.citizens.baby.h1">Baby</entry>  

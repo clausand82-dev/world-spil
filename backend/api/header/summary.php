@@ -140,27 +140,7 @@ try {
     ];
   }
 
-  // Aggreger totals for heat/power/health
-  $capacities['heatCapacity']  = (float)(
-    ($capacities['heatFossilCapacity']  ?? 0) +
-    ($capacities['heatGreenCapacity']   ?? 0) +
-    ($capacities['heatNuclearCapacity'] ?? 0) +
-    ($capacities['heatCapacity']        ?? 0)
-  );
-  $capacities['powerCapacity'] = (float)(
-    ($capacities['powerFossilCapacity']  ?? 0) +
-    ($capacities['powerGreenCapacity']   ?? 0) +
-    ($capacities['powerNuclearCapacity'] ?? 0) +
-    ($capacities['powerCapacity']        ?? 0)
-  );
-  $capacities['healthCapacity'] = (float)(
-    ($capacities['healthDentistCapacity']  ?? 0) +
-    ($capacities['healthCapacity']         ?? 0)
-  );
-    $capacities['taxCapacity'] = (float)(
-    ($capacities['taxHealthCapacity']  ?? 0) +
-    ($capacities['taxCapacity']         ?? 0)
-  );
+
 
   // NYT: borger-bidrag via registry
   foreach ($registry as $id => $m) {
@@ -209,7 +189,7 @@ try {
     'useHealth','useHealthDentist',
 
     // tax
-    'useTax','useTaxHealth',
+    'useTax','useTaxHealth','useTaxCitizens',
   ];
   $usages = [];
   foreach ($USAGE_FIELDS as $field) {
@@ -255,25 +235,7 @@ try {
     }
   }
 
-  // Aggreger top use fra sub-uses
-  $heatF   = (float)($usages['useHeatFossil']['total']   ?? 0);
-  $heatG   = (float)($usages['useHeatGreen']['total']    ?? 0);
-  $heatN   = (float)($usages['useHeatNuclear']['total']  ?? 0);
-  $powerF  = (float)($usages['usePowerFossil']['total']  ?? 0);
-  $powerG  = (float)($usages['usePowerGreen']['total']   ?? 0);
-  $powerN  = (float)($usages['usePowerNuclear']['total'] ?? 0);
-  $useHeatTop  = (float)($usages['useHeat']['total']  ?? 0);
-  $usePowerTop = (float)($usages['usePower']['total'] ?? 0);
-  $useHealthTop  = (float)($usages['useHealth']['total']  ?? 0);
-  $healthDen  = (float)($usages['useHealthDentist']['total'] ?? 0);
-
-  $taxHealth = (float)($usages['useTaxHealth']['total'] ?? 0);
-  $taxOther  = (float)($usages['useTax']['total'] ?? 0);
-
-  $usages['useHeat']['total']    = $heatF + $heatG + $heatN + $useHeatTop;
-  $usages['usePower']['total']   = $powerF + $powerG + $powerN + $usePowerTop;
-  $usages['useHealth']['total']  = $healthDen + $useHealthTop;
-  $usages['useTax']['total']     = $taxHealth + $taxOther;
+  
 
   // === Konfiguration ===
   $happinessWeights  = $cfg['happiness']  ?? [];
@@ -341,6 +303,52 @@ try {
   $capacities = $summary['capacities'] ?? $capacities;
   $usages     = $summary['usages']     ?? $usages;
   // =================== /NYT: Apply management policies ======================
+
+
+  // Aggreger top use fra sub-uses
+  $heatF   = (float)($usages['useHeatFossil']['total']   ?? 0);
+  $heatG   = (float)($usages['useHeatGreen']['total']    ?? 0);
+  $heatN   = (float)($usages['useHeatNuclear']['total']  ?? 0);
+  $powerF  = (float)($usages['usePowerFossil']['total']  ?? 0);
+  $powerG  = (float)($usages['usePowerGreen']['total']   ?? 0);
+  $powerN  = (float)($usages['usePowerNuclear']['total'] ?? 0);
+  $useHeatTop  = (float)($usages['useHeat']['total']  ?? 0);
+  $usePowerTop = (float)($usages['usePower']['total'] ?? 0);
+  $useHealthTop  = (float)($usages['useHealth']['total']  ?? 0);
+  $healthDen  = (float)($usages['useHealthDentist']['total'] ?? 0);
+
+  $taxHealth = (float)($usages['useTaxHealth']['total'] ?? 0);
+  $taxCitizens = (float)($usages['useTaxCitizens']['total'] ?? 0);
+  $taxOther  = (float)($usages['useTax']['total'] ?? 0);
+
+  $usages['useHeat']['total']    = $heatF + $heatG + $heatN + $useHeatTop;
+  $usages['usePower']['total']   = $powerF + $powerG + $powerN + $usePowerTop;
+  $usages['useHealth']['total']  = $healthDen + $useHealthTop;
+  $usages['useTax']['total']     = $taxHealth + $taxOther + $taxCitizens;
+
+    // Aggreger totals for heat/power/health
+  $capacities['heatCapacity']  = (float)(
+    ($capacities['heatFossilCapacity']  ?? 0) +
+    ($capacities['heatGreenCapacity']   ?? 0) +
+    ($capacities['heatNuclearCapacity'] ?? 0) +
+    ($capacities['heatCapacity']        ?? 0)
+  );
+  $capacities['powerCapacity'] = (float)(
+    ($capacities['powerFossilCapacity']  ?? 0) +
+    ($capacities['powerGreenCapacity']   ?? 0) +
+    ($capacities['powerNuclearCapacity'] ?? 0) +
+    ($capacities['powerCapacity']        ?? 0)
+  );
+  $capacities['healthCapacity'] = (float)(
+    ($capacities['healthDentistCapacity']  ?? 0) +
+    ($capacities['healthCapacity']         ?? 0)
+  );
+    $capacities['taxCapacity'] = (float)(
+    ($capacities['taxHealthCapacity']  ?? 0) +
+    ($capacities['taxCitizensCapacity']  ?? 0) +
+    ($capacities['taxCapacity']         ?? 0)
+  );
+
 
   // === HAPPINESS: byg dynamisk fra registry + stage ===
   $happinessPairs = []; // key => ['used','capacity']

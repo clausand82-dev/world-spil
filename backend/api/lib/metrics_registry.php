@@ -406,9 +406,10 @@ function metrics_registry(): array {
       'flows' => [],
     ],
 
-    // Traffic (eksempel demands)
-    'tax' => [
-      'label' => 'Skat',
+// TAX
+
+      'tax' => [
+      'label' => 'Skat ',
       'usageField' => 'useTax', // kunne være useTrafficFossil hvis du vil
       'capacityField' => 'taxCapacity',
       'capacityStatKeys' => 'taxCapacity',
@@ -417,7 +418,23 @@ function metrics_registry(): array {
       'stage' => ['unlock_at'=>2,'visible_at'=>2],
       'happiness' => ['enabled'=>true, 'weight_key'=>'taxHappinessWeight'],
       'popularity'=> ['enabled'=>true, 'weight_key'=>'taxPopularityWeight'],
-      'subs' => ['taxHealth'],
+      'subs' => ['taxCitizens','taxHealth'],
+      'demands' => [],
+      'flows' => [],  
+  ],
+    
+
+    'taxCitizens' => [
+      'label' => 'Skat (borger)',
+      'usageField' => 'useTaxCitizens', // kunne være useTrafficFossil hvis du vil
+      'capacityField' => 'taxCitizensCapacity',
+      'capacityStatKeys' => 'taxCitizensCapacity',
+      'usageStatKeys' => 'taxCitizensUsage',
+      'sources' => ['bld'=>true,'add'=>true,'rsd'=>true,'ani'=>true,'res'=>true],
+      'stage' => ['unlock_at'=>2,'visible_at'=>2],
+      'happiness' => ['enabled'=>true, 'weight_key'=>'taxCitizensHappinessWeight'],
+      'popularity'=> ['enabled'=>true, 'weight_key'=>'taxCitizensPopularityWeight'],
+      'parent' => ['tax'],
       'demands' => [],
       'flows' => [],    
 
