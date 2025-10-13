@@ -228,8 +228,8 @@
 
   <entry key="ui.emoji.adults_health.h1">🏥</entry>
   <entry key="ui.citizens.adults_health.h1">Sundhedsarbejder</entry>
-  <entry key="ui.capdesc.health.h1">Hvor mange sundhedsarbejdere byen har plads til.</entry>
-  <entry key="ui.usagedesc.health.h1">Hvor mange sundhedsarbejdere byen har brug for.</entry>
+  <entry key="ui.capdesc.adults_health.h1">Hvor mange sundhedsarbejdere byen har plads til.</entry>
+  <entry key="ui.usagedesc.adults_health.h1">Hvor mange sundhedsarbejdere byen har brug for.</entry>
   <entry key="ui.emoji.health_unit.h1">🚑</entry>
 
   <entry key="ui.emoji.adults_unemployed.h1">🤷</entry>

@@ -7,6 +7,7 @@ import { fetchOverrides, saveOverrides } from '../services/managementChoicesApi.
 import { fetchSchema } from '../services/managementSchemaApi.js';
 import { interpolate, computeFieldEffectsPreview } from '../components/utils/policyExpr.js';
 import ManagementStatsTooltip from '../components/management/ManagementStatsTooltip.jsx';
+import { projectSummaryWithChoices } from '../components/utils/policyProjector.js';
 
 function defaultsFromSchema(schema) {
   const out = {};
@@ -18,7 +19,7 @@ function defaultsFromSchema(schema) {
   return out;
 }
 
-function adaptSchemaToConfig(schema, ctx, choices) {
+function adaptSchemaToConfig(schema, ctx, choices, projected) {
   const fieldsIn = schema?.fields || {};
   const fields = {};
   for (const [id, def] of Object.entries(fieldsIn)) {
@@ -26,26 +27,16 @@ function adaptSchemaToConfig(schema, ctx, choices) {
     fields[id] = {
       label: def.label || id,
       help: (chs, tCtx) => {
-        const c = { summary: tCtx?.summary, choices: chs || {} };
+        const c = { summary: projected, choices: chs || {} }; // brug projected
         return typeof baseHelp === 'string' ? interpolate(baseHelp, c) : baseHelp;
       },
-      stageMin: def.stageMin,
-      stageMax: def.stageMax,
-      showWhenLocked: def.showWhenLocked,
       control: { ...(def.control || {}), key: id },
-      // Dynamisk hover: generér stats-oversigt fra def.effects
-      tooltip: (chs, tCtx) => {
-        const stats = computeFieldEffectsPreview(def, chs, tCtx?.summary);
-        const hasAny = stats && Object.keys(stats).length > 0;
-        if (!hasAny) return null;
+      tooltip: (chs) => {
+        // Brug projected summary i preview
+        const stats = computeFieldEffectsPreview(def, chs, projected);
+        if (!stats || Object.keys(stats).length === 0) return null;
         return (
-          <ManagementStatsTooltip
-            headerMode="stats"
-            title={def.label || id}
-            subtitle=""
-            stats={stats}
-            translations={tCtx?.translations}
-          />
+          <ManagementStatsTooltip headerMode="stats" title={def.label || id} stats={stats} translations={ctx?.translations} />
         );
       },
     };
@@ -60,13 +51,21 @@ export default function ManagementPageDynamic() {
   const [activeKey, setActiveKey] = useState('health');
   const tabs = [{ key: 'health', label: 'Sundhed', emoji: '🧺' }];
 
+  // --- STATE: sørg for at schema state er deklareret FØR noget bruger "schema" ---
   const [schema, setSchema] = useState(null);
   const [defaults, setDefaults] = useState({});
   const [choices, setChoices] = useState({});
   const [snapshot, setSnapshot] = useState({});
   const dirty = useMemo(() => JSON.stringify(choices) !== JSON.stringify(snapshot), [choices, snapshot]);
 
-  const ctx = useMemo(() => ({ summary, gameData, translations: gameData?.i18n?.current ?? {} }), [summary, gameData]);
+  // Projected summary skal oprettes EFTER schema state er lavet (så 'schema' findes)
+  const projectedSummary = useMemo(() => {
+    if (!schema) return summary || {};
+    return projectSummaryWithChoices(schema, choices, summary || {});
+  }, [schema, choices, summary]);
+
+  const ctx = useMemo(() => ({ summary: projectedSummary, gameData, translations: gameData?.i18n?.current ?? {} }), [projectedSummary, gameData]);
+
   const setChoice = (k, v) => setChoices(prev => ({ ...prev, [k]: v }));
 
   useEffect(() => {
@@ -129,9 +128,9 @@ export default function ManagementPageDynamic() {
 
   const config = useMemo(() => {
     if (!schema) return null;
-    const base = adaptSchemaToConfig(schema, ctx, choices);
+    const base = adaptSchemaToConfig(schema, ctx, choices, projectedSummary);
     return { ...base, sections: uiSections };
-  }, [schema, ctx, choices, uiSections]);
+  }, [schema, ctx, choices, projectedSummary, uiSections]);
 
   return (
     <section className="panel section">
