@@ -1,6 +1,7 @@
 import React from 'react';
 import { group, topic, leaf } from './helpTopicsBuilder.js';
-import helpStats from '../assets/pic/help_statsview.png';
+// import helpStats from 'assets/pic/help_statsview.png';
+const helpStats = `${import.meta.env.BASE_URL || '/'}assets/pic/help_statsview.png`;
 
 // Eksempel: meget kortfattet, let at læse og udbygge
 export const HELP_TOPICS = [

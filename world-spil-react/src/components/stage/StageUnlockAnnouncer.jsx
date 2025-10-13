@@ -10,9 +10,19 @@ function buildImageUrl(confPaths, raw) {
   if (!raw) return '';
   if (/^https?:\/\//i.test(raw) || raw.startsWith('/')) return raw;
   const clean = String(raw).replace(/^\.?\/+/, '');
+
+  // Brug art_base fra konfiguration hvis angivet, ellers brug Vite BASE_URL + public/assets/art
   const baseFromConf = (confPaths?.art_url_base || confPaths?.artBase || '').replace(/\/+$/, '');
-  const defaultPublicBase = '/world-spil/public/assets/art';
-  const artBase = (baseFromConf || defaultPublicBase).replace(/\/+$/, '');
+  const viteBase = (import.meta.env.BASE_URL || '/').replace(/\/+$/, '');
+  const defaultPublicBase = `${viteBase}/assets/art`.replace(/\/+/g, '/');
+  let artBase = (baseFromConf || defaultPublicBase).replace(/\/+$/, '');
+
+  // SANITIZE: hvis artBase indeholder en filsti eller "frontend/public", fjern alt før "/assets"
+  try {
+    const idx = artBase.indexOf('/assets/');
+    if (idx >= 0) artBase = artBase.slice(idx);
+  } catch (e) { /* ignore */ }
+
   return `${artBase}/${clean}`;
 }
 

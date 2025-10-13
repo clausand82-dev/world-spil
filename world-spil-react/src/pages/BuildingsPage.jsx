@@ -63,6 +63,7 @@ function BuildingRow({ bld, state, defs }) {
         <div className="item" data-bld-id={bld.id}>
             <div className="icon">
                 <GameImage src={`/assets/art/${bld.id}.medium.png`} fallback="/assets/art/placeholder.medium.png" className="bld-thumb" width={50} height={50} style={{ width: 50, height: 50, borderRadius: '6px', border: '1px solid var(--border)' }} />
+           
             </div>
             <div>
                 <div className="title"><a href={`#/building/${bld.displayLinkId}`} className="link">{bld.displayName}</a></div>
