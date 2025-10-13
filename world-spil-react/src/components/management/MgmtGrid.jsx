@@ -2,6 +2,7 @@ import React from 'react';
 import DockHoverCard from '../ui/DockHoverCard.jsx';
 import { renderControl } from './mgmtControlRender.jsx';
 import * as MP from './managementparts.jsx';
+import ManagementStatsTooltip from './ManagementStatsTooltip.jsx';
 
 /**
  * MgmtGrid – præsentationskomponent til management tabs
@@ -13,8 +14,9 @@ import * as MP from './managementparts.jsx';
  * - choices: object
  * - setChoice: (key, value) => void
  * - currentStage: number
+ * - tooltipCtx: optional context for tooltip functions: { summary, gameData, translations, ... }
  */
-export default function MgmtGrid({ config, choices, setChoice, currentStage }) {
+export default function MgmtGrid({ config, choices, setChoice, currentStage, tooltipCtx = {} }) {
   const fields = config?.fields || {};
   const sections = config?.sections || [];
 
@@ -32,6 +34,35 @@ export default function MgmtGrid({ config, choices, setChoice, currentStage }) {
     return cfg?.visible !== false;
   };
 
+  const buildTooltipElement = (tip) => {
+    if (!tip) return null;
+    if (React.isValidElement(tip)) return tip;
+    if (typeof tip === 'function') {
+      const res = tip(choices, tooltipCtx);
+      return buildTooltipElement(res);
+    }
+    if (typeof tip === 'object') {
+      const type = tip.type || 'stats';
+      const headerMode = type === 'stats' ? 'stats' : 'wrapper';
+      const title = tip.title || '';
+      const subtitle = tip.subtitle || '';
+      const extras = tip.extras;
+      const statsVal = typeof tip.stats === 'function' ? tip.stats(choices, tooltipCtx) : tip.stats;
+      return (
+        <ManagementStatsTooltip
+          headerMode={headerMode}
+          title={title}
+          subtitle={subtitle}
+          stats={statsVal}
+          extras={extras}
+          translations={tooltipCtx?.translations}
+        />
+      );
+    }
+    if (typeof tip === 'string' || typeof tip === 'number') return String(tip);
+    return null;
+  };
+
   const FieldRow = ({ id }) => {
     const cfg = fields[id];
     if (!cfg) return null;
@@ -46,9 +77,9 @@ export default function MgmtGrid({ config, choices, setChoice, currentStage }) {
       </MP.Row>
     );
 
-    const tipContent = typeof cfg.tooltip === 'function' ? cfg.tooltip() : cfg.tooltip;
-    return tipContent ? (
-      <DockHoverCard content={tipContent}>
+    const tipEl = buildTooltipElement(cfg.tooltip);
+    return tipEl ? (
+      <DockHoverCard content={tipEl}>
         <div>{body}</div>
       </DockHoverCard>
     ) : body;
@@ -92,8 +123,8 @@ export default function MgmtGrid({ config, choices, setChoice, currentStage }) {
   };
 
   return (
-    <>
-      {(sections || []).map((sec, i) => <Section key={sec.title || i} sec={sec} />)}
-    </>
+    <div style={{ display: 'grid', gap: 12 }}>
+      {(sections || []).map((sec, i) => <Section key={i} sec={sec} />)}
+    </div>
   );
 }

@@ -22,7 +22,7 @@ import { BoardProvider } from './components/ui/BoardProvider.jsx';
 import UnitPage from './pages/UnitPage.jsx';
 import CitizensPage from './pages/CitizensPage.jsx';
 import HelpOverlay from './pages/HelpOverlay.jsx';
-import ManagementPage from './pages/ManagementPage.jsx';
+import ManagementPageDynamic from './pages/ManagementPageDynamic.jsx';
 import { HELP_TOPICS } from './config/helpTopics.jsx';
 
 function App() {
@@ -79,7 +79,7 @@ function App() {
       case 'userpage': return <UserPage />;
       case 'map': return <MapPage />;
       case 'citizens': return <CitizensPage />;
-      case 'management': return <ManagementPage />;
+      case 'management': return <ManagementPageDynamic />;
       default: return <h1>Side ikke fundet: {page}</h1>;
     }
   };
