@@ -9,6 +9,7 @@ require_once __DIR__ . '/../lib/popularity.php';
 require_once __DIR__ . '/../lib/metrics_registry.php';
 require_once __DIR__ . '/../lib/demands.php';
 require_once __DIR__ . '/../lib/effects_rules.php';
+require_once __DIR__ . '/../lib/management_effects_integration.php';
 
 function respond($p, int $http=200): never {
   http_response_code($http);
@@ -334,6 +335,8 @@ foreach ($registry as $id => $m) {
       ];
     }
   }
+
+apply_user_policies_to_summary($pdo, $userId, $summary);
 
   // === HAPPINESS: byg dynamisk fra registry + stage ===
   $happinessPairs = []; // key => ['used','capacity']

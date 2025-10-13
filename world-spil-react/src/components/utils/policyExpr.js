@@ -72,11 +72,11 @@ export function computeFieldEffectsPreview(fieldDef, choices, summary) {
   // Præsenter: hvis mul != 1 → vis “xX.XXX”, hvis add != 0 → vis ±tal
   for (const [stat, { add, mul }] of acc.entries()) {
     if (Math.abs(mul - 1) > 1e-12 && Math.abs(add) > 1e-12) {
-      stats[stat] = `${add >= 0 ? '+' : ''}${add.toFixed(2)} & x${mul.toFixed(3)}`;
+      stats[stat] = `${add >= 0 ? '' : ''}${add.toFixed(2)} & x${mul.toFixed(3)}`;
     } else if (Math.abs(mul - 1) > 1e-12) {
       stats[stat] = `x${mul.toFixed(3)}`;
     } else if (Math.abs(add) > 1e-12) {
-      stats[stat] = `${add >= 0 ? '+' : ''}${add.toFixed(2)}`;
+      stats[stat] = `${add >= 0 ? '' : ''}${add.toFixed(2)}`;
     } else {
       // Ingen effekt → udelad eller vis 0
     }

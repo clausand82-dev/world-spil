@@ -8,23 +8,15 @@ export function defineHealthFields(ctx) {
   const young  = Number(summary?.citizens?.groupCounts?.young || 0);
   const adults = Number(summary?.citizens?.groupCounts?.adultsTotal || 0) + Number(summary?.citizens?.groupCounts?.old || 0);
 
-  const free_dentist_kids_cap   = 100;
-  const free_dentist_kids_cost  = 100;
-  const free_dentist_kids_total = nf2.format(free_dentist_kids_cost * kids);
+ const free_dentist_kids_total = nf2.format(100 * kids);
 
-  const free_dentist_young_cap   = 80;
-  const free_dentist_young_cost  = 125;
-  const free_dentist_young_total = nf2.format(free_dentist_young_cost * young);
+  const free_dentist_young_total = nf2.format(125 * young);
 
-  const free_dentist_adults_cap   = 50;
-  const free_dentist_adults_cost  = 175;
-  const free_dentist_adults_total = nf2.format(free_dentist_adults_cost * adults);
+  const free_dentist_adults_total = nf2.format(175 * adults);
 
   const HP = Number(summary?.capacities?.healthCapacity || 0);
-  const health_wait_target_days_max = 180;
-  const health_wait_target_days_min = 10;
-  const health_wait_target_default  = 60;
-  const health_wait_target_rate = HP / health_wait_target_default;
+
+  const health_wait_target_rate = HP / 60; // Kapacitet pr. dag ved default mål
   const health_wait_target_costtotal = 750 * Number(summary?.usages?.useHealth?.total || 0);
 
   return {
@@ -40,7 +32,7 @@ export function defineHealthFields(ctx) {
           type: 'wrapper',
           title: 'Gratis tandlæge — børn',
           subtitle: 'Øger kapacitet og tilfredshed for børnefamilier.',
-          stats: { healthDentistCapacity: free_dentist_kids_cap, taxHealthUsage: free_dentist_kids_total },
+          stats: { healthDentistCapacity: 100, taxHealthUsage: free_dentist_kids_total },
         },
       },
       health_free_dentist_young: {
@@ -52,7 +44,7 @@ export function defineHealthFields(ctx) {
           type: 'wrapper',
           title: 'Gratis tandlæge — unge',
           subtitle: 'Øger kapacitet og tilfredshed for unge.',
-          stats: { healthDentistCapacity: free_dentist_young_cap, taxHealthUsage: free_dentist_young_total },
+          stats: { healthDentistCapacity: 80, taxHealthUsage: free_dentist_young_total },
         },
       },
       health_free_dentist_adults: {
@@ -64,7 +56,7 @@ export function defineHealthFields(ctx) {
           type: 'wrapper',
           title: 'Gratis tandlæge — voksne',
           subtitle: 'Øger kapacitet og tilfredshed for voksne.',
-          stats: { healthDentistCapacity: free_dentist_adults_cap, taxHealthUsage: free_dentist_adults_total },
+          stats: { healthDentistCapacity: 50, taxHealthUsage: free_dentist_adults_total },
         },
       },
       health_subsidy_pct: {
@@ -93,14 +85,14 @@ export function defineHealthFields(ctx) {
         label: 'Ventetidsmål (dage)',
         help: 'Lavere mål kræver flere ressourcer.',
         stageMin: 2,
-        control: { type: 'slider', key: 'health_wait_target_days', min: health_wait_target_days_min, max: health_wait_target_days_max, step: 5, default: health_wait_target_default },
+        control: { type: 'slider', key: 'health_wait_target_days', min: 10, max: 80, step: 5, default: 60 },
         tooltip: {
           type: 'stats',
           title: 'Ventetidsmål',
           subtitle: 'Sæt tydeligt mål for maksimal ventetid.',
           stats: {
-            healthCapacity: health_wait_target_rate * Number(choices?.health_wait_target_days ?? health_wait_target_default),
-            taxHealthUsage: nf2.format(health_wait_target_costtotal / Number(choices?.health_wait_target_days || health_wait_target_default) * 100),
+            healthCapacity: health_wait_target_rate * Number(choices?.health_wait_target_days ?? 60),
+            taxHealthUsage: nf2.format(health_wait_target_costtotal / Number(choices?.health_wait_target_days || 60) * 100),
           },
         },
       },
