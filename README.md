@@ -48,8 +48,9 @@ Change/update History
 - more stage 2 building, addons and research added
 - tax system slightly implimented
 - crime lite introduced
-- working on lang selection
+- now lang can be selected (current danish and english) - not all game text has been translated yet
 - stage popup added and fixed
+- local and global marketplace added
 
 4.1
 - STAGE 2 and 3 system introduced

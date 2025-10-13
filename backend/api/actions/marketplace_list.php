@@ -16,32 +16,76 @@ try {
   $q     = trim((string)($_GET['q'] ?? ''));
 
   if ($scope === 'local') {
-    $samples = array(
-      array('res.wood', 50, 2.2),
-      array('res.stone', 40, 3.1),
-      array('res.iron', 12, 6.0),
-      array('res.water', 100, 1.0),
-      array('res.food', 24, 4.2),
+    // --- NYT: deterministic "random" per time-slot + session-baseret mængde (hourly reset) ---
+    if (session_status() !== PHP_SESSION_ACTIVE) session_start();
+    $hourKey = date('YmdH'); // ændr til date('YmdHi') for per-minute reset osv.
+    if (!isset($_SESSION['market_local']) || !is_array($_SESSION['market_local'])) $_SESSION['market_local'] = [];
+
+    // base samples (kan udvides)
+    $baseSamples = array(
+      array('res.wood', 50, 12.2),
+      array('res.stone', 40, 13.1),
+      array('res.iron', 12, 16.0),
+      array('res.water', 100, 11.0),
+      array('res.food', 24, 14.2),
+      array('res.hide', 30, 15.5),
+      array('res.wool', 50, 17.5),
+      array('res.bronze', 50, 17.5),
+      array('res.stonebrick', 50, 17.5),
     );
-    $rows = array();
-    $names = array('Olav','Mia','Kira','Liam','Noah','Ida','Otto','Asta','Elin');
-    for ($i = 0; $i < count($samples); $i++) {
-      list($rid, $amt, $price) = $samples[$i];
-      $rows[] = array(
-        'id' => "local:$i",
-        'res_id' => $rid,
-        'amount' => $amt,
-        'price' => $price,
-        'created_at' => date('Y-m-d H:i:s', time() - rand(60,3600)),
-        'seller' => array(
-          'username' => $names[array_rand($names)],
-          'world_id' => 'Local',
-          'map_id' => rand(1,9),
-          'x' => rand(1,100),
-          'y' => rand(1,100),
-        ),
-      );
+
+    // deterministic seed så samme time giver samme liste
+    $seed = crc32($hourKey . (isset($_SESSION['uid']) ? $_SESSION['uid'] : 'guest'));
+    mt_srand((int)$seed);
+
+    // hvis vi ikke har en state for denne time, opret den
+    if (empty($_SESSION['market_local'][$hourKey])) {
+      $rows = [];
+      $names = array('Olav','Mia','Kira','Liam','Noah','Ida','Otto','Asta','Elin','Sven','Nora','Morten');
+
+      // lav en small variation i priser baseret på time (fx svingning)
+      $hour = (int)date('G');
+      $priceFactor = 1 + sin($hour / 24 * 2 * M_PI) * 0.12; // +-12% dags-svingning
+
+      // vælg et subset og generer rækker
+      $sampleCount = min(6, count($baseSamples));
+      $keys = range(0, count($baseSamples)-1);
+      shuffle($keys); // shuffle er seedet af mt_srand
+      for ($i = 0; $i < $sampleCount; $i++) {
+        $k = $keys[$i];
+        list($rid, $amt, $price) = $baseSamples[$k];
+
+        // lille tilfældig variation per time
+        $varAmt = max(1, (int)round($amt * (0.75 + mt_rand(0,50)/100))); // 75%-125%
+        $varPrice = round($price * $priceFactor * (0.92 + mt_rand(0,16)/100), 2); // +-8%
+
+        $sellerName = $names[array_rand($names)];
+        $rows[] = array(
+          'id' => "local:$i",
+          'res_id' => $rid,
+          'amount' => $varAmt,
+          'initial_amount' => $varAmt,
+          'price' => $varPrice,
+          'created_at' => date('Y-m-d H:i:s', strtotime("-" . mt_rand(60,3600) . " seconds")),
+          'seller' => array(
+            'username' => $sellerName,
+            'world_id' => 'Local',
+            'map_id' => mt_rand(1,9),
+            'x' => mt_rand(1,100),
+            'y' => mt_rand(1,100),
+          ),
+        );
+      }
+
+      // gem initial state i session så køb kan reducere mængde
+      $_SESSION['market_local'][$hourKey] = [
+        'rows' => $rows,
+        'created_at' => time(),
+      ];
     }
+
+    // returner rækkerne fra session (reduceret hvis køb er foretaget)
+    $rows = $_SESSION['market_local'][$hourKey]['rows'];
     echo json_encode(['ok' => true, 'data' => ['rows' => $rows]], JSON_UNESCAPED_UNICODE);
     exit;
   }

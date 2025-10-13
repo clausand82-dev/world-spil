@@ -10,11 +10,17 @@ header('Content-Type: application/json; charset=utf-8');
 /**
  * marketplace_buy.php
  *
- * Handles buying from marketplace listings (local/global).
- * Improvements:
- * - Accepts JSON body and traditional form/query params (fixes "Invalid input" on local).
- * - Checks buyer storage capacity (solid/liquid) using authoritative alldata/yield helpers before crediting items.
- * - Keeps existing locking and money transfer logic.
+ * Handles BOTH:
+ * - Global marketplace purchases (rows in DB table marketplace)
+ * - Local marketplace purchases (synthetic rows with id like 'local:0' that do NOT exist in DB)
+ *
+ * For local purchases:
+ * - We accept body.id like 'local:idx' + body.res_id (e.g. 'res.wood') + body.price + body.amount
+ * - We do NOT read/modify marketplace table
+ * - We ONLY: check storage capacity, check buyer funds, deduct money, and credit resource to buyer's inventory
+ *
+ * For global purchases:
+ * - We keep existing behavior: lock listing row, check funds, transfer money to seller, credit buyer, update/sell listing
  */
 
 try {
@@ -41,16 +47,149 @@ try {
     return $default;
   };
 
-  // Support both "id" and "listingId" keys
-  $idRaw = $getIn('id', $getIn('listingId', 0));
-  $amountRaw = $getIn('amount', 0);
+  $idStr   = (string)($getIn('id', $getIn('listingId', '')) ?? '');
+  $amount  = (float)($getIn('amount', 0) ?? 0);
+  $scope   = strtolower((string)($getIn('scope', '') ?? '')); // optional hint from client
 
-  $id = (int)$idRaw;
-  $amount = (float)$amountRaw;
+  // Detect local vs global listing
+  $isLocal = ($scope === 'local') || (str_starts_with($idStr, 'local:'));
+  if ($isLocal) {
+    // Lokal køb: læs listing fra session (skal være initialiseret af marketplace_list.php)
+    if (session_status() !== PHP_SESSION_ACTIVE) session_start();
+    $hourKey = date('YmdH'); // samme key som marketplace_list.php bruger
 
+    if (empty($_SESSION['market_local'][$hourKey]['rows']) || !is_array($_SESSION['market_local'][$hourKey]['rows'])) {
+      http_response_code(400);
+      echo json_encode(['ok'=>false,'error'=>['message'=>'Lokalt marked ikke initialiseret - opdater listen først']], JSON_UNESCAPED_UNICODE);
+      exit;
+    }
+
+    $rows = &$_SESSION['market_local'][$hourKey]['rows'];
+    $foundIndex = null;
+    for ($i = 0; $i < count($rows); $i++) {
+      if ((string)$rows[$i]['id'] === (string)$idStr) { $foundIndex = $i; break; }
+    }
+    if ($foundIndex === null) {
+      http_response_code(404);
+      echo json_encode(['ok'=>false,'error'=>['message'=>'Listing ikke fundet i det lokale marked - opdater listen']], JSON_UNESCAPED_UNICODE);
+      exit;
+    }
+
+    $listing = $rows[$foundIndex];
+    $available = (float)($listing['amount'] ?? 0);
+    if ($amount <= 0) {
+      http_response_code(400);
+      echo json_encode(['ok'=>false,'error'=>['message'=>'Ugyldigt antal'] ], JSON_UNESCAPED_UNICODE);
+      exit;
+    }
+    if ($amount > $available) {
+      http_response_code(400);
+      echo json_encode(['ok'=>false,'error'=>['message'=>'Ikke nok på lager','available'=>$available,'requested'=>$amount] ], JSON_UNESCAPED_UNICODE);
+      exit;
+    }
+
+    // bestem pris (foretræk listing.price, ellers payload)
+    $pricePayload = $getIn('price', null);
+    $usePrice = isset($listing['price']) ? (float)$listing['price'] : (is_numeric($pricePayload) ? (float)$pricePayload : 0.0);
+    $resId = (string)($listing['res_id'] ?? $getIn('res_id', ''));
+    $total = $usePrice * $amount;
+
+    // Begin DB-transaction for penge + inventory-opdatering (kapacitetscheck osv.)
+    $pdo->beginTransaction();
+
+    // capacity check helpers must eksistere
+    if (!function_exists('load_all_defs') || !function_exists('yield__build_min_state') || !function_exists('yield__read_user_caps') || !function_exists('yield__compute_bucket_usage')) {
+      $pdo->rollBack();
+      http_response_code(500);
+      echo json_encode(['ok'=>false,'error'=>['message'=>'Missing required alldata/yield helpers']], JSON_UNESCAPED_UNICODE);
+      exit;
+    }
+
+    $defs = load_all_defs();
+    $defsRes = (array)($defs['res'] ?? []);
+    $plainKey = preg_replace('/^res\./','', $resId);
+    $resDef = $defsRes[$plainKey] ?? $defsRes[$resId] ?? ($defsRes["res.$plainKey"] ?? null);
+
+    $unit = strtolower((string)($resDef['unit'] ?? $resDef['stats']['unit'] ?? ''));
+    $isLiquid = ($unit === 'l');
+    $unitSpace = 0.0;
+    if (isset($resDef['unitSpace'])) $unitSpace = (float)$resDef['unitSpace'];
+    elseif (isset($resDef['stats']['unitSpace'])) $unitSpace = (float)$resDef['stats']['unitSpace'];
+
+    $needSpace = $amount * $unitSpace;
+    $bucket = $isLiquid ? 'liquid' : 'solid';
+
+    // Lock buyer inventory rows to stabilize snapshot and prevent race
+    $pdo->prepare("SELECT res_id FROM inventory WHERE user_id = ? FOR UPDATE")->execute([$buyerId]);
+
+    $state = yield__build_min_state($pdo, $buyerId);
+    $caps  = yield__read_user_caps($pdo, $buyerId, $defs, $state);
+    $usage = yield__compute_bucket_usage($pdo, $buyerId, $defs);
+
+    if (!array_key_exists($bucket, $caps) || !array_key_exists($bucket, $usage)) {
+      $pdo->rollBack();
+      http_response_code(500);
+      echo json_encode(['ok'=>false,'error'=>['message'=>'Storage capability not available (local)']], JSON_UNESCAPED_UNICODE);
+      exit;
+    }
+
+    $freeSpace = max(0.0, (float)$caps[$bucket] - (float)$usage[$bucket]);
+    if ($needSpace > $freeSpace + 1e-9) {
+      $pdo->rollBack();
+      http_response_code(400);
+      echo json_encode(['ok'=>false,'error'=>[
+        'message'=>'Not enough storage space for this purchase',
+        'details'=>['res_id'=>$resId,'amount'=>$amount,'need_space'=>$needSpace,'free_space'=>$freeSpace,'bucket'=>$bucket]
+      ]], JSON_UNESCAPED_UNICODE);
+      exit;
+    }
+
+    // Check and deduct buyer funds if total > 0
+    if ($total > 0) {
+      $selMoney = $pdo->prepare("SELECT amount FROM inventory WHERE user_id = ? AND res_id = 'res.money' FOR UPDATE");
+      $selMoney->execute([$buyerId]);
+      $haveMoney = (float)($selMoney->fetchColumn() ?? 0.0);
+      if ($haveMoney < $total) {
+        $pdo->rollBack();
+        http_response_code(400);
+        echo json_encode(['ok'=>false,'error'=>['message'=>'Insufficient funds','need'=>$total,'have'=>$haveMoney]], JSON_UNESCAPED_UNICODE);
+        exit;
+      }
+      $updMoney = $pdo->prepare("UPDATE inventory SET amount = amount - ? WHERE user_id = ? AND res_id = 'res.money'");
+      $updMoney->execute([$total, $buyerId]);
+    }
+
+    // Credit buyer resource — upsert
+    $upd = $pdo->prepare("UPDATE inventory SET amount = amount + ? WHERE user_id = ? AND res_id = ?");
+    $upd->execute([$amount, $buyerId, $resId]);
+    if ($upd->rowCount() === 0) {
+      $ins = $pdo->prepare("INSERT INTO inventory (user_id, res_id, amount) VALUES (?, ?, ?)");
+      $ins->execute([$buyerId, $resId, $amount]);
+    }
+
+    $pdo->commit();
+
+    // Reducer mængden i session-listen EFTER succesfuld commit
+    $remaining = $available - $amount;
+    if ($remaining > 0) {
+      $rows[$foundIndex]['amount'] = $remaining;
+    } else {
+      array_splice($rows, $foundIndex, 1);
+    }
+
+    echo json_encode(['ok'=>true,'data'=>[
+      'scope'=>'local','id'=>$idStr,'bought'=>$amount,'paid'=>$total,'res_id'=>$resId,'remaining'=>$remaining
+    ]], JSON_UNESCAPED_UNICODE);
+    exit;
+  }
+
+  // === GLOBAL marketplace purchase (existing behavior) ===
+
+  // Validate input for global: numeric id and amount
+  $id = (int)$idStr;
   if ($id <= 0 || $amount <= 0) {
     http_response_code(400);
-    echo json_encode(['ok'=>false,'error'=>['message'=>'Invalid input','debug'=>['id'=>$idRaw,'amount'=>$amountRaw]]], JSON_UNESCAPED_UNICODE);
+    echo json_encode(['ok'=>false,'error'=>['message'=>'Invalid input','debug'=>['id'=>$idStr,'amount'=>$amount]]], JSON_UNESCAPED_UNICODE);
     exit;
   }
 
@@ -138,7 +277,7 @@ try {
     $pdo->rollBack();
     http_response_code(400);
     echo json_encode(['ok'=>false,'error'=>[
-      'message'=>'Du har ikke nok plads i inventory til dit køb (du mangler '.($needSpace - $freeSpace).' enheder plads)',
+      'message'=>'Not enough storage space for this purchase',
       'details'=>[
         'res_id'=>$resId,
         'amount'=>$amount,
@@ -195,11 +334,13 @@ try {
 
   $pdo->commit();
   echo json_encode(['ok'=>true,'data'=>[
-    'id'      => $id,
-    'bought'  => $amount,
-    'left'    => $left,
-    'paid'    => $total,
-    'bucket'  => $bucket,
+    'scope'      => 'global',
+    'id'         => $id,
+    'bought'     => $amount,
+    'left'       => $left,
+    'paid'       => $total,
+    'res_id'     => $resId,
+    'bucket'     => $bucket,
     'unit_space' => $unitSpace
   ]], JSON_UNESCAPED_UNICODE);
   exit;
