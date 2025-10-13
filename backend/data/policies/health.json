@@ -55,6 +55,11 @@
           "stat": "healthCapacity",
           "op": "add",
           "value": { "expr": "(summary.capacities.healthCapacity / 60) * choice('health_wait_target_days')" }
+        },
+        {
+          "stat": "taxHealthUsage",
+          "op": "add",
+          "value": { "expr": "(60 / choice('health_wait_target_days')) * 1000 * summary.citizens.totals.totalPersons" }
         }
       ]
     },
