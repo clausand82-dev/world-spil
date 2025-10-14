@@ -22,6 +22,34 @@ export const UNIT_GROUPS = [
     capacityLabel: 'Health units',
   },
   {
+    key: 'lake',
+    label: 'Lake',
+    emoji: '🐟',
+    family: 'lake',
+    perItemStat: 'animal_cap',     // brug samme per-item stat som dyr
+    capacityMode: 'animalCap',     // samme kapacitetsmode som farm
+    capacityLabel: 'Staldplads',
+    // Hvis du senere får specifik kapacitet i header/buildings, kan du tilføje fx:
+    // headerCapacityKey: 'lakeUnitCapacity',
+    // headerUsageKey: 'lakeUnitUsage',
+    // buildingCapacityStat: 'lakeUnitCapacity',
+  },
+
+  // NY: Forest-enheder (dyr/udstyr knyttet til skov-familien)
+  {
+    key: 'forest',
+    label: 'Forest',
+    emoji: '🦌',
+    family: 'forest',
+    perItemStat: 'animal_cap',
+    capacityMode: 'animalCap',
+    capacityLabel: 'Staldplads',
+    // Tilsvarende kan kapacitetsnøgler tilføjes senere hvis du har dem i summary/buildings:
+    // headerCapacityKey: 'forestUnitCapacity',
+    // headerUsageKey: 'forestUnitUsage',
+    // buildingCapacityStat: 'forestUnitCapacity',
+  },
+  {
     key: 'police',
     label: 'Politi',
     emoji: '👮',

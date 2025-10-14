@@ -52,7 +52,77 @@ function computeUnitTotalsFallback(defs, state, group) {
   return { total, used };
 }
 
-export default function UnitPage() {
+// IMPORTANT: forward ...rest to the root DOM node so DockHoverCard can inject mouse handlers
+function PurchaseRow({ def, defs, aniId, toBuy, setQty, availableCap, perItemStat, isAnimal, ...rest }) {
+  const per = isAnimal
+    ? Math.abs(Number(def?.stats?.[perItemStat] ?? 1)) || 1
+    : Math.abs(Number(def?.stats?.[perItemStat] ?? 0)) || 0;
+
+  const capUsedByOthers = useMemo(() => {
+    return Object.entries(toBuy).reduce((sum, [id, qty]) => {
+      if (id === aniId) return sum;
+      const otherKey = id.replace(/^ani\./, '');
+      const otherDef = defs.ani?.[otherKey];
+      const otherPer = isAnimal
+        ? Math.abs(Number(otherDef?.stats?.[perItemStat] ?? 1)) || 1
+        : Math.abs(Number(otherDef?.stats?.[perItemStat] ?? 0)) || 0;
+      return sum + otherPer * (Number(qty) || 0);
+    }, 0);
+  }, [toBuy, aniId, defs, perItemStat, isAnimal]);
+
+  const remainingCap = Math.max(0, availableCap - capUsedByOthers);
+  const maxVal = per > 0 ? Math.floor(remainingCap / per) : 999999;
+  const currentVal = Math.min(Number(toBuy[aniId] || 0), maxVal);
+
+  return (
+    <div className="item" {...rest}>
+      <div className="icon">{def.emoji || (isAnimal ? '🐄' : '🏷️')}</div>
+      <div className="grow">
+        <div className="title">{def.name}</div>
+        <div className="sub">
+          <ResourceCost cost={def.cost} />
+        </div>
+        <div className="sub">{isAnimal ? `Kræver ${Math.max(1, per)} staldplads` : (per > 0 ? `Forbruger ${per} units` : 'Ingen unit-forbrug')}</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '8px' }}>
+          <input
+            type="range"
+            className="slider"
+            min="0"
+            step="1"
+            max={maxVal}
+            value={currentVal}
+            style={{ flexGrow: 1 }}
+            onChange={(e) => setQty(aniId, parseInt(e.target.value, 10))}
+            disabled={maxVal === 0}
+          />
+          <span style={{ fontWeight: 'bold', width: '30px', textAlign: 'right' }}>{currentVal}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function emojiForId(id, defs) {
+  if (id.startsWith('res.')) {
+    const key = id.replace(/^res\./, '');
+    const def = defs.res?.[key];
+    return def?.emoji || '📦';
+  }
+  if (id.startsWith('ani.')) {
+    const key = id.replace(/^ani\./, '');
+    const def = defs.ani?.[key];
+    return def?.emoji || '🐾';
+  }
+  return '•';
+}
+
+function renderCostInline(costLike, defs) {
+  const entries = Object.values(H.normalizePrice(costLike || {}));
+  if (!entries.length) return '';
+  return entries.map((e) => `${emojiForId(e.id, defs)} ${H.fmt(e.amount)}`).join(' · ');
+}
+
+export default function UnitPage({ embedFamily = null, embed = false }) {
   const { data, isLoading, error, refreshData } = useGameData();
   const { data: header } = useHeaderSummary();
   const [selectedKey, setSelectedKey] = useState(null);
@@ -74,22 +144,31 @@ export default function UnitPage() {
     return set;
   }, [state?.bld]);
 
-  // Kun tabs for grupper, hvor man ejer family
+  // Synlige grupper:
+  // - Normalt: dem man ejer (familiesOwned)
+  // - Embed: kun embedFamily (hvis def findes i UNIT_GROUPS), uanset familiesOwned
   const visibleGroups = useMemo(() => {
+    if (embedFamily) {
+      const g = UNIT_GROUPS.find((x) => x.family === embedFamily);
+      return g ? [g] : [];
+    }
     return UNIT_GROUPS.filter((g) => familiesOwned.has(g.family));
-  }, [familiesOwned]);
+  }, [familiesOwned, embedFamily]);
 
   // Vælg første synlige tab hvis selectedKey ikke længere er gyldig
   const effectiveSelectedKey = useMemo(() => {
+    if (embedFamily) {
+      return visibleGroups[0]?.key || null;
+    }
     if (selectedKey && visibleGroups.some((g) => g.key === selectedKey)) return selectedKey;
     return visibleGroups[0]?.key || null;
-  }, [selectedKey, visibleGroups]);
+  }, [selectedKey, visibleGroups, embedFamily]);
 
   const group = useMemo(() => {
     return visibleGroups.find((g) => g.key === effectiveSelectedKey) || null;
   }, [effectiveSelectedKey, visibleGroups]);
 
-  const isAnimal = group?.capacityMode === 'animal_cap';
+  const isAnimal = group?.capacityMode === 'animalCap';
 
   // Tilgængelige defs i aktiv gruppe
   const availableDefs = useMemo(() => {
@@ -137,19 +216,39 @@ export default function UnitPage() {
     const headerTotal = Number(header?.capacities?.[hc] ?? NaN);
     const headerUsed = Number(header?.usages?.[hu]?.total ?? NaN);
 
-    const fb = computeUnitTotalsFallback(defs, state, group);
+    // Fallback
+    let fbTotal = 0;
+    for (const id of Object.keys(state?.bld || {})) {
+      const p = H.parseBldKey(id);
+      if (!p) continue;
+      const bdef =
+        defs?.bld?.[`${p.family}.l${p.level}`] ||
+        defs?.bld?.[p.key];
+      const cap = Number(bdef?.stats?.[group.buildingCapacityStat] ?? 0);
+      if (Number.isFinite(cap)) fbTotal += cap;
+    }
+    let fbUsed = 0;
+    for (const [aniId, row] of Object.entries(state?.ani || {})) {
+      const qty = Number(row?.quantity || 0);
+      if (!qty) continue;
+      const key = String(aniId).replace(/^ani\./, '');
+      const adef = defs?.ani?.[key];
+      if (!adef) continue;
+      const fams = String(adef?.family || '')
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean);
+      if (!fams.includes(group.family)) continue;
+      const per = Math.abs(Number(adef?.stats?.[group.perItemStat] ?? 0)) || 0;
+      fbUsed += per * qty;
+    }
 
-    // Brug header hvis den ligner gyldige tal, ellers fallback
     const headerLooksValid =
       Number.isFinite(headerTotal) &&
       Number.isFinite(headerUsed) &&
-      (headerTotal > 0 || headerUsed > 0 || (headerTotal === 0 && headerUsed === 0 && fb.total === 0));
+      (headerTotal > 0 || headerUsed > 0 || (headerTotal === 0 && headerUsed === 0 && fbTotal === 0));
 
-    if (headerLooksValid) {
-      return { total: headerTotal, used: headerUsed };
-    } else {
-      return fb;
-    }
+    return headerLooksValid ? { total: headerTotal, used: headerUsed } : { total: fbTotal, used: fbUsed };
   }, [group, isAnimal, state, defs, header]);
 
   const toBuy = toBuyByGroup[effectiveSelectedKey] || {};
@@ -167,48 +266,47 @@ export default function UnitPage() {
     [effectiveSelectedKey, group]
   );
 
-  // “Kurv”-summeringer
-  const basket = useMemo(() => {
-    if (!group) return null;
+  // “Kurv”-summeringer (GENINDSAT)
+const basket = useMemo(() => {
+  if (!group) return null;
 
-    const total = Number(totals.total || 0);
-    const used = Number(totals.used || 0);
+  const total = Number(totals.total || 0);
+  const used = Number(totals.used || 0);
 
-    let capToUse = 0;
-    const totalCost = {};
+  let capToUse = 0;
+  const totalCost = {};
 
-    for (const [aniId, qty] of Object.entries(toBuy)) {
-      if (!qty) continue;
-      const key = aniId.replace(/^ani\./, '');
-      const def = defs.ani?.[key];
-      if (!def) continue;
-      const per = isAnimal
-        ? Math.abs(Number(def?.stats?.[group.perItemStat] ?? 1)) || 1
-        : Math.abs(Number(def?.stats?.[group.perItemStat] ?? 0)) || 0;
-      capToUse += per * qty;
+  for (const [aniId, qty] of Object.entries(toBuy)) {
+    if (!qty) continue;
+    const key = aniId.replace(/^ani\./, '');
+    const def = defs.ani?.[key];
+    if (!def) continue;
+    const per = isAnimal
+      ? Math.abs(Number(def?.stats?.[group.perItemStat] ?? 1)) || 1
+      : Math.abs(Number(def?.stats?.[group.perItemStat] ?? 0)) || 0;
+    capToUse += per * qty;
 
-      const costs = H.normalizePrice(def?.cost || {});
-      Object.values(costs).forEach((entry) => {
-        const prev = totalCost[entry.id]?.amount || 0;
-        totalCost[entry.id] = { id: entry.id, amount: prev + (entry.amount || 0) * qty };
-      });
-    }
+    const costs = H.normalizePrice(def?.cost || {});
+    Object.values(costs).forEach((entry) => {
+      const prev = totalCost[entry.id]?.amount || 0;
+      totalCost[entry.id] = { id: entry.id, amount: prev + (entry.amount || 0) * qty };
+    });
+  }
 
-    const availableCap = Math.max(0, total - used);
-    const hasCapacity = capToUse <= availableCap;
+  const availableCap = Math.max(0, total - used);
+  const hasCapacity = capToUse <= availableCap;
 
-    const getHave = (resId) => {
-      const key = String(resId).replace(/^res\./, '');
-      const liquid = Number(state?.inv?.liquid?.[key] || 0);
-      const solid = Number(state?.inv?.solid?.[key] || 0);
-      return liquid + solid;
-    };
-    const canAfford = Object.values(totalCost).every((c) => getHave(c.id) >= (c.amount || 0));
-    const totalQty = Object.values(toBuy).reduce((s, q) => s + (Number(q) || 0), 0);
+  const getHave = (resId) => {
+    const key = String(resId).replace(/^res\./, '');
+    const liquid = Number(state?.inv?.liquid?.[key] || 0);
+    const solid = Number(state?.inv?.solid?.[key] || 0);
+    return liquid + solid;
+  };
+  const canAfford = Object.values(totalCost).every((c) => getHave(c.id) >= (c.amount || 0));
+  const totalQty = Object.values(toBuy).reduce((s, q) => s + (Number(q) || 0), 0);
 
-    return { total, used, availableCap, capToUse, totalCost, canAfford, hasCapacity, totalQty };
-  }, [group, totals, toBuy, defs, state, isAnimal]);
-
+  return { total, used, availableCap, capToUse, totalCost, canAfford, hasCapacity, totalQty };
+}, [group, totals, toBuy, defs, state, isAnimal]);
   // KØB (samlet)
   const handleBuy = useCallback(async () => {
     if (!basket) return;
@@ -283,7 +381,7 @@ export default function UnitPage() {
     setConfirm({
       isOpen: true,
       title: quantity === 1 ? 'Sælg 1 enhed' : `Sælg ${quantity} enheder`,
-      body: `Du får følgende tilbage:<br/><div style="margin-top:8px;">${refundText || '(ukendt værdi)'}</div>`,
+      body: `Du får følgende tilbage:<br/><div style={{ marginTop: '8px' }}>${refundText || '(ukendt værdi)'}</div>`,
       onConfirm: async () => {
         try {
           await handleSell(aniId, quantity);
@@ -311,32 +409,35 @@ export default function UnitPage() {
 
   return (
     <>
-      <section className="panel section">
-        <div className="section-head" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <span>Units</span>
-          <div className="tabs" style={{ marginLeft: 'auto' }}>
-            {visibleGroups.map((g) => (
-              <button
-                key={g.key}
-                type="button"
-                className={`tab ${g.key === effectiveSelectedKey ? 'active' : ''}`}
-                onClick={() => {
-                  setSelectedKey(g.key);
-                  // Kurven bevares pr. gruppe i toBuyByGroup
-                }}
-              >
-                {g.label}
-              </button>
-            ))}
+      {/* Top-tabs vises kun i normal side, ikke embed */}
+      {!embed && (
+        <section className="panel section">
+          <div className="section-head" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <span>Units</span>
+            <div className="tabs" style={{ marginLeft: 'auto' }}>
+              {visibleGroups.map((g) => (
+                <button
+                  key={g.key}
+                  type="button"
+                  className={`tab ${g.key === effectiveSelectedKey ? 'active' : ''}`}
+                  onClick={() => {
+                    setSelectedKey(g.key);
+                    // Kurven bevares pr. gruppe i toBuyByGroup
+                  }}
+                >
+                  {g.label}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       <section className="panel section">
         <div className="section-head">
           {group.label} – Dine enheder
           <span style={{ marginLeft: 'auto' }}>
-            <strong>{capLabel}:</strong> {H.fmt((basket?.used || 0) + (basket?.capToUse || 0))} / {H.fmt(basket?.total || 0)}
+            <strong>{capLabel}:</strong> {H.fmt((Number(totals.used || 0)) + 0)} / {H.fmt(Number(totals.total || 0))}
           </span>
         </div>
         <div className="section-body">
@@ -353,7 +454,7 @@ export default function UnitPage() {
             return (
               <DockHoverCard key={aniId} content={hoverContent}>
                 <div className="item">
-                  <div className="icon">{def.emoji || (isAnimal ? '🐄' : group.emoji || '🏷️')}</div>
+                  <div className="icon">{def.emoji || (isAnimal ? '🐄' : '🏷️')}</div>
                   <div>
                     <div className="title">
                       {def.name} (x{H.fmt(qty)})
@@ -380,39 +481,61 @@ export default function UnitPage() {
         <div className="section-body">
           {availableDefs.map(([key, def]) => {
             const hoverContent = <StatsEffectsTooltip def={def} translations={data?.i18n?.current ?? {}} />;
+            const aniId = `ani.${key}`;
+            const per = isAnimal
+              ? Math.abs(Number(def?.stats?.[group.perItemStat] ?? 1)) || 1
+              : Math.abs(Number(def?.stats?.[group.perItemStat] ?? 0)) || 0;
+            const availableCap = Math.max(0, Number(totals.total || 0) - Number(totals.used || 0));
+            const maxVal = per > 0 ? Math.floor(availableCap / per) : 999999;
+            const currentVal = Math.min(Number(toBuy[aniId] || 0), maxVal);
+
             return (
               <DockHoverCard key={key} content={hoverContent}>
-                <PurchaseRow
-                  def={def}
-                  defs={defs}
-                  aniId={`ani.${key}`}
-                  toBuy={toBuy}
-                  setQty={setQty}
-                  availableCap={basket?.availableCap || 0}
-                  perItemStat={group.perItemStat}
-                  isAnimal={isAnimal}
-                />
+                <div className="item">
+                  <div className="icon">{def.emoji || (isAnimal ? '🐄' : '🏷️')}</div>
+                  <div className="grow">
+                    <div className="title">{def.name}</div>
+                    <div className="sub">
+                      <ResourceCost cost={def.cost || {}} />
+                    </div>
+                    <div className="sub">{isAnimal ? `Kræver ${per} staldplads` : (per > 0 ? `Forbruger ${per} units` : 'Ingen unit-forbrug')}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '8px' }}>
+                      <input
+                        type="range"
+                        className="slider"
+                        min="0"
+                        step="1"
+                        max={maxVal}
+                        value={currentVal}
+                        style={{ flexGrow: 1 }}
+                        onChange={(e) => setQty(aniId, parseInt(e.target.value, 10))}
+                        disabled={maxVal === 0}
+                      />
+                      <span style={{ fontWeight: 'bold', width: '30px', textAlign: 'right' }}>{currentVal}</span>
+                    </div>
+                  </div>
+                </div>
               </DockHoverCard>
             );
           })}
-          <div className="actions-bar" style={{ marginTop: '16px' }}>
-            <div>
-              <strong>Total:</strong> <ResourceCost cost={basket?.totalCost || {}} /> &nbsp;
-              <strong style={{ marginLeft: '1em' }}>{capLabel}:</strong>
-              <span className={!basket?.hasCapacity ? 'price-bad' : ''}>
-                {H.fmt((basket?.used || 0) + (basket?.capToUse || 0))}
-              </span>
-              {' / '}
-              {H.fmt(basket?.total || 0)}
-            </div>
-            <button
-              className="btn primary"
-              disabled={!basket || basket.totalQty === 0 || !basket.canAfford || !basket.hasCapacity}
-              onClick={openBuyConfirm}
-            >
-              Køb valgte {group.label.toLowerCase()}
-            </button>
-          </div>
+<div className="actions-bar" style={{ marginTop: '16px' }}>
+  <div>
+    <strong>Total:</strong> <ResourceCost cost={basket?.totalCost || {}} /> &nbsp;
+    <strong style={{ marginLeft: '1em' }}>{capLabel}:</strong>
+    <span className={!basket?.hasCapacity ? 'price-bad' : ''}>
+      {H.fmt((basket?.used || 0) + (basket?.capToUse || 0))}
+    </span>
+    {' / '}
+    {H.fmt(basket?.total || 0)}
+  </div>
+  <button
+    className="btn primary"
+    disabled={!basket || basket.totalQty === 0 || !basket.canAfford || !basket.hasCapacity}
+    onClick={openBuyConfirm}
+  >
+    Køb valgte {group.label.toLowerCase()}
+  </button>
+</div>
         </div>
       </section>
 
@@ -426,77 +549,5 @@ export default function UnitPage() {
         cancelText="Annuller"
       />
     </>
-  );
-}
-
-/* ===== helpers ===== */
-
-function emojiForId(id, defs) {
-  if (id.startsWith('res.')) {
-    const key = id.replace(/^res\./, '');
-    const def = defs.res?.[key];
-    return def?.emoji || '📦';
-  }
-  if (id.startsWith('ani.')) {
-    const key = id.replace(/^ani\./, '');
-    const def = defs.ani?.[key];
-    return def?.emoji || '🐾';
-  }
-  return '•';
-}
-
-function renderCostInline(costLike, defs) {
-  const entries = Object.values(H.normalizePrice(costLike || {}));
-  if (!entries.length) return '';
-  return entries.map((e) => `${emojiForId(e.id, defs)} ${H.fmt(e.amount)}`).join(' · ');
-}
-
-// IMPORTANT: forward ...rest to the root DOM node so DockHoverCard can inject mouse handlers
-function PurchaseRow({ def, defs, aniId, toBuy, setQty, availableCap, perItemStat, isAnimal, ...rest }) {
-  const per = isAnimal
-    ? Math.abs(Number(def?.stats?.[perItemStat] ?? 1)) || 1
-    : Math.abs(Number(def?.stats?.[perItemStat] ?? 0)) || 0;
-
-  const capUsedByOthers = useMemo(() => {
-    return Object.entries(toBuy).reduce((sum, [id, qty]) => {
-      if (id === aniId) return sum;
-      const otherKey = id.replace(/^ani\./, '');
-      const otherDef = defs.ani?.[otherKey];
-      const otherPer = isAnimal
-        ? Math.abs(Number(otherDef?.stats?.[perItemStat] ?? 1)) || 1
-        : Math.abs(Number(otherDef?.stats?.[perItemStat] ?? 0)) || 0;
-      return sum + otherPer * (Number(qty) || 0);
-    }, 0);
-  }, [toBuy, aniId, defs, perItemStat, isAnimal]);
-
-  const remainingCap = Math.max(0, availableCap - capUsedByOthers);
-  const maxVal = per > 0 ? Math.floor(remainingCap / per) : 999999;
-  const currentVal = Math.min(Number(toBuy[aniId] || 0), maxVal);
-
-  return (
-    <div className="item" {...rest}>
-      <div className="icon">{def.emoji || (isAnimal ? '🐄' : '🏷️')}</div>
-      <div className="grow">
-        <div className="title">{def.name}</div>
-        <div className="sub">
-          <ResourceCost cost={def.cost} />
-        </div>
-        <div className="sub">{isAnimal ? `Kræver ${per} staldplads` : `Forbruger ${per} units`}</div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '8px' }}>
-          <input
-            type="range"
-            className="slider"
-            min="0"
-            step="1"
-            max={maxVal}
-            value={currentVal}
-            style={{ flexGrow: 1 }}
-            onChange={(e) => setQty(aniId, parseInt(e.target.value, 10))}
-            disabled={maxVal === 0}
-          />
-          <span style={{ fontWeight: 'bold', width: '30px', textAlign: 'right' }}>{currentVal}</span>
-        </div>
-      </div>
-    </div>
   );
 }
