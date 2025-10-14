@@ -3,6 +3,7 @@ import DockHoverCard from '../ui/DockHoverCard.jsx';
 import { renderControl } from './mgmtControlRender.jsx';
 import * as MP from './managementparts.jsx';
 import ManagementStatsTooltip from './ManagementStatsTooltip.jsx';
+import { meetsRequires, requiresToLabel } from '../utils/requirements.js';
 
 export default function MgmtGrid({ config, choices, setChoice, currentStage, tooltipCtx = {} }) {
   const fields = config?.fields || {};
@@ -16,8 +17,17 @@ export default function MgmtGrid({ config, choices, setChoice, currentStage, too
     return true;
   };
 
+  const isRequiresOk = (cfg) => {
+    if (!cfg?.requires) return true;
+    // VIGTIGT: giv hele tooltipCtx ind (den kan indeholde summary.state og/eller gameData.state)
+    return meetsRequires(tooltipCtx, cfg.requires);
+  };
+
   const isFieldVisible = (cfg) => {
-    if (!isStageOk(cfg)) return !!cfg?.showWhenLocked;
+    // Hvis feltet er låst af stage/krav, vis kun hvis showWhenLocked = true
+    const stageOk = isStageOk(cfg);
+    const reqOk   = isRequiresOk(cfg);
+    if (!(stageOk && reqOk)) return !!cfg?.showWhenLocked;
     if (typeof cfg?.visible === 'function') return !!cfg.visible(choices);
     return cfg?.visible !== false;
   };
@@ -54,12 +64,21 @@ export default function MgmtGrid({ config, choices, setChoice, currentStage, too
   const FieldRow = ({ id }) => {
     const cfg = fields[id];
     if (!cfg) return null;
-    if (!isFieldVisible(cfg)) return null;
+    const stageOk = isStageOk(cfg);
+    const reqOk   = isRequiresOk(cfg);
+    const visible = isFieldVisible(cfg);
+    if (!visible) return null;
 
-    const locked = !isStageOk(cfg);
+    const locked = !(stageOk && reqOk);
     const controlEl = renderControl(id, cfg, { choices, setChoice, locked });
 
-    const helpText = typeof cfg.help === 'function' ? cfg.help(choices, tooltipCtx) : cfg.help;
+    // Help-tekst: injicer “Kræver: …” hvis låst pga. krav
+    const baseHelp = typeof cfg.help === 'function' ? cfg.help(choices, tooltipCtx) : cfg.help;
+    const reqText = (!reqOk && cfg?.requires) ? requiresToLabel(cfg.requires) : '';
+    const helpText = (!reqOk && reqText)
+      ? (baseHelp ? `${baseHelp}\nKræver: ${reqText}` : `Kræver: ${reqText}`)
+      : baseHelp;
+
     const body = (
       <MP.Row label={cfg.label || id} help={helpText}>
         {controlEl}
@@ -97,7 +116,8 @@ export default function MgmtGrid({ config, choices, setChoice, currentStage, too
   };
 
   const Section = ({ sec }) => {
-    if (!isStageOk(sec) && !sec.showWhenLocked) return null;
+    const stageOk = isStageOk(sec);
+    if (!stageOk && !sec.showWhenLocked) return null;
     const cols = Math.max(1, Math.min(3, sec.cols || 1));
     return (
       <fieldset className="groupbox">

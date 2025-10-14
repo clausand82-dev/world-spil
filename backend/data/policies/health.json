@@ -8,9 +8,10 @@
       "stageMin": 2,
       "stageMax": 1000,
       "requires": {
-        "building": ["bld.basecamp.l4"]
+        "research": ["rsd.tools.l2"]
 
       },
+      "showWhenLocked": false,
       "effects": [
         { "stat": "healthDentistCapacity", "op": "add", "value": 100 },
         { "stat": "taxHealthUsage", "op": "add", "value": { "expr": "(summary.citizens.groupCounts.kids + summary.citizens.groupCounts.baby) * 100" } }

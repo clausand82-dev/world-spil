@@ -50,6 +50,8 @@ Denne guide beskriver hvordan du definerer felter (fields), kontroller (control)
   - Operatorer: `+ - * / ( )`
   - Ikke andet (ingen vilkårlige funktioner/variabler)
 
+  showWhenLocked: hvis du vil vise låste felter i UI
+
 ## Requires og Stage
 
 - `stageMin`, `stageMax`: Gating på serveren (feltets effekter ignoreres hvis stage er udenfor).

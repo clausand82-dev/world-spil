@@ -79,11 +79,6 @@ function defaultsFromSchema(schema) {
   return out;
 }
 
-/**
- * Adapter som laver schema.fields om til MgmtGrid config-fields
- * - help interpoleres dynamisk med en projected summary + aktuelle valg
- * - tooltip viser live beregnede effekter for det enkelte felt
- */
 function adaptSchemaToConfig(schema, ctx, choices, projected) {
   const fieldsIn = schema?.fields || {};
   const fields = {};
@@ -91,13 +86,14 @@ function adaptSchemaToConfig(schema, ctx, choices, projected) {
     const baseHelp = def.help;
     fields[id] = {
       label: def.label || id,
-      help: (chs, _tCtx) => {
+      help: (chs) => {
         const c = { summary: projected, choices: chs || {} };
         return typeof baseHelp === 'string' ? interpolate(baseHelp, c) : baseHelp;
       },
       stageMin: def.stageMin,
       stageMax: def.stageMax,
       showWhenLocked: def.showWhenLocked,
+      requires: def.requires || null, // send requires videre
       control: { ...(def.control || {}), key: id },
       tooltip: (chs) => {
         const stats = computeFieldEffectsPreview(def, chs, projected);
@@ -123,29 +119,34 @@ export default function ManagementPageDynamic() {
 
   const [activeKey, setActiveKey] = useState(TABS[0]?.key || 'health');
 
-  // STATE for denne side
   const [schema, setSchema] = useState(null);
   const [defaults, setDefaults] = useState({});
   const [choices, setChoices] = useState({});
   const [snapshot, setSnapshot] = useState({});
   const dirty = useMemo(() => JSON.stringify(choices) !== JSON.stringify(snapshot), [choices, snapshot]);
 
-  // Beregn en projected summary i UI, så hover/help kan vise live tal ift. nuværende valg (før save)
+  // Projected summary til hover/help
   const projectedSummary = useMemo(() => {
     if (!schema) return summary || {};
     return projectSummaryWithChoices(schema, choices, summary || {});
   }, [schema, choices, summary]);
 
-  // Context til MgmtGrid/tooltip med projected summary
+  // Ejer-state til krav: brug summary.state hvis den findes, ellers gameData.state
+  const ownedState = useMemo(() => {
+    if (summary?.state && typeof summary.state === 'object') return summary.state;
+    if (gameData?.state && typeof gameData.state === 'object') return gameData.state;
+    return {};
+  }, [summary, gameData]);
+
   const ctx = useMemo(() => ({
     summary: projectedSummary,
+    state: ownedState,     // GIV eksplicit state til MgmtGrid/requirements
     gameData,
     translations: gameData?.i18n?.current ?? {}
-  }), [projectedSummary, gameData]);
+  }), [projectedSummary, ownedState, gameData]);
 
   const setChoice = (k, v) => setChoices(prev => ({ ...prev, [k]: v }));
 
-  // Hent schema + overrides for aktivt faneblad (family)
   useEffect(() => {
     let mounted = true;
     (async () => {
@@ -172,7 +173,6 @@ export default function ManagementPageDynamic() {
     return () => { mounted = false; };
   }, [activeKey]);
 
-  // Gem kun differencer ift. defaults
   const onSave = async () => {
     const overrides = {};
     for (const [k, v] of Object.entries(choices)) {
@@ -183,10 +183,8 @@ export default function ManagementPageDynamic() {
   };
   const onRevert = () => setChoices(snapshot);
 
-  // Vælg sektioner for den aktive family
   const uiSections = useMemo(() => sectionsByFamily[activeKey] ?? [], [activeKey]);
 
-  // Byg MgmtGrid-config (fields + sections)
   const config = useMemo(() => {
     if (!schema) return null;
     const base = adaptSchemaToConfig(schema, ctx, choices, projectedSummary);

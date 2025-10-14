@@ -293,7 +293,7 @@ try {
     'capacities' => $capacities,
     'usages'     => $usages,
     'statSources'=> $summary['statSources'] ?? [], // tom/optional
-    'state'      => $summary['state'] ?? [],       // hvis du allerede lægger ejerskab andre steder
+    //'state'      => $summary['state'] ?? [],       // hvis du allerede lægger ejerskab andre steder
   ];
 
   // Brug korrekt variabel ($uid), ikke $userId
@@ -491,6 +491,7 @@ if (!empty($summary['capChoice']) && is_array($summary['capChoice'])) {
     'popularity'   => $popularityData,
     'demands'      => $demandsData,
     'effects'      => $effects,
+    'state'        => $summary['state'] ?? [],
     'metricsMeta'  => (function() use ($registry, $userStage) {
       $out = [];
       foreach ($registry as $id => $m) {
