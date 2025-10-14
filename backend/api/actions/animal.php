@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 require_once __DIR__ . '/../_init.php';
+require_once __DIR__ . '/buffs.php'; // til collect_active_buffs/apply_cost_buffs
 
 // =====================================================================
 // SEKTION 1: ALLE NØDVENDIGE HJÆLPEFUNKTIONER (KOPIERET IND FOR AT VÆRE UAFHÆNGIG)
@@ -56,6 +57,55 @@ function _animal_api_load_all_defs(): array {
     }
     
     return $defs;
+}
+
+// Hjælpere til at læse ejer-state (for buff-kilder)
+function _animal_api_load_owned_state(PDO $db, int $userId): array {
+    // NB: tilpas kolonner/tabeller hvis dine schemas afviger
+    $state = ['bld'=>[], 'add'=>[], 'rsd'=>[], 'ani'=>[]];
+
+    // buildings
+    try {
+        $st = $db->prepare("SELECT bld_id FROM user_buildings WHERE user_id = ?");
+        $st->execute([$userId]);
+        foreach ($st as $r) {
+            $id = (string)($r['bld_id'] ?? '');
+            if ($id !== '') $state['bld']["bld.$id"] = ['owned' => 1];
+        }
+    } catch (\Throwable $e) {}
+
+    // addons
+    try {
+        $st = $db->prepare("SELECT addon_id FROM user_addons WHERE user_id = ?");
+        $st->execute([$userId]);
+        foreach ($st as $r) {
+            $id = (string)($r['addon_id'] ?? '');
+            if ($id !== '') $state['add']["add.$id"] = ['owned' => 1];
+        }
+    } catch (\Throwable $e) {}
+
+    // research
+    try {
+        $st = $db->prepare("SELECT rsd_id FROM user_research WHERE user_id = ?");
+        $st->execute([$userId]);
+        foreach ($st as $r) {
+            $id = (string)($r['rsd_id'] ?? '');
+            if ($id !== '') $state['rsd']["rsd.$id"] = ['owned' => 1];
+        }
+    } catch (\Throwable $e) {}
+
+    // owned animals (ikke nødv. for cost-buffs, men harmless)
+    try {
+        $st = $db->prepare("SELECT ani_id, quantity FROM animals WHERE user_id = ?");
+        $st->execute([$userId]);
+        foreach ($st as $r) {
+            $id = (string)($r['ani_id'] ?? '');
+            $qty = (int)($r['quantity'] ?? 0);
+            if ($id !== '' && $qty > 0) $state['ani'][$id] = ['quantity' => $qty];
+        }
+    } catch (\Throwable $e) {}
+
+    return $state;
 }
 
 /**
@@ -158,10 +208,36 @@ try {
             }
         }
         
-        $totalCostArray = [];
-        foreach($totalCost as $rid => $amt) $totalCostArray[] = ['res_id' => $rid, 'amount' => $amt];
-        
-        _animal_api_spend_resources($db, $userId, $totalCostArray);
+        $stateForBuffs = _animal_api_load_owned_state($db, $userId);
+$activeBuffs   = collect_active_buffs($defs, $stateForBuffs, time());
+
+// $totalCost er assoc map: res_id => sum
+// Konverter til assoc, filtrér kun res.* (buffs er kun for ressourcer)
+$resourceAssoc = [];
+foreach ($totalCost as $rid => $amt) {
+    $ridStr = (string)$rid;
+    if ($ridStr === '' || (strpos($ridStr, 'ani.') === 0)) continue;
+    $resourceAssoc[$ridStr] = (float)$amt;
+}
+
+// Anvend rabatter (ctx: 'all' er fint her; hvis du har specifik applies_to for dyr-køb, brug fx 'ani.buy')
+$buffedAssoc = apply_cost_buffs($resourceAssoc, 'all', $activeBuffs);
+
+// Byg rækker til spending: dyr ubuffet (kvantitet), ressourcer buffede
+$totalCostArray = [];
+// dyr (ani.*)
+foreach ($totalCost as $rid => $amt) {
+    if (strpos($rid, 'ani.') === 0) {
+        $totalCostArray[] = ['res_id' => $rid, 'amount' => (float)$amt];
+    }
+}
+// ressourcer (res.*) – brug buffede tal
+foreach ($buffedAssoc as $rid => $amt) {
+    $totalCostArray[] = ['res_id' => $rid, 'amount' => (float)$amt];
+}
+
+// Brug rabatterede rækker i validering/spending
+_animal_api_spend_resources($db, $userId, $totalCostArray);
 
         $stmt = $db->prepare("INSERT INTO animals (user_id, ani_id, quantity) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE quantity = quantity + VALUES(quantity)");
         foreach ($animalsToBuy as $aniId => $quantity) {
