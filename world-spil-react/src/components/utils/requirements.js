@@ -13,11 +13,11 @@ const DOMAIN_ALIASES = {
 
 export function parseRequirementToken(token) {
   if (typeof token !== 'string') return null;
-  const m = token.trim().match(/^([a-zA-Z]+)\.([A-Za-z0-9_.-]+)(?:\.l(\d+))?$/);
+  // domain er nu valgfri: "rsd.tools.l3" eller "tools.l3"
+  const m = token.trim().match(/^(?:([a-zA-Z]+)\.)?([A-Za-z0-9_.-]+?)(?:\.l(\d+))?$/);
   if (!m) return null;
-  const rawDomain = m[1].toLowerCase();
-  const domain = DOMAIN_ALIASES[rawDomain] || null;
-  if (!domain) return null;
+  const rawDomain = m[1] ? m[1].toLowerCase() : undefined;
+  const domain = rawDomain ? (DOMAIN_ALIASES[rawDomain] || rawDomain) : undefined;
   const id = m[2];
   const minLevel = m[3] ? Number(m[3]) : undefined;
   return { domain, id, minLevel };
@@ -144,11 +144,26 @@ export function meetsRequirementEntry(inputCtxOrState, entry) {
 
   if (!spec) return false;
 
-  const haveLevel = getOwnedLevel(state, spec.domain, spec.id);
-  if (typeof spec.minLevel === 'number') {
-    return haveLevel >= spec.minLevel;
+  // Hvis domain er specificeret, brug den direkte
+  if (spec.domain) {
+    const haveLevel = getOwnedLevel(state, spec.domain, spec.id);
+    if (typeof spec.minLevel === 'number') return haveLevel >= spec.minLevel;
+    return haveLevel > 0;
   }
-  return haveLevel > 0;
+
+  // Hvis ingen domain angivet: scan sandsynlige domæner
+  const domainCandidates = ['rsd','bld','add','res','building','research'];
+  for (const d of domainCandidates) {
+    const lvl = getOwnedLevel(state, d, spec.id);
+    if (typeof spec.minLevel === 'number') {
+      if (lvl >= spec.minLevel) return true;
+    } else if (lvl > 0) {
+      return true;
+    }
+  }
+
+  // Endelig fallback: ingen match
+  return false;
 }
 
 /**

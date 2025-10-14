@@ -8,7 +8,7 @@
       "stageMin": 2,
       "stageMax": 1000,
       "requires": {
-        "research": ["rsd.tools.l2"]
+        "research": ["rsd.tools.l3"]
 
       },
       "showWhenLocked": false,
