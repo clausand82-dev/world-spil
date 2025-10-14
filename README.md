@@ -51,6 +51,7 @@ Change/update History
 - now lang can be selected (current danish and english) - not all game text has been translated yet
 - stage popup added and fixed
 - local and global marketplace added
+- new exstra stats system, where you can take choices, are implemented
 
 4.1
 - STAGE 2 and 3 system introduced

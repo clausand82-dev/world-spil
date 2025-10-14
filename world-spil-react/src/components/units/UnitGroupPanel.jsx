@@ -1,27 +1,17 @@
 import React, { useMemo, useState, useCallback } from 'react';
-import { useGameData } from '../context/GameDataContext.jsx';
-import * as H from '../services/helpers.js';
-import ResourceCost from '../components/requirements/ResourceCost.jsx';
-import ConfirmModal from '../components/ConfirmModal.jsx';
-import useHeaderSummary from '../hooks/useHeaderSummary.js';
-import DockHoverCard from '../components/ui/DockHoverCard.jsx';
-import StatsEffectsTooltip from '../components/ui/StatsEffectsTooltip.jsx';
-import { UNIT_GROUPS } from '../config/unitGroups.js';
+import { useGameData } from '../../context/GameDataContext.jsx';
+import useHeaderSummary from '../../hooks/useHeaderSummary.js';
+import * as H from '../../services/helpers.js';
+import ResourceCost from '../requirements/ResourceCost.jsx';
+import ConfirmModal from '../ConfirmModal.jsx';
+import DockHoverCard from '../ui/DockHoverCard.jsx';
+import StatsEffectsTooltip from '../ui/StatsEffectsTooltip.jsx';
+import { UNIT_GROUPS } from '../../config/unitGroups.js';
 
-/**
- * UnitPage – dynamisk på baggrund af UNIT_GROUPS:
- * - Viser kun tabs for grupper, hvor spilleren ejer mindst én bygning i gruppens family.
- * - "Dyr" (farm) bruger animal_cap som før.
- * - Øvrige grupper (health/police/fire/military …) bruger gruppens headerCapacityKey/headerUsageKey,
- *   og hvis header ikke har tal, falder vi tilbage til at summere:
- *     - Bygningsstats: group.buildingCapacityStat (f.eks. healthUnitCapacity)
- *     - Unit-forbrug:  group.perItemStat        (f.eks. healthUnitUsage)
- */
-
-// Generisk fallback-beregning for alle non-animal grupper
+// Fallback-beregning (samme logik som i UnitPage for non-animal grupper)
 function computeUnitTotalsFallback(defs, state, group) {
   let total = 0;
-  // Summer kapacitet fra ejede bygninger for den relevante stat
+  // Summer kapacitet fra ejede bygninger i gruppens family
   for (const id of Object.keys(state?.bld || {})) {
     const p = H.parseBldKey(id);
     if (!p) continue;
@@ -32,7 +22,7 @@ function computeUnitTotalsFallback(defs, state, group) {
     if (Number.isFinite(cap)) total += cap;
   }
 
-  // Summer usage fra ejede ani i gruppens family
+  // Summer unit-forbrug fra ejede units i gruppens family
   let used = 0;
   for (const [aniId, row] of Object.entries(state?.ani || {})) {
     const qty = Number(row?.quantity || 0);
@@ -52,46 +42,85 @@ function computeUnitTotalsFallback(defs, state, group) {
   return { total, used };
 }
 
-export default function UnitPage() {
-  const { data, isLoading, error, refreshData } = useGameData();
+// Lokal kopi af købsrække (bevarer samme UI som UnitPage)
+function PurchaseRow({ def, defs, aniId, toBuy, setQty, availableCap, perItemStat, isAnimal, ...rest }) {
+  const per = isAnimal
+    ? Math.abs(Number(def?.stats?.[perItemStat] ?? 1)) || 1
+    : Math.abs(Number(def?.stats?.[perItemStat] ?? 0)) || 0;
+
+  // Kapacitet reserveret af andre i kurven
+  const capUsedByOthers = useMemo(() => {
+    return Object.entries(toBuy).reduce((sum, [id, qty]) => {
+      if (id === aniId) return sum;
+      const otherKey = id.replace(/^ani\./, '');
+      const otherDef = defs.ani?.[otherKey];
+      const otherPer = isAnimal
+        ? Math.abs(Number(otherDef?.stats?.[perItemStat] ?? 1)) || 1
+        : Math.abs(Number(otherDef?.stats?.[perItemStat] ?? 0)) || 0;
+      return sum + otherPer * (Number(qty) || 0);
+    }, 0);
+  }, [toBuy, aniId, defs, perItemStat, isAnimal]);
+
+  const remainingCap = Math.max(0, (availableCap || 0) - capUsedByOthers);
+  const maxVal = per > 0 ? Math.floor(remainingCap / per) : 999999;
+  const currentVal = Math.min(Number(toBuy[aniId] || 0), maxVal);
+  const perLabel = isAnimal ? `Kræver ${per} staldplads` : (per > 0 ? `Forbruger ${per} units` : 'Ingen unit-forbrug');
+
+  return (
+    <div className="item" {...rest}>
+      <div className="icon">{def.emoji || (isAnimal ? '🐄' : '🏷️')}</div>
+      <div className="grow">
+        <div className="title">{def.name}</div>
+        <div className="sub">
+          <ResourceCost cost={def.cost} />
+        </div>
+        <div className="sub">{perLabel}</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '8px' }}>
+          <input
+            type="range"
+            className="slider"
+            min="0"
+            step="1"
+            max={maxVal}
+            value={currentVal}
+            style={{ flexGrow: 1 }}
+            onChange={(e) => setQty(aniId, parseInt(e.target.value, 10))}
+            disabled={maxVal === 0}
+          />
+          <span style={{ fontWeight: 'bold', width: '30px', textAlign: 'right' }}>{currentVal}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function emojiForId(id, defs) {
+  if (id.startsWith('ani.')) {
+    const key = id.replace(/^ani\./, '');
+    return defs.ani?.[key]?.emoji || '🐾';
+  }
+  return '•';
+}
+
+function renderCostInline(costLike, defs) {
+  const entries = Object.values(H.normalizePrice(costLike || {}));
+  if (!entries.length) return '';
+  return entries.map((e) => `${e.id.replace(/^res\./, '')}: ${H.fmt(e.amount)}`).join(' · ');
+}
+
+// Genbrugeligt panel for en enkelt family (samme layout som på UnitPage – uden top-tabs)
+export default function UnitGroupPanel({ family }) {
+  const { data, refreshData } = useGameData();
   const { data: header } = useHeaderSummary();
-  const [selectedKey, setSelectedKey] = useState(null);
-  const [confirm, setConfirm] = useState({ isOpen: false, title: '', body: '', onConfirm: null });
-  const [toBuyByGroup, setToBuyByGroup] = useState({}); // { [groupKey]: { 'ani.x': qty } }
 
-  if (isLoading) return <div className="sub">Indlæser...</div>;
-  if (error || !data) return <div className="sub">Fejl.</div>;
+  const defs = data?.defs || {};
+  const state = data?.state || {};
+  const currentStage = Number(state?.user?.currentstage || state?.user?.stage || 0);
 
-  const { state, defs } = data;
+  const group = useMemo(() => UNIT_GROUPS.find((g) => g.family === family) || null, [family]);
+  const isAnimal = group?.capacityMode === 'animalCap';
 
-  // Ejer hvilke families (fra bygninger)?
-  const familiesOwned = useMemo(() => {
-    const set = new Set();
-    Object.keys(state?.bld || {}).forEach((id) => {
-      const p = H.parseBldKey(id);
-      if (p?.family) set.add(p.family);
-    });
-    return set;
-  }, [state?.bld]);
-
-  // Kun tabs for grupper, hvor man ejer family
-  const visibleGroups = useMemo(() => {
-    return UNIT_GROUPS.filter((g) => familiesOwned.has(g.family));
-  }, [familiesOwned]);
-
-  // Vælg første synlige tab hvis selectedKey ikke længere er gyldig
-  const effectiveSelectedKey = useMemo(() => {
-    if (selectedKey && visibleGroups.some((g) => g.key === selectedKey)) return selectedKey;
-    return visibleGroups[0]?.key || null;
-  }, [selectedKey, visibleGroups]);
-
-  const group = useMemo(() => {
-    return visibleGroups.find((g) => g.key === effectiveSelectedKey) || null;
-  }, [effectiveSelectedKey, visibleGroups]);
-
-  const isAnimal = group?.capacityMode === 'animal_cap';
-
-  // Tilgængelige defs i aktiv gruppe
+  // Tilgængelige defs (samme filter som UnitPage)
   const availableDefs = useMemo(() => {
     if (!group) return [];
     return Object.entries(defs.ani || {}).filter(([_, def]) => {
@@ -101,10 +130,10 @@ export default function UnitPage() {
         .filter(Boolean);
       const inFamily = fams.includes(group.family);
       if (!inFamily) return false;
-      const stageOk = Number(def?.stage || 0) <= Number(state?.user?.currentstage || 0);
+      const stageOk = Number(def?.stage || 0) <= currentStage;
       return stageOk;
     });
-  }, [defs?.ani, state?.user?.currentstage, group]);
+  }, [defs?.ani, currentStage, group]);
 
   // Ejede units i aktiv gruppe
   const ownedUnits = useMemo(() => {
@@ -122,52 +151,57 @@ export default function UnitPage() {
     });
   }, [state?.ani, defs?.ani, group]);
 
-  // Kapacitet & usage totals for aktiv gruppe
+  // Kapacitet/forbrug totals – identisk strategi som UnitPage
   const totals = useMemo(() => {
     if (!group) return { total: 0, used: 0 };
 
     if (isAnimal) {
-      const cap = state?.cap?.animal_cap || { total: 0, used: 0 };
-      return { total: Number(cap.total || 0), used: Number(cap.used || 0) };
+      // Animal-grupper kan fås fra header (hvis du har dedikeret animal-capacitet i summary),
+      // ellers beregnes usage fra ownedUnits og total = used + available fra state/defs (kan udvides senere).
+      const cap = Number(header?.capacities?.[group.headerCapacityKey] ?? NaN);
+      const usedHeader = Number(header?.usages?.[group.headerUsageKey]?.total ?? NaN);
+
+      const usedFallback = ownedUnits.reduce((acc, [id, row]) => {
+        const key = id.replace(/^ani\./, '');
+        const def = defs.ani?.[key];
+        const per = Math.abs(Number(def?.stats?.[group.perItemStat] ?? 1)) || 1;
+        return acc + (Number(row?.quantity || 0) * per);
+      }, 0);
+
+      const headerLooksValid = Number.isFinite(cap) && (cap >= 0);
+      const total = headerLooksValid ? cap : usedFallback; // hvis ikke header findes, vis i det mindste det samme tal på begge sider
+      const used = Number.isFinite(usedHeader) ? usedHeader : usedFallback;
+
+      return { total, used };
     }
 
-    // Non-animal grupper: brug header hvis tilgængelig, ellers fallback
+    // Non-animal: brug header hvis data er brugbar; ellers fallback
     const hc = group.headerCapacityKey;  // fx 'healthUnitCapacity'
     const hu = group.headerUsageKey;     // fx 'healthUnitUsage'
     const headerTotal = Number(header?.capacities?.[hc] ?? NaN);
     const headerUsed = Number(header?.usages?.[hu]?.total ?? NaN);
-
     const fb = computeUnitTotalsFallback(defs, state, group);
 
-    // Brug header hvis den ligner gyldige tal, ellers fallback
     const headerLooksValid =
       Number.isFinite(headerTotal) &&
       Number.isFinite(headerUsed) &&
       (headerTotal > 0 || headerUsed > 0 || (headerTotal === 0 && headerUsed === 0 && fb.total === 0));
 
-    if (headerLooksValid) {
-      return { total: headerTotal, used: headerUsed };
-    } else {
-      return fb;
-    }
-  }, [group, isAnimal, state, defs, header]);
+    return headerLooksValid ? { total: headerTotal, used: headerUsed } : fb;
+  }, [group, isAnimal, state, defs, header, ownedUnits]);
 
-  const toBuy = toBuyByGroup[effectiveSelectedKey] || {};
+  // Kurv / køb-salg
+  const [toBuy, setToBuy] = useState({});
+  const [confirm, setConfirm] = useState({ isOpen: false, title: '', body: '', onConfirm: null });
 
-  const setQty = useCallback(
-    (aniId, value) => {
-      if (!group) return;
-      setToBuyByGroup((prev) => {
-        const bucket = { ...(prev[effectiveSelectedKey] || {}) };
-        if (value > 0) bucket[aniId] = value;
-        else delete bucket[aniId];
-        return { ...prev, [effectiveSelectedKey]: bucket };
-      });
-    },
-    [effectiveSelectedKey, group]
-  );
+  const setQty = useCallback((aniId, value) => {
+    setToBuy((prev) => {
+      const next = { ...prev };
+      if (value > 0) next[aniId] = value; else delete next[aniId];
+      return next;
+    });
+  }, []);
 
-  // “Kurv”-summeringer
   const basket = useMemo(() => {
     if (!group) return null;
 
@@ -196,7 +230,6 @@ export default function UnitPage() {
 
     const availableCap = Math.max(0, total - used);
     const hasCapacity = capToUse <= availableCap;
-
     const getHave = (resId) => {
       const key = String(resId).replace(/^res\./, '');
       const liquid = Number(state?.inv?.liquid?.[key] || 0);
@@ -209,7 +242,6 @@ export default function UnitPage() {
     return { total, used, availableCap, capToUse, totalCost, canAfford, hasCapacity, totalQty };
   }, [group, totals, toBuy, defs, state, isAnimal]);
 
-  // KØB (samlet)
   const handleBuy = useCallback(async () => {
     if (!basket) return;
     const animals = Object.fromEntries(Object.entries(toBuy).filter(([, q]) => Number(q) > 0));
@@ -225,12 +257,11 @@ export default function UnitPage() {
     });
     const json = await res.json();
     if (json && json.ok === false) throw new Error(json.message || 'Server refused purchase.');
-    setToBuyByGroup((prev) => ({ ...prev, [effectiveSelectedKey]: {} }));
-    await refreshData();
+    setToBuy({});
+    await refreshData?.();
     return json;
-  }, [basket, toBuy, effectiveSelectedKey, refreshData]);
+  }, [basket, toBuy, refreshData]);
 
-  // SALG (per item)
   const handleSell = useCallback(
     async (aniId, quantity) => {
       if (!aniId || !quantity) return;
@@ -242,20 +273,19 @@ export default function UnitPage() {
       });
       const json = await res.json();
       if (json && json.ok === false) throw new Error(json.message || 'Server refused sale.');
-      await refreshData();
+      await refreshData?.();
       return json;
     },
     [refreshData]
   );
 
-  // Bekræft-dialoger
   const openBuyConfirm = () => {
     if (!basket?.totalQty) return;
     const costText = renderCostInline(basket.totalCost, defs);
     setConfirm({
       isOpen: true,
       title: `Bekræft køb (${group?.label || 'Units'})`,
-      body: `Du køber ${basket.totalQty} enhed(er).<br/><div style="margin-top:8px;">Pris: ${costText || '(ukendt)'}</div>`,
+      body: `Du køber ${basket.totalQty} enhed(er).<br/><div style={{ marginTop: '8px' }}>Pris: ${costText || '(ukendt)'}</div>`,
       onConfirm: async () => {
         try {
           await handleBuy();
@@ -283,7 +313,7 @@ export default function UnitPage() {
     setConfirm({
       isOpen: true,
       title: quantity === 1 ? 'Sælg 1 enhed' : `Sælg ${quantity} enheder`,
-      body: `Du får følgende tilbage:<br/><div style="margin-top:8px;">${refundText || '(ukendt værdi)'}</div>`,
+      body: `Du får følgende tilbage:<br/><div style={{ marginTop: '8px' }}>${refundText || '(ukendt værdi)'}</div>`,
       onConfirm: async () => {
         try {
           await handleSell(aniId, quantity);
@@ -301,37 +331,16 @@ export default function UnitPage() {
       <section className="panel section">
         <div className="section-head">Units</div>
         <div className="section-body">
-          <div className="sub">Ingen unit-grupper tilgængelige. Byg først relevante faciliteter.</div>
+          <div className="sub">Ingen unit-gruppe for family: {family || '(ukendt)'}</div>
         </div>
       </section>
     );
   }
 
-  const capLabel = group.capacityLabel || (isAnimal ? 'Staldplads' : 'Units');
+  const capLabel = isAnimal ? 'Staldplads' : 'Units';
 
   return (
     <>
-      <section className="panel section">
-        <div className="section-head" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <span>Units</span>
-          <div className="tabs" style={{ marginLeft: 'auto' }}>
-            {visibleGroups.map((g) => (
-              <button
-                key={g.key}
-                type="button"
-                className={`tab ${g.key === effectiveSelectedKey ? 'active' : ''}`}
-                onClick={() => {
-                  setSelectedKey(g.key);
-                  // Kurven bevares pr. gruppe i toBuyByGroup
-                }}
-              >
-                {g.label}
-              </button>
-            ))}
-          </div>
-        </div>
-      </section>
-
       <section className="panel section">
         <div className="section-head">
           {group.label} – Dine enheder
@@ -347,7 +356,7 @@ export default function UnitPage() {
             const per = isAnimal
               ? Math.abs(Number(def?.stats?.[group.perItemStat] ?? 1)) || 1
               : Math.abs(Number(def?.stats?.[group.perItemStat] ?? 0)) || 0;
-            const perLabel = isAnimal ? `Optager ${per} staldplads` : `Forbruger ${per} units`;
+            const perLabel = isAnimal ? `Optager ${per} staldplads` : (per > 0 ? `Forbruger ${per} units` : 'Ingen unit-forbrug');
             const hoverContent = <StatsEffectsTooltip def={def} translations={data?.i18n?.current ?? {}} />;
 
             return (
@@ -388,13 +397,14 @@ export default function UnitPage() {
                   aniId={`ani.${key}`}
                   toBuy={toBuy}
                   setQty={setQty}
-                  availableCap={basket?.availableCap || 0}
+                  availableCap={Math.max(0, (basket?.total || 0) - (basket?.used || 0))}
                   perItemStat={group.perItemStat}
                   isAnimal={isAnimal}
                 />
               </DockHoverCard>
             );
           })}
+
           <div className="actions-bar" style={{ marginTop: '16px' }}>
             <div>
               <strong>Total:</strong> <ResourceCost cost={basket?.totalCost || {}} /> &nbsp;
@@ -426,77 +436,5 @@ export default function UnitPage() {
         cancelText="Annuller"
       />
     </>
-  );
-}
-
-/* ===== helpers ===== */
-
-function emojiForId(id, defs) {
-  if (id.startsWith('res.')) {
-    const key = id.replace(/^res\./, '');
-    const def = defs.res?.[key];
-    return def?.emoji || '📦';
-  }
-  if (id.startsWith('ani.')) {
-    const key = id.replace(/^ani\./, '');
-    const def = defs.ani?.[key];
-    return def?.emoji || '🐾';
-  }
-  return '•';
-}
-
-function renderCostInline(costLike, defs) {
-  const entries = Object.values(H.normalizePrice(costLike || {}));
-  if (!entries.length) return '';
-  return entries.map((e) => `${emojiForId(e.id, defs)} ${H.fmt(e.amount)}`).join(' · ');
-}
-
-// IMPORTANT: forward ...rest to the root DOM node so DockHoverCard can inject mouse handlers
-function PurchaseRow({ def, defs, aniId, toBuy, setQty, availableCap, perItemStat, isAnimal, ...rest }) {
-  const per = isAnimal
-    ? Math.abs(Number(def?.stats?.[perItemStat] ?? 1)) || 1
-    : Math.abs(Number(def?.stats?.[perItemStat] ?? 0)) || 0;
-
-  const capUsedByOthers = useMemo(() => {
-    return Object.entries(toBuy).reduce((sum, [id, qty]) => {
-      if (id === aniId) return sum;
-      const otherKey = id.replace(/^ani\./, '');
-      const otherDef = defs.ani?.[otherKey];
-      const otherPer = isAnimal
-        ? Math.abs(Number(otherDef?.stats?.[perItemStat] ?? 1)) || 1
-        : Math.abs(Number(otherDef?.stats?.[perItemStat] ?? 0)) || 0;
-      return sum + otherPer * (Number(qty) || 0);
-    }, 0);
-  }, [toBuy, aniId, defs, perItemStat, isAnimal]);
-
-  const remainingCap = Math.max(0, availableCap - capUsedByOthers);
-  const maxVal = per > 0 ? Math.floor(remainingCap / per) : 999999;
-  const currentVal = Math.min(Number(toBuy[aniId] || 0), maxVal);
-
-  return (
-    <div className="item" {...rest}>
-      <div className="icon">{def.emoji || (isAnimal ? '🐄' : '🏷️')}</div>
-      <div className="grow">
-        <div className="title">{def.name}</div>
-        <div className="sub">
-          <ResourceCost cost={def.cost} />
-        </div>
-        <div className="sub">{isAnimal ? `Kræver ${per} staldplads` : `Forbruger ${per} units`}</div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '8px' }}>
-          <input
-            type="range"
-            className="slider"
-            min="0"
-            step="1"
-            max={maxVal}
-            value={currentVal}
-            style={{ flexGrow: 1 }}
-            onChange={(e) => setQty(aniId, parseInt(e.target.value, 10))}
-            disabled={maxVal === 0}
-          />
-          <span style={{ fontWeight: 'bold', width: '30px', textAlign: 'right' }}>{currentVal}</span>
-        </div>
-      </div>
-    </div>
   );
 }

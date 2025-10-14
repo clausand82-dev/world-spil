@@ -162,8 +162,11 @@ function BuildingDetailPage({ buildingId }) {
         return <RecipesTab family={family} defs={defs} state={state} stage={currentStage} baseOwned={baseOwned} requirementCaches={requirementCaches} />;
       case 'units':
         return <UnitsTab family={family} defs={defs} state={state} stage={currentStage} baseOwned={baseOwned} requirementCaches={requirementCaches} />;
+      case 'special':
+        // VIGTIGT: giv family ind – Special-tab embedder Management for præcis denne family
+        return <SpecialTab family={family} />;
       default:
-        return <SpecialTab />;
+        return null;
     }
   })();
 

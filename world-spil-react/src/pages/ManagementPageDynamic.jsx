@@ -24,7 +24,7 @@ const TABS = [
  * Sektioner pr. family (faneblad). Items refererer til field keys i det pågældende family‑schema.
  * Tilføj en nøgle for hver ny family (fx "police") med egne sektioner/items.
  */
-const sectionsByFamily = {
+export const sectionsByFamily = {
   health: [
     {
       title: 'Ordninger',
@@ -79,7 +79,7 @@ function defaultsFromSchema(schema) {
   return out;
 }
 
-function adaptSchemaToConfig(schema, ctx, choices, projected) {
+export function adaptSchemaToConfig(schema, ctx, choices, projected) {
   const fieldsIn = schema?.fields || {};
   const fields = {};
   for (const [id, def] of Object.entries(fieldsIn)) {
@@ -93,7 +93,7 @@ function adaptSchemaToConfig(schema, ctx, choices, projected) {
       stageMin: def.stageMin,
       stageMax: def.stageMax,
       showWhenLocked: def.showWhenLocked,
-      requires: def.requires || null, // send requires videre
+      requires: def.requires || null,
       control: { ...(def.control || {}), key: id },
       tooltip: (chs) => {
         const stats = computeFieldEffectsPreview(def, chs, projected);

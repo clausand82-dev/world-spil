@@ -8,7 +8,7 @@
       "stageMin": 2,
       "stageMax": 1000,
       "requires": {
-        "research": ["rsd.tools.l3","rsd.irrigation.l1"],
+        "research": ["rsd.tools.l2","rsd.irrigation.l1"],
         "buildings": ["bld.basecamp.l3"]
 
       },

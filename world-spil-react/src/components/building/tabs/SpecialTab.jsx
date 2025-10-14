@@ -1,21 +1,14 @@
 import React from 'react';
-import AnimalPage from './SpecialTabAnimal.jsx';
-import SpecialTabHealthUnits from './SpecialTabHealthUnits.jsx';
+import ManagementFamilyPanel from '../../management/ManagementFamilyPanel.jsx';
 
-export default function SpecialTab() {
-  const hash = typeof window !== 'undefined' ? window.location.hash : '';
-  const m = hash.match(/#\/building\/([^\/\?]+)/);
-  const id = m ? decodeURIComponent(m[1]) : '';
-
-
-  const headTitle = 'Special';
-
-  return (
-    <section className="panel section">
-      <div className="section-head">{headTitle}</div>
-      <div className="section-body">
-    Ingen data endnu
-      </div>
-    </section>
-  );
+export default function SpecialTab({ family }) {
+  if (!family) {
+    return (
+      <section className="panel section">
+        <div className="section-head">Special</div>
+        <div className="section-body"><div className="sub">Ukendt building family.</div></div>
+      </section>
+    );
+  }
+  return <ManagementFamilyPanel family={family} />;
 }
