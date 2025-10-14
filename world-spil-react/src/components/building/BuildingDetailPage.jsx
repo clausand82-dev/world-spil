@@ -7,12 +7,13 @@ import BuildingActions from './BuildingActions.jsx';
 import AddonsTab from './tabs/AddonsTab.jsx';
 import ResearchTab from './tabs/ResearchTab.jsx';
 import RecipesTab from './tabs/RecipesTab.jsx';
+import UnitsTab from './tabs/UnitsTab.jsx';
 import SpecialTab from './tabs/SpecialTab.jsx';
 import { useT } from "../../services/i18n.js";
 
 import { computeOwnedMap, requirementInfo, collectActiveBuffs, computeResearchOwned } from '../../services/requirements.js';
 
-const DETAIL_TABS = ['addons', 'research', 'recipes']; // add "", 'special'" for special tab
+const DETAIL_TABS = ['addons', 'research', 'recipes', 'units', 'special']; // add "", 'special'" for special tab
 
 function canonicalizeBuildingId(param) {
   if (!param) return null;
@@ -159,6 +160,8 @@ function BuildingDetailPage({ buildingId }) {
         return <ResearchTab family={family} defs={defs} state={state} stage={currentStage} baseOwned={baseOwned} requirementCaches={requirementCaches} />;
       case 'recipes':
         return <RecipesTab family={family} defs={defs} state={state} stage={currentStage} baseOwned={baseOwned} requirementCaches={requirementCaches} />;
+      case 'units':
+        return <UnitsTab family={family} defs={defs} state={state} stage={currentStage} baseOwned={baseOwned} requirementCaches={requirementCaches} />;
       default:
         return <SpecialTab />;
     }
