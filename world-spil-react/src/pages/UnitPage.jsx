@@ -266,7 +266,7 @@ export default function UnitPage({ embedFamily = null, embed = false }) {
     [effectiveSelectedKey, group]
   );
 
-  // “Kurv”-summeringer (GENINDSAT)
+// “Kurv”-summeringer (GENINDSAT)
 const basket = useMemo(() => {
   if (!group) return null;
 
@@ -284,12 +284,12 @@ const basket = useMemo(() => {
     const per = isAnimal
       ? Math.abs(Number(def?.stats?.[group.perItemStat] ?? 1)) || 1
       : Math.abs(Number(def?.stats?.[group.perItemStat] ?? 0)) || 0;
-    capToUse += per * qty;
+    capToUse += per * Number(qty || 0);
 
     const costs = H.normalizePrice(def?.cost || {});
     Object.values(costs).forEach((entry) => {
       const prev = totalCost[entry.id]?.amount || 0;
-      totalCost[entry.id] = { id: entry.id, amount: prev + (entry.amount || 0) * qty };
+      totalCost[entry.id] = { id: entry.id, amount: prev + (entry.amount || 0) * Number(qty || 0) };
     });
   }
 
@@ -297,16 +297,124 @@ const basket = useMemo(() => {
   const hasCapacity = capToUse <= availableCap;
 
   const getHave = (resId) => {
+    // normaliser id (fjern evt. 'res.' prefix)
     const key = String(resId).replace(/^res\./, '');
     const liquid = Number(state?.inv?.liquid?.[key] || 0);
     const solid = Number(state?.inv?.solid?.[key] || 0);
     return liquid + solid;
   };
-  const canAfford = Object.values(totalCost).every((c) => getHave(c.id) >= (c.amount || 0));
+
+  const shortfalls = {};
+  let canAfford = true;
+  Object.values(totalCost).forEach((c) => {
+    const have = getHave(c.id);
+    if (have < (c.amount || 0)) {
+      canAfford = false;
+      shortfalls[c.id] = { need: Number(c.amount || 0), have };
+    }
+  });
+
   const totalQty = Object.values(toBuy).reduce((s, q) => s + (Number(q) || 0), 0);
 
-  return { total, used, availableCap, capToUse, totalCost, canAfford, hasCapacity, totalQty };
+  console.debug('BASKET DEBUG', { total, used, availableCap, capToUse, totalCost, shortfalls, canAfford, totalQty });
+
+  return { total, used, availableCap, capToUse, totalCost, canAfford, hasCapacity, totalQty, shortfalls };
 }, [group, totals, toBuy, defs, state, isAnimal]);
+
+// NYT: samlet (cross‑group) kurv for alle dyr‑grupper på UnitPage (embed=false)
+const combinedAnimals = useMemo(() => {
+  // Kun relevant for dyr (fælles animalCap) og kun på den fulde side (ikke embed under building)
+  if (embed || !group || group.capacityMode !== 'animalCap') return null;
+
+  // Hent global animal cap fra state (foretræk state.cap.animal_cap hvis sat)
+  const globalCap = state?.cap?.animal_cap;
+  let globalTotal = Number(globalCap?.total ?? NaN);
+  let globalUsed = Number(globalCap?.used ?? NaN);
+
+  // Fallback: hvis state.cap.animal_cap ikke findes, beregn fra ejede bygninger (som fallback)
+  if (!Number.isFinite(globalTotal) || !Number.isFinite(globalUsed)) {
+    let t = 0;
+    let u = 0;
+    for (const id of Object.keys(state?.bld || {})) {
+      const p = H.parseBldKey(id);
+      if (!p) continue;
+      const bdef =
+        defs?.bld?.[`${p.family}.l${p.level}`] ||
+        defs?.bld?.[p.key];
+      const cap = Number(bdef?.stats?.animal_cap ?? 0);
+      if (Number.isFinite(cap)) t += cap;
+    }
+    // used fallback: sum existing ani quantities * per-item (best-effort)
+    for (const [aniId, row] of Object.entries(state?.ani || {})) {
+      const qty = Number(row?.quantity || 0);
+      if (!qty) continue;
+      const key = String(aniId).replace(/^ani\./, '');
+      const adef = defs?.ani?.[key];
+      if (!adef) continue;
+      const per = Math.abs(Number(adef?.stats?.[group.perItemStat] ?? 1)) || 1;
+      u += per * qty;
+    }
+    globalTotal = t;
+    globalUsed = u;
+  }
+
+  // Opsaml omkostninger og kapacitetsforbrug på tværs af alle grupper med capacityMode = 'animalCap'
+  let capToUseAll = 0;
+  const costAll = {};
+
+  const animalGroups = UNIT_GROUPS.filter(g => g.capacityMode === 'animalCap');
+
+  for (const ag of animalGroups) {
+    const bucket = toBuyByGroup[ag.key] || {};
+    for (const [aniId, qty] of Object.entries(bucket)) {
+      if (!qty) continue;
+      const key = String(aniId).replace(/^ani\./, '');
+      const def = defs.ani?.[key];
+      if (!def) continue;
+
+      const per = Math.abs(Number(def?.stats?.[ag.perItemStat] ?? 1)) || 1;
+      capToUseAll += per * (Number(qty) || 0);
+
+      const costs = H.normalizePrice(def?.cost || {});
+      Object.values(costs).forEach((entry) => {
+        const prev = costAll[entry.id]?.amount || 0;
+        costAll[entry.id] = { id: entry.id, amount: prev + (entry.amount || 0) * (Number(qty) || 0) };
+      });
+    }
+  }
+
+  const availableCap = Math.max(0, globalTotal - globalUsed);
+  const hasCapacity = capToUseAll <= availableCap;
+
+  const getHave = (resId) => {
+    const key = String(resId).replace(/^res\./, '');
+    const liquid = Number(state?.inv?.liquid?.[key] || 0);
+    const solid = Number(state?.inv?.solid?.[key] || 0);
+    return liquid + solid;
+  };
+  const canAfford = Object.values(costAll).every((c) => getHave(c.id) >= (c.amount || 0));
+
+  return { hasCapacity, canAfford, globalTotal, globalUsed, availableCap, capToUseAll };
+}, [embed, toBuyByGroup, UNIT_GROUPS, defs, state, group]);
+
+// --- DEBUG: log centrale værdier for animal capacity issues ---
+useMemo(() => {
+  try {
+    console.debug('UNITPAGE DEBUG state.cap.animal_cap =', state?.cap?.animal_cap);
+    console.debug('UNITPAGE DEBUG totals (active group) =', totals);
+    console.debug('UNITPAGE DEBUG basket =', basket);
+    console.debug('UNITPAGE DEBUG combinedAnimals =', combinedAnimals);
+    // sanity convert to numbers for quick check
+    const stTotal = Number(state?.cap?.animal_cap?.total ?? NaN);
+    const stUsed = Number(state?.cap?.animal_cap?.used ?? NaN);
+    console.debug('UNITPAGE DEBUG numeric checks: total=', stTotal, 'used=', stUsed, 'available=', (Number.isFinite(stTotal) && Number.isFinite(stUsed) ? stTotal - stUsed : 'n/a'));
+  } catch (e) { console.error('UNITPAGE DEBUG error', e); }
+  return null;
+}, [state?.cap?.animal_cap, totals, basket, combinedAnimals]);
+
+const buyDisabled = !basket || (basket.totalQty || 0) <= 0 || !basket.hasCapacity || !basket.canAfford;
+
+
   // KØB (samlet)
   const handleBuy = useCallback(async () => {
     if (!basket) return;
@@ -406,7 +514,7 @@ const basket = useMemo(() => {
   }
 
   const capLabel = group.capacityLabel || (isAnimal ? 'Staldplads' : 'Units');
-
+  
   return (
     <>
       {/* Top-tabs vises kun i normal side, ikke embed */}
@@ -529,13 +637,30 @@ const basket = useMemo(() => {
     {H.fmt(basket?.total || 0)}
   </div>
   <button
-    className="btn primary"
-    disabled={!basket || basket.totalQty === 0 || !basket.canAfford || !basket.hasCapacity}
-    onClick={openBuyConfirm}
-  >
-    Køb valgte {group.label.toLowerCase()}
-  </button>
+  className="btn primary"
+  disabled={buyDisabled}
+  onClick={openBuyConfirm}
+>
+  Køb valgte {group.label.toLowerCase()}
+</button>
 </div>
+<div style={{ marginTop: 8, fontSize: 12, color: 'var(--muted,#999)' }}>
+    <div>DEBUG — animal_cap (raw): {JSON.stringify(state?.cap?.animal_cap)}</div>
+    <div>DEBUG — totals: total={H.fmt(basket?.total || 0)}, used={H.fmt(basket?.used || 0)}, capToUse={H.fmt(basket?.capToUse || 0)}</div>
+    <div>DEBUG — combined: total={H.fmt(combinedAnimals?.globalTotal || 0)}, used={H.fmt(combinedAnimals?.globalUsed || 0)}, capToUseAll={H.fmt(combinedAnimals?.capToUseAll || 0)}, available={H.fmt(combinedAnimals?.availableCap || 0)}</div>
+  </div>
+  {basket?.shortfalls && Object.keys(basket.shortfalls).length > 0 && (
+  <div style={{ marginTop: 8, color: '#f66', fontSize: 13 }}>
+    <strong>Manglende ressourcer:</strong>
+    <div>
+      {Object.entries(basket.shortfalls).map(([id, s]) => (
+        <div key={id}>
+          {id.replace(/^res\./, '')}: mangler {H.fmt(s.need - s.have)} ({H.fmt(s.have)} / {H.fmt(s.need)})
+        </div>
+      ))}
+    </div>
+  </div>
+)}
         </div>
       </section>
 
