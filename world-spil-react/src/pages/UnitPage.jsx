@@ -270,7 +270,7 @@ export default function UnitPage({ embedFamily = null, embed = false }) {
 
 const activeBuffs = useMemo(() => collectActiveBuffs(defs), [defs]);
 
-// “Kurv”-summeringer (GENINDSAT)
+// Kurv – hold både base (til visning) og buffed (til afford-check)
 const basket = useMemo(() => {
   if (!group) return null;
 
@@ -278,7 +278,7 @@ const basket = useMemo(() => {
   const used = Number(totals.used || 0);
 
   let capToUse = 0;
-  const totalCostRaw = {};
+  const totalCostBase = {};
   const totalCostBuffed = {};
 
   for (const [aniId, qty] of Object.entries(toBuy)) {
@@ -297,15 +297,14 @@ const basket = useMemo(() => {
       const rid = entry.id;
       const baseAmt = (entry.amount || 0) * qty;
 
-      // akkumulér ubuffet
-      totalCostRaw[rid] = (totalCostRaw[rid] || 0) + baseAmt;
+      // Base (til UI, ResourceCost vil selv anvende buffs)
+      totalCostBase[rid] = (totalCostBase[rid] || 0) + baseAmt;
 
-      // anvend rabat/buffs til “res.*” – ctx ‘all’ er tilstrækkelig her
+      // Buffed (kun til afford/disabled)
       const effRid = rid.startsWith('res.') ? rid : (defs?.res?.[rid] ? `res.${rid}` : rid);
       const buffedAmt = effRid.startsWith('res.')
         ? applyCostBuffsToAmount(baseAmt, effRid, { appliesToCtx: 'all', activeBuffs })
         : baseAmt;
-
       totalCostBuffed[rid] = (totalCostBuffed[rid] || 0) + buffedAmt;
     });
   }
@@ -313,14 +312,13 @@ const basket = useMemo(() => {
   const availableCap = Math.max(0, total - used);
   const hasCapacity = capToUse <= availableCap;
 
-  // sammenlign mod buffet total
   const getHave = (resId) => {
     const key = String(resId).replace(/^res\./, '');
     const liquid = Number(state?.inv?.liquid?.[key] || 0);
     const solid = Number(state?.inv?.solid?.[key] || 0);
     return liquid + solid;
   };
-  const canAfford = Object.entries(totalCostBuffed).every(([rid, amt]) => getHave(rid) >= (amt || 0));
+  const canAffordBuffed = Object.entries(totalCostBuffed).every(([rid, amt]) => getHave(rid) >= (amt || 0));
   const totalQty = Object.values(toBuy).reduce((s, q) => s + (Number(q) || 0), 0);
 
   return {
@@ -328,14 +326,15 @@ const basket = useMemo(() => {
     used,
     availableCap,
     capToUse,
-    totalCost: totalCostBuffed, // VIGTIGT: brug buffede tal til visning og check
-    canAfford,
+    totalCostBase,      // <- til visning
+    totalCostBuffed,    // <- til afford
+    canAffordBuffed,
     hasCapacity,
     totalQty
   };
 }, [group, totals, toBuy, defs, state, isAnimal, activeBuffs]);
 
-// NYT: samlet (cross‑group) kurv for alle dyr‑grupper på UnitPage (embed=false)
+// Samlet dyr (på tværs af dyr-faner) med buffede beløb — kun relevant på fuld side
 const combinedAnimals = useMemo(() => {
   if (embed || !group || group.capacityMode !== 'animalCap') return null;
 
@@ -343,7 +342,7 @@ const combinedAnimals = useMemo(() => {
   const used = Number(totals.used || 0);
 
   let capToUseAll = 0;
-  const costAll = {};
+  const costAllBuffed = {};
 
   const animalGroups = UNIT_GROUPS.filter(g => g.capacityMode === 'animalCap');
   for (const ag of animalGroups) {
@@ -361,13 +360,11 @@ const combinedAnimals = useMemo(() => {
       Object.values(costs).forEach((entry) => {
         const rid = entry.id;
         const baseAmt = (entry.amount || 0) * (Number(qty) || 0);
-
         const effRid = rid.startsWith('res.') ? rid : (defs?.res?.[rid] ? `res.${rid}` : rid);
         const buffedAmt = effRid.startsWith('res.')
           ? applyCostBuffsToAmount(baseAmt, effRid, { appliesToCtx: 'all', activeBuffs })
           : baseAmt;
-
-        costAll[rid] = (costAll[rid] || 0) + buffedAmt;
+        costAllBuffed[rid] = (costAllBuffed[rid] || 0) + buffedAmt;
       });
     }
   }
@@ -381,10 +378,12 @@ const combinedAnimals = useMemo(() => {
     const solid = Number(state?.inv?.solid?.[key] || 0);
     return liquid + solid;
   };
-  const canAfford = Object.entries(costAll).every(([rid, amt]) => getHave(rid) >= (amt || 0));
+  const canAfford = Object.entries(costAllBuffed).every(([rid, amt]) => getHave(rid) >= (amt || 0));
 
   return { hasCapacity, canAfford };
 }, [embed, group, totals, toBuyByGroup, defs, state, activeBuffs]);
+
+
 
 // --- DEBUG: log centrale værdier for animal capacity issues ---
 useMemo(() => {
@@ -401,12 +400,13 @@ useMemo(() => {
   return null;
 }, [state?.cap?.animal_cap, totals, basket, combinedAnimals]);
 
+// Disabled-logik: dyr på fuld side bruger samlet (cross-tab) check; ellers pr. fane
 const buyDisabled = useMemo(() => {
   if (!basket || basket.totalQty === 0) return true;
   if (!embed && group?.capacityMode === 'animalCap' && combinedAnimals) {
     return !(combinedAnimals.canAfford && combinedAnimals.hasCapacity);
   }
-  return !(basket.canAfford && basket.hasCapacity);
+  return !(basket.canAffordBuffed && basket.hasCapacity);
 }, [basket, embed, group, combinedAnimals]);
 
 
@@ -623,7 +623,7 @@ const buyDisabled = useMemo(() => {
           })}
 <div className="actions-bar" style={{ marginTop: '16px' }}>
   <div>
-    <strong>Total:</strong> <ResourceCost cost={basket?.totalCost || {}} /> &nbsp;
+    <strong>Total:</strong> <ResourceCost cost={basket?.totalCostBase || {}} /> &nbsp;
     <strong style={{ marginLeft: '1em' }}>{capLabel}:</strong>
     <span className={!basket?.hasCapacity ? 'price-bad' : ''}>
       {H.fmt((basket?.used || 0) + (basket?.capToUse || 0))}
