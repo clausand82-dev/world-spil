@@ -13,6 +13,7 @@ const POLICY_LABELS = {
   health_free_dentist_kids: 'Gratis tandpleje — børn',
   health_free_dentist_young: 'Gratis tandpleje — unge',
   health_free_dentist_adults: 'Gratis tandpleje — voksne',
+  health_wait_target_days: 'Maks. ventetid (dage)',
   // tilføj flere faste mappings efter behov
 };
 
@@ -67,6 +68,7 @@ export default function HeaderBudgetBadge() {
   const taxHealthMeta = metaMap?.taxHealth || {};
   const taxCitizens = usages.useTaxCitizens?.total || {};
   const taxCitizensIncome = capacities.taxCitizensCapacity || {};
+  const taxCitizensByPolicy = usages.useTaxCitizens?.citizens || {};
 
   const diff = (Number(taxCap) || 0) - (Number(taxUsed) || 0);
   const diffIncome = diff > 0 ? diff : 0;
@@ -96,6 +98,7 @@ export default function HeaderBudgetBadge() {
   // --- flytede state/hooks så modalContent kan bruge dem ---
   const [open, setOpen] = useState(false);
   const [healthExpanded, setHealthExpanded] = useState(false);
+  const [citizensExpanded, setCitizensExpanded] = useState(false);
 
   useEffect(() => {
     const onKey = (e) => { if (e.key === 'Escape') setOpen(false); };
@@ -152,7 +155,7 @@ export default function HeaderBudgetBadge() {
           onClick={() => setHealthExpanded(s => !s)}
           style={{ cursor: 'pointer', userSelect: 'none' }}
         >
-          {renderTwoColsRow('Sundhed (tax)', 0, extractValue(taxHealth) || 0, 'sundhed')}
+          {renderTwoColsRow('Sundhed (tax) ⏷', 0, extractValue(taxHealth) || 0, 'sundhed')}
           
           {healthExpanded && (
             <div style={{ padding: '8px 12px 12px 12px', background: 'var(--panel-alt, rgba(255,255,255,0.02))', borderRadius: 6 }}>
@@ -170,10 +173,47 @@ export default function HeaderBudgetBadge() {
         </div>
 
         {/* Andre rækker */}
-        {renderTwoColsRow('Borgere (tax)', 0, extractValue(taxCitizens) || 0, 'taxCitizens')}
-        
+        {/* Borgere-klikbar række: klik folder detaljer ud (ingen pil) */}
+        <div
+          role="button"
+          aria-expanded={citizensExpanded}
+          onClick={() => setCitizensExpanded(s => !s)}
+          style={{ cursor: 'pointer', userSelect: 'none' }}
+        >
+          {renderTwoColsRow('Udbetalinger (løn/offentlig ydelse) ⏷', 0, extractValue(taxCitizens) || 0, 'taxCitizens')}
 
-          <div style={{ borderTop: '1px dashed var(--border, #e5e7eb)', paddingTop: 8 }}>
+          {citizensExpanded && (
+            <div style={{ padding: '8px 12px 12px 12px', background: 'var(--panel-alt, rgba(255,255,255,0.02))', borderRadius: 6 }}>
+              {(!taxCitizensByPolicy || Object.keys(taxCitizensByPolicy).length === 0) ? (
+                <div style={{ fontSize: 13, color: 'var(--muted, #999)' }}>Ingen detaljer tilgængelige</div>
+              ) : (
+                (() => {
+                  const entries = Object.entries(taxCitizensByPolicy);
+                  console.debug('HeaderBudgetBadge: taxCitizensByPolicy entries', entries);
+                  const totalForGroup = entries.reduce((acc, [, val]) => {
+                    const amt = Number(val?.amount ?? val?.total ?? extractValue(val) ?? 0);
+                    return acc + (Number.isFinite(amt) ? amt : 0);
+                  }, 0) || (extractValue(taxCitizens) || 0);
+                  return entries.map(([k, v]) => {
+                    const name = v?.name || (metaMap?.taxCitizens && (metaMap.taxCitizens.labels?.[k] || metaMap.taxCitizens.names?.[k])) || POLICY_LABELS[k] || prettifyKey(k) || k;
+                    const amount = Number(v?.amount ?? v?.total ?? extractValue(v) ?? 0);
+                    const pct = totalForGroup > 0 ? Math.round((amount / totalForGroup) * 100) : null;
+                    return (
+                      <div key={k} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, padding: '4px 0' }}>
+                        <div style={{ color: 'var(--muted, #999)' }}>{name}</div>
+                        <div style={{ fontWeight: 600, color: 'var(--expense, #dc3545)' }}>
+                          {fmtNum(amount)}{pct != null ? ` (${pct}%)` : ''}
+                        </div>
+                      </div>
+                    );
+                  });
+                })()
+              )}
+            </div>
+          )}
+        </div>
+
+        <div style={{ borderTop: '1px dashed var(--border, #e5e7eb)', paddingTop: 8 }}>
           <div style={{ fontWeight: 700 }}>Indtægter:</div>
           <div style={{ fontSize: 13, color: 'var(--muted, #999)' }}>
             {/* Andre rækker */}

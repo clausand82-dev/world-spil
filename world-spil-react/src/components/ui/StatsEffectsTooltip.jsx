@@ -72,7 +72,7 @@ export default function StatsEffectsTooltip({ def, translations = {} }) {
 let display;
 if (typeof v === 'number') {
   // altid viste tegn: +10, -5, 0 => +0
-  const nf = new Intl.NumberFormat('da-DK', { maximumFractionDigits: 0, signDisplay: 'always' });
+  const nf = new Intl.NumberFormat('da-DK', { maximumFractionDigits: 2, signDisplay: 'always' });
   display = nf.format(v);
 } else {
   display = `${prefix}${String(v)}`;

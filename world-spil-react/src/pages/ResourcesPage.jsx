@@ -30,8 +30,11 @@ export default function ResourcesPage() {
     try {
       const url = new URL(window.location.href);
       const sp = url.searchParams;
-      sp.set('tab', tab);
-      window.history.replaceState({}, '', `${url.pathname}?${sp.toString()}`);
+      if (tab) sp.set('tab', tab); else sp.delete('tab');
+      // bevar eksisterende hash (fx #/dashboard) når vi opdaterer query
+      const search = sp.toString() ? `?${sp.toString()}` : '';
+      const newUrl = `${url.pathname}${search}${url.hash || ''}`;
+      window.history.replaceState({}, '', newUrl);
     } catch {}
   }, [tab]);
 

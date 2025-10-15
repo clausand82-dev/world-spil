@@ -1,6 +1,8 @@
 import React from 'react';
 import ItemRow from './ItemRow.jsx';
-import HoverCard from './ui/HoverCard.jsx';
+import ResourceHoverContent from './resources/ResourceHoverContent.jsx';
+import StatsEffectsTooltip from './ui/StatsEffectsTooltip.jsx';
+import DockHoverCard from './ui/DockHoverCard.jsx';
 import { useGameData } from '../context/GameDataContext.jsx';
 import { buildPassiveYieldTitle } from '../services/passiveYields.js';
 import { fmt } from '../services/helpers.js';
@@ -20,6 +22,7 @@ export default function ResourceList({ items, defs, format = 'detailed', columns
   const { data } = useGameData();
   const gameDefs = data?.defs || {};
   const state = data?.state || {};
+  const translations = data?.i18n?.current ?? {};
 
   const resDefs = gameDefs.res || defs || {};
   const sortedItems = Object.entries(items || {}).sort();
@@ -81,9 +84,9 @@ export default function ResourceList({ items, defs, format = 'detailed', columns
           {hoverText ? <div>{hoverText}</div> : <div style={{ opacity: 0.7 }}>Ingen passive kilder fundet.</div>}
         </div>
       );
-
+      
       return (
-        <HoverCard key={id} content={hoverContent} style={{ display: 'block', width: '100%' }}>
+        <DockHoverCard key={id} content={hoverContent} style={{ display: 'block', width: '100%' }}>
           <div
             className="row"
             role="button"
@@ -109,7 +112,7 @@ export default function ResourceList({ items, defs, format = 'detailed', columns
               {fmt(amount)}
             </div>
           </div>
-        </HoverCard>
+        </DockHoverCard>
       );
     });
 
@@ -129,22 +132,47 @@ export default function ResourceList({ items, defs, format = 'detailed', columns
       const space = (def.unitSpace || 0) * amount;
       const unit = def.unit ? ` ${def.unit}` : "";
 
+      const hoverContent = (
+        <div style={{ display: 'grid', gap: 12 }}>
+          <ResourceHoverContent
+            resourceId={fullResId}
+            resourceDef={def}
+            amount={amount}
+            totalSpace={space}
+          /><div
+        style={{
+          borderTop: '1px solid rgba(0,0,0,0.08)',
+          paddingTop: 8,
+          display: 'grid',
+          gap: 4,
+          fontSize: 12,
+        }}
+      >
+          <StatsEffectsTooltip def={def} translations={translations} />
+        </div></div>
+      );
+
       return (
-        <div
+        <DockHoverCard
           key={id}
-          role="button"
-          tabIndex={0}
-          onClick={(e) => handleClickWithRect(e, fullResId, def.name, def.emoji)}
-          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleClickWithRect(e, fullResId, def.name, def.emoji); } }}
-          style={{ cursor: 'pointer' }}
+          content={hoverContent}
+          style={{ display: 'block', width: '100%' }}
         >
-          <ItemRow
-            icon={def.emoji}
-            title={def.name}
-            subtitle={`Fylder pr. enhed: ${def.unitSpace || 0}`}
-            value={`${fmt(amount)}${unit} / Fylder: ${fmt(space)} ialt`}
-          />
-        </div>
+          <div
+            role="button"
+            tabIndex={0}
+            onClick={(e) => handleClickWithRect(e, fullResId, def.name, def.emoji)}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleClickWithRect(e, fullResId, def.name, def.emoji); } }}
+            style={{ cursor: 'pointer' }}
+          >
+            <ItemRow
+              icon={def.emoji}
+              title={def.name}
+              subtitle={`Fylder pr. enhed: ${def.unitSpace || 0}`}
+              value={`${fmt(amount)}${unit} / Fylder: ${fmt(space)} ialt`}
+            />
+          </div>
+        </DockHoverCard>
       );
     });
   }

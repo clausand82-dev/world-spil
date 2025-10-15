@@ -268,9 +268,10 @@ export default function UnitPage({ embedFamily = null, embed = false }) {
     [effectiveSelectedKey, group]
   );
 
+// inde i komponenten:
 const activeBuffs = useMemo(() => collectActiveBuffs(defs), [defs]);
 
-// Kurv – hold både base (til visning) og buffed (til afford-check)
+// Kurv – bevar base (til UI) og buffed (til afford)
 const basket = useMemo(() => {
   if (!group) return null;
 
@@ -297,10 +298,10 @@ const basket = useMemo(() => {
       const rid = entry.id;
       const baseAmt = (entry.amount || 0) * qty;
 
-      // Base (til UI, ResourceCost vil selv anvende buffs)
+      // Base (UI)
       totalCostBase[rid] = (totalCostBase[rid] || 0) + baseAmt;
 
-      // Buffed (kun til afford/disabled)
+      // Buffed (afford)
       const effRid = rid.startsWith('res.') ? rid : (defs?.res?.[rid] ? `res.${rid}` : rid);
       const buffedAmt = effRid.startsWith('res.')
         ? applyCostBuffsToAmount(baseAmt, effRid, { appliesToCtx: 'all', activeBuffs })
@@ -326,15 +327,15 @@ const basket = useMemo(() => {
     used,
     availableCap,
     capToUse,
-    totalCostBase,      // <- til visning
-    totalCostBuffed,    // <- til afford
+    totalCostBase,      // til UI
+    totalCostBuffed,    // til afford
     canAffordBuffed,
     hasCapacity,
     totalQty
   };
 }, [group, totals, toBuy, defs, state, isAnimal, activeBuffs]);
 
-// Samlet dyr (på tværs af dyr-faner) med buffede beløb — kun relevant på fuld side
+// Samlet dyr (på tværs af dyr-faner) med buffed beløb (kun fuld side)
 const combinedAnimals = useMemo(() => {
   if (embed || !group || group.capacityMode !== 'animalCap') return null;
 
@@ -383,24 +384,7 @@ const combinedAnimals = useMemo(() => {
   return { hasCapacity, canAfford };
 }, [embed, group, totals, toBuyByGroup, defs, state, activeBuffs]);
 
-
-
-// --- DEBUG: log centrale værdier for animal capacity issues ---
-useMemo(() => {
-  try {
-    console.debug('UNITPAGE DEBUG state.cap.animal_cap =', state?.cap?.animal_cap);
-    console.debug('UNITPAGE DEBUG totals (active group) =', totals);
-    console.debug('UNITPAGE DEBUG basket =', basket);
-    console.debug('UNITPAGE DEBUG combinedAnimals =', combinedAnimals);
-    // sanity convert to numbers for quick check
-    const stTotal = Number(state?.cap?.animal_cap?.total ?? NaN);
-    const stUsed = Number(state?.cap?.animal_cap?.used ?? NaN);
-    console.debug('UNITPAGE DEBUG numeric checks: total=', stTotal, 'used=', stUsed, 'available=', (Number.isFinite(stTotal) && Number.isFinite(stUsed) ? stTotal - stUsed : 'n/a'));
-  } catch (e) { console.error('UNITPAGE DEBUG error', e); }
-  return null;
-}, [state?.cap?.animal_cap, totals, basket, combinedAnimals]);
-
-// Disabled-logik: dyr på fuld side bruger samlet (cross-tab) check; ellers pr. fane
+// Disabled: brug samlet dyr-check i fuld side, ellers per-fane buffed
 const buyDisabled = useMemo(() => {
   if (!basket || basket.totalQty === 0) return true;
   if (!embed && group?.capacityMode === 'animalCap' && combinedAnimals) {
@@ -409,27 +393,55 @@ const buyDisabled = useMemo(() => {
   return !(basket.canAffordBuffed && basket.hasCapacity);
 }, [basket, embed, group, combinedAnimals]);
 
+// KØB: brug samme afford‑kilde som disabled check
+const handleBuy = useCallback(async () => {
+  if (!basket) return;
+  const animals = Object.fromEntries(Object.entries(toBuy).filter(([, q]) => Number(q) > 0));
+  if (!Object.keys(animals).length || basket.totalQty <= 0) throw new Error('No items selected.');
 
-  // KØB (samlet)
-  const handleBuy = useCallback(async () => {
-    if (!basket) return;
-    const animals = Object.fromEntries(Object.entries(toBuy).filter(([, q]) => Number(q) > 0));
-    if (!Object.keys(animals).length || basket.totalQty <= 0) throw new Error('No items selected.');
-    if (!basket.hasCapacity) throw new Error('Insufficient capacity.');
-    if (!basket.canAfford) throw new Error('Insufficient resources.');
+  // kapacitet pr. fane/samlet dyr tjek
+  if (!basket.hasCapacity) throw new Error('Insufficient capacity.');
+  const affordOk = (!embed && group?.capacityMode === 'animalCap' && combinedAnimals)
+    ? combinedAnimals.canAfford
+    : basket.canAffordBuffed;
+  if (!affordOk) throw new Error('Insufficient resources.');
 
-    const res = await fetch('/world-spil/backend/api/actions/animal.php', {
-      method: 'POST',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'buy', animals }),
-    });
-    const json = await res.json();
-    if (json && json.ok === false) throw new Error(json.message || 'Server refused purchase.');
-    setToBuyByGroup((prev) => ({ ...prev, [effectiveSelectedKey]: {} }));
-    await refreshData();
-    return json;
-  }, [basket, toBuy, effectiveSelectedKey, refreshData]);
+  const res = await fetch('/world-spil/backend/api/actions/animal.php', {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'buy', animals }),
+  });
+  const json = await res.json();
+  if (json && json.ok === false) throw new Error(json.message || 'Server refused purchase.');
+  setToBuyByGroup((prev) => ({ ...prev, [effectiveSelectedKey]: {} }));
+  await refreshData();
+  return json;
+}, [basket, toBuy, effectiveSelectedKey, refreshData, embed, group, combinedAnimals]);
+
+// Bekræft-dialog: brug base-total (UI) så prisen ikke bliver dobbelt-rabatteret
+const openBuyConfirm = () => {
+  if (!basket?.totalQty) return;
+
+  // Før: const costText = renderCostInline(basket.totalCostBase, defs);
+  // Efter: brug buffede totals
+  const costText = renderCostInline(basket.totalCostBuffed, defs);
+
+  setConfirm({
+    isOpen: true,
+    title: `Bekræft køb (${group?.label || 'Units'})`,
+    body: `Du køber ${basket.totalQty} enhed(er).<br/><div style="margin-top:8px;">Pris: ${costText || '(ukendt)'}</div>`,
+    onConfirm: async () => {
+      try {
+        await handleBuy();
+      } catch (e) {
+        alert(e.message || 'Køb fejlede.');
+      } finally {
+        setConfirm((c) => ({ ...c, isOpen: false }));
+      }
+    },
+  });
+};
 
   // SALG (per item)
   const handleSell = useCallback(
@@ -449,25 +461,6 @@ const buyDisabled = useMemo(() => {
     [refreshData]
   );
 
-  // Bekræft-dialoger
-  const openBuyConfirm = () => {
-    if (!basket?.totalQty) return;
-    const costText = renderCostInline(basket.totalCost, defs);
-    setConfirm({
-      isOpen: true,
-      title: `Bekræft køb (${group?.label || 'Units'})`,
-      body: `Du køber ${basket.totalQty} enhed(er).<br/><div style="margin-top:8px;">Pris: ${costText || '(ukendt)'}</div>`,
-      onConfirm: async () => {
-        try {
-          await handleBuy();
-        } catch (e) {
-          alert(e.message || 'Køb fejlede.');
-        } finally {
-          setConfirm((c) => ({ ...c, isOpen: false }));
-        }
-      },
-    });
-  };
 
   const openSellConfirm = (aniId, quantity) => {
     const key = aniId.replace(/^ani\./, '');

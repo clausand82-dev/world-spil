@@ -139,6 +139,7 @@
     <emoji>🦴</emoji  >
   </resource>
     <resource id="res.firewood" family="product" type="product" lvl="1" stage="1">
+    <stats>heatFossilCapacity=0.2</stats>
     <unit>pcs</unit>
     <unitSpace>0.1</unitSpace>
     <emoji>🪵</emoji  >

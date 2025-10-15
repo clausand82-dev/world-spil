@@ -15,18 +15,42 @@ export default function InlineCapacityBar({
   const roundedRaw = Math.round(rawPct);
   const delta = Math.abs(rawPct - 100); // afvigelse fra 100%
 
-  // visuel længde baseret på delta relativt til scaleMaxDelta
-  const displayPct = scaleMaxDelta > 0 ? Math.min(100, (delta / scaleMaxDelta) * 100) : Math.min(100, delta);
+  // displayPct: hvis scaleMaxDelta>0 bruger vi gammel "delta"-mode (skaleret),
+  // ellers viser vi den faktiske brug (rawPct) clamped til 0..100
+  let displayPct;
+  if (scaleMaxDelta > 0) {
+    displayPct = Math.min(100, (delta / scaleMaxDelta) * 100);
+  } else {
+    displayPct = Math.min(100, Math.max(0, rawPct));
+  }
 
-  // farver: under -> blå, over -> rød; ekstrem over (>=200) -> mørkerød
-  const isOver = rawPct > 100;
-  const redGradient = rawPct >= 200
-    ? 'linear-gradient(90deg,#6b0505,#3c0200)'
-    : 'linear-gradient(90deg,#ff7b72,#d9534f)';
-  const blueGradient = 'linear-gradient(90deg,#2c7be5,#06b6d4)';
+  // Farver opdelt i ønskede intervaller:
+  // 0-75% -> blå
+  // 76-95% -> orange
+  // 96-100% -> rød
+  // >100% -> mørk rød
+  // >=200% -> meget mørk rød
+  const blueGradient = 'linear-gradient(90deg,#2c7be5,#06b6d4)'; // 0-75
+  const orangeGradient = 'linear-gradient(90deg,#ffb020,#ff7a18)'; // 76-95
+  const redGradient = 'linear-gradient(90deg,#ff7b72,#d9534f)'; // 96-100
+  const darkRedGradient = 'linear-gradient(90deg,#6b0505,#3c0200)'; // >100
+  const veryDarkRedGradient = 'linear-gradient(90deg,#300000,#120000)'; // >=200 extreme
 
-  const fillGradient = isOver ? redGradient : blueGradient;
-  const textColor = isOver || roundedRaw >= 60 ? '#fff' : '#cbd5e1';
+  let fillGradient;
+  if (rawPct >= 200) {
+    fillGradient = veryDarkRedGradient;
+  } else if (rawPct > 100) {
+    fillGradient = darkRedGradient;
+  } else if (rawPct >= 96) {
+    fillGradient = redGradient;
+  } else if (rawPct >= 76) {
+    fillGradient = orangeGradient;
+  } else {
+    fillGradient = blueGradient;
+  }
+
+  // Tekstfarve: lys tekst ved høj brug (for kontrast), ellers lysere grå
+  const textColor = rawPct >= 60 || rawPct > 100 ? '#fff' : '#cbd5e1';
   const labelColor = '#cbd5e1';
 
   const bar = (
@@ -49,7 +73,7 @@ export default function InlineCapacityBar({
         gap: 10,
       }}
     >
-      {/* fill baseret på scaled delta */}
+      {/* fill baseret på displayPct */}
       {displayPct > 0 && (
         <div
           aria-hidden
@@ -60,7 +84,7 @@ export default function InlineCapacityBar({
             bottom: 0,
             width: `${displayPct}%`,
             background: fillGradient,
-            transition: 'width 260ms ease',
+            transition: 'width 260ms ease, background 260ms ease',
             zIndex: 0,
           }}
         />
@@ -102,8 +126,8 @@ export default function InlineCapacityBar({
 
         <div style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums', fontWeight: 700, color: textColor, fontSize: 12 }}>
           {Math.round(rawPct)}%
-          {!isOver && rawPct < 100 && <span style={{ marginLeft: 8, color: '#9ae6ff', fontWeight: 600 }}>-{Math.round(100 - rawPct)}%</span>}
-          {isOver && <span style={{ marginLeft: 8, color: rawPct >= 200 ? '#ffdede' : '#ffd6d6', fontWeight: 600 }}>+{Math.round(rawPct - 100)}%</span>}
+          {! (rawPct > 100) && rawPct < 100 && <span style={{ marginLeft: 8, color: '#9ae6ff', fontWeight: 600 }}>-{Math.round(100 - rawPct)}%</span>}
+          {rawPct > 100 && <span style={{ marginLeft: 8, color: rawPct >= 200 ? '#ffdede' : '#ffd6d6', fontWeight: 600 }}>+{Math.round(rawPct - 100)}%</span>}
         </div>
       </div>
     </div>

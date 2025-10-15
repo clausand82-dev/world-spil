@@ -31,7 +31,7 @@ try {
       array('res.hide', 30, 15.5),
       array('res.wool', 50, 17.5),
       array('res.bronze', 50, 17.5),
-      array('res.stonebrick', 50, 17.5),
+      array('res.stonebricks', 50, 17.5),
     );
 
     // deterministic seed så samme time giver samme liste
