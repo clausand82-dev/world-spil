@@ -1,4 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { queryClient } from './queryClient';
 import { useGameData } from './context/GameDataContext.jsx';
 import { useRouter } from './services/useRouter.jsx';
 
@@ -99,7 +101,8 @@ function App() {
 
   const isHelpHashOpen = (window.location.hash || '').startsWith('#/help');
 
-  return (
+return (
+  <QueryClientProvider client={queryClient}>
     <BoardProvider>
       <>
         {data && (
@@ -111,36 +114,27 @@ function App() {
         )}
 
         <Header />
-
-        {/* Valgfri ekstra knap, hvis du også vil have den her i layoutet */}
-        {/* <button className="icon-btn" onClick={() => setShowHelp(true)}>❓ Hjælp</button> */}
-
         <div className="content">
-          <main id="main">
-            {mainContent}
-          </main>
-
+          <main id="main">{mainContent}</main>
           {data && <Sidebar />}
         </div>
-
         {data && page !== 'map' && <Quickbar activePage={page} />}
 
         <HelpOverlay
           isOpen={showHelp || isHelpHashOpen}
           onClose={() => {
             setShowHelp(false);
-            // Hvis vi er på #/help, gå tilbage til sidste kendte rute i stedet for "#/"
             if (isHelpHashOpen) {
               const backTo = lastNonHelpHashRef.current || '#/map';
               window.location.hash = backTo;
             }
           }}
           topics={HELP_TOPICS}
-          // initialTopicId="intro"
         />
       </>
     </BoardProvider>
-  );
+  </QueryClientProvider>
+);
 }
 
 export default App;

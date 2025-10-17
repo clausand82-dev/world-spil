@@ -1,106 +1,123 @@
-import React, { createContext, useState, useEffect, useContext, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useState, useCallback } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 const GameDataContext = createContext(null);
 
+async function fetchAllData() {
+  // Bevar dit eksisterende endpoint
+  const dataUrl = `/world-spil/backend/api/alldata.php?ts=${Date.now()}`;
+  const res = await fetch(dataUrl, { cache: 'no-store' });
+  if (!res.ok) throw new Error(`API error: ${res.status}`);
+  const json = await res.json();
+  if (!json?.ok) throw new Error(json?.error?.message || 'API data error');
+  return json.data;
+}
+
 export function GameDataProvider({ children }) {
-  const [gameState, setGameState] = useState({ 
-    isLoading: true, 
-    data: null, 
-    artManifest: new Set(), // Initialiser som et tomt Set
-    error: null 
-  });
+  const queryClient = useQueryClient();
 
-  const fetchData = useCallback(async () => {
-    try {
-      setGameState(prev => ({ ...prev, isLoading: !prev?.data, error: null }));
-      
-      // 1. Hent primær spildata
-      const API_BASE = import.meta.env.VITE_API_BASE ?? '';
-      //const dataUrl = `${API_BASE}/backend/api/alldata.php?ts=${Date.now()}`;
-      const dataUrl = `/world-spil/backend/api/alldata.php?ts=${Date.now()}`;
-      const gameDataResponse = await fetch(dataUrl, { cache: 'no-store' });
-      if (!gameDataResponse.ok) throw new Error(`API error: ${gameDataResponse.status}`);
-      const gameDataResult = await gameDataResponse.json();
-      if (!gameDataResult.ok) throw new Error(gameDataResult.error?.message || 'API data error');
-
-      // 2. Hent billed-manifest (fra /public/assets/art/manifest.json)
-      let artManifestSet = new Set();
-      try {
-        const manifestResponse = await fetch('/assets/art/manifest.json', { cache: 'no-store' });
-        if (manifestResponse.ok) {
-          const manifestArray = await manifestResponse.json();
-          if (Array.isArray(manifestArray)) {
-            artManifestSet = new Set(manifestArray);
-          }
-        }
-      } catch (manifestError) {
-        console.warn("Could not load art manifest. Placeholders may be used.", manifestError);
-      }
-
-      setGameState(prev => ({
-        ...prev,
-        isLoading: false,
-        data: gameDataResult.data,
-        artManifest: artManifestSet,
-        error: null
-      }));
-
-    } catch (error) {
-      console.error("Failed to fetch game data:", error);
-      setGameState(prev => ({ ...prev, isLoading: false, error }));
-    }
-  }, []);
+  // Art manifest beholdes som separat state (som før)
+  const [artManifest, setArtManifest] = useState(() => new Set());
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    let active = true;
+    (async () => {
+      try {
+        const resp = await fetch('/assets/art/manifest.json', { cache: 'no-store' });
+        if (resp.ok) {
+          const arr = await resp.json();
+          if (active && Array.isArray(arr)) setArtManifest(new Set(arr));
+        }
+      } catch {
+        // valgfrit: log
+      }
+    })();
+    return () => { active = false; };
+  }, []);
 
-  // Optimistic resource updates for locks/refunds/yields
+  // Hoveddata via React Query
+  const {
+    data,
+    error,
+    isLoading,
+    refetch,
+  } = useQuery({
+    queryKey: ['alldata'],
+    queryFn: fetchAllData,
+    // Vi lader ResourceAutoRefresh styre polling-frekvens, så ingen fast refetchInterval her
+  });
+
+  // Optimistiske delta-opdateringer (samme behavior som før, men via setQueryData)
   const applyLockedCostsDelta = useCallback((lockedList = [], sign = -1) => {
     if (!Array.isArray(lockedList) || lockedList.length === 0) return;
-    setGameState(prev => {
-      if (!prev?.data) return prev;
-      const next = { ...prev, data: { ...prev.data, state: { ...prev.data.state, inv: { ...(prev.data.state?.inv || {}), solid: { ...(prev.data.state?.inv?.solid || {}) }, liquid: { ...(prev.data.state?.inv?.liquid || {}) } }, ani: { ...(prev.data.state?.ani || {}) } } } };
+    queryClient.setQueryData(['alldata'], (prev) => {
+      if (!prev) return prev;
+      const next = {
+        ...prev,
+        state: {
+          ...prev.state,
+          inv: {
+            ...(prev.state?.inv || {}),
+            solid: { ...(prev.state?.inv?.solid || {}) },
+            liquid: { ...(prev.state?.inv?.liquid || {}) },
+          },
+          ani: { ...(prev.state?.ani || {}) },
+        },
+      };
       for (const row of lockedList) {
-        const rid = String(row.res_id || '');
-        const amt = Number(row.amount || 0) * sign;
+        const rid = String(row?.res_id || '');
+        const amt = Number(row?.amount || 0) * sign;
         if (!rid || !amt) continue;
         if (rid.startsWith('ani.')) {
-          const cur = next.data.state.ani[rid]?.quantity || 0;
-          next.data.state.ani[rid] = { ...(next.data.state.ani[rid] || {}), quantity: cur + amt };
+          const cur = next.state.ani[rid]?.quantity || 0;
+          next.state.ani[rid] = { ...(next.state.ani[rid] || {}), quantity: cur + amt };
         } else {
           const key = rid.replace(/^res\./, '');
-          if (key in next.data.state.inv.solid) {
-            next.data.state.inv.solid[key] = (next.data.state.inv.solid[key] || 0) + amt;
-          } else if (key in next.data.state.inv.liquid) {
-            next.data.state.inv.liquid[key] = (next.data.state.inv.liquid[key] || 0) + amt;
-          } else {
-            next.data.state.inv.solid[key] = (next.data.state.inv.solid[key] || 0) + amt;
-          }
+          if (key in next.state.inv.solid) next.state.inv.solid[key] = (next.state.inv.solid[key] || 0) + amt;
+          else if (key in next.state.inv.liquid) next.state.inv.liquid[key] = (next.state.inv.liquid[key] || 0) + amt;
+          else next.state.inv.solid[key] = (next.state.inv.solid[key] || 0) + amt;
         }
       }
       return next;
     });
-  }, []);
+  }, [queryClient]);
 
   const applyResourceDeltaMap = useCallback((resources = {}) => {
     if (!resources || typeof resources !== 'object') return;
-    setGameState(prev => {
-      if (!prev?.data) return prev;
-      const next = { ...prev, data: { ...prev.data, state: { ...prev.data.state, inv: { ...(prev.data.state?.inv || {}), solid: { ...(prev.data.state?.inv?.solid || {}) }, liquid: { ...(prev.data.state?.inv?.liquid || {}) } } } } };
+    queryClient.setQueryData(['alldata'], (prev) => {
+      if (!prev) return prev;
+      const next = {
+        ...prev,
+        state: {
+          ...prev.state,
+          inv: {
+            ...(prev.state?.inv || {}),
+            solid: { ...(prev.state?.inv?.solid || {}) },
+            liquid: { ...(prev.state?.inv?.liquid || {}) },
+          },
+        },
+      };
       for (const [rid, delta] of Object.entries(resources)) {
         const amt = Number(delta || 0);
         if (!amt) continue;
         const key = String(rid).replace(/^res\./, '');
-        if (key in next.data.state.inv.solid) next.data.state.inv.solid[key] = (next.data.state.inv.solid[key] || 0) + amt;
-        else if (key in next.data.state.inv.liquid) next.data.state.inv.liquid[key] = (next.data.state.inv.liquid[key] || 0) + amt;
-        else next.data.state.inv.solid[key] = (next.data.state.inv.solid[key] || 0) + amt;
+        if (key in next.state.inv.solid) next.state.inv.solid[key] = (next.state.inv.solid[key] || 0) + amt;
+        else if (key in next.state.inv.liquid) next.state.inv.liquid[key] = (next.state.inv.liquid[key] || 0) + amt;
+        else next.state.inv.solid[key] = (next.state.inv.solid[key] || 0) + amt;
       }
       return next;
     });
-  }, []);
+  }, [queryClient]);
 
-  const value = { ...gameState, refreshData: fetchData, applyLockedCostsDelta, applyResourceDeltaMap };
+  const value = useMemo(() => ({
+    isLoading,
+    data,
+    artManifest,
+    error,
+    refreshData: refetch,
+    applyLockedCostsDelta,
+    applyResourceDeltaMap,
+  }), [isLoading, data, artManifest, error, refetch, applyLockedCostsDelta, applyResourceDeltaMap]);
 
   return (
     <GameDataContext.Provider value={value}>
@@ -110,9 +127,3 @@ export function GameDataProvider({ children }) {
 }
 
 export const useGameData = () => useContext(GameDataContext);
-
-
-
-
-
-

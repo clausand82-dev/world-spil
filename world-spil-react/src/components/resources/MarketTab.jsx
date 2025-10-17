@@ -495,8 +495,7 @@ export default function MarketTab() {
                           <div style={{ fontSize:18, flex:'0 0 auto' }}>{norm.res_emoji}</div>
                           <div style={{ minWidth:0 }}>
                             <div className="res-name" style={{ fontSize:14, color:'#fff', fontWeight:700 }}>{norm.res_name}</div>
-                            <div style={{ fontSize:11, color:'#94a3b8' }}>{norm.res_id}</div>
-                          </div>
+                                                    </div>
                         </div>
                       </td>
                       <td>{formatAmountAsInt(r.amount)}</td>
@@ -546,7 +545,7 @@ export default function MarketTab() {
                           <div style={{ fontSize:18, flex:'0 0 auto' }}>{norm.res_emoji}</div>
                           <div style={{ minWidth:0 }}>
                             <div className="res-name" style={{ fontSize:14, color:'#fff', fontWeight:700 }}>{norm.res_name}</div>
-                            <div style={{ fontSize:11, color:'#94a3b8' }}>{norm.res_id}</div>
+                      
                           </div>
                         </div>
                       </td>
