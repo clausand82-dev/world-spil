@@ -8,6 +8,7 @@ import { fetchSchema } from '../services/managementSchemaApi.js';
 import { interpolate, computeFieldEffectsPreview } from '../components/utils/policyExpr.js';
 import { projectSummaryWithChoices } from '../components/utils/policyProjector.js';
 import ManagementStatsTooltip from '../components/management/ManagementStatsTooltip.jsx';
+import { addSummaryRefreshListener, removeSummaryRefreshListener } from '../events/summaryEvents.js';
 
 /**
  * Tabs/families der kan vælges i toppen.
@@ -117,7 +118,13 @@ export default function ManagementPageDynamic() {
   const { data: gameData } = useGameData();
   const { data: summary } = useHeaderSummary();
 
+  // DEBUG: bekræft at komponenten mountes og hvilke keys den ser
+  console.debug('ManagementPageDynamic mounted', { activeKey: TABS[0]?.key, summaryLoaded: !!summary, gameDataLoaded: !!gameData });
+
   const [activeKey, setActiveKey] = useState(TABS[0]?.key || 'health');
+
+  // Om klienten leverer sections-konfiguration (bruges som dependency i effect)
+  const clientHasSections = Object.keys(sectionsByFamily || {}).length > 0;
 
   const [schema, setSchema] = useState(null);
   const [defaults, setDefaults] = useState({});
@@ -171,7 +178,53 @@ export default function ManagementPageDynamic() {
       }
     })();
     return () => { mounted = false; };
-  }, [activeKey]);
+  }, [activeKey, clientHasSections]);
+ 
+  // Genindlæs kun overrides når vi modtager summary-refresh eller overridesSaved events
+  useEffect(() => {
+    let mounted = true;
+
+    const refreshOverrides = async () => {
+      try {
+        // Hent overrides fra server for aktiv family
+        const server = await fetchOverrides(activeKey);
+        if (!mounted) return;
+        const famOverrides = server[activeKey] || {};
+
+        // Udled defaults fra allerede hentet schema (fallback hvis schema mangler)
+        const dfl = {};
+        if (schema && schema.fields) {
+          for (const [k, def] of Object.entries(schema.fields || {})) {
+            const c = def?.control || {};
+            if ('default' in c) dfl[k] = c.default;
+          }
+        }
+
+        const merged = { ...dfl, ...famOverrides };
+        setDefaults(dfl);
+        setChoices(merged);
+        setSnapshot(merged);
+
+      } catch (e) {
+        if (mounted) console.warn('ManagementPageDynamic: failed to refresh overrides', e);
+      }
+    };
+
+    // Lyt på summary refresh events — payload kan indeholde { family }
+    const onSummary = ({ family } = {}) => {
+      // hvis payload angiver familie, kun refresh hvis den matcher aktiv family
+      if (family && family !== activeKey) return;
+      // ellers kør refresh
+      refreshOverrides();
+    };
+
+    addSummaryRefreshListener(onSummary);
+    // cleanup
+    return () => {
+      mounted = false;
+      removeSummaryRefreshListener(onSummary);
+    };
+  }, [activeKey, schema]);
 
   const onSave = async () => {
     const overrides = {};

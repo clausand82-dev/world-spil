@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useT } from "../services/i18n.js";
+import { useGameData } from '../context/GameDataContext.jsx';                // NYT
+import { triggerSummaryRefresh } from '../events/summaryEvents.js';           // NYT
 
 const ROLE_ORDER = [
   { key: 'adultsPolice', label: 'Police' },
@@ -23,6 +25,7 @@ const CAP_KEY_MAP = {
 };
 
 export default function CitizenAssignmentsPage() {
+  const { refreshData } = useGameData() || {}; // NYT
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState('');
@@ -122,22 +125,18 @@ export default function CitizenAssignmentsPage() {
       });
       const json = await res.json();
       if (!json?.ok) throw new Error(json?.error?.message || 'Ukendt fejl');
-      // Refetch for at se serverens clamps/kriminalitets-fordeling m.m.
+
+      // Opdater både game-data og summary-stats straks
+      await (typeof refreshData === 'function' ? refreshData() : Promise.resolve());
+      triggerSummaryRefresh();
+
+      // Valgfrit: opdater lokal sidevisning
       await fetchState();
-      // Vis pæn bekræftelse i stedet for alert
-      setToast({
-        show: true,
-        msg: 'Tildeling gemt 🎉',
-        variant: 'success'
-      });
-      
+
+      setToast({ show: true, msg: 'Gemte tildeling', variant: 'success' });
     } catch (e) {
       setErr(e?.message || String(e));
-      setToast({
-        show: true,
-        msg: 'Fejl ved gem: ' + (e?.message || String(e)),
-        variant: 'error'
-      });
+      setToast({ show: true, msg: 'Fejl ved gem', variant: 'error' });
     } finally {
       setSaving(false);
     }
