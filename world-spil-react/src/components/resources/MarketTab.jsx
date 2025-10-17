@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import BuyModal from './modals/BuyModal.jsx';
 import { useGameData } from '../../context/GameDataContext.jsx';
-import { addMarketRefreshListener, removeMarketRefreshListener, dispatchMarketRefresh } from '../../events/marketEvents.js';
+import { addMarketRefreshListener, removeMarketRefreshListener, triggerMarketRefresh  } from '../../events/marketEvents.js';
 
 export default function MarketTab() {
   const tableCss = `
@@ -298,35 +298,29 @@ export default function MarketTab() {
 
   // initial load
   useEffect(() => { fetchLocal(); fetchGlobal(); }, []);
+useEffect(() => { if (viewMode === 'global') fetchGlobal(); }, [ownMode, sort, q, viewMode]);
 
-  // Hent igen ved fokus/visibility og når der trigges et globalt market:refresh-event
-  useEffect(() => {
-    const refreshLists = () => {
-      try {
-        if (document.visibilityState === 'visible') {
-          fetchLocal();
-          fetchGlobal();
-        }
-      } catch (e) {
-        // ignore
-      }
-    };
+// NEW: refresh on focus/visibility + global event
+useEffect(() => {
+  const refreshLists = () => {
+    if (document.visibilityState === 'visible') {
+      fetchLocal();
+      fetchGlobal();
+    }
+  };
+  const onFocus = () => refreshLists();
+  const onVisibility = () => refreshLists();
 
-    const onFocus = () => refreshLists();
-    const onVisibility = () => refreshLists();
+  window.addEventListener('focus', onFocus);
+  document.addEventListener('visibilitychange', onVisibility);
+  addMarketRefreshListener(refreshLists);
 
-    window.addEventListener('focus', onFocus);
-    document.addEventListener('visibilitychange', onVisibility);
-
-    // Lyt på globalt market-refresh event
-    addMarketRefreshListener(refreshLists);
-
-    return () => {
-      window.removeEventListener('focus', onFocus);
-      document.removeEventListener('visibilitychange', onVisibility);
-      removeMarketRefreshListener(refreshLists);
-    };
-  }, []);
+  return () => {
+    window.removeEventListener('focus', onFocus);
+    document.removeEventListener('visibilitychange', onVisibility);
+    removeMarketRefreshListener(refreshLists);
+  };
+}, []);
 
   // open buy (use normalized offer) and clear previous errors
   const openBuy = (offer) => {
@@ -375,7 +369,7 @@ export default function MarketTab() {
       setTimeout(() => setSuccessOpen(false), 2500);
       try { await refetch?.(); } catch (e) { /* ignore */ }
       await fetchLocal(); await fetchGlobal();
-      try { dispatchMarketRefresh(); } catch (e) { /* ignore */ }
+      try { triggerMarketRefresh(); } catch (e) { /* ignore */ }
     } catch (e) {
       console.error('cancelOwn error', e);
       showError({ message: e?.message || 'Uventet fejl', details: e });
@@ -654,7 +648,7 @@ export default function MarketTab() {
             await fetchLocal();
             await fetchGlobal();
             // notify resten af app'en om at noget ændrede sig (fx Header/Inventory kan lytte)
-            try { dispatchMarketRefresh(); } catch (e) { /* ignore */ }
+            try { triggerMarketRefresh(); } catch (e) { /* ignore */ }
 
             setSuccessMessage('Købet er gennemført.');
             setSuccessOpen(true);

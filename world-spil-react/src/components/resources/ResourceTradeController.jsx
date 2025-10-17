@@ -3,11 +3,12 @@ import { useGameData } from '../../context/GameDataContext.jsx';
 import ResourceActionModal from './modals/ResourceActionModal.jsx';
 import LocalSellModal from './modals/LocalSellModal.jsx';
 import GlobalListingModal from './modals/GlobalListingModal.jsx';
+import { triggerMarketRefresh } from '../../events/marketEvents.js';
 
 const GLOBAL_MIN_STAGE = 2; // same as before
 
 export default function ResourceTradeController({ onChanged }) {
-  const { data: gameData, refetch } = useGameData();
+  const { data: gameData, refreshData } = useGameData();
   const stage = Number(gameData?.state?.user?.currentstage ?? 0);
   const inv = gameData?.state?.inv || { solid: {}, liquid: {} };
 
@@ -76,39 +77,43 @@ export default function ResourceTradeController({ onChanged }) {
 
   // Local accepted handler (sends res_id + amount only)
   const onLocalAccepted = async ({ qty }) => {
-    try {
-      const r = await fetch('/world-spil/backend/api/actions/market_local_sell.php', {
-        method: 'POST', credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ res_id: resId, amount: qty })
-      }).then(r => r.json());
-      if (!r?.ok) throw new Error(r?.error?.message || 'Fejl');
-      onChanged?.();
-      await refetch?.();
-      closeAll();
-    } catch (e) {
-      alert(e.message || 'Salg fejlede');
-      closeAll();
-    }
-  };
+  try {
+    const r = await fetch('/world-spil/backend/api/actions/market_local_sell.php', {
+      method: 'POST', credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ res_id: resId, amount: qty })
+    }).then(r => r.json());
+    if (!r?.ok) throw new Error(r?.error?.message || 'Fejl');
+
+    triggerMarketRefresh();       // tell MarketTab to reload lists
+    await refreshData?.();        // refresh resources/money
+    onChanged?.();
+    closeAll();
+  } catch (e) {
+    alert(e.message || 'Salg fejlede');
+    closeAll();
+  }
+};
 
   // Global listing submit (posts res_id, amount, price)
   const onGlobalSubmit = async ({ qty, price }) => {
-    try {
-      const r = await fetch('/world-spil/backend/api/actions/marketplace_create.php', {
-        method: 'POST', credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ res_id: resId, amount: qty, price })
-      }).then(r => r.json());
-      if (!r?.ok) throw new Error(r?.error?.message || 'Fejl');
-      onChanged?.();
-      await refetch?.();
-      closeAll();
-    } catch (e) {
-      alert(e.message || 'Sæt til salg fejlede');
-      closeAll();
-    }
-  };
+  try {
+    const r = await fetch('/world-spil/backend/api/actions/marketplace_create.php', {
+      method: 'POST', credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ res_id: resId, amount: qty, price })
+    }).then(r => r.json());
+    if (!r?.ok) throw new Error(r?.error?.message || 'Fejl');
+
+    triggerMarketRefresh();
+    await refreshData?.();
+    onChanged?.();
+    closeAll();
+  } catch (e) {
+    alert(e.message || 'Sæt til salg fejlede');
+    closeAll();
+  }
+};
 
   return (
     <>

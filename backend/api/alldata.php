@@ -679,6 +679,20 @@ $data['yields_preview'] = $yields_preview;
         /* 7) Output */
         $out = ['defs' => $defs, 'state' => $state, 'lang' => $langMap, 'config' => $cfg];
         if ($debug) $out['__debug'] = ['xml_scan' => $debugXml ?? []];
+
+        // ETag / cache helpers: send 304 if client already has same payload
+        // Bemærk: Content-Type sættes tidligere når WS_RUN_MODE === 'run'
+        header('Cache-Control: no-cache');
+        $etag = '"' . md5(json_encode($out['state']['inv'] ?? []) . json_encode($out['state']['user'] ?? [])) . '"';
+        // send 304 hvis If-None-Match matcher
+        $ifNone = $_SERVER['HTTP_IF_NONE_MATCH'] ?? '';
+        if ($ifNone === $etag) {
+            http_response_code(304);
+            exit;
+        }
+        // ellers offentliggør etag header så klient kan cache/validerer næste gang
+        header('ETag: ' . $etag);
+
         jout(true, $out);
 
         

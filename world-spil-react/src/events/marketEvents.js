@@ -1,7 +1,13 @@
-// Lille event-bus til at trigge opdatering af markedslister fra hvor som helst
 const EVT = 'market:refresh';
 
-const listeners = new Set();
-export function addMarketRefreshListener(cb) { listeners.add(cb); }
-export function removeMarketRefreshListener(cb) { listeners.delete(cb); }
-export function dispatchMarketRefresh() { for (const cb of Array.from(listeners)) { try { cb(); } catch(e){} } }
+export function triggerMarketRefresh() {
+  try { window.dispatchEvent(new CustomEvent(EVT)); } catch {}
+}
+
+export function addMarketRefreshListener(fn) {
+  try { window.addEventListener(EVT, fn); } catch {}
+}
+
+export function removeMarketRefreshListener(fn) {
+  try { window.removeEventListener(EVT, fn); } catch {}
+}

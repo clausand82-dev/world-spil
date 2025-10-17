@@ -126,8 +126,10 @@ export default function ActionButton({ item, allOk }) {
             }
           } else {
             if (Array.isArray(payload?.locked_costs) && payload.locked_costs.length) {
-              applyLockedCostsDelta && applyLockedCostsDelta(payload.locked_costs, +1);
-            }
+            applyLockedCostsDelta && applyLockedCostsDelta(payload.locked_costs, +1);
+          }
+          // ensure UI is current
+          refreshData && refreshData();
           }
           // Uanset hvad, prøv at rydde ActiveBuilds for dette id lokalt
           updateActiveBuilds((map) => { delete map[id]; });
