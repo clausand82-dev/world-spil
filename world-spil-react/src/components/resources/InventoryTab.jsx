@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useGameData } from '../../context/GameDataContext.jsx';
+import { addMarketRefreshListener, removeMarketRefreshListener } from '../../events/marketEvents.js';
 import ResourceList from '../../components/ResourceList.jsx';
 import AnimalList from '../../components/AnimalList.jsx';
 import { fmt } from '../../services/helpers.js';
@@ -8,7 +9,39 @@ import CapHoverContent from '../../components/ui/CapHoverContent.jsx';
 import ResourceCapacityModal from './ResourceCapacityModal.jsx';
 
 export default function InventoryPage() {
-  const { data, isLoading, error } = useGameData();
+  const { data, isLoading, error, refetch } = useGameData();
+  // fallback tick for callers where refetch isn't present
+  const [, setTick] = useState(0);
+
+  // Re-fetch when market signals change, and when window regains focus / becomes visible
+  useEffect(() => {
+    const refresh = async () => {
+      try {
+        if (document.visibilityState !== 'visible') return;
+        if (typeof refetch === 'function') {
+          await refetch();
+        } else {
+          // trigger a local rerender if no refetch available
+          setTick(t => t + 1);
+        }
+      } catch (e) {
+        // ignore
+      }
+    };
+
+    const onFocus = () => refresh();
+    const onVisibility = () => { if (document.visibilityState === 'visible') refresh(); };
+
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onVisibility);
+    addMarketRefreshListener(refresh);
+
+    return () => {
+      window.removeEventListener('focus', onFocus);
+      document.removeEventListener('visibilitychange', onVisibility);
+      removeMarketRefreshListener(refresh);
+    };
+  }, [refetch]);
 
   if (isLoading) return <div className="sub">Indlæser beholdning...</div>;
   if (error) return <div className="sub">Fejl: Kunne ikke hente data.</div>;

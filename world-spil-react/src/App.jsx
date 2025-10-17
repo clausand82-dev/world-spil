@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { QueryClientProvider } from '@tanstack/react-query';
-import { queryClient } from './queryClient';
+// Fjernet: QueryClientProvider + queryClient imports
 import { useGameData } from './context/GameDataContext.jsx';
 import { useRouter } from './services/useRouter.jsx';
 
@@ -42,7 +41,6 @@ function App() {
         lastNonHelpHashRef.current = h;
       }
     };
-    // fang nuværende straks og på fremtidige ændringer
     capture();
     window.addEventListener('hashchange', capture);
     return () => window.removeEventListener('hashchange', capture);
@@ -101,8 +99,7 @@ function App() {
 
   const isHelpHashOpen = (window.location.hash || '').startsWith('#/help');
 
-return (
-  <QueryClientProvider client={queryClient}>
+  return (
     <BoardProvider>
       <>
         {data && (
@@ -133,8 +130,7 @@ return (
         />
       </>
     </BoardProvider>
-  </QueryClientProvider>
-);
+  );
 }
 
 export default App;
