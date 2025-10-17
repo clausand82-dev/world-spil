@@ -1,7 +1,8 @@
 const listeners = new Set();
 export function addSummaryRefreshListener(cb) { listeners.add(cb); }
 export function removeSummaryRefreshListener(cb) { listeners.delete(cb); }
-// sørg for at dispatch er asynkron
+
+// Asynkron dispatch så vi ikke risikerer at trigge hooks midt i render
 export function triggerSummaryRefresh() {
   setTimeout(() => {
     for (const cb of Array.from(listeners)) {

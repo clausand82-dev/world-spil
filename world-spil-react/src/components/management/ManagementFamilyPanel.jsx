@@ -6,11 +6,12 @@ import { fetchOverrides, saveOverrides } from '../../services/managementChoicesA
 import { fetchSchema } from '../../services/managementSchemaApi.js';
 import { projectSummaryWithChoices } from '../utils/policyProjector.js';
 import { adaptSchemaToConfig, sectionsByFamily } from '../../pages/ManagementPageDynamic.jsx';
+import { triggerSummaryRefresh } from '../../events/summaryEvents.js'; // NYT
 
 export default function ManagementFamilyPanel({ family }) {
-  const { data: gameData } = useGameData();
+  const { data: gameData, refreshData } = useGameData(); // tilføj refreshData
   const { data: summary } = useHeaderSummary();
-
+  
   const [loading, setLoading] = useState(true);
   const [schema, setSchema] = useState(null);
   const [schemaMissing, setSchemaMissing] = useState(false);
@@ -124,6 +125,16 @@ export default function ManagementFamilyPanel({ family }) {
       if (JSON.stringify(v) !== JSON.stringify(defaults[k])) overrides[k] = v;
     }
     await saveOverrides(family, overrides, { replaceFamily: true });
+
+    try {
+      await refreshData?.();
+    } catch (e) { console.warn('refreshData failed', e); }
+
+    // lille pause så context-opdatering når at slå igennem før summary-lyttere kører
+    await new Promise(resolve => setTimeout(resolve, 50));
+
+    try { triggerSummaryRefresh(); } catch (e) { console.warn('triggerSummaryRefresh failed', e); }
+
     setSnapshot(choices);
   };
   const onRevert = () => setChoices(snapshot);

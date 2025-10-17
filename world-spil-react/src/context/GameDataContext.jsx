@@ -109,6 +109,12 @@ export function GameDataProvider({ children }) {
     });
   }, [queryClient]);
 
+  async function refreshData() {
+    console.debug('refreshData: start');
+    await doActualFetch();
+    console.debug('refreshData: end');
+  }
+
   const value = useMemo(() => ({
     isLoading,
     data,
