@@ -1,5 +1,7 @@
 import { useState, useCallback } from 'react';
+import { triggerSummaryRefresh } from '../events/summaryEvents.js';
 import { useGameData } from '../context/GameDataContext.jsx';
+
 
 export default function useCitizensReproductionTick() {
   const { refreshData } = useGameData() || {};
@@ -15,7 +17,20 @@ export default function useCitizensReproductionTick() {
       const json = await res.json();
       if (json.ok) {
         setResult(json.data);
-        await refreshData?.();  // ensure UI reflects changes
+        // Opdater både alldata (inv/user) og summary (stats)
+        try {
+          // kør refreshData i en microtask (ikke synkront i samme call-stack)
+          if (typeof refreshData === 'function') {
+            await Promise.resolve().then(() => refreshData());
+          }
+        } catch (e) {
+          console.error('useCitizensReproductionTick: refreshData failed', e);
+        }
+
+        // Dispatch summary-refresh asynkront (macrotask) for at undgå at trigge hooks midt i render
+        setTimeout(() => {
+          try { triggerSummaryRefresh(); } catch (e) { console.error('useCitizensReproductionTick: triggerSummaryRefresh failed', e); }
+        }, 0);
       } else {
         setError(json.error?.message || 'Ukendt fejl');
       }

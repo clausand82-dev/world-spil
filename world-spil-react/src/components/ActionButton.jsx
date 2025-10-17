@@ -58,6 +58,7 @@ export default function ActionButton({ item, allOk }) {
           if (Array.isArray(job.locked_costs) && job.locked_costs.length) {
             applyLockedCostsDelta && applyLockedCostsDelta(job.locked_costs, -1);
           }
+          
         } else {
           // Ukendt returværdi -> vis optimistisk indtil ActiveBuilds opdateres andetsteds
           setLocalActive(true);

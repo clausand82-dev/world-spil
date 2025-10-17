@@ -50,6 +50,17 @@ export default function HeaderBudgetBadge() {
   const { data, loading, err } = useHeaderSummary();
   const t = useT();
 
+  // --- flytede hooks: altid kald hooks her, før tidlige return ---
+  const [open, setOpen] = useState(false);
+  const [healthExpanded, setHealthExpanded] = useState(false);
+  const [citizensExpanded, setCitizensExpanded] = useState(false);
+
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') setOpen(false); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
   if (loading || err || !data) return null;
 
   const usages = data?.usages ?? {};
@@ -96,41 +107,6 @@ export default function HeaderBudgetBadge() {
     // per dit ønske: comes-from-usage => expense
     return renderTwoColsRow(prettifyKey(key), 0, val, key);
   }
-
-  // --- flytede state/hooks så modalContent kan bruge dem ---
-  const [open, setOpen] = useState(false);
-  const [healthExpanded, setHealthExpanded] = useState(false);
-  const [citizensExpanded, setCitizensExpanded] = useState(false);
-
-  useEffect(() => {
-    const onKey = (e) => { if (e.key === 'Escape') setOpen(false); };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, []);
-
-  function openDialog() { setOpen(true); }
-  function closeDialog() { setOpen(false); }
-
-  const ratio = taxCap > 0 ? Math.max(0, Math.min(1, taxUsed / taxCap)) : 0;
-  const pct = Math.round(ratio * 100);
-
-  const hoverContent = (
-    <div style={{ minWidth: 220 }}>
-      <div style={{ fontWeight: 700, marginBottom: 4 }}>Budget</div>
-      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-        <span>Forbrug (tax)</span><span>{fmtNum(taxUsed)}</span>
-      </div>
-      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-        <span>Indkomst (tax)</span><span>{fmtNum(taxCap)}</span>
-      </div>
-      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-        <span>Forskel</span><span>{fmtNum(diff)}</span>
-      </div>
-      <div style={{ marginTop: 6, fontSize: 12, color: 'var(--muted, #888)' }}>
-        Klik for flere detaljer
-      </div>
-    </div>
-  );
 
   const modalContent = (
     <div style={{ minWidth: 360 }}>
@@ -238,6 +214,27 @@ export default function HeaderBudgetBadge() {
     </div>
   );
 
+  const ratio = taxCap > 0 ? Math.max(0, Math.min(1, taxUsed / taxCap)) : 0;
+  const pct = Math.round(ratio * 100);
+
+  const hoverContent = (
+    <div style={{ minWidth: 220 }}>
+      <div style={{ fontWeight: 700, marginBottom: 4 }}>Budget</div>
+      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+        <span>Forbrug (tax)</span><span>{fmtNum(taxUsed)}</span>
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+        <span>Indkomst (tax)</span><span>{fmtNum(taxCap)}</span>
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+        <span>Forskel</span><span>{fmtNum(diff)}</span>
+      </div>
+      <div style={{ marginTop: 6, fontSize: 12, color: 'var(--muted, #888)' }}>
+        Klik for flere detaljer
+      </div>
+    </div>
+  );
+
   return (
     <>
       <HoverCard content={hoverContent} cardStyle={{ maxWidth: 360, minWidth: 220 }}>
@@ -245,14 +242,14 @@ export default function HeaderBudgetBadge() {
           className="res-chip"
           title="Budget (tax)"
           style={{ cursor: 'pointer', userSelect: 'none' }}
-          onClick={(e) => { e.stopPropagation(); openDialog(); }}
+          onClick={(e) => { e.stopPropagation(); setOpen(true); }}
         >
           💹 {fmtNum(taxUsed)} / {fmtNum(taxCap)}
         </span>
       </HoverCard>
 
       {/* Klik-åbnet modal (brug projektets modal-komponent så stilen matcher resten af appen) */}
-      <Modal open={open} onClose={closeDialog} title="Budget" size="medium">
+      <Modal open={open} onClose={() => setOpen(false)} title="Budget" size="medium">
         <div style={{ padding: 12, maxWidth: 640 }}>
           {modalContent}
         </div>

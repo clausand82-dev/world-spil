@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { addSummaryRefreshListener, removeSummaryRefreshListener } from '../events/summaryEvents.js';
 
 const ENDPOINT = '/world-spil/backend/api/header/summary.php';
 const STORAGE_KEY = 'ws:summary-cache-v1';
@@ -188,6 +189,19 @@ export default function useHeaderSummary({ revalidateMs = 30000 } = {}) {
       if (mountedRef.current) setLoading(false);
     }
   };
+
+  // Hold en ref til refresh så globale events kan kalde den uden at re-registrere lytteren hver render
+  const refreshRef = useRef(refresh);
+  useEffect(() => { refreshRef.current = refresh; }, [refresh]);
+
+  // Lyt kun én gang; onRefresh kalder altid den seneste refresh via ref
+  useEffect(() => {
+    const onRefresh = () => {
+      try { refreshRef.current?.(); } catch (e) { /* ignore */ }
+    };
+    addSummaryRefreshListener(onRefresh);
+    return () => removeSummaryRefreshListener(onRefresh);
+  }, []);
 
   return { data, err, loading, refresh, lastUpdated, unauthenticated };
 }

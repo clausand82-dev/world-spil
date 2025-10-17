@@ -4,6 +4,9 @@ export async function fetchOverrides(family) {
   const json = await res.json();
   if (!json.ok) throw new Error(json.error?.message || 'Failed to load overrides');
   return json.overrides || {};
+// efter succes:
+await refreshData?.();
+triggerSummaryRefresh();
 }
 
 export async function saveOverrides(family, overrides, { replaceFamily = true } = {}) {
