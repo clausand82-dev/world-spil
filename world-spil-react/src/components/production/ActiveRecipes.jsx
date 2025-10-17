@@ -3,8 +3,9 @@ import { useGameData } from '../../context/GameDataContext.jsx';
 import RecipeRow from '../building/rows/RecipeRow.jsx';
 import { useT } from '../../services/i18n.js';
 import * as H from '../../services/helpers.js';
+import { collectActiveBuffs } from '../../services/requirements.js';
 
-export default function ActiveRecipes({ defs: defsProp, state: stateProp, stage: stageProp, debug = false }) {
+export default function ActiveRecipes({ defs: defsProp, state: stateProp, stage: stageProp, debug = true }) {
   const t = useT();
   const tf = (key, fallback) => { const v = t(key); return v === key ? fallback : v; };
 
@@ -17,6 +18,10 @@ export default function ActiveRecipes({ defs: defsProp, state: stateProp, stage:
     : Number(state?.user?.currentstage ?? state?.user?.stage ?? 0) || 0;
 
   const recipeDefs = defs?.rcp || {};
+  // Shared cache so requirementInfo can see active buffs
+  const requirementCaches = React.useMemo(() => {
+    return { activeBuffs: collectActiveBuffs(defs) || [] };
+  }, [defs]);
 
   // Ejerede bygnings-familier (intet level-krav)
   const ownedBuildingFamilies = useMemo(() => {
@@ -120,16 +125,6 @@ export default function ActiveRecipes({ defs: defsProp, state: stateProp, stage:
     return out;
   }, [recipeDefs, ownedBuildingFamilies, ownedBldMax, ownedAddMax, currentStage]);
 
-  if (debug) {
-    // Hjælp til at se hvad der sker
-    console.log('[ActiveRecipes][debug]', {
-      currentStage,
-      ownedBuildingFamilies: Array.from(ownedBuildingFamilies),
-      totalRecipes: Object.keys(recipeDefs).length,
-      matched: entries.map((e) => e.fullId),
-    });
-  }
-
   if (isLoading) return <div className="sub">{tf('ui.text.loading.h1', 'Indlæser...')}</div>;
   if (error || !data) return <div className="sub">{tf('ui.text.error.h1', 'Fejl.')}</div>;
 
@@ -160,7 +155,7 @@ export default function ActiveRecipes({ defs: defsProp, state: stateProp, stage:
             defs={defs}
             state={state}
             baseOwned={true}
-            requirementCaches={{}}
+            requirementCaches={requirementCaches}
           />
         ))}
       </div>

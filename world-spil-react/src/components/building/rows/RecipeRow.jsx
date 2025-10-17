@@ -53,7 +53,8 @@ function RecipeRow({ entry, defs, state, baseOwned, requirementCaches }) {
     id: fullId,
     price: def.cost || {},
     req: def.require || def.req || '',
-    duration_s: Number(def.duration_s ?? 0),
+    // Use buffed/final duration from requirementInfo when available
+    duration_s: Number(requirement?.duration?.final_s ?? Number(def.duration_s ?? 0)),
     isUpgrade: entry.level > 1,
     isOwned: false,
     owned: false,

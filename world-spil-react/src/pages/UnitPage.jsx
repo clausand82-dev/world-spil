@@ -632,11 +632,7 @@ const openBuyConfirm = () => {
     Køb valgte {group.label.toLowerCase()}
   </button>
 </div>
-<div style={{ marginTop: 8, fontSize: 12, color: 'var(--muted,#999)' }}>
-    <div>DEBUG — animal_cap (raw): {JSON.stringify(state?.cap?.animal_cap)}</div>
-    <div>DEBUG — totals: total={H.fmt(basket?.total || 0)}, used={H.fmt(basket?.used || 0)}, capToUse={H.fmt(basket?.capToUse || 0)}</div>
-    <div>DEBUG — combined: total={H.fmt(combinedAnimals?.globalTotal || 0)}, used={H.fmt(combinedAnimals?.globalUsed || 0)}, capToUseAll={H.fmt(combinedAnimals?.capToUseAll || 0)}, available={H.fmt(combinedAnimals?.availableCap || 0)}</div>
-  </div>
+
   {basket?.shortfalls && Object.keys(basket.shortfalls).length > 0 && (
   <div style={{ marginTop: 8, color: '#f66', fontSize: 13 }}>
     <strong>Manglende ressourcer:</strong>
