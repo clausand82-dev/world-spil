@@ -45,6 +45,8 @@ function renderPolicyEntry(key, v, totalForGroup) {
 }
 
 export default function HeaderBudgetBadge() {
+
+  
   const { data, loading, err } = useHeaderSummary();
   const t = useT();
 

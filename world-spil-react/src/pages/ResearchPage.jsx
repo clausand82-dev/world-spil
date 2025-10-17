@@ -188,12 +188,20 @@ export default function ResearchPage() {
   const didScrollForCurrentRef = useRef(false);
 
   function getFocusFromHash() {
+    // Primært: kig efter query i hash (fx #/research?focus=...)
     const h = window.location.hash || '';
     const idx = h.indexOf('?');
-    if (idx === -1) return '';
+    if (idx !== -1) {
+      try {
+        const qs = new URLSearchParams(h.slice(idx + 1));
+        return qs.get('focus') || '';
+      } catch { /* ignore malformed */ }
+    }
+
+    // Fallback: kig i location.search (fx /research?focus=...)
     try {
-      const qs = new URLSearchParams(h.slice(idx + 1));
-      return qs.get('focus') || '';
+      const qs2 = new URLSearchParams(window.location.search || '');
+      return qs2.get('focus') || '';
     } catch {
       return '';
     }

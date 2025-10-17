@@ -177,7 +177,7 @@ try {
   // Usages (citizen-baseret)
   $USAGE_FIELDS = [
     'useHousing','useProvision','useWater',
-    'useCloth','useMedicin','wasteOther',
+    'useCloth','useMedicin',
     'deathHealthExpose','deathHealthWeight','deathHealthBaseline',
     'birthRate','movingIn','movingOut','usePolice','useSocial',
 
@@ -190,6 +190,9 @@ try {
 
     // tax
     'useTax','useTaxHealth','useTaxCitizens',
+
+    // Waste
+    'useWaste','useWasteOrganic','useWasteOther',
   ];
   $usages = [];
   foreach ($USAGE_FIELDS as $field) {
@@ -365,11 +368,16 @@ if (!empty($summary['capChoice']) && is_array($summary['capChoice'])) {
   $useHealthTop  = (float)($usages['useHealth']['total']  ?? 0);
   $healthDen  = (float)($usages['useHealthDentist']['total'] ?? 0);
 
+  $wasteOrg = (float)($usages['wasteOrganic']['total'] ?? 0);
+  $wasteOth = (float)($usages['wasteOther']['total'] ?? 0);  
+
   $taxHealth = (float)($usages['useTaxHealth']['total'] ?? 0);
   $taxCitizens = (float)($usages['useTaxCitizens']['total'] ?? 0);
   $taxOther  = (float)($usages['useTax']['total'] ?? 0);
 
   $usages['useHeat']['total']    = $heatF + $heatG + $heatN + $useHeatTop;
+  $usages['useWaste']['total']   = $wasteOrg + $wasteOth;
+
   $usages['usePower']['total']   = $powerF + $powerG + $powerN + $usePowerTop;
   $usages['useHealth']['total']  = $healthDen + $useHealthTop;
   $usages['useTax']['total']     = $taxHealth + $taxOther + $taxCitizens;
@@ -395,6 +403,11 @@ if (!empty($summary['capChoice']) && is_array($summary['capChoice'])) {
     ($capacities['taxHealthCapacity']  ?? 0) +
     ($capacities['taxCitizensCapacity']  ?? 0) +
     ($capacities['taxCapacity']         ?? 0)
+  );
+    $capacities['wasteCapacity'] = (float)(
+    ($capacities['wasteOrganicCapacity']  ?? 0) +
+    ($capacities['wasteOtherCapacity']  ?? 0) +
+    ($capacities['wasteCapacity']         ?? 0)
   );
 
 
@@ -445,7 +458,44 @@ if (!empty($summary['capChoice']) && is_array($summary['capChoice'])) {
     'stage'      => $userStage,
   ]);
 
-  // (Din eksisterende “AFSNIT HER SKAL TJEKKE …” kan blive, hvis du ønsker de ekstra justeringer)
+  // AFSNIT HER SKAL TJEKKE OG BRUGE EFFEKTER
+
+                // ----------------- NYT: Anvend effect-justeringer (enkelt, erstat baseline) -----------------
+      // Hvis effects indeholder adjustments for happiness -> anvend dem direkte og overskriv baseline
+      if (!empty($effects['adjustments']['happiness'])) {
+        $adj = $effects['adjustments']['happiness'];
+        $mult = (float)($adj['mult'] ?? 1.0);
+        $add  = (float)($adj['add'] ?? 0.0);
+
+        // Best-effort hent baseline fra almindelige keys, ellers 0
+        $happyBaseline = 0.0;
+        if (is_array($happinessData)) {
+          foreach (['total','value','score','overall','happiness','mean'] as $k) {
+            if (isset($happinessData[$k]) && is_numeric($happinessData[$k])) {
+              $happyBaseline = (float)$happinessData[$k];
+              break;
+            }
+          }
+        } elseif (is_numeric($happinessData)) {
+          $happyBaseline = (float)$happinessData;
+        }
+
+        // Beregn effektive værdi og overskriv baseline så frontend ikke skal ændres
+        $effective = $happyBaseline * $mult + $add;
+        // Gem både effective og overskriv total (frontend bruger total som før)
+        if (is_array($happinessData)) {
+          $happinessData['effective'] = $effective;
+          $happinessData['total'] = $effective;
+        } else {
+          // hvis happinessData er scalar, pak det i en struktur
+          $happinessData = ['total' => $effective, 'effective' => $effective];
+        }
+
+        // Kort warning til diagnostik (fjern senere hvis ikke ønsket)
+        $effects['warnings'][] = sprintf('Applied happiness adjustment: mult=%.3f add=%.3f (baseline=%.3f -> effective=%.3f)', $mult, $add, $happyBaseline, $effective);
+      }
+
+  // AFSLUTNING AF EFFECT TJEK OG ANVENDELSE
 
   // Afrunding helper
   function round_numeric_recursive($val, int $decimals = 2) {

@@ -153,8 +153,17 @@
   <entry key="ui.capdesc.water.h1">Kapacitet til vand (hvor meget vand der kan leveres).</entry>
   <entry key="ui.usagedesc.water.h1">Hvor meget vand der forbruges alt i alt.</entry>
 
+
+  <entry key="ui.emoji.waste.h1">💩</entry>
+  <entry key="ui.label.waste.h1">Affald</entry>
+  <entry key="ui.capdesc.waste_.h1">Hvor meget affald, der kan opbevares og behandles.</entry>
+  <entry key="ui.usagedesc.waste.h1">Hvor meget affald, kan produceres.</entry>
+  <entry key="ui.emoji.waste_organic.h1">💩</entry>
+  <entry key="ui.label.waste_organic.h1">Affald (organisk)</entry>
+  <entry key="ui.capdesc.waste_organic.h1">Hvor meget affald (organisk) der kan opbevares og behandles.</entry>
+  <entry key="ui.usagedesc.waste_organic.h1">Hvor meget affald (organisk) kan produceres.</entry>
   <entry key="ui.emoji.waste_other.h1">💩</entry>
-  <entry key="ui.label.waste_other.h1">Affald</entry>
+  <entry key="ui.label.waste_other.h1">Affald (andet)</entry>
   <entry key="ui.capdesc.waste_other.h1">Hvor meget affald (andet) der kan opbevares og behandles.</entry>
   <entry key="ui.usagedesc.waste_other.h1">Hvor meget affald (andet) kan produceres.</entry>
 
@@ -259,6 +268,8 @@
 
 
 <!--BUILDINGS-->
+  <entry key="bld.admin.l1.name">Test bygning</entry>
+  <entry key="bld.admin.l1.desc">Bruges til at teste forskellige stats osv. - ER IKKE EN DEL AF SPILLET.</entry>
   <entry key="bld.basecamp.l1.name">Lejrbål</entry>
   <entry key="bld.basecamp.l1.desc">Spillets starter base</entry>
   <entry key="bld.basecamp.l2.name">Lille lejrplads</entry>
@@ -304,6 +315,7 @@
   <entry key="bld.health.l1.name">Medicin telt</entry>
   <entry key="bld.health.l1.desc">Et medicin telt, hvor der kan udøves basal første hjælp.</entry>
 
+
 <!--ADDONS BASECAMP-->  
   <entry key="add.choppingblock.l1.name">Økseblok</entry>
   <entry key="add.choppingblock.l1.desc">Økseblok bruges til at hugge brænde på</entry>
@@ -322,6 +334,16 @@
   <entry key="add.well.l2.desc">Tilføjer en større brønd til lejren</entry>
   <entry key="add.well_bucket.l1.name">Brøndspand</entry>
   <entry key="add.well_bucket.l1.desc">Bruges til at hente vand fra brønden</entry>
+
+  <entry key="add.bigfireplace_stonepot.l1.name">Stengryde</entry>
+  <entry key="add.bigfireplace_stonepot.l1.desc">En lille fordybning i en sten - fungerer primitivt som en slags gryde.</entry>
+  <entry key="add.bigfireplace_mortarandpestle.l1.name">Morter og Støder</entry>
+  <entry key="add.bigfireplace_mortarandpestle.l1.desc">En morter og støder til at knuse urter og andre ting.</entry>
+  <entry key="add.furnace.l1.name">Smedje</entry>
+  <entry key="add.furnace.l1.desc">En simpel smedje til at holde varmen med.</entry>
+  <entry key="add.maizefield_scarecrow.l1.name">Kornmark med fugleskræmsel</entry>
+  <entry key="add.maizefield_scarecrow.l1.desc">En kornmark med et fugleskræmsel for at holde fugle væk.</entry>
+
 
 <!--ADDONS FARM-->  
   <entry key="add.barn.l1.name">Lille stald</entry>
@@ -551,6 +573,14 @@
   <entry key="rsd.medicinstorage.l1.name">Medicinsk opbevaring</entry>
   <entry key="rsd.medicinstorage.l1.desc">Giver mulighed for sikker opbevaring af medicin og medicinsk udstyr</entry>
 
+  <entry key="rsd.straw.l1.name">Udnyt strå bedre</entry>
+  <entry key="rsd.straw.l1.desc">giver mulighed for at udvinde mere strå.</entry>
+
+  <entry key="rsd.cooking.l1.name">Madlavning</entry>
+  <entry key="rsd.cooking.l1.desc">Giver evnen til at lave mad og forbedre madlavningsteknikker</entry>
+
+  <entry key="rsd.maizefield_scarecrow.l1.name">Fugleskræmsel til Majs mark</entry>
+  <entry key="rsd.maizefield_scarecrow.l1.desc">Giver evnen til at beskytte majsmarker mod skadedyr og øger udbytte.</entry>
 
 <!--RECIPES-->
   <entry key="rcp.firewood.l1.name">Lav brænde</entry>
@@ -577,8 +607,55 @@
   <entry key="rcp.slaughterrabbit.l1.desc">Giver kød og skind ved slagtning</entry>
   <entry key="rcp.trimsheep.l1.name">Klip får</entry>
   <entry key="rcp.trimsheep.l1.desc">Giver uld fra får</entry>
-  <entry key="rcp.fishtofood.l1.name">Lav fiskemad</entry>
+  <entry key="rcp.fishtofood.l1.name">Lav mad</entry>
   <entry key="rcp.fishtofood.l1.desc">Producerer mad fra fisk</entry>
+  <entry key="rcp.maizefield_scarecrow.l1.name">Malk ko</entry>
+  <entry key="rcp.maizefield_scarecrow.l1.desc">Producerer mælk fra køer</entry>
+  <entry key="rcp.straw.l1.name">Forsk i strå</entry>
+  <entry key="rcp.straw.l1.desc">udnyt strå til forskellige formål</entry>
+  <entry key="rcp.cooking.l1.name">Madlavning</entry>
+  <entry key="rcp.cooking.l1.desc">Forbedrer madlavningseffektivitet og madkvalitet</entry>
+
+  <entry key="rcp.fertilizer.l1.name">Lav gødning</entry>
+  <entry key="rcp.fertilizer.l1.desc">Producer gødning ud fra det du lige har ved hånden.</entry>
+  <entry key="rcp.flintstone.l1.name">Lav flintesten værktøj</entry>
+  <entry key="rcp.flintstone.l1.desc">Producer værktøj med flintesten</entry>
+  <entry key="rcp.woodtorope.l1.name">Lav reb af træ</entry>
+  <entry key="rcp.woodtorope.l1.desc">Producer reb af træ</entry>
+  <entry key="rcp.basictools.l1.name">Lav basis værktøj</entry>
+  <entry key="rcp.basictools.l1.desc">Producer basis værktøj</entry>
+  <entry key="rcp.basictools.l2.name">Lav bedre basis værktøj</entry>
+  <entry key="rcp.basictools.l2.desc">Producer bedre basis værktøj</entry>
+  <entry key="rcp.clothtorope.l1.name">Lav reb af stof</entry>
+  <entry key="rcp.clothtorope.l1.desc">Producer reb af stof</entry>
+  <entry key="rcp.cloth.l1.name">Lav stof</entry>
+  <entry key="rcp.cloth.l1.desc">Producer stof af uld, læder og skind.</entry>
+  <entry key="rcp.cockedfish.l1.name">Lav kogt fisk</entry>
+  <entry key="rcp.cockedfish.l1.desc">Producer kogt fisk</entry>
+  <entry key="rcp.cockedmeattofood.l1.name">Lav mad</entry>
+  <entry key="rcp.cockedmeattofood.l1.desc">Producer kogt kød til mad</entry>
+  <entry key="rcp.cockedfishtofood.l1.name">Lav mad</entry>
+  <entry key="rcp.cockedfishtofood.l1.desc">Producer kogt fisk til mad</entry>
+  <entry key="rcp.souptofood.l1.name">Lav mad</entry>
+  <entry key="rcp.souptofood.l1.desc">Producer suppe til mad</entry>
+  <entry key="rcp.breadtofood.l1.name">Lav mad</entry>
+  <entry key="rcp.breadtofood.l1.desc">Producer brød til mad</entry>
+  <entry key="rcp.bread.l1.name">Lav brød fra mel</entry>
+  <entry key="rcp.bread.l1.desc">Producer brød fra mel</entry>
+  <entry key="rcp.meattosoup.l1.name">Lav suppe</entry>
+  <entry key="rcp.meattosoup.l1.desc">Producer en god suppe med kød.</entry>
+  <entry key="rcp.fishtosoup.l1.name">Lav suppe</entry>
+  <entry key="rcp.fishtosoup.l1.desc">Producer en god suppe af fisk.</entry>
+  <entry key="rcp.wheatflour.l1.name">Lav hvedemel</entry>
+  <entry key="rcp.wheatflour.l1.desc">Producer hvedemel fra hvede</entry>
+  <entry key="rcp.bonemeal.l1.name">Lav benmel</entry>   
+  <entry key="rcp.bonemeal.l1.desc">Producer benmel fra knogler</entry>
+  <entry key="rcp.coal.l1.name">Lav kul</entry>
+  <entry key="rcp.coal.l1.desc">Producer kul fra træ.</entry>
+  <entry key="rcp.animalfoodwithbonemeal.l1.name">Lav dyrefoder med benmel</entry>
+  <entry key="rcp.animalfoodwithbonemeal.l1.desc">Producer dyrefoder med benmel</entry>
+  <entry key="rcp.animalfoodwithoutbonemeal.l1.name">Lav dyrefoder uden benmel</entry>
+  <entry key="rcp.animalfoodwithoutbonemeal.l1.desc">Producer dyrefoder uden benmel</entry>
 
 <!--RESOURCES--> 
   <entry key="res.wood.name">Træ</entry>
@@ -649,6 +726,42 @@
   <entry key="res.iron.desc">Jernmalm fra miner</entry>
   <entry key="res.bronze.name">Bronze</entry>
   <entry key="res.bronze.desc">Bronzeblending fra miner</entry>
+
+  <entry key="res.flintstone.name">Flintsten</entry>
+  <entry key="res.flintstone.desc">Kan bruges til at lave værktøj</entry>
+
+  <entry key="res.basictools.name">Basis værktøj</entry>
+  <entry key="res.basictools.desc">Nødvendigt værktøj til grundlæggende opgaver</entry>
+
+  <entry key="res.coal.name">Kul</entry>
+  <entry key="res.coal.desc">Brændstof til ovne og smedjer</entry>
+
+  <entry key="res.soup.name">Suppe</entry>
+  <entry key="res.soup.desc">Kan laves af forskellige ingredienser</entry>
+
+  <entry key="res.bread.name">Brød</entry>
+  <entry key="res.bread.desc">Kan laves af korn</entry>
+
+  <entry key="res.rope.name">Reb</entry>
+  <entry key="res.rope.desc">Kan laves af planter eller uld</entry>
+
+  <entry key="res.animalfood.name">Dyrefoder</entry>
+  <entry key="res.animalfood.desc">Foder til dyr</entry>
+
+  <entry key="res.cloth.name">Stof</entry>
+  <entry key="res.cloth.desc">Kan bruges til tøj og reb</entry>
+
+  <entry key="res.cockedmeat.name">Kogt kød</entry>
+  <entry key="res.cockedmeat.desc">Kan laves af rå kød</entry>
+
+  <entry key="res.cockedfish.name">Kogt fisk</entry>
+  <entry key="res.cockedfish.desc">Kan laves af rå fisk</entry>
+
+  <entry key="res.wheatflour.name">Hvedemel</entry>
+  <entry key="res.wheatflour.desc">Kan laves af hvede</entry>
+
+  <entry key="res.bonemeal.name">Benmel</entry>
+  <entry key="res.bonemeal.desc">Kan laves af knogler</entry>
 
 <!--ANIMALS-->
   <entry key="ani.cow.name">Kalv</entry>

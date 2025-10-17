@@ -6,7 +6,7 @@
   <stats>animal_cap=-10;provisionCapacity=5;waterUsage=2;wasteOtherUsage=1</stats>
     <cost>
       <res id="res.money" amount="10"/>
-      <res id="res.food" amount="6"/>
+      <res id="res.animalfood" amount="6"/>
     </cost>
     <yield period="1h">
         <res id="res.fertilizer" amount="1"/>
@@ -19,19 +19,20 @@
     <stats>animal_cap=-4;provisionCapacity=3;waterUsage=3;wasteOtherUsage=4</stats>
     <cost>
       <res id="res.money" amount="10"/>
-      <res id="res.food" amount="2"/>
+      <res id="res.animalfood" amount="2"/>
     </cost>
     <yield period="1h">
         <res id="res.fertilizer" amount="4"/>
     </yield>
     <emoji>🐖</emoji>
+   
   </animal>
 
   <animal id="ani.goat" family="farm" stage="1">
     <stats>animal_cap=-5;provisionCapacity=1;waterUsage=2;wasteOtherUsage=1</stats>
     <cost>
       <res id="res.money" amount="10"/>
-      <res id="res.food" amount="2"/>
+      <res id="res.animalfood" amount="2"/>
     </cost>
     <yield period="1h">
         <res id="res.goatmilk" amount="2"/>
@@ -44,7 +45,7 @@
    <stats>animal_cap=-5;provisionCapacity=1;waterUsage=2;wasteOtherUsage=1</stats>
     <cost>
       <res id="res.money" amount="10"/>
-      <res id="res.food" amount="2"/>
+      <res id="res.animalfood" amount="2"/>
     </cost>
     <yield period="1h">
         <res id="res.wool" amount="2"/>
@@ -57,7 +58,7 @@
    <stats>animal_cap=-1;provisionCapacity=0.2;waterUsage=0.2;wasteOtherUsage=1</stats>
     <cost>
       <res id="res.money" amount="10"/>
-      <res id="res.food" amount="2"/>
+      <res id="res.animalfood" amount="2"/>
     </cost>
     <yield period="1h">
         <res id="res.egg" amount="1"/>
@@ -73,7 +74,7 @@
     <stats>animal_cap=-10;provisionCapacity=0.3;waterUsage=0.2</stats>
     <cost>
       <res id="res.money" amount="10"/>
-      <res id="res.food" amount="2"/>
+      <res id="res.animalfood" amount="2"/>
     </cost>
     <yield period="1h">
     </yield>
@@ -84,7 +85,7 @@
    <stats>animal_cap=-1;provisionCapacity=0.2;waterUsage=0.4;wasteOtherUsage=1</stats>
     <cost>
       <res id="res.money" amount="10"/>
-      <res id="res.food" amount="2"/>
+      <res id="res.animalfood" amount="2"/>
     </cost>
     <yield period="1h">
         <res id="res.egg" amount="1"/>

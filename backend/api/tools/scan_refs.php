@@ -38,12 +38,18 @@ foreach ($it as $f) {
         continue;
     }
     // collect defined ids from common element names
-    foreach (['building','research','addon'] as $tag) {
+    // inkluder også recipe / rcp og res/resource tags så recipes og resources opdages
+    foreach (['building','research','addon','recipe','rcp','res','resource'] as $tag) {
         $nodes = $xml->xpath("//{$tag}[@id]");
         foreach ($nodes as $n) {
             $id = (string)$n['id'];
             $defined[$id] = $tag;
         }
+    }
+    // collect <res id="..."/> usages (cost/yield/etc.) as referenced ids
+    $resNodes = $xml->xpath("//res[@id]");
+    foreach ($resNodes as $r) {
+        $collectId((string)$r['id'], $path . ' <res>');
     }
     // collect require / require-like attributes and tags
     // tags: <require>, <upgradesTo>, <upgradesTo><target id="..."/>

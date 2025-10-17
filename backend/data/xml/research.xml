@@ -1,130 +1,153 @@
 <?xml version="1.0" encoding="utf-8"?>
-<research source="World 2025.xlsx" sheet="Research">
+<researchs source="World 2025.xlsx" sheet="Research">
   
 
-<!-- Basic tools -->
-  <research id="rsd.flintstone.l1" family="basecamp" type="ressource" lvl="1" stage="1">
-    <cost>
-      <res id="res.money" amount="50"/>
-    </cost>
-    <time>2m</time>
-    <require>bld.basecamp.l1</require>
-  </research>
+<!-- STAGE 1 -->
 
-    <research id="rsd.rope.l1" family="basecamp" type="ressource" lvl="1" stage="1">
-    <cost>
-      <res id="res.money" amount="50"/>
-    </cost>
-    <time>2m</time>
-    <require>bld.basecamp.l1</require>
-  </research>
-
-
-  <research id="rsd.tools.l1" family="basecamp" type="tools" lvl="1" stage="1">
-    <cost>
-      <res id="res.money" amount="25"/>
-    </cost>
-    <time>2m</time>
-    <require>rsd.flintstone.l1,rsd.rope.l1</require>
-    <upgradesTo>rsd.tools.l2</upgradesTo>
-  </research>
-
-  <research id="rsd.tools.l2" family="basecamp" type="tools" lvl="2" stage="1">
+ <research id="rsd.flintstone.l1" family="basecamp" type="ressource" lvl="1" stage="1">
     <cost>
       <res id="res.money" amount="50"/>
     </cost>
     <time>5m</time>
-    <require>bld.basecamp.l2,rsd.tools.l1</require>
-    <upgradesTo>rsd.tools.l3</upgradesTo>
+    <require>bld.basecamp.l1</require>
   </research>
 
-    <research id="rsd.tools.l3" family="basecamp" type="tools" lvl="3" stage="1">
+ <research id="rsd.rope.l1" family="basecamp" type="ressource" lvl="1" stage="1">
+    <cost>
+      <res id="res.money" amount="50"/>
+    </cost>
+    <time>5m</time>
+    <require>rsd.flintstone.l1</require>
+  </research>
+
+<research id="rsd.tools.l1" family="basecamp" type="tools" lvl="1" stage="1">
     <cost>
       <res id="res.money" amount="25"/>
     </cost>
-    <time>30m</time>
-    <require>add.barn.l2,bld.mine.l2,rsd.tools.l2</require>
+    <time>5m</time>
+    <require>rsd.rope.l1</require>
+    <upgradesTo>rsd.tools.l2</upgradesTo>
   </research>
 
-
-<!--  VANDBRUG -->
-    <research id="rsd.irrigation.l1" family="basecamp" type="agri" lvl="1" stage="1">
+ <research id="rsd.tools.l2" family="basecamp" type="tools" lvl="2" stage="1">
     <cost>
-      <res id="res.money" amount="200"/>
-      <res id="res.stone" amount="40"/>
+      <res id="res.money" amount="50"/>
     </cost>
     <time>15m</time>
-    <require>bld.basecamp.l2,rsd.tools.l1</require>
+    <require>bld.basecamp.l2,rsd.leatherwork.l1</require>
+    <upgradesTo>rsd.tools.l3</upgradesTo>
   </research>
 
-    <research id="rsd.irrigation.l2" family="basecamp" type="agri" lvl="2" stage="2">
+  <research id="rsd.tools.l3" family="basecamp" type="tools" lvl="3" stage="1">
     <cost>
-      <res id="res.money" amount="350"/>
-      <res id="res.stone" amount="75"/>
+      <res id="res.money" amount="100"/>
     </cost>
     <time>30m</time>
-    <require>bld.farm.l2,rsd.irrigation.l1</require>
-    </research>
-
-    <research id="rsd.fishing.l1" family="lake" type="storage" lvl="1" stage="1">
-    <cost>
-      <res id="res.money" amount="75"/>
-    </cost>
-    <time>10m</time>
-    <require>bld.lake.l1,rsd.irrigation.l1</require>
+    <require>bld.mine.l1,rsd.mining.l1</require>
   </research>
 
-      <research id="rsd.fishing.l2" family="lake" type="storage" lvl="2" stage="1">
+  <research id="rsd.leatherwork.l1" family="basecamp" type="storage" lvl="1" stage="1">
     <cost>
-      <res id="res.money" amount="75"/>
+      <res id="res.money" amount="100"/>
     </cost>
-    <time>10m</time>
-    <buffs applies_to="all">
-      <res id="res.rawcommonfish" type="mult" amount="50" mode="yield"/>
-    </buffs>
-    <require>rsd.fishing.l1,add.mole.l1</require>
+    <time>20m</time>
+    <require>rsd.animalhusbandry.l1</require>
   </research>
 
-  <research id="rsd.fishing.l3" family="lake" type="storage" lvl="3" stage="2">
+  <research id="rsd.mining.l1" family="mine" type="storage" lvl="1" stage="1">
     <cost>
-      <res id="res.money" amount="150"/>
+      <res id="res.money" amount="100"/>
+      <res id="res.stone" amount="5"/>
+      <res id="res.wood" amount="5"/>
     </cost>
     <time>10m</time>
-    <buffs applies_to="all">
-      <res id="res.rawcommonfish" type="mult" amount="50" mode="yield"/>
-    </buffs>
-    <require>rsd.fishing.l2,bld.lake.l2</require>
+    <require>rsd.leatherwork.l1,bld.basecamp.l2</require>
   </research>
 
-<!--  FOREST  -->
+  <research id="rsd.mining.l2" family="mine" type="storage" lvl="2" stage="2">
+    <cost>
+      <res id="res.money" amount="500"/>
+    </cost>
+    <time>2h</time>
+    <require>rsd.tools.l3</require>
+  </research>
+
+  <research id="rsd.irrigation.l1" family="basecamp" type="agri" lvl="1" stage="1">
+    <cost>
+      <res id="res.money" amount="200"/>
+      <res id="res.stone" amount="45"/>
+      <res id="res.water" amount="25"/>
+    </cost>
+    <time>15m</time>
+    <require>bld.basecamp.l2,rsd.leatherwork.l1</require>
+  </research>
 
   <research id="rsd.forestry.l1" family="forest" type="agri" lvl="1" stage="1">
     <cost>
       <res id="res.money" amount="100"/>
       <res id="res.wood" amount="10"/>
     </cost>
-    <time>3m</time>
-    <require>bld.basecamp.l2,rsd.tools.l1</require>
+    <time>10m</time>
+    <require>bld.basecamp.l2,rsd.leatherwork.l1</require>
   </research>
 
-    <research id="rsd.forestry.l2" family="forest" type="agri" lvl="2" stage="2">
+   <research id="rsd.fishing.l1" family="lake" type="storage" lvl="1" stage="1">
     <cost>
-      <res id="res.money" amount="200"/>
-      <res id="res.wood" amount="15"/>
+      <res id="res.money" amount="75"/>
+      <res id="res.water" amount="25"/>
     </cost>
-    <time>3m</time>
-    <require>rsd.forestry.l1</require>
-  </research> 
+    <time>10m</time>
+    <require>bld.lake.l1,rsd.irrigation.l1</require>
+  </research>
 
- <!-- Farming related resarch--> 
-  
-    <research id="rsd.animalhusbandry.l1" family="farm" type="animal" lvl="1" stage="1">
+  <research id="rsd.fishing.l2" family="lake" type="storage" lvl="2" stage="1">
+    <cost>
+      <res id="res.money" amount="125"/>
+      <res id="res.water" amount="50"/>
+    </cost>
+    <time>25m</time>
+    <buffs applies_to="all">
+      <res id="res.rawcommonfish" type="mult" amount="50" mode="yield"/> <!--50 % more to fishing of rawcommonfish on all-->
+    </buffs>
+    <require>rsd.fishing.l1,add.mole.l1</require>
+  </research>
+
+  <research id="rsd.betterstorage.l1" family="storage" type="storage" lvl="1" stage="1">
+    <cost>
+      <res id="res.money" amount="100"/>
+      <res id="res.wood" amount="10"/>
+      <res id="res.stone" amount="10"/>
+    </cost>
+    <time>30m</time>
+    <require>bld.storage.l1</require>
+  </research>
+
+  <research id="rsd.campmanagement.l1" family="storage" type="storage" lvl="2" stage="2">
+    <cost>
+      <res id="res.money" amount="250"/>
+    </cost>
+    <time>1h</time>
+    <buffs applies_to="all">
+      <res id="res.money" type="mult" amount="5" mode="yield"/> <!--5 % more to fishing of money on all-->
+    </buffs>
+    <require>bld.tent.l2, rsd.tools.l2</require>
+  </research>
+
+ <research id="rsd.farming.l1" family="farm" type="agri" lvl="1" stage="1">
+    <cost>
+      <res id="res.money" amount="100"/>
+    </cost>
+    <time>10m</time>
+    <require>bld.farm.l1</require>
+  </research>
+
+  <research id="rsd.animalhusbandry.l1" family="farm" type="animal" lvl="1" stage="1">
     <cost>
       <res id="res.money" amount="100"/>
       <res id="res.water" amount="25"/>
     </cost>
-    <time>1m</time>
-    <require>bld.basecamp.l1</require>
+    <time>5m</time>
+    <require>rsd.farming.l1</require>
   </research>
 
       <research id="rsd.animalhusbandry.l2" family="farm" type="animal" lvl="2" stage="1">
@@ -132,41 +155,16 @@
       <res id="res.money" amount="150"/>
       <res id="res.water" amount="45"/>
     </cost>
-    <time>10m</time>
+    <time>15m</time>
     <require>add.barn.l1,rsd.animalhusbandry.l1</require>
   </research>
 
-  <research id="rsd.animalhusbandry.l3" family="farm" type="animal" lvl="3" stage="2">
-    <cost>
-      <res id="res.money" amount="225"/>
-      <res id="res.water" amount="56"/>
-    </cost>
-    <time>30m</time>
-    <require>rsd.farming.l2</require>
-  </research>
-
-  <research id="rsd.farming.l1" family="farm" type="agri" lvl="1" stage="1">
-    <cost>
-      <res id="res.money" amount="100"/>
-    </cost>
-    <time>7m</time>
-    <require>bld.farm.l1,rsd.animalhusbandry.l1</require>
-  </research>
-
-    <research id="rsd.farming.l2" family="farm" type="agri" lvl="2" stage="2">
+  <research id="rsd.betterfeeding.l1" family="farm" type="agri" lvl="1" stage="1">
     <cost>
       <res id="res.money" amount="150"/>
     </cost>
-    <time>14m</time>
-    <require>bld.farm.l1,rsd.farming.l1</require>
-  </research>
-
-   <research id="rsd.betterfeeding.l1" family="farm" type="agri" lvl="1" stage="1">
-    <cost>
-      <res id="res.money" amount="150"/>
-    </cost>
-    <time>1h</time>
-    <require>rsd.animalhusbandry.l1</require>
+    <time>10m</time>
+    <require>rsd.animalhusbandry.l1,bld.barn.l1</require>
   </research>
 
       <research id="rsd.fertilizer.l1" family="farm" type="storage" lvl="1" stage="1">
@@ -185,6 +183,125 @@
     <require>add.barn.l1,rsd.animalhusbandry.l1</require>
   </research>
 
+  <research id="rsd.maizefield_scarecrow.l1" family="farm" type="agri" lvl="2" stage="2">
+    <cost>
+      <res id="res.money" amount="50"/>
+      <res id="res.wood" amount="25"/>
+      <res id="res.straw" amount="10"/>
+    </cost>
+    <time>1h</time>
+    <require>rsd.farming.l1,add.maizefield.l1</require>
+  </research>
+
+   <research id="rsd.straw.l1" family="farm" type="agri" lvl="2" stage="2">
+    <cost>
+      <res id="res.money" amount="100"/>
+      <res id="res.wheat" amount="50"/>
+      <res id="res.water" amount="50"/>
+    </cost>
+    <time>1h</time>
+    <require>rsd.farming.l1,add.wheatfield.l1</require>
+    <buffs applies_to="add.wheatfield.l1">
+      <res id="res.straw" type="add" amount="2" mode="yield"/> <!--2  more of straw on all-->
+    </buffs>
+  </research>
+  
+ <research id="rsd.stage.l2" family="basecamp" type="stage" lvl="2" stage="1">
+    <cost>
+      <res id="res.money" amount="500"/>
+      <res id="res.wood" amount="100"/>
+      <res id="res.stone" amount="100"/>
+      <res id="res.water" amount="50"/>
+      <res id="res.food" amount="25"/>
+      <res id="res.cloth" amount="10"/>
+      <res id="res.coal" amount="25"/>
+      <res id="res.basictools" amount="10"/>
+    </cost>
+    <time>12h</time>
+    <require>bld.basecamp.l3,rsd.campmanagement.l1,bld.mine.l2</require>
+  </research>
+
+  <research id="rsd.cooking.l1" family="basecamp" type="stage" lvl="2" stage="1">
+    <cost>
+      <res id="res.money" amount="125"/>
+      <res id="res.water" amount="50"/>
+    </cost>
+    <time>10m</time>
+    <require>bld.basecamp.l3,rsd.campmanagement.l1,add.bigfireplace.l1</require>
+  </research>
+
+
+
+
+<!-- STAGE 2-->
+ 
+
+    
+
+
+<!--  VANDBRUG -->
+    
+
+    <research id="rsd.irrigation.l2" family="basecamp" type="agri" lvl="2" stage="2">
+    <cost>
+      <res id="res.money" amount="350"/>
+      <res id="res.stone" amount="75"/>
+    </cost>
+    <time>30m</time>
+    <require>bld.farm.l2,rsd.irrigation.l1</require>
+    </research>
+
+   
+
+  <research id="rsd.fishing.l3" family="lake" type="storage" lvl="3" stage="2">
+    <cost>
+      <res id="res.money" amount="150"/>
+    </cost>
+    <time>10m</time>
+    <buffs applies_to="all">
+      <res id="res.rawcommonfish" type="mult" amount="50" mode="yield"/>
+    </buffs>
+    <require>rsd.fishing.l2,bld.lake.l2</require>
+  </research>
+
+<!--  FOREST  -->
+
+  
+
+    <research id="rsd.forestry.l2" family="forest" type="agri" lvl="2" stage="2">
+    <cost>
+      <res id="res.money" amount="200"/>
+      <res id="res.wood" amount="15"/>
+    </cost>
+    <time>3m</time>
+    <require>rsd.forestry.l1</require>
+  </research> 
+
+ <!-- Farming related resarch--> 
+  
+    
+
+  <research id="rsd.animalhusbandry.l3" family="farm" type="animal" lvl="3" stage="2">
+    <cost>
+      <res id="res.money" amount="225"/>
+      <res id="res.water" amount="56"/>
+    </cost>
+    <time>30m</time>
+    <require>rsd.farming.l2</require>
+  </research>
+
+  
+
+    <research id="rsd.farming.l2" family="farm" type="agri" lvl="2" stage="2">
+    <cost>
+      <res id="res.money" amount="150"/>
+    </cost>
+    <time>14m</time>
+    <require>bld.farm.l1,rsd.farming.l1</require>
+  </research>
+
+   
+
      <research id="rsd.oats.l1" family="farm" type="storage" lvl="1" stage="2">
     <cost>
       <res id="res.money" amount="75"/>
@@ -195,21 +312,7 @@
   
 <!--MINING-->    
   
-    <research id="rsd.mining.l1" family="mine" type="storage" lvl="1" stage="1">
-    <cost>
-      <res id="res.money" amount="100"/>
-    </cost>
-    <time>10m</time>
-    <require>rsd.tools.l1,bld.basecamp.l2</require>
-  </research>
-
-  <research id="rsd.mining.l2" family="mine" type="storage" lvl="2" stage="2">
-    <cost>
-      <res id="res.money" amount="150"/>
-    </cost>
-    <time>10m</time>
-    <require>rsd.mining.l1,bld.mine.l2</require>
-  </research>
+    
 
   <research id="rsd.useclay.l1" family="mine" type="storage" lvl="1" stage="2">
     <cost>
@@ -261,13 +364,7 @@
 
 <!-- STORAGE-->
 
-  <research id="rsd.betterstorage.l1" family="storage" type="storage" lvl="1" stage="1">
-    <cost>
-      <res id="res.money" amount="100"/>
-    </cost>
-    <time>10m</time>
-    <require>bld.storage.l1,rsd.tools.l2</require>
-  </research>
+  
 
   <research id="rsd.betterstorage.l2" family="storage" type="storage" lvl="2" stage="2">
     <cost>
@@ -279,13 +376,7 @@
 
 <!-- LEATHER AND CLOTH-->
 
-    <research id="rsd.leatherwork.l1" family="basecamp" type="storage" lvl="1" stage="1">
-    <cost>
-      <res id="res.money" amount="100"/>
-    </cost>
-    <time>10m</time>
-    <require>rsd.animalhusbandry.l1</require>
-  </research>
+    
 
   <research id="rsd.basiccloth.l1" family="basecamp" type="storage" lvl="1" stage="2">
     <cost>
@@ -317,15 +408,7 @@
 
 
 
-    <research id="rsd.campmanagement.l1" family="basecamp" type="stage" lvl="1" stage="1">
-    <cost>
-      <res id="res.money" amount="75"/>
-    </cost>
-    <time>1m</time>
-    <require>rsd.tools.l1</require>
-  </research>
-
-    <research id="rsd.campmanagement.l2" family="basecamp" type="stage" lvl="2" stage="2">
+        <research id="rsd.campmanagement.l2" family="basecamp" type="stage" lvl="2" stage="2">
     <cost>
       <res id="res.money" amount="200"/>
     </cost>
@@ -369,13 +452,7 @@
 
 <!-- STAGE RESEARCH -->
 
-  <research id="rsd.stage.l2" family="basecamp" type="stage" lvl="2" stage="1">
-    <cost>
-      <res id="res.money" amount="75"/>
-    </cost>
-    <time>1m</time>
-    <require>bld.basecamp.l3,rsd.tools.l3</require>
-  </research>
+ 
 
   <research id="rsd.stage.l3" family="basecamp" type="stage" lvl="3" stage="2">
     <cost>
@@ -393,4 +470,4 @@
     <time>30m</time>
   </research>-->
 
-</research>
+</researchs>

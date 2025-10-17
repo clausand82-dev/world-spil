@@ -40,6 +40,7 @@ const GROUPS = {
   power: ['powerGreen', 'powerNuclear', 'powerFossil'],
   health: ['healthDentist'],
   tax: ['taxHealth', 'taxCitizens'],
+  waste: ['wasteOrganic', 'wasteOther'],
 };
 
 // Mapping af nøgle → usage/capacity keys fra summary (FALLBACK når impacts mangler)

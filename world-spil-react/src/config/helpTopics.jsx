@@ -74,6 +74,88 @@ export const HELP_TOPICS = [
     ],
   }),
 
+    group({
+    id: 'stages',
+    title: 'Stages',
+    children: [
+      // dynamisk render som string (kan få defs/t via HelpOverlay)
+      topic({
+        id: 'explain-stages',
+        title: 'Stages Generelt',
+        render: ({ defs, t }) => {
+
+          
+          return `<h2>Stages</h2>
+          <p>Stages er forskellige milepæle i spillet, og bruges til blandt andet langsomt at introducerer spilleren for nye elementer og funktioner i spillet. Når man er nået langt nok i et stages, finder man en research, der tilbyder at forske i næste stages. Sådan stiger man i stages. <p>Stages ...</p>
+          `;
+        },
+        searchText: 'ressourcer vand træ sten',
+      }),
+
+      
+      // JSX component for mere kontrol (filen er .jsx så dette er OK)
+      topic({
+        id: 'stage-1',
+        title: 'Stage 1',
+        component: ({ defs }) => {
+          const emoji = defs?.res?.water?.emoji || '💧';
+          return (
+            <div className="help-article">
+              <h2>Stage 1 {emoji}</h2>
+              <p>I STAGE 1 er formålet at få en stille introduktion til spillet igennem diverse basale grundlæggende systemer, der dækker over ressource kendskab, bygge/opgraderer bygninger og addons, samt at forske og lave ting udfra opskrifter. En del ressourcer fra dette stadie er helt basale ressourcer, som skal benyttes igennem hele spillet.</p>
+
+<p>En anden faktorer, der stiftes kendskab med er begrebet stats. Stats er ikke ressourcer, men repræsenterer et fast flow eller en fast mængde. Alle stats har en kapacitet og et forbrug. Disse er statiske og ændres (modsat ressourcer) kun via valg, bygning eller andre aktive elementer. Kort sagt kan man sige at ressourcer er valgfrie brugbare, men stats bare er der eller bruges. Begge dele er grundlæggende ting i spillet.</p>
+
+<p>Stats kan påvirke hinanden, og ofte har et valg for at forbedre stats et sted, en konsekvens i stats et andet sted. Stats påvirker ikke ressourcer, men ressourcer kan midlertidig påvirke stats..</p>
+
+<p>Ressourcer, der introduceres i Stage 1:</p>
+              <ul>
+              <li><strong>MONEY</strong> — Spillets valuta til bygninger, research og addons.</li>
+              <li><strong>WOOD</strong> — Fra skov, bruges til byggeri.</li>
+              <li><strong>STONE</strong> — Fra miner, bruges i mange bygninger/addons.</li>
+              <li><strong>WATER</strong> — Livsvigtig, bruges i opskrifter og giver stats: water.</li>
+              <li><strong>FLINTSTONE</strong> — Bruges til værktøj (nødvendigt for byggeri).</li>
+              <li><strong>ROPE</strong> — Bruges til straw, værktøj og andre basale ting.</li>
+              <li><strong>SALT</strong> — Bruges til f.eks. at fremstille LEATHER.</li>
+              <li><strong>RAWHIDE</strong> — Rå skind fra dyr; skal bearbejdes.</li>
+              <li><strong>HIDE</strong> — Bearbejdet skind til telte og tøj.</li>
+              <li><strong>LEATHER</strong> — Bruges til tøj og telte.</li>
+              <li><strong>WOOL</strong> — Bruges til tøj.</li>
+              <li><strong>MAIZE</strong> — Bruges til ANIMALFOOD.</li>
+              <li><strong>WHEAT</strong> — Bruges til WHEATFLOUR (BREAD, ANIMALFOOD, STRAW).</li>
+              <li><strong>GOATMILK</strong> — Bruges til SOUP.</li>
+              <li><strong>COWMILK</strong> — Bruges til SOUP og BREAD.</li>
+              <li><strong>RAWMEAT</strong> — Fra dyr; bruges til COOKEDMEAT og SOUP.</li>
+              <li><strong>RAWCOMMONFISH</strong> — Fanges i lake; bruges i ANIMALFOOD eller FISHSOUP.</li>
+              <li><strong>COOKEDFISH</strong> — Giver provision_cap=2.</li>
+              <li><strong>COOKEDMEAT</strong> — Giver provision_cap=1.</li>
+              <li><strong>FOOD</strong> — Generisk mad, bruges også i byggeprocesser.</li>
+              <li><strong>SOUP</strong> — Giver provision_cap=8.</li>
+              <li><strong>BONE</strong> — Kan laves til BONEMEAL til ANIMALFOOD.</li>
+              <li><strong>BONEMEAL</strong> — Bruges i ANIMALFOOD.</li>
+              <li><strong>FERTILIZER</strong> — Produceres af dyr; bruges til marker og påvirker wasteOrganic.</li>
+              <li><strong>EGG</strong> — Fra høns; bruges i opskrifter.</li>
+              <li><strong>CLOTH</strong> — Påvirker stats som heat.</li>
+              <li><strong>ANIMALFOOD</strong> — Bruges til at købe dyr.</li>
+              <li><strong>COAL</strong> — Giver heatFossil=5.</li>
+              <li><strong>BASICTOOLS</strong> — Bruges i mere komplicerede bygninger/addons.</li>
+              <li><strong>WHEATFLOUR</strong> — Bruges i brød.</li>
+              <li><strong>STRAW</strong> — Bruges til dyr.</li>
+              <li><strong>BREAD</strong> — Brød (fødevarer).</li>
+              <li><strong>FEATHER</strong> — Bruges til tøj.</li>
+              <li><strong>FIREWOOD</strong> — Bruges til bål og varme.</li>
+              </ul>
+
+
+              
+              <p>Se også <a data-topic-link="resources-overview">Ressourcer Generelt</a>.</p>
+            </div>
+          );
+        },searchText: 'ressource vand water forbrug',
+      }),
+    ],
+  }),
+
   group({
     id: 'stats',
     title: 'Stats',

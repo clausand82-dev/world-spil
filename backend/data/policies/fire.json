@@ -4,6 +4,8 @@
     "fire_free_dentist_kids": {
       "label": "Gratis tandlæge — børn",
       "help": "Ordningen gælder pt for ${summary.citizens.groupCounts.kids + summary.citizens.groupCounts.baby} børn.",
+      "stageMin": 3,
+      "stageMax": 99,
       "control": { "type": "toggle", "default": false },
       "effects": [
         { "stat": "healthDentistCapacity", "op": "add", "value": 100 },
@@ -13,6 +15,8 @@
     "fire_free_dentist_young": {
       "label": "Gratis tandlæge — unge",
       "help": "Ordningen gælder pt for ${summary.citizens.groupCounts.young} unge.",
+      "stageMin": 3,
+      "stageMax": 99,
       "control": { "type": "toggle", "default": false },
       "effects": [
         { "stat": "healthDentistCapacity", "op": "add", "value": 80 },
@@ -22,6 +26,8 @@
     "fire_free_dentist_adults": {
       "label": "Gratis tandlæge — voksne",
       "help": "Ordningen gælder pt for ${(summary.citizens.groupCounts.adultsTotal + summary.citizens.groupCounts.old)} voksne.",
+      "stageMin": 3,
+      "stageMax": 99,
       "control": { "type": "toggle", "default": false },
       "effects": [
         { "stat": "healthDentistCapacity", "op": "add", "value": 50 },

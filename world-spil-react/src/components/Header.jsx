@@ -23,6 +23,21 @@ export default function Header() {
   const animal_cap = state?.cap?.animal_cap ?? {};
   const resDefs = defs?.res ?? {};
 
+  // stages config (fra serverens config.ini via alldata.php)
+  const stageCfg = data?.config?.stagemanagement || data?.config?.stageManagement || {};
+  const currentStage = Number(state?.user?.currentstage || 0);
+  const turnOnTax = Number(stageCfg.turnOnTax ?? 0);
+  const turnOnCrime = Number(stageCfg.turnOnCrime ?? 0);
+  const turnOnHappiness = Number(stageCfg.turnOnHappiness ?? 0);
+  const turnOnPopularity = Number(stageCfg.turnOnPopularity ?? 0);
+  const turnOnCitizens = Number(stageCfg.turnOnCitizensLite ?? 0);
+
+  const showBudget = currentStage >= turnOnTax;
+  const showCrime = currentStage >= turnOnCrime;
+  const showPopularity = currentStage >= turnOnPopularity;
+  const showHappiness = currentStage >= turnOnHappiness;
+  const showCitizens = currentStage >= turnOnCitizens;
+
   // Nye hover-contents for cap-chips
   const animalCapHover = (
     <CapHoverContent title="Staldplads" metric="animal_cap" capObj={animal_cap} />
@@ -42,14 +57,14 @@ export default function Header() {
       </div>
 
       <div className="header-resources">
-        <HeaderCrimeBadge />
-        <HeaderBudgetBadge />
-        <HeaderPopularityBadge />
-        <HeaderHappinessBadge />
+        {showCrime && <HeaderCrimeBadge />}
+        {showBudget && <HeaderBudgetBadge />}
+        {showPopularity && <HeaderPopularityBadge />}
+        {showHappiness && <HeaderHappinessBadge />}
         <StageUnlockAnnouncer />
 
         {/* Fjern ekstra wrapper for at undgå dobbelt chip-indpakning */}
-        <HeaderCitizensBadge />
+        {showCitizens && <HeaderCitizensBadge />}
 
         <HoverCard content={animalCapHover}>
           <span className="res-chip">

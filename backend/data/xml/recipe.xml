@@ -1,26 +1,95 @@
 <?xml version="1.0" encoding="utf-8"?>
 <recipes source="World 2025.xlsx" sheet="Recipe">
 
-  <recipe id="rcp.firewood.l1" family="forest" type="recipe" lvl="1" stage="1" mode="active" max_allowed="1">
+<!-- STAGE 1-->
+
+  <recipe id="rcp.fertilizer.l1" family="basecamp" type="recipe" lvl="1" stage="1" mode="active">
     <yield>
-      <res id="res.firewood" amount="10"/>
+      <res id="res.fertilizer" amount="10"/>
     </yield>
     <cost>
+    </cost>
+    <time>5s</time>
+    <require>bld.basecamp.l1</require>
+  </recipe>
+  
+  <recipe id="rcp.flintstone.l1" family="basecamp" type="recipe" lvl="1" stage="1" mode="active">
+    <yield>
+      <res id="res.flintstone" amount="10"/>
+    </yield>
+    <cost>
+      <res id="res.stone" amount="2"/>
+    </cost>
+    <time>5s</time>
+    <require>rsd.flintstone.l1</require>
+  </recipe>
+
+  <recipe id="rcp.woodtorope.l1" family="basecamp" type="recipe" lvl="1" stage="1" mode="active">
+    <yield>
+      <res id="res.rope" amount="10"/>
+    </yield>
+    <cost>
+      <res id="res.wood" amount="2"/>
+      <res id="res.flintstone" amount="1"/>
+      <res id="res.water" amount="1"/>
+    </cost>
+    <time>1m</time>
+    <require>rsd.flintstone.l1</require>
+  </recipe>
+
+  <recipe id="rcp.basictools.l1" family="basecamp" type="recipe" lvl="1" stage="1" mode="active">
+    <yield>
+      <res id="res.basictools" amount="2"/> 
+    </yield>
+    <cost>
+      <res id="res.flintstone" amount="4"/>
+      <res id="res.rope" amount="1"/>
       <res id="res.wood" amount="1"/>
     </cost>
     <time>15s</time>
-    <require>add.choppingblock.l1</require>
+    <require>rsd.tools.l1</require>
   </recipe>
 
-  <recipe id="rcp.cockedmeat.l1" family="basecamp" type="recipe" lvl="1" stage="1" mode="active">
+   <recipe id="rcp.basictools.l2" family="basecamp" type="recipe" lvl="1" stage="1" mode="active">
     <yield>
-      <res id="res.food" amount="10"/>
+      <res id="res.basictools" amount="5"/>
     </yield>
     <cost>
-      <res id="res.rawmeat" amount="10"/>
+      <res id="res.flintstone" amount="4"/>
+      <res id="res.rope" amount="1"/>
+      <res id="res.wood" amount="1"/>
+      <res id="res.hide" amount="1"/>
+    </cost>
+    <time>120s</time>
+    <require>rsd.tools.l2</require>
+  </recipe>
+
+  <recipe id="rcp.clothtorope.l1" family="basecamp" type="recipe" lvl="1" stage="1" mode="active">
+    <yield>
+      <res id="res.rope" amount="22"/>
+    </yield>
+    <cost>
+      <res id="res.cloth" amount="1"/>
+      <res id="res.basictools" amount="1"/>
     </cost>
     <time>1m</time>
-    <require></require>
+    <require>rsd.leatherwork.l1, add.tailorspot.l1</require>
+  </recipe>
+
+  <recipe id="rcp.cloth.l1" family="basecamp" type="recipe" lvl="1" stage="1" mode="active">
+    <yield>
+      <res id="res.cloth" amount="5"/>
+    </yield>
+    <cost>
+      <res id="res.hide" amount="4"/>
+      <res id="res.leather" amount="2"/>
+      <res id="res.feather" amount="100"/>
+      <res id="res.rope" amount="1"/>
+      <res id="res.wool" amount="1"/>
+      <res id="res.basictools" amount="1"/>
+    </cost>
+    <time>1m</time>
+    <require>rsd.leatherwork.l1, add.tailorspot.l1</require>
   </recipe>
 
   <recipe id="rcp.hide.l1" family="basecamp" type="recipe" lvl="1" stage="1" mode="active">
@@ -28,10 +97,10 @@
       <res id="res.hide" amount="5"/>
     </yield>
     <cost>
-      <res id="res.rawhide" amount="6"/>
-      <res id="res.water" amount="5"/>
+      <res id="res.rawhide" amount="10"/>
+      <res id="res.water" amount="1"/>
     </cost>
-    <time>15s</time>
+    <time>1m</time>
     <require>add.tailorspot.l1</require>
   </recipe>
 
@@ -41,39 +110,220 @@
     </yield>
     <cost>
       <res id="res.rawhide" amount="5"/>
-      <res id="res.salt" amount="5"/>
-      <res id="res.water" amount="5"/>
+      <res id="res.salt" amount="1"/>
+      <res id="res.water" amount="1"/>
+    </cost>
+    <time>1m</time>
+    <require>add.tailorspot.l1</require>
+  </recipe> 
+  
+  <recipe id="rcp.firewood.l1" family="forest" type="recipe" lvl="1" stage="1" mode="active">
+    <yield>
+      <res id="res.firewood" amount="10"/>
+    </yield>
+    <cost>
+      <res id="res.wood" amount="1"/>
+    </cost>
+    <time>1m</time>
+    <require>add.choppingblock.l1, rsd.tools.l1</require>
+  </recipe>
+
+  <recipe id="rcp.cockedmeat.l1" family="basecamp" type="recipe" lvl="1" stage="1" mode="active">
+    <yield>
+      <res id="res.cockedmeat" amount="10"/>
+    </yield>
+    <cost>
+      <res id="res.rawmeat" amount="10"/>
+    </cost>
+    <time>1m</time>
+    <require>rsd.cooking.l1</require>
+  </recipe>
+
+  <recipe id="rcp.cockedfish.l1" family="basecamp" type="recipe" lvl="1" stage="1" mode="active">
+    <yield>
+      <res id="res.cockedfish" amount="10"/>
+    </yield>
+    <cost>
+      <res id="res.rawcommonfish" amount="10"/>
+    </cost>
+    <time>1m</time>
+    <require>rsd.cooking.l1</require>
+  </recipe>
+
+  <recipe id="rcp.cockedmeattofood.l1" family="basecamp" type="recipe" lvl="1" stage="1" mode="active">
+    <yield>
+      <res id="res.food" amount="2"/>
+    </yield>
+    <cost>
+      <res id="res.cockedmeat" amount="4"/>
     </cost>
     <time>5m</time>
-    <require>add.tailorspot.l1</require>
+    <require>rsd.cooking.l1</require>
   </recipe>
 
-<!-- ANIMALS-->
-  <!-- SLAUGHTER ANIMALS-->
-  <recipe id="rcp.slaughtercow.l1" family="farm" type="recipe" lvl="1" stage="1" mode="active">
+  <recipe id="rcp.cockedfishtofood.l1" family="basecamp" type="recipe" lvl="1" stage="1" mode="active">
     <yield>
-      <res id="res.rawhide" amount="2"/>
-      <res id="res.rawmeat" amount="10"/>
-      <res id="res.bone" amount="4"/>
+      <res id="res.food" amount="3"/>
     </yield>
     <cost>
-      <res id="ani.cow" amount="1"/>
+      <res id="res.cockedfish" amount="4"/>
     </cost>
-    <time>12m</time>
-    <require>add.barn_slaughterspot.l3</require>
+    <time>5m</time>
+    <require>rsd.cooking.l1</require>
   </recipe>
 
-  <recipe id="rcp.slaughterdeer.l1" family="forest" type="recipe" lvl="1" stage="1" mode="active">
+  <recipe id="rcp.souptofood.l1" family="basecamp" type="recipe" lvl="1" stage="1" mode="active">
     <yield>
-      <res id="res.rawhide" amount="2"/>
-      <res id="res.rawmeat" amount="12"/>
-      <res id="res.bone" amount="8"/>
+      <res id="res.food" amount="7"/>
     </yield>
     <cost>
-      <res id="ani.deer" amount="1"/>
+      <res id="res.soup" amount="5"/>
     </cost>
-    <time>15m</time>
-    <require>add.barn_slaughterspot.l3</require>
+    <time>5m</time>
+    <require>rsd.cooking.l1</require>
+  </recipe>
+
+  <recipe id="rcp.breadtofood.l1" family="basecamp" type="recipe" lvl="1" stage="1" mode="active">
+    <yield>
+      <res id="res.food" amount="5"/>
+    </yield>
+    <cost>
+      <res id="res.bread" amount="4"/>
+    </cost>
+    <time>5m</time>
+    <require>rsd.cooking.l1</require>
+  </recipe>
+
+  <recipe id="rcp.bread.l1" family="basecamp" type="recipe" lvl="1" stage="1" mode="active">
+    <yield>
+      <res id="res.bread" amount="5"/>
+    </yield>
+    <cost>
+      <res id="res.cowmilk" amount="1"/>
+      <res id="res.water" amount="2"/>
+      <res id="res.wheatflour" amount="2"/>
+      <res id="res.egg" amount="2"/>
+    </cost>
+    <time>10m</time>
+    <require>rsd.cooking.l1, add.bigfireplace_stonepot.l1</require>
+  </recipe>
+
+  <recipe id="rcp.meattosoup.l1" family="basecamp" type="recipe" lvl="1" stage="1" mode="active">
+    <yield>
+      <res id="res.soup" amount="5"/>
+    </yield>
+    <cost>
+      <res id="res.cowmilk" amount="5"/>
+      <res id="res.goatmilk" amount="3"/>
+      <res id="res.water" amount="2"/>
+      <res id="res.rawmeat" amount="2"/>
+      <res id="res.egg" amount="2"/>
+    </cost>
+    <time>10m</time>
+    <require>rsd.cooking.l1, add.bigfireplace_stonepot.l1</require>
+  </recipe>
+
+  <recipe id="rcp.fishtosoup.l1" family="basecamp" type="recipe" lvl="1" stage="1" mode="active">
+    <yield>
+      <res id="res.soup" amount="5"/>
+    </yield>
+    <cost>
+      <res id="res.cowmilk" amount="5"/>
+      <res id="res.goatmilk" amount="3"/>
+      <res id="res.water" amount="2"/>
+      <res id="res.rawcommonfish" amount="2"/>
+      <res id="res.egg" amount="2"/>
+    </cost>
+    <time>10m</time>
+    <require>rsd.cooking.l1, add.bigfireplace_stonepot.l1</require>
+  </recipe>
+
+  <recipe id="rcp.wheatflour.l1" family="basecamp" type="recipe" lvl="1" stage="1" mode="active">
+    <yield>
+      <res id="res.wheatflour" amount="2"/>
+    </yield>
+    <cost>
+      <res id="res.wheat" amount="20"/>
+    </cost>
+    <time>2m</time>
+    <require>rsd.cooking.l1, add.bigfireplace_mortarandpestle.l1</require>
+  </recipe>
+
+  <recipe id="rcp.bonemeal.l1" family="basecamp" type="recipe" lvl="1" stage="1" mode="active">
+    <yield>
+      <res id="res.bonemeal" amount="1"/>
+    </yield>
+    <cost>
+      <res id="res.bone" amount="10"/>
+    </cost>
+    <time>2m</time>
+    <require>rsd.cooking.l1, add.bigfireplace_mortarandpestle.l1</require>
+  </recipe>
+
+  <recipe id="rcp.coal.l1" family="basecamp" type="recipe" lvl="1" stage="1" mode="active">
+    <yield>
+      <res id="res.coal" amount="10"/>
+    </yield>
+    <cost>
+      <res id="res.wood" amount="5"/>
+      <res id="res.firewood" amount="1"/>
+    </cost>
+    <time>10m</time>
+    <require>rsd.mining.l1, bld.mine.l1</require>
+  </recipe>
+
+  <recipe id="rcp.animalfoodwithbonemeal.l1" family="farm" type="recipe" lvl="1" stage="1" mode="active">
+    <yield>
+      <res id="res.animalfood" amount="50"/>
+    </yield>
+    <cost>
+      <res id="res.wheat" amount="5"/>
+      <res id="res.maize" amount="10"/>
+      <res id="res.water" amount="2"/>
+      <res id="res.bonemeal" amount="2"/>
+      <res id="res.straw" amount="5"/>
+    </cost>
+    <time>4m</time>
+    <require>rsd.farming.l1</require>
+  </recipe>
+
+  <recipe id="rcp.animalfoodwithoutbonemeal.l1" family="farm" type="recipe" lvl="1" stage="1" mode="active">
+    <yield>
+      <res id="res.animalfood" amount="25"/>
+    </yield>
+    <cost>
+      <res id="res.wheat" amount="5"/>
+      <res id="res.maize" amount="10"/>
+      <res id="res.water" amount="3"/>
+    </cost>
+    <time>5m</time>
+    <require>rsd.farming.l1</require>
+  </recipe>
+
+  <recipe id="rcp.straw.l1" family="farm" type="recipe" lvl="1" stage="1" mode="active">
+    <yield>
+      <res id="res.straw" amount="25"/>
+    </yield>
+    <cost>
+      <res id="res.wheat" amount="10"/>
+      <res id="res.rope" amount="1"/>
+    </cost>
+    <time>2m</time>
+    <require>rsd.straw.l1</require>
+  </recipe>
+
+  <!--- SLAUGHTER ANIMALS-->
+  <recipe id="rcp.slaughterchicken.l1" family="farm" type="recipe" lvl="1" stage="1" mode="active">
+    <yield>
+      <res id="res.rawmeat" amount="2"/>
+      <res id="res.bone" amount="1"/>
+      <res id="res.feather" amount="10"/>
+    </yield>
+    <cost>
+      <res id="ani.chicken" amount="1"/>
+    </cost>
+    <time>3m</time>
+    <require>add.barn_slaughterspot.l1</require>
   </recipe>
 
   <recipe id="rcp.slaughterpig.l1" family="farm" type="recipe" lvl="1" stage="1" mode="active">
@@ -84,7 +334,7 @@
     <cost>
       <res id="ani.pig" amount="1"/>
     </cost>
-    <time>15m</time>
+    <time>14m</time>
     <require>add.barn_slaughterspot.l2</require>
   </recipe>
 
@@ -114,62 +364,55 @@
     <require>add.barn_slaughterspot.l2</require>
   </recipe>
 
-  <recipe id="rcp.slaughterchicken.l1" family="farm" type="recipe" lvl="1" stage="1" mode="active">
+    <recipe id="rcp.slaughtercow.l1" family="farm" type="recipe" lvl="1" stage="1" mode="active">
     <yield>
-      <res id="res.rawmeat" amount="2"/>
-      <res id="res.bone" amount="1"/>
-      <res id="res.feather" amount="10"/>
+      <res id="res.rawhide" amount="2"/>
+      <res id="res.rawmeat" amount="14"/>
+      <res id="res.bone" amount="4"/>
     </yield>
     <cost>
-      <res id="ani.chicken" amount="1"/>
+      <res id="ani.cow" amount="1"/>
     </cost>
-    <time>3m</time>
-    <require>add.barn_slaughterspot.l1</require>
+    <time>12m</time>
+    <require>add.barn_slaughterspot.l3</require>
   </recipe>
 
-    <recipe id="rcp.slaughterdeer.l1" family="basecamp" type="recipe" lvl="1" stage="1" mode="active">
+  <recipe id="rcp.slaughterdeer.l1" family="forest" type="recipe" lvl="1" stage="1" mode="active">
     <yield>
+      <res id="res.rawhide" amount="2"/>
       <res id="res.rawmeat" amount="12"/>
-      <res id="res.bone" amount="2"/>
+      <res id="res.bone" amount="8"/>
     </yield>
     <cost>
       <res id="ani.deer" amount="1"/>
     </cost>
     <time>15m</time>
-    <require></require>
+    <require>add.barn_slaughterspot.l3</require>
   </recipe>
 
-    <recipe id="rcp.fishing.l1" family="lake" type="recipe" lvl="1" stage="1" mode="active">
-    <yield period="1h">
-      <res id="res.rawcommonfish" amount="20"/>
-    </yield>
-    <time>1h</time>
-    <require>add.mole_net.l1</require>
-  </recipe>
-
-  <recipe id="rcp.fishtofood.l1" family="lake" type="recipe" lvl="1" stage="1" mode="active">
-    <yield period="1h">
-      <res id="res.food" amount="5"/>
-    </yield>
-    <time>15s</time>
-    <cost>
-      <res id="res.rawcommonfish" amount="5"/>
-    </cost>
-    <require>bld.lake.l1</require>
-  </recipe>
-  
-  <!-- OTHER ANIMALS RECIPE-->
-
-    <recipe id="rcp.trimsheep.l1" family="farm" type="recipe" lvl="1" stage="1" mode="active">
+  <recipe id="rcp.trimsheep.l1" family="farm" type="recipe" lvl="1" stage="1" mode="active">
     <yield period="1h">
       <res id="res.wool" amount="4"/>
     </yield>
-    <time>15s</time>
+    <time>1h</time>
         <cost>
-      <res id="ani.sheep" amount="1"/>
+      <res id="res.money" amount="10"/>
     </cost>
     <require>add.barn_shearingshed.l1</require>
-  </recipe>
+  </recipe>  
+  
+  
+  
+  
+
+  
+
+<!-- STAGE 2-->
+
+
+
+  
+
 
 
 

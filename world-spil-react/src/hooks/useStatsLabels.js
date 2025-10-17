@@ -23,6 +23,9 @@ export function useStatsLabels() {
   cloth: t("ui.emoji.product_cloth.h1") + ' ' + t("ui.label.product_cloth.h1") || 'Cloth',
   medicin: t("ui.emoji.product_medicin.h1") + ' ' + t("ui.label.product_medicin.h1") || 'Medicine',
   social: t("ui.emoji.social.h1") + ' ' + t("ui.label.social.h1") || 'Social',
+
+  waste: t("ui.emoji.waste.h1") + ' ' + t("ui.label.waste.h1") || 'Waste',
+  wasteOrganic: t("ui.emoji.waste_organic.h1") + ' ' + t("ui.label.waste_organic.h1") || 'Organic Waste',
   wasteOther: t("ui.emoji.waste_other.h1") + ' ' + t("ui.label.waste_other.h1") || 'Other Waste',
 
   tax: t("ui.emoji.tax.h1") + ' ' + t("ui.label.tax.h1") || 'Tax',
@@ -40,6 +43,7 @@ export function defaultLabelMap() {
   const t = useT();
 
   const map = {
+// STAGE 1
     'footprint': { label: t("ui.emoji.footprint.h1")+t("ui.label.footprint.h1"), desc: t("ui.desc.footprint.h1") },
     'animal_cap': { label: t("ui.emoji.animalcap.h1")+t("ui.label.animalcap.h1"), desc: t("ui.desc.animalcap.h1") },
     'housing': { label: t("ui.emoji.housing.h1")+t("ui.label.housing.h1"), desc: t("ui.capdesc.housing.h1") },
@@ -48,6 +52,24 @@ export function defaultLabelMap() {
     'provision_cap': { label: t("ui.emoji.provision.h1")+t("ui.label.provision.h1"), desc: t("ui.capdesc.provision.h1") },
     'provisionCapacity': { label: t("ui.emoji.provision.h1")+t("ui.label.provision.h1"), desc: t("ui.capdesc.provision.h1") },
     'provisionUsage': { label: t("ui.emoji.provision.h1")+t("ui.label.provision.h1"), desc: t("ui.usagedesc.provision.h1") },
+
+    'heatFossilCapacity': { label: t("ui.emoji.heat.h1")+t("ui.label.heat.h1"), desc: t("ui.capdesc.heat.h1") },  
+
+    'storageSolidCap': { label: t("ui.emoji.storage_solid.h1")+t("ui.label.storage_solid.h1"), desc: t("ui.capdesc.storage_solid.h1") },
+    'storageLiquidCap': { label: t("ui.emoji.storage_liquid.h1")+t("ui.label.storage_liquid.h1"), desc: t("ui.capdesc.storage_liquid.h1") },
+    
+    'waterUsage': { label: t("ui.emoji.water.h1")+t("ui.label.water.h1"), desc: t("ui.usagedesc.water.h1") },
+    'waterCapacity': { label: t("ui.emoji.water.h1")+t("ui.label.water.h1"), desc: t("ui.capdesc.water.h1") },
+
+    'wasteUsage': { label: t("ui.emoji.waste.h1")+t("ui.label.waste.h1"), desc: t("ui.usagedesc.waste.h1") },
+    'wasteCapacity': { label: t("ui.emoji.waste.h1")+t("ui.label.waste.h1"), desc: t("ui.capdesc.waste.h1") },
+    'wasteOrganicUsage': { label: t("ui.emoji.waste_organic.h1")+t("ui.label.waste_organic.h1"), desc: t("ui.usagedesc.waste_organic.h1") },
+    'wasteOrganicCapacity': { label: t("ui.emoji.waste_organic.h1")+t("ui.label.waste_organic.h1"), desc: t("ui.capdesc.waste_organic.h1") },
+    'wasteOtherUsage': { label: t("ui.emoji.waste_other.h1")+t("ui.label.waste_other.h1"), desc: t("ui.usagedesc.waste_other.h1") },
+    'wasteOtherCapacity': { label: t("ui.emoji.waste_other.h1")+t("ui.label.waste_other.h1"), desc: t("ui.capdesc.waste_other.h1") },
+
+// OTHER STAGE    
+
 
     'healthCapacity': { label: t("ui.emoji.health.h1")+t("ui.label.health.h1"), desc: t("ui.capdesc.health.h1") },
     'healthUnitUsage': { label: t("ui.emoji.health_unit.h1")+t("ui.label.health_unit.h1"), desc: t("ui.usagedesc.health_unit.h1") },
@@ -63,16 +85,9 @@ export function defaultLabelMap() {
     'kidsStudentCapacity': { label: t("ui.emoji.kids_student.h1")+t("ui.citizens.kids_student.h1"), desc: t("ui.capdesc.kids_student.h1") },
     'youngStudentCapacity': { label: t("ui.emoji.young_student.h1")+t("ui.citizens.young_student.h1"), desc: t("ui.capdesc.young_student.h1") },
 
-    'heatFossilCapacity': { label: t("ui.emoji.heat.h1")+t("ui.label.heat.h1"), desc: t("ui.capdesc.heat.h1") },    
+      
     
-    'storageSolidCap': { label: t("ui.emoji.storage_solid.h1")+t("ui.label.storage_solid.h1"), desc: t("ui.capdesc.storage_solid.h1") },
-    'storageLiquidCap': { label: t("ui.emoji.storage_liquid.h1")+t("ui.label.storage_liquid.h1"), desc: t("ui.capdesc.storage_liquid.h1") },
-    
-    'waterUsage': { label: t("ui.emoji.water.h1")+t("ui.label.water.h1"), desc: t("ui.usagedesc.water.h1") },
-    'waterCapacity': { label: t("ui.emoji.water.h1")+t("ui.label.water.h1"), desc: t("ui.capdesc.water.h1") },
-    
-    'wasteOtherUsage': { label: t("ui.emoji.waste_other.h1")+t("ui.label.waste_other.h1"), desc: t("ui.usagedesc.waste_other.h1") },
-    'wasteOtherCapacity': { label: t("ui.emoji.waste_other.h1")+t("ui.label.waste_other.h1"), desc: t("ui.capdesc.waste_other.h1") },
+
 
     'productClothUsage': { label: t("ui.emoji.cloth.h1")+t("ui.label.product_cloth.h1"), desc: t("ui.usagedesc.product_cloth.h1") },
     'productClothCapacity': { label: t("ui.emoji.cloth.h1")+t("ui.label.product_cloth.h1"), desc: t("ui.capdesc.product_cloth.h1") },

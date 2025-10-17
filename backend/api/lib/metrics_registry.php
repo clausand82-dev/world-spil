@@ -9,6 +9,7 @@ declare(strict_types=1);
  * 4: TILFØJ I SUMMARY - $usages (summer hvis noget er kædet sammen)
  * 5: TILFØJ I STATSEFFECTSTOOLTIP (FRONTEND)
  * 6: TILFØJ I LANG FIL (GØRES OFTE I FORBINDELSEN MED PUNKT 5)
+ * 7: I happiness og Popularity skal grupperinger kædes sammen også (FRONTEND)
  * 
  * adultsTotal er alle adults inc. crimes
  * adults er alle adults uden crimes
@@ -43,7 +44,7 @@ function metrics_registry(): array {
       'capacityStatKeys' => ['housingCapacity','housing'],
       'usageStatKeys' => ['housingUsage'],
       'sources' => ['bld'=>true,'add'=>true,'rsd'=>true,'ani'=>true,'res'=>true],
-      'stage' => ['unlock_at'=>2,'visible_at'=>2],
+      'stage' => ['unlock_at'=>1,'visible_at'=>1],
       'happiness' => ['enabled'=>true, 'weight_key'=>'housingHappinessWeight'],
       'popularity'=> ['enabled'=>true, 'weight_key'=>'housingPopularityWeight'],
       'subs' => [],
@@ -58,7 +59,7 @@ function metrics_registry(): array {
       'capacityStatKeys' => ['provisionCapacity','provision_cap', 'provision'],
       'usageStatKeys' => ['provisionUsage'],
       'sources' => ['bld'=>true,'add'=>true,'rsd'=>true,'ani'=>true,'res'=>true],
-      'stage' => ['unlock_at'=>2,'visible_at'=>2],
+      'stage' => ['unlock_at'=>1,'visible_at'=>1],
       'happiness' => ['enabled'=>true, 'weight_key'=>'foodHappinessWeight'],
       'popularity'=> ['enabled'=>true, 'weight_key'=>'foodPopularityWeight'],
       'subs' => [],
@@ -73,7 +74,7 @@ function metrics_registry(): array {
       'capacityStatKeys' => ['waterCapacity'],
       'usageStatKeys' => ['waterUsage'],
       'sources' => ['bld'=>true,'add'=>true,'rsd'=>true,'ani'=>true,'res'=>true],
-      'stage' => ['unlock_at'=>2,'visible_at'=>2],
+      'stage' => ['unlock_at'=>1,'visible_at'=>1],
       'happiness' => ['enabled'=>true, 'weight_key'=>'waterHappinessWeight'],
       'popularity'=> ['enabled'=>true, 'weight_key'=>'waterPopularityWeight'],
       'subs' => [],
@@ -85,6 +86,71 @@ function metrics_registry(): array {
         // Eksempel: borger-flow kunne påvirke forbrug/indikatorer (ikke bogført i summary endnu)
       ],
     ],
+
+    // Heat + subs
+    'heat' => [
+      'label' => 'Heat',
+      'usageField' => 'useHeat',
+      'capacityField' => 'heatCapacity',
+      'capacityStatKeys' => ['heatCapacity'],
+      'usageStatKeys' => ['heatUsage'],
+      'sources' => ['bld'=>true,'add'=>true,'rsd'=>true,'ani'=>true,'res'=>true],
+      'stage' => ['unlock_at'=>1,'visible_at'=>1],
+      'happiness' => ['enabled'=>true, 'weight_key'=>'heatHappinessWeight'], // sæt 0 hvis du kun vægter subs
+      'popularity'=> ['enabled'=>true, 'weight_key'=>'heatPopularityWeight'],
+      'subs' => ['heatGreen','heatNuclear','heatFossil'],
+      'demands' => [],
+      'flows' => [],
+    ],
+    'heatGreen' => [
+      'label' => 'Heat (Green)',
+      'usageField' => 'useHeatGreen',
+      'capacityField' => 'heatGreenCapacity',
+      'capacityStatKeys' => ['heatGreenCapacity'],
+      'usageStatKeys' => ['heatGreenUsage'],
+      'sources' => ['bld'=>true,'add'=>true,'rsd'=>true,'ani'=>true,'res'=>true],
+      'stage' => ['unlock_at'=>4,'visible_at'=>4],
+      'happiness' => ['enabled'=>true, 'weight_key'=>'heatGreenHappinessWeight'],
+      'popularity'=> ['enabled'=>true, 'weight_key'=>'heatGreenPopularityWeight'],
+      'parent' => 'heat',
+      'demands' => [
+        ['id'=>'demandsHeatGreenMin', 'type'=>'minShare', 'domain'=>'heat', 'basis'=>'usage_share_in_parent', 'config_key'=>'demandsHeatGreenMin', 'parent'=>'useHeat'],
+      ],
+      'flows' => [],
+    ],
+    'heatNuclear' => [
+      'label' => 'Heat (Nuclear)',
+      'usageField' => 'useHeatNuclear',
+      'capacityField' => 'heatNuclearCapacity',
+      'capacityStatKeys' => ['heatNuclearCapacity'],
+      'usageStatKeys' => ['heatNuclearUsage'],
+      'sources' => ['bld'=>true,'add'=>true,'rsd'=>true,'ani'=>true,'res'=>true],
+      'stage' => ['unlock_at'=>4,'visible_at'=>4],
+      'happiness' => ['enabled'=>true, 'weight_key'=>'heatNuclearHappinessWeight'],
+      'popularity'=> ['enabled'=>true, 'weight_key'=>'heatNuclearPopularityWeight'],
+      'parent' => 'heat',
+      'demands' => [
+        ['id'=>'demandsHeatNuclearMax', 'type'=>'maxShare', 'domain'=>'heat', 'basis'=>'usage_share_in_parent', 'config_key'=>'demandsHeatNuclearMax', 'parent'=>'useHeat'],
+      ],
+      'flows' => [],
+    ],
+    'heatFossil' => [
+      'label' => 'Heat (Fossil)',
+      'usageField' => 'useHeatFossil',
+      'capacityField' => 'heatFossilCapacity',
+      'capacityStatKeys' => ['heatFossilCapacity'],
+      'usageStatKeys' => ['heatFossilUsage'],
+      'sources' => ['bld'=>true,'add'=>true,'rsd'=>true,'ani'=>true,'res'=>true],
+      'stage' => ['unlock_at'=>1,'visible_at'=>1],
+      'happiness' => ['enabled'=>true, 'weight_key'=>'heatFossilHappinessWeight'],
+      'popularity'=> ['enabled'=>true, 'weight_key'=>'heatFossilPopularityWeight'],
+      'parent' => 'heat',
+      'demands' => [
+        ['id'=>'demandsHeatFossilMax', 'type'=>'maxShare', 'domain'=>'heat', 'basis'=>'usage_share_in_parent', 'config_key'=>'demandsHeatFossilMax', 'parent'=>'useHeat'],
+      ],
+      'flows' => [],
+    ],
+
 
     'health' => [
       'label' => 'Health',
@@ -138,69 +204,7 @@ function metrics_registry(): array {
       'flows' => [],
     ],
 
-    // Heat + subs
-    'heat' => [
-      'label' => 'Heat',
-      'usageField' => 'useHeat',
-      'capacityField' => 'heatCapacity',
-      'capacityStatKeys' => ['heatCapacity'],
-      'usageStatKeys' => ['heatUsage'],
-      'sources' => ['bld'=>true,'add'=>true,'rsd'=>true,'ani'=>true,'res'=>true],
-      'stage' => ['unlock_at'=>2,'visible_at'=>2],
-      'happiness' => ['enabled'=>true, 'weight_key'=>'heatHappinessWeight'], // sæt 0 hvis du kun vægter subs
-      'popularity'=> ['enabled'=>true, 'weight_key'=>'heatPopularityWeight'],
-      'subs' => ['heatGreen','heatNuclear','heatFossil'],
-      'demands' => [],
-      'flows' => [],
-    ],
-    'heatGreen' => [
-      'label' => 'Heat (Green)',
-      'usageField' => 'useHeatGreen',
-      'capacityField' => 'heatGreenCapacity',
-      'capacityStatKeys' => ['heatGreenCapacity'],
-      'usageStatKeys' => ['heatGreenUsage'],
-      'sources' => ['bld'=>true,'add'=>true,'rsd'=>true,'ani'=>true,'res'=>true],
-      'stage' => ['unlock_at'=>4,'visible_at'=>4],
-      'happiness' => ['enabled'=>true, 'weight_key'=>'heatGreenHappinessWeight'],
-      'popularity'=> ['enabled'=>true, 'weight_key'=>'heatGreenPopularityWeight'],
-      'parent' => 'heat',
-      'demands' => [
-        ['id'=>'demandsHeatGreenMin', 'type'=>'minShare', 'domain'=>'heat', 'basis'=>'usage_share_in_parent', 'config_key'=>'demandsHeatGreenMin', 'parent'=>'useHeat'],
-      ],
-      'flows' => [],
-    ],
-    'heatNuclear' => [
-      'label' => 'Heat (Nuclear)',
-      'usageField' => 'useHeatNuclear',
-      'capacityField' => 'heatNuclearCapacity',
-      'capacityStatKeys' => ['heatNuclearCapacity'],
-      'usageStatKeys' => ['heatNuclearUsage'],
-      'sources' => ['bld'=>true,'add'=>true,'rsd'=>true,'ani'=>true,'res'=>true],
-      'stage' => ['unlock_at'=>4,'visible_at'=>4],
-      'happiness' => ['enabled'=>true, 'weight_key'=>'heatNuclearHappinessWeight'],
-      'popularity'=> ['enabled'=>true, 'weight_key'=>'heatNuclearPopularityWeight'],
-      'parent' => 'heat',
-      'demands' => [
-        ['id'=>'demandsHeatNuclearMax', 'type'=>'maxShare', 'domain'=>'heat', 'basis'=>'usage_share_in_parent', 'config_key'=>'demandsHeatNuclearMax', 'parent'=>'useHeat'],
-      ],
-      'flows' => [],
-    ],
-    'heatFossil' => [
-      'label' => 'Heat (Fossil)',
-      'usageField' => 'useHeatFossil',
-      'capacityField' => 'heatFossilCapacity',
-      'capacityStatKeys' => ['heatFossilCapacity'],
-      'usageStatKeys' => ['heatFossilUsage'],
-      'sources' => ['bld'=>true,'add'=>true,'rsd'=>true,'ani'=>true,'res'=>true],
-      'stage' => ['unlock_at'=>2,'visible_at'=>2],
-      'happiness' => ['enabled'=>true, 'weight_key'=>'heatFossilHappinessWeight'],
-      'popularity'=> ['enabled'=>true, 'weight_key'=>'heatFossilPopularityWeight'],
-      'parent' => 'heat',
-      'demands' => [
-        ['id'=>'demandsHeatFossilMax', 'type'=>'maxShare', 'domain'=>'heat', 'basis'=>'usage_share_in_parent', 'config_key'=>'demandsHeatFossilMax', 'parent'=>'useHeat'],
-      ],
-      'flows' => [],
-    ],
+    
 
     // Power + subs
     'power' => [
@@ -295,6 +299,25 @@ function metrics_registry(): array {
       'demands' => [],
       'flows' => [],
     ],
+
+    'waste' => [
+      'label' => 'Waste ',
+      'usageField' => 'useWaste',
+      'capacityField' => 'wasteCapacity',
+      'capacityStatKeys' => ['wasteCapacity'],
+      'usageStatKeys' => ['wasteUsage'],
+      'sources' => ['bld'=>true,'add'=>true,'rsd'=>true,'ani'=>true,'res'=>true],
+      'stage' => ['unlock_at'=>1,'visible_at'=>1],
+      'happiness' => ['enabled'=>true, 'weight_key'=>'wasteHappinessWeight'], // eksempel
+      'popularity'=> ['enabled'=>false],
+      'subs' => ['wasteOrganic','wasteOther'],
+      'demands' => [],
+      'flows' => [
+        // Eksempel på borger-flow du kan bruge senere:
+        // ['citizenField'=>'wastePlastic', 'unit'=>'per_hour'],
+      ],
+    ],
+
     'wasteOther' => [
       'label' => 'Waste Other',
       'usageField' => 'wasteOther',
@@ -302,10 +325,28 @@ function metrics_registry(): array {
       'capacityStatKeys' => ['wasteOtherCapacity'],
       'usageStatKeys' => ['wasteOtherUsage'],
       'sources' => ['bld'=>true,'add'=>true,'rsd'=>true,'ani'=>true,'res'=>true],
-      'stage' => ['unlock_at'=>2,'visible_at'=>2],
-      'happiness' => ['enabled'=>true, 'weight_key'=>'pollutionAirHappinessWeight'], // eksempel
+      'stage' => ['unlock_at'=>1,'visible_at'=>1],
+      'happiness' => ['enabled'=>true, 'weight_key'=>'wasteOtherHappinessWeight'], // eksempel
       'popularity'=> ['enabled'=>false],
-      'subs' => [],
+      'parent' => ['waste'],
+      'demands' => [],
+      'flows' => [
+        // Eksempel på borger-flow du kan bruge senere:
+        // ['citizenField'=>'wastePlastic', 'unit'=>'per_hour'],
+      ],
+    ],
+
+    'wasteOrganic' => [
+      'label' => 'Waste Organic',
+      'usageField' => 'wasteOrganic',
+      'capacityField' => 'wasteOrganicCapacity',
+      'capacityStatKeys' => ['wasteOrganicCapacity'],
+      'usageStatKeys' => ['wasteOrganicUsage'],
+      'sources' => ['bld'=>true,'add'=>true,'rsd'=>true,'ani'=>true,'res'=>true],
+      'stage' => ['unlock_at'=>1,'visible_at'=>1],
+      'happiness' => ['enabled'=>true, 'weight_key'=>'wasteOrganicHappinessWeight'], // eksempel
+      'popularity'=> ['enabled'=>false],
+      'parent' => ['waste'],
       'demands' => [],
       'flows' => [
         // Eksempel på borger-flow du kan bruge senere:
@@ -378,7 +419,7 @@ function metrics_registry(): array {
       'capacityStatKeys' => [],
       'usageStatKeys' => [],
       'sources' => [],
-      'stage' => ['unlock_at'=>2,'visible_at'=>2],
+      'stage' => ['unlock_at'=>3,'visible_at'=>3],
       'happiness' => ['enabled'=>true, 'weight_key'=>'pollutionAirHappinessWeight'],
       'popularity'=> ['enabled'=>true, 'weight_key'=>'pollutionAirPopularityWeight'],
       'subs' => [],
@@ -396,7 +437,7 @@ function metrics_registry(): array {
       'capacityStatKeys' => [],
       'usageStatKeys' => [],
       'sources' => [],
-      'stage' => ['unlock_at'=>2,'visible_at'=>1],
+      'stage' => ['unlock_at'=>3,'visible_at'=>3],
       'happiness' => ['enabled'=>true, 'weight_key'=>'trafficHappinessWeight'],
       'popularity'=> ['enabled'=>true, 'weight_key'=>'trafficFossilPopularityWeight'],
       'parent' => 'traffic',
