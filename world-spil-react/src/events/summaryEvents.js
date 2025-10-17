@@ -9,6 +9,6 @@ export function triggerSummaryRefresh(payload = {}) {
     for (const cb of Array.from(listeners)) {
       try { cb(payload); } catch (e) { console.error('summaryEvents listener failed', e); }
     }
-    console.debug('summaryEvents: dispatched to listeners', { payload });
+    //console.debug('summaryEvents: dispatched to listeners', { payload });
   }, 0);
 }

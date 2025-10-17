@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import useHeaderSummary from '../../hooks/useHeaderSummary.js';
 import HoverCard from '../ui/HoverCard.jsx';
 import Modal from '../ui/Modal.jsx'; // <-- tilpas sti/navn hvis din modal ligger et andet sted
@@ -45,10 +45,14 @@ function renderPolicyEntry(key, v, totalForGroup) {
 }
 
 export default function HeaderBudgetBadge() {
-
-  
-  const { data, loading, err } = useHeaderSummary();
+  // inkluder isFetching fra hook (bruges til visuel indikation)
+  const { data, loading, err, isFetching } = useHeaderSummary();
   const t = useT();
+
+  // Gem sidste valide data for at undgå unmount/re-mount flicker
+  const lastDataRef = useRef(data);
+  useEffect(() => { if (data) lastDataRef.current = data; }, [data]);
+  const effective = data || lastDataRef.current;
 
   // --- flytede hooks: altid kald hooks her, før tidlige return ---
   const [open, setOpen] = useState(false);
@@ -61,11 +65,12 @@ export default function HeaderBudgetBadge() {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
-  if (loading || err || !data) return null;
+  // Vis kun når vi har effektive data (brug last cached data under revalidate)
+  if (!effective) return null;
 
-  const usages = data?.usages ?? {};
-  const capacities = data?.capacities ?? {};
-  const metaMap = data?.metricsMeta ?? {};
+  const usages = effective?.usages ?? {};
+  const capacities = effective?.capacities ?? {};
+  const metaMap = effective?.metricsMeta ?? {};
 
   // Total tax-usage: sum af alle usage entries hvor key starter med "tax"
   const taxUsed = usages.useTax?.total;
@@ -217,6 +222,18 @@ export default function HeaderBudgetBadge() {
   const ratio = taxCap > 0 ? Math.max(0, Math.min(1, taxUsed / taxCap)) : 0;
   const pct = Math.round(ratio * 100);
 
+  // Blink-effekt når taxUsed ændrer sig (visuel feedback)
+  const lastTaxRef = useRef(taxUsed);
+  const [blink, setBlink] = useState(false);
+  useEffect(() => {
+    if (lastTaxRef.current !== undefined && lastTaxRef.current !== taxUsed) {
+      setBlink(true);
+      const tBlink = setTimeout(() => setBlink(false), 180);
+      return () => clearTimeout(tBlink);
+    }
+    lastTaxRef.current = taxUsed;
+  }, [taxUsed]);
+
   const hoverContent = (
     <div style={{ minWidth: 220 }}>
       <div style={{ fontWeight: 700, marginBottom: 4 }}>Budget</div>
@@ -240,8 +257,14 @@ export default function HeaderBudgetBadge() {
       <HoverCard content={hoverContent} cardStyle={{ maxWidth: 360, minWidth: 220 }}>
         <span
           className="res-chip"
-          title="Budget (tax)"
-          style={{ cursor: 'pointer', userSelect: 'none' }}
+          title={isFetching ? 'Opdaterer...' : 'Budget (tax)'}
+          style={{
+            cursor: 'pointer',
+            userSelect: 'none',
+            transition: 'opacity 160ms ease, transform 160ms ease',
+            opacity: blink ? 0.5 : (isFetching ? 0.65 : 1),
+            transform: blink ? 'translateY(-4px)' : 'translateY(0)',
+          }}
           onClick={(e) => { e.stopPropagation(); setOpen(true); }}
         >
           💹 {fmtNum(taxUsed)} / {fmtNum(taxCap)}

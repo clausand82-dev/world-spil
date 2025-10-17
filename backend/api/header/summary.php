@@ -518,7 +518,7 @@ if (!empty($summary['capChoice']) && is_array($summary['capChoice'])) {
   $usages     = round_numeric_recursive($usages, $ROUND_DECIMALS);
 
   // Respond – udvidet payload (kompatibel med eksisterende UI)
-  respond([
+  $data = [
     'citizens' => [
       'raw'          => $rawCit,
       'groupCounts'  => $macro,
@@ -536,7 +536,7 @@ if (!empty($summary['capChoice']) && is_array($summary['capChoice'])) {
     'capacities'   => $capacities,
     'parts'        => $parts,
     'partsList'    => $partsList,
-    'capChoice'   => $capChoice = round_numeric_recursive(($summary['capChoice'] ?? []), $ROUND_DECIMALS),
+    'capChoice'    => $capChoice = round_numeric_recursive(($summary['capChoice'] ?? []), $ROUND_DECIMALS),
     'happiness'    => $happinessData,
     'popularity'   => $popularityData,
     'demands'      => $demandsData,
@@ -561,8 +561,22 @@ if (!empty($summary['capChoice']) && is_array($summary['capChoice'])) {
       return $out;
     })(),
     'stage'        => ['current' => $userStage],
-  ]);
+  ];
 
+  // --- ETag / conditional response ---
+  // Compute an ETag from parts of the payload that should indicate change.
+  // Prefer DB timestamps in production; here we hash relevant sections.
+  $etag = '"' . md5(json_encode($data['capacities'] ?? []) . json_encode($data['usages'] ?? []) . json_encode($data['state'] ?? [])) . '"';
+  header('ETag: ' . $etag);
+
+  $ifNone = $_SERVER['HTTP_IF_NONE_MATCH'] ?? '';
+  if ($ifNone === $etag) {
+    // Not modified — client can reuse cached payload
+    http_response_code(304);
+    exit;
+  }
+
+  respond($data);
 } catch (Throwable $e) {
   fail('E_SERVER', $e->getMessage(), 500);
 }

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useRef, useEffect } from 'react';
 import useHeaderSummary from '../../hooks/useHeaderSummary.js';
 import HoverCard from '../ui/HoverCard.jsx';
 import { fmt } from '../../services/helpers.js';
@@ -69,21 +69,36 @@ function calcScore01(used, cap) {
 }
 
 export default function HeaderHappinessBadge() {
-  const { data, loading, err } = useHeaderSummary();
+  // include isFetching and cached effective data + blink
+  const { data, loading, err, isFetching } = useHeaderSummary();
+  const lastDataRef = useRef(data);
+  useEffect(() => { if (data) lastDataRef.current = data; }, [data]);
+  const effective = data || lastDataRef.current;
   const { data: gameData } = useGameData();
   const [hoverMain, setHoverMain] = useState(null);
 
   const LABELS = useStatsLabels();
 
-  const h       = data?.happiness ?? { impacts: {}, weightTotal: 0, impactTotal: 0, happiness: 0 };
-  const usages  = data?.usages ?? {};
-  const caps    = data?.capacities ?? {};
-  const metaMap = data?.metricsMeta ?? {}; // fra backend summary.php
+  const h       = effective?.happiness ?? { impacts: {}, weightTotal: 0, impactTotal: 0, happiness: 0 };
+  const usages  = effective?.usages ?? {};
+  const caps    = effective?.capacities ?? {};
+  const metaMap = effective?.metricsMeta ?? {}; // fra backend summary.php
   const stageCurrent = Number(gameData?.state?.user?.currentstage ?? 0);
 
   const score01 = Number(h.total || h.happiness|| 0); // total med rettelse, ellers baseline
   const pct = Math.round(score01 * 100);
   const emoji = happinessEmojiFromScore(score01);
+  // blink when score changes
+  const lastScoreRef = useRef(pct);
+  const [blink, setBlink] = useState(false);
+  useEffect(() => {
+    if (lastScoreRef.current !== undefined && lastScoreRef.current !== pct) {
+      setBlink(true);
+      const t = setTimeout(() => setBlink(false), 180);
+      return () => clearTimeout(t);
+    }
+    lastScoreRef.current = pct;
+  }, [pct]);
 
   // Hjælper: stage gating for UI (kun til fallback; impacts må vises hvis backend har valgt det)
   const getStage = (key) => {
@@ -260,19 +275,28 @@ export default function HeaderHappinessBadge() {
     );
   }, [h, usages, caps, hoverMain, metaMap, stageCurrent, LABELS]);
 
-  // Nu må vi gerne "stille" os selv ved loading/fejl
-  if (loading || err) return null;
-  // Hvis der slet ikke er happiness endnu, kan vi skjule badge – hooks er allerede kaldt
-  if (!data?.happiness) return null;
+  // Vis kun hvis vi slet ikke har nogen data overhovedet;
+  // behold cached effektive data under revalidate/fejl for at undgå flicker
+  if (!effective) return null;
 
-  return (
-    <HoverCard
-      content={content}
-      cardStyle={{ maxWidth: 560, minWidth: 420 }}
-    >
-      <span className="res-chip" title={undefined} style={{ cursor: 'pointer', userSelect: 'none' }}>
-        {emoji} {pct}
-      </span>
-    </HoverCard>
-  );
+   return (
+     <HoverCard
+       content={content}
+       cardStyle={{ maxWidth: 560, minWidth: 420 }}
+     >
+       <span
+         className="res-chip"
+         title={undefined}
+         style={{
+           cursor: 'pointer',
+           userSelect: 'none',
+           transition: 'opacity 160ms ease, transform 160ms ease',
+           opacity: blink ? 0.5 : (isFetching ? 0.65 : 1),
+           transform: blink ? 'translateY(-4px)' : 'translateY(0)',
+         }}
+       >
+         {emoji} {pct}
+       </span>
+     </HoverCard>
+   );
 }

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useRef, useEffect } from 'react';
 import useHeaderSummary from '../../hooks/useHeaderSummary.js';
 import HoverCard from '../ui/HoverCard.jsx';
 import { useGameData } from '../../context/GameDataContext.jsx';
@@ -9,13 +9,28 @@ import {useStatsLabels, popularityEmojiFromScore} from '../../hooks/useStatsLabe
 
 export default function HeaderPopularityBadge() {
   const { data, loading, err } = useHeaderSummary();
+  // keep last valid summary to avoid unmount/remount during revalidate
+  const lastDataRef = useRef(data);
+  useEffect(() => { if (data) lastDataRef.current = data; }, [data]);
+  const effective = data || lastDataRef.current;
   const [hoverKey, setHoverKey] = useState(null);
   const LABELS = useStatsLabels(); // Henter LABELS fra hook
 
-  if (err) return null;
-  const p = data?.popularity ?? { impacts: {}, weightTotal: 0, impactTotal: 0, popularity: 0 };
+  if (!effective) return null;
+  const p = effective?.popularity ?? { impacts: {}, weightTotal: 0, impactTotal: 0, popularity: 0 };
 
   const score01 = Number(p.popularity || 0);
+  // transient blink when popularity changes (visual only)
+  const lastScoreRef = useRef(score01);
+  const [blink, setBlink] = useState(false);
+  useEffect(() => {
+    if (lastScoreRef.current !== undefined && lastScoreRef.current !== score01) {
+      setBlink(true);
+      const t = setTimeout(() => setBlink(false), 180);
+      return () => clearTimeout(t);
+    }
+    lastScoreRef.current = score01;
+  }, [score01]);
   const pct = Math.round(score01 * 100);
   const emoji = popularityEmojiFromScore(score01);
 
@@ -91,10 +106,20 @@ export default function HeaderPopularityBadge() {
           cursor: 'pointer', userSelect: 'none', fontSize: 14,
         }}
       >
-        <span className="res-chip" title={undefined} style={{ cursor: 'pointer', userSelect: 'none' }}>
-        <span role="img" aria-label="popularity" style={{ fontSize: 16 }}>📣</span>
-        <span style={{ fontWeight: 600 }}>{pct}%</span>
-        <span>{emoji}</span>
+        <span
+          className="res-chip"
+          title={undefined}
+          style={{
+            cursor: 'pointer',
+            userSelect: 'none',
+            transition: 'opacity 160ms ease, transform 160ms ease',
+            opacity: blink ? 0.5 : 1,
+            transform: blink ? 'translateY(-4px)' : 'translateY(0)',
+          }}
+        >
+          <span role="img" aria-label="popularity" style={{ fontSize: 16 }}>📣</span>
+          <span style={{ fontWeight: 600 }}>{pct}%</span>
+          <span>{emoji}</span>
         </span>
       </div>
     </HoverCard>

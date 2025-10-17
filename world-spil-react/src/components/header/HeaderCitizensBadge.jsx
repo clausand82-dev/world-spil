@@ -1,31 +1,35 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef, useEffect, useState } from 'react';
 import { useGameData } from '../../context/GameDataContext.jsx';
+import useHeaderSummary from '../../hooks/useHeaderSummary.js';
+import HoverCard from '../ui/HoverCard.jsx';
 import { useT } from "../../services/i18n.js";
 import { fmt } from '../../services/helpers.js';
-import HoverCard from '../ui/HoverCard.jsx';
-import useHeaderSummary from '../../hooks/useHeaderSummary.js';
-
-
+ 
 export default function HeaderCitizensBadge() {
   const t = useT();
+  // behold gameData fra context
   const { data: gameData } = useGameData();
-  const { data, loading, err } = useHeaderSummary();  
+  // brug isFetching fra hook og cache sidste valide summary
+  const { data, loading, err, isFetching } = useHeaderSummary();
+  const lastDataRef = useRef(data);
+  useEffect(() => { if (data) lastDataRef.current = data; }, [data]);
+  const effective = data || lastDataRef.current;
+  const [blink, setBlink] = useState(false);
+  if (!effective) return null; // ingen data nogensinde → returnér intakt
 
   const stageCurrent = Number(gameData?.state?.user?.currentstage ?? 0);
-  const isLite = stageCurrent <= 1
+  const isLite = stageCurrent <= 1;
 
   // Tag samme kilder som Happiness/Popularity: usages + capacities
-  const usages = data?.usages ?? {};
-  const caps   = data?.capacities ?? {};
+  const usages = effective?.usages ?? {};
+  const caps   = effective?.capacities ?? {};
 
   // Borger-tal fra summary hvis tilgængeligt; fallback til state hvis backend ikke sender det her
-  const popSum = data?.citizens?.groupCounts ?? data?.population ?? {};
+  const popSum = effective?.citizens?.groupCounts ?? effective?.population ?? {};
   const popState = gameData?.state?.city?.population ?? gameData?.state?.population ?? {};
-  const popGroups = data?.citizens?.raw || {};
+  const popGroups = effective?.citizens?.raw || {};
 
-//console.log(popGroups);
-
-  const total  = toNum(data?.citizens?.totals?.totalPersons ?? popSum.total ?? popState.total);
+  const total  = toNum(effective?.citizens?.totals?.totalPersons ?? popSum.total ?? popState.total);
   const adults = toNum(popSum.adultsTotal ?? popState.adults);
   const adultsUnemployed = toNum(popGroups?.adultsUnemployed);
   const young  = toNum(popSum.young ?? popState.young);
@@ -36,20 +40,15 @@ export default function HeaderCitizensBadge() {
   const adultsFire        = toNum(popGroups?.adultsFire);
   const adultsHealth      = toNum(popGroups?.adultsHealth);
   const adultsPolitician  = toNum(popGroups?.adultsPolitician);
-  const adultsGovernment = toNum(popGroups?.adultsGovernment);
+  const adultsGovernment  = toNum(popGroups?.adultsGovernment);
   const adultsWorker      = toNum(popGroups?.adultsWorker);
   const adultsSoldier     = toNum(popGroups?.adultsSoldier);
   const youngStudent      = toNum(popGroups?.youngStudent);
   const youngWorker       = toNum(popGroups?.youngWorker);
   const kidsStudent       = toNum(popGroups?.kidsStudent);
-  const kidsStreet         = toNum(popGroups?.kidsStreet);
-  const old                = toNum(popGroups?.old);
-  const crime              = toNum(popSum?.crime);
-  
-  
-//
-
-  //console.log(adultsPolice, adultsFire, adultsHealth, adultsPolitician);
+  const kidsStreet        = toNum(popGroups?.kidsStreet);
+  const old               = toNum(popGroups?.old);
+  const crime             = toNum(popSum?.crime);
 
   // Kapaciteter/forbrug – samme navne som bruges i HappinessBadge (usages/caps)
   const housingUsed = toNum(getTotal(usages.useHousing));
@@ -71,7 +70,7 @@ export default function HeaderCitizensBadge() {
         </div>
 
         <ul style={{ margin: 0, paddingLeft: 0, listStyle: 'none' }}>
-          <Row label="Total" value={fmt(total)} strong/><hr></hr>
+          <Row label="Total" value={fmt(total)} strong/><hr />
 
           {isLite ? (
             <>
@@ -79,17 +78,16 @@ export default function HeaderCitizensBadge() {
               <Row label="Unge"   value={fmt(young)} strong/>
               <Row label={t("ui.citizens.baby.h1")}  value={fmt(kids)} strong/>
               <Row label="Babyer"   value={fmt(baby)} strong/>
-              <hr></hr>
+              <hr />
               <Row label="Housing"  value={`${fmt(housingUsed)} / ${fmt(housingCap)}`} mono />
               <Row label="Hjemløse" value={fmt(homeless)} />
               <Row label="Health"   value={`${fmt(healthUsed)} / ${fmt(healthCap)}`} mono />
-              <hr></hr>
+              <hr />
               <Row label="Provision forbrug" value={fmt(provisionUse)} mono />
               <Row label="Vand forbrug" value={fmt(waterUse)} mono />
             </>
           ) : (
             <>
-              
               <Row label="Voksne:" strong/>
               <Row label={`${t("ui.emoji.adults_police.h1")} ${t("ui.citizens.adults_police.h1")}`}  value={fmt(adultsPolice)} />
               <Row label={`${t("ui.emoji.adults_fire.h1")} ${t("ui.citizens.adults_fire.h1")}`}  value={fmt(adultsFire)} />
@@ -101,25 +99,24 @@ export default function HeaderCitizensBadge() {
               <Row label={`${t("ui.emoji.old.h1")} ${t("ui.citizens.old.h1")}`}  value={fmt(old)} />
               <Row label={`${t("ui.emoji.adults_unemployed.h1")} ${t("ui.citizens.adults_unemployed.h1")}`}  value={fmt(adultsUnemployed)} />
               <Row label={`${t("ui.emoji.adults_homeless.h1")} ${t("ui.citizens.adults_homeless.h1")}`}  value={fmt(homeless)} />
-              {/*<Row label={`${t("ui.emoji.crime.h1")} ${t("ui.citizens.crime.h1")}`}  value={fmt(crime)} />*/}
-              <hr></hr>
+              <hr />
               <Row label="Unge:" strong/>
               <Row label={`${t("ui.emoji.young_student.h1")} ${t("ui.citizens.young_student.h1")}`}  value={fmt(youngStudent)} />
               <Row label={`${t("ui.emoji.young_worker.h1")} ${t("ui.citizens.young_worker.h1")}`}  value={fmt(youngWorker)} />
-              <hr></hr>
+              <hr />
               <Row label="Børn og babyer:" strong/>
               <Row label={`${t("ui.emoji.kids_student.h1")} ${t("ui.citizens.kids_student.h1")}`}  value={fmt(kidsStudent)} />
               <Row label={`${t("ui.emoji.kids_street.h1")} ${t("ui.citizens.kids_street.h1")}`}  value={fmt(kidsStreet)} />
               <Row label={`${t("ui.emoji.baby.h1")} ${t("ui.citizens.baby.h1")}`}   value={fmt(baby)} />
-              <hr></hr>
+              <hr />
               <Row label="Stats:" strong/>
               <Row label="Housing"  value={`${fmt(housingUsed)} / ${fmt(housingCap)}`} mono />
-               <Row label="Health"   value={`${fmt(healthUsed)} / ${fmt(healthCap)}`} mono />
+              <Row label="Health"   value={`${fmt(healthUsed)} / ${fmt(healthCap)}`} mono />
               <Row label="Provision forbrug" value={fmt(provisionUse)} mono />
               <Row label="Vand forbrug"      value={fmt(waterUse)} mono />
-              <hr></hr>
+              <hr />
               Se detaljer i <a href="#/help?topic=population">Hjælp: Befolkning</a> og <a href="#/help?topic=stats-overview">Hjælp: Stats</a>
-              </>
+            </>
           )}
         </ul>
       </div>
@@ -131,9 +128,6 @@ export default function HeaderCitizensBadge() {
     healthUsed, healthCap,
     provisionUse, waterUse
   ]);
-
-  // Følg mønsteret fra de andre badges: ved load/fejl returneres intet (badge skjules)
-  if (loading || err) return null;
 
   return (
     <HoverCard content={content} cardStyle={{ maxWidth: 480, minWidth: 320 }}>

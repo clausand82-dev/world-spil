@@ -4,10 +4,9 @@ export async function fetchOverrides(family) {
   const json = await res.json();
   if (!json.ok) throw new Error(json.error?.message || 'Failed to load overrides');
   return json.overrides || {};
-// efter succes:
-await refreshData?.();
-triggerSummaryRefresh();
 }
+
+import { triggerSummaryRefresh } from '../events/summaryEvents.js'; // NYT
 
 export async function saveOverrides(family, overrides, { replaceFamily = true } = {}) {
   const res = await fetch(`/world-spil/backend/api/management/choices.php?debug=1`, {
@@ -18,5 +17,14 @@ export async function saveOverrides(family, overrides, { replaceFamily = true } 
   });
   const json = await res.json();
   if (!json.ok) throw new Error(json.error?.message || 'Failed to save overrides');
+
+  // NYT: notify app that summary might have changed (header/sidebar)
+  try {
+    triggerSummaryRefresh();
+  } catch (e) {
+    // no-op if event fails
+    console.warn('triggerSummaryRefresh failed', e);
+  }
+
   return json;
 }

@@ -11,6 +11,7 @@ const shared = {
   promise: null,
   at: 0,              // timestamp ms
   unauthenticated: false,
+  isFetching: false,
 };
 
 function loadFromSession() {
@@ -70,8 +71,11 @@ async function doFetch() {
 
 function fetchSummary() {
   if (shared.promise) return shared.promise;
+  // markér at vi er i gang med en fetch — men behold shared.data intakt
+  shared.isFetching = true;
   shared.promise = doFetch()
     .then((res) => {
+      shared.isFetching = false;
       if (res?.unauthenticated) {
         shared.data = null;
         shared.err = null;
@@ -89,6 +93,7 @@ function fetchSummary() {
     })
     .catch((err) => {
       shared.err = String(err?.message || err);
+      shared.isFetching = false;
       // Do not clobber unauthenticated flag on other errors
       throw err;
     })
@@ -107,6 +112,7 @@ export default function useHeaderSummary({ revalidateMs = 30000 } = {}) {
   const [data, setData] = useState(shared.data);
   const [err, setErr] = useState(shared.err);
   const [loading, setLoading] = useState(!shared.data && !shared.promise);
+  const [isFetching, setIsFetching] = useState(Boolean(shared.isFetching));
   const [lastUpdated, setLastUpdated] = useState(shared.at);
   const [unauthenticated, setUnauthenticated] = useState(shared.unauthenticated);
 
@@ -115,6 +121,7 @@ export default function useHeaderSummary({ revalidateMs = 30000 } = {}) {
     mountedRef.current = true;
 
     // Start/tilslut fetch – revalidate altid i baggrunden
+    setIsFetching(true);
     fetchSummary()
       .then((res) => {
         if (!mountedRef.current) return;
@@ -128,18 +135,21 @@ export default function useHeaderSummary({ revalidateMs = 30000 } = {}) {
           setUnauthenticated(false);
         }
         setLoading(false);
+        setIsFetching(false);
         setLastUpdated(shared.at);
       })
       .catch((e) => {
         if (!mountedRef.current) return;
         setErr(String(e?.message || e));
         setLoading(false);
+        setIsFetching(false);
       });
 
     // Periodisk revalidate (stale-while-revalidate)
     let timer = null;
     if (revalidateMs > 0) {
       timer = setInterval(() => {
+        setIsFetching(true);
         fetchSummary()
           .then((res) => {
             if (!mountedRef.current) return;
@@ -169,6 +179,7 @@ export default function useHeaderSummary({ revalidateMs = 30000 } = {}) {
 
   const refresh = async () => {
     setLoading(true);
+    setIsFetching(true);
     try {
       const res = await fetchSummary();
       if (!mountedRef.current) return;
@@ -187,6 +198,7 @@ export default function useHeaderSummary({ revalidateMs = 30000 } = {}) {
       setErr(String(e?.message || e));
     } finally {
       if (mountedRef.current) setLoading(false);
+      if (mountedRef.current) setIsFetching(false);
     }
   };
 
@@ -203,5 +215,6 @@ export default function useHeaderSummary({ revalidateMs = 30000 } = {}) {
     return () => removeSummaryRefreshListener(onRefresh);
   }, []);
 
-  return { data, err, loading, refresh, lastUpdated, unauthenticated };
+  const isStale = Boolean(shared.data && (Date.now() - (shared.at || 0) > Math.max(0, revalidateMs || 30000)));
+  return { data, err, loading, isFetching, isStale, refresh, lastUpdated, unauthenticated };
 }

@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef, useEffect } from 'react';
 import { useGameData } from '../context/GameDataContext.jsx';
 import { fmt } from '../services/helpers.js';
 import TopbarAuth from './TopbarAuth.jsx';
@@ -22,6 +22,15 @@ export default function Header() {
   const footprint = state?.cap?.footprint ?? {};
   const animal_cap = state?.cap?.animal_cap ?? {};
   const resDefs = defs?.res ?? {};
+  // Keep last-known non-empty values to avoid flicker when backend updates
+  const animalCapRef = useRef(animal_cap);
+  const footprintRef = useRef(footprint);
+  useEffect(() => { if (animal_cap && (animal_cap.used !== undefined || animal_cap.total !== undefined)) animalCapRef.current = animal_cap; }, [animal_cap]);
+  useEffect(() => { if (footprint && (footprint.used !== undefined || footprint.total !== undefined)) footprintRef.current = footprint; }, [footprint]);
+  const animalUsed = (animal_cap?.used ?? animalCapRef.current?.used) ?? 0;
+  const animalTotal = (animal_cap?.total ?? animalCapRef.current?.total) ?? 0;
+  const footprintUsed = (footprint?.used ?? footprintRef.current?.used) ?? 0;
+  const footprintTotal = (footprint?.total ?? footprintRef.current?.total) ?? 0;
 
   // stages config (fra serverens config.ini via alldata.php)
   const stageCfg = data?.config?.stagemanagement || data?.config?.stageManagement || {};
@@ -57,24 +66,34 @@ export default function Header() {
       </div>
 
       <div className="header-resources">
-        {showCrime && <HeaderCrimeBadge />}
-        {showBudget && <HeaderBudgetBadge />}
-        {showPopularity && <HeaderPopularityBadge />}
-        {showHappiness && <HeaderHappinessBadge />}
+        <div className={`badge-wrap ${showCrime ? 'visible' : 'hidden'}`} style={{ transition: 'opacity 180ms', opacity: showCrime ? 1 : 0, pointerEvents: showCrime ? 'auto' : 'none' }}>
+          <HeaderCrimeBadge />
+        </div>
+        <div className={`badge-wrap ${showBudget ? 'visible' : 'hidden'}`} style={{ transition: 'opacity 180ms', opacity: showBudget ? 1 : 0, pointerEvents: showBudget ? 'auto' : 'none' }}>
+          <HeaderBudgetBadge />
+        </div>
+        <div className={`badge-wrap ${showPopularity ? 'visible' : 'hidden'}`} style={{ transition: 'opacity 180ms', opacity: showPopularity ? 1 : 0, pointerEvents: showPopularity ? 'auto' : 'none' }}>
+          <HeaderPopularityBadge />
+        </div>
+        <div className={`badge-wrap ${showHappiness ? 'visible' : 'hidden'}`} style={{ transition: 'opacity 180ms', opacity: showHappiness ? 1 : 0, pointerEvents: showHappiness ? 'auto' : 'none' }}>
+          <HeaderHappinessBadge />
+        </div>
         <StageUnlockAnnouncer />
 
         {/* Fjern ekstra wrapper for at undgå dobbelt chip-indpakning */}
-        {showCitizens && <HeaderCitizensBadge />}
+        <div className={`badge-wrap ${showCitizens ? 'visible' : 'hidden'}`} style={{ transition: 'opacity 180ms', opacity: showCitizens ? 1 : 0, pointerEvents: showCitizens ? 'auto' : 'none' }}>
+          <HeaderCitizensBadge />
+        </div>
 
         <HoverCard content={animalCapHover}>
           <span className="res-chip">
-            🐾 {fmt(animal_cap.used || 0)}<span className="max">/{fmt(animal_cap.total || 0)}</span>
+            🐾 {fmt(animalUsed)}<span className="max">/{fmt(animalTotal)}</span>
           </span>
         </HoverCard>
 
         <HoverCard content={footprintHover}>
           <span className="res-chip">
-            ⬛ {fmt(Math.abs(footprint.used) || 0)}<span className="max">/{fmt(footprint.total || 0)}</span>
+            ⬛ {fmt(Math.abs(footprintUsed) || 0)}<span className="max">/{fmt(footprintTotal)}</span>
           </span>
         </HoverCard>
       </div>
