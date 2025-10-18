@@ -24,8 +24,7 @@
     <yield period="1h">
         <res id="res.fertilizer" amount="4"/>
     </yield>
-    <emoji>🐖</emoji>
-   
+    <emoji>🐖</emoji>   
   </animal>
 
   <animal id="ani.goat" family="farm" stage="1">

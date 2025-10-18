@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useGameData } from '../../context/GameDataContext.jsx';
-import { parseBldKey } from '../../services/helpers.js';
+import * as H from '../../services/helpers.js';
 
 import BuildingHero from './BuildingHero.jsx';
 import BuildingActions from './BuildingActions.jsx';
@@ -23,6 +23,8 @@ function canonicalizeBuildingId(param) {
 function BuildingDetailPage({ buildingId }) {
   const { data } = useGameData();
   const t = useT();
+  // local sanitized id to avoid conditional hooks when redirecting
+  const [sanitizedBuildingId, setSanitizedBuildingId] = React.useState(buildingId);
 
   if (!data) {
     return <div className="panel section"><div className="section-body"><div className="sub">Loading…</div></div></div>;
@@ -30,13 +32,20 @@ function BuildingDetailPage({ buildingId }) {
 
   const { defs, state } = data;
 
-  const canonicalId = canonicalizeBuildingId(buildingId);
+  // compute canonicalId from sanitizedBuildingId (not raw prop)
+  const canonicalId = canonicalizeBuildingId(sanitizedBuildingId);
   const defKey = canonicalId ? canonicalId.replace(/^bld\./, '') : null;
   const heroDef = defKey ? defs.bld?.[defKey] : null;
 
-  const parsed = canonicalId ? parseBldKey(canonicalId) : null;
+  // robust parse using helpers if available
+  const parsed = (typeof H.parseBldKey === 'function') ? H.parseBldKey(canonicalId || '') : (() => {
+    const m = String(canonicalId || '').match(/^bld\.([^.]+(?:\.[^.]+)*)\.l(\d+)$/);
+    if (!m) return {};
+    return { family: m[1], level: Number(m[2]) };
+  })();
   const family = parsed?.family ?? defKey?.replace(/\.l\d+$/, '');
-  const series = parsed?.series ?? (family ? `bld.${family}` : null);
+  const reqLevel = Number(parsed?.level || parsed?.lvl || parsed?.level_s || 0);
+  const series = family ? `bld.${family}` : null;
 
   const ownedBuildings = useMemo(() => computeOwnedMap(state.bld || {}), [state.bld]);
   const ownedAddons = useMemo(() => computeOwnedMap(state.add || {}), [state.add]);
@@ -135,6 +144,21 @@ function BuildingDetailPage({ buildingId }) {
   const [activeTab, setActiveTab] = useState(DETAIL_TABS[0]);
   const [addonFilter, setAddonFilter] = useState('main');
   useEffect(() => { setActiveTab(DETAIL_TABS[0]); setAddonFilter('main'); }, [canonicalId]);
+
+  // Sikker guard: juster kun lokal sanitizedBuildingId først, opdater URL asynkront
+  React.useEffect(() => {
+    if (!family) return;
+    if (reqLevel > ownedMax) {
+      if (ownedMax > 0) {
+        setSanitizedBuildingId(`${family}.l${ownedMax}`);
+        setTimeout(() => { window.location.hash = `#/building/${family}.l${ownedMax}`; }, 0);
+      } else {
+        setTimeout(() => { window.location.hash = '#/buildings'; }, 0);
+      }
+    } else {
+      setSanitizedBuildingId(buildingId);
+    }
+  }, [family, reqLevel, ownedMax, buildingId]);
 
   if (!canonicalId || !heroDef || !family) {
     return <div className="panel section"><div className="section-body"><div className="sub">Building not found.</div></div></div>;
