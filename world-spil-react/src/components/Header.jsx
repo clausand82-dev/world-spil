@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useEffect } from 'react';
+import React, { useMemo, useRef, useEffect, useState } from 'react';
 import { useGameData } from '../context/GameDataContext.jsx';
 import { fmt } from '../services/helpers.js';
 import TopbarAuth from './TopbarAuth.jsx';
@@ -16,6 +16,29 @@ export default function Header() {
   const { data } = useGameData();
   const defs = data?.defs || {};
   const state = data?.state || {};
+  // About-modal state
+  const [aboutOpen, setAboutOpen] = useState(false);
+  const [aboutText, setAboutText] = useState(null);
+  const [aboutLoading, setAboutLoading] = useState(false);
+
+  // valgfri: læs filnavn fra serverens config (fx data.config.about_file)
+  const ABOUT_PATH = data?.config?.game_data?.historyfile ?? '/history.txt';
+  
+  const openAbout = () => {
+    setAboutOpen(true);
+    if (aboutText !== null) return;
+    setAboutLoading(true);
+    // Fetch plain text from public folder (place a file e.g. public/about.txt)
+    fetch(ABOUT_PATH)
+      .then((r) => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.text();
+      })
+      .then((txt) => setAboutText(txt))
+      .catch(() => setAboutText('Kunne ikke indlæse filen.'))
+      .finally(() => setAboutLoading(false));
+  };
+  const closeAbout = () => setAboutOpen(false);
 
   const solid = state?.inv?.solid ?? {};
   const liquid = state?.inv?.liquid ?? {};
@@ -57,7 +80,13 @@ export default function Header() {
 
   return (
     <header className="topbar">
-      <div className="brand" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      <div
+        className="brand"
+        style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}
+        // open modal when clicking brand or version
+        onClick={openAbout}
+        title="Vis info"
+      >
         <span className="brand-emoji" style={{ fontSize: 20 }}>🌍</span>
         <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1 }}>
           <span className="brand-name" style={{ fontWeight: 700 }}>World</span>
@@ -108,6 +137,31 @@ export default function Header() {
           <HeaderLangSelector />
           
       </div>
+      {/* About modal */}
+      {aboutOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          style={{
+            position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: 'rgba(0,0,0,0.5)', zIndex: 1200,
+          }}
+          onClick={closeAbout}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{ maxWidth: 720, width: '90%', maxHeight: '80%', overflow: 'auto', background: '#fff', borderRadius: 8, padding: 18 }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+              <strong>Information</strong>
+              <button className="icon-btn" onClick={closeAbout} aria-label="Luk">✕</button>
+            </div>
+            <div style={{ whiteSpace: 'pre-wrap', fontFamily: 'monospace', fontSize: 13, color: '#111' }}>
+              {aboutLoading ? 'Indlæser…' : (aboutText ?? 'Ingen information tilgængelig.')}
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   );
 }

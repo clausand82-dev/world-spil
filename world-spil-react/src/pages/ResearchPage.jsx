@@ -305,10 +305,11 @@ export default function ResearchPage() {
           {[ALL_KEY, ...familyKeys].map((f) => (
             <button
               key={f}
-              role="tab"
+              role="button"
               aria-selected={f === activeFamily}
               onClick={() => setActiveFamily(f)}
-              className={f === activeFamily ? 'btn active' : 'btn'}
+              className={`tab ${activeFamily === t ? 'active' : ''}`}
+              // className={f === activeFamily ? 'btn active' : 'btn'}
             >
               {f === ALL_KEY ? 'Alle' : f}
               <span style={{ opacity: 0.7, marginLeft: 6 }}>

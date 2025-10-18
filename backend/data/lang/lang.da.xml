@@ -611,8 +611,8 @@
   <entry key="rcp.fishtofood.l1.desc">Producerer mad fra fisk</entry>
   <entry key="rcp.maizefield_scarecrow.l1.name">Malk ko</entry>
   <entry key="rcp.maizefield_scarecrow.l1.desc">Producerer mælk fra køer</entry>
-  <entry key="rcp.straw.l1.name">Forsk i strå</entry>
-  <entry key="rcp.straw.l1.desc">udnyt strå til forskellige formål</entry>
+  <entry key="rcp.straw.l1.name">Lav strå</entry>
+  <entry key="rcp.straw.l1.desc">Lav lidt strå, hvis du mangler det</entry>
   <entry key="rcp.cooking.l1.name">Madlavning</entry>
   <entry key="rcp.cooking.l1.desc">Forbedrer madlavningseffektivitet og madkvalitet</entry>
 

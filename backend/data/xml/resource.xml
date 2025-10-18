@@ -159,7 +159,7 @@
   </resource>
 
   <resource id="res.fertilizer" family="byproduct" type="fertilizer" lvl="1" stage="1">
-  <stats>wasteOrganic=0.5</stats>
+  <stats>wasteOrganicUsage=0.5</stats>
     <unit>kg</unit>
     <unitSpace>0.2</unitSpace>
     <emoji>💩</emoji >

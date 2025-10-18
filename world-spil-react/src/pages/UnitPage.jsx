@@ -124,6 +124,101 @@ function renderCostInline(costLike, defs) {
   return entries.map((e) => `${emojiForId(e.id, defs)} ${H.fmt(e.amount)}`).join(' · ');
 }
 
+// helper: try extract yield/produce entries from various possible def shapes
+function extractYields(def) {
+  if (!def) return [];
+  // common shapes: def.yields = { res.foo: 1 } or { foo: 1 }
+  const maybeObj = def.yields || def.produces || def.produce || def.output || def.outputs || def.yield;
+  if (maybeObj && typeof maybeObj === 'object' && !Array.isArray(maybeObj)) {
+    return Object.entries(maybeObj).map(([k, v]) => {
+      const id = String(k).startsWith('res.') ? String(k) : String(k).replace(/^res\./, '').trim();
+      const amt = Number(v || 0);
+      return { id: id.startsWith('res.') ? id : `res.${id}`, amount: amt };
+    }).filter(e => e.amount > 0);
+  }
+  // array shapes: [{ id:'res.foo', amount: 1 }, ...] or ['res.foo'] or ['foo']
+  if (Array.isArray(maybeObj)) {
+    return maybeObj.map((it) => {
+      if (!it) return null;
+      if (typeof it === 'string') {
+        const key = it.startsWith('res.') ? it : `res.${it.replace(/^res\./, '').trim()}`;
+        return { id: key, amount: 1 };
+      }
+      if (typeof it === 'object') {
+        const key = String(it.id || it.resource || it.res || '').trim();
+        const id = key ? (key.startsWith('res.') ? key : `res.${key.replace(/^res\./, '')}`) : null;
+        const amount = Number(it.amount || it.qty || it.count || 0);
+        if (!id) return null;
+        return { id, amount};
+      }
+      return null;
+    }).filter(Boolean);
+  }
+
+  // fallback: some defs keep numeric single yield in stats e.g. stats.yield and maybe stats.yield_res
+  if (def.stats && (def.stats.yield || def.stats.yield_res)) {
+    const amt = Number(def.stats.yield || 0);
+    const res = def.stats.yield_res || def.stats.yield_resource || def.stats.produces;
+    if (amt > 0 && res) {
+      const id = String(res).startsWith('res.') ? String(res) : `res.${String(res).replace(/^res\./, '')}`;
+      return [{ id, amount: amt }];
+    }
+  }
+
+  return [];
+}
+
+// helper: render yields block (returns React node or null)
+function YieldBlock({ def, defs, H }) {
+  const yields = extractYields(def);
+  if (!yields.length) return null;
+
+  function formatPeriod(sec) {
+    sec = Number(sec || 0);
+    if (!sec || sec <= 0) return '';
+    if (sec >= 3600) {
+      const h = Math.floor(sec / 3600);
+      const m = Math.floor((sec % 3600) / 60);
+      return m ? `${h} h ${m} m` : `${h} h`; // har kan h ændres til t for dansk - brug sprogfil hvis det er
+    }
+    if (sec >= 60) {
+      const m = Math.floor(sec / 60);
+      const s = sec % 60;
+      return s ? `${m} m ${s} s` : `${m} m`; // har kan engelsk ændres til t for dansk - brug sprogfil hvis det er
+    }
+    return `${sec}s`;
+  }
+
+  return (
+    <div style={{ marginBottom: 8 }}>
+      <div className="sub"><strong>Yield / Produktion</strong></div>
+      <div style={{fontSize: 13, marginBottom: 8 }}>
+        {yields.map((y) => {
+          const resKey = String(y.id).replace(/^res\./, '');
+          const resDef = defs?.res?.[resKey];
+          const resName = (resDef && (resDef.name || resDef.label || resDef.title)) || resKey;
+          const amt = Number(y.amount || 0);
+          const sign = amt > 0 ? '+' : (amt < 0 ? '−' : '');
+          const cls = amt > 0 ? 'price-good' : (amt < 0 ? 'price-bad' : '');
+          // yield period: prefer explicit on yield entry, then on def fields (def.yield_period_s or def.stats.yield_period_s)
+          const periodSec = Number(def?.yield_period_s || 0);
+          const periodLabel = formatPeriod(periodSec);
+          return (
+            <div key={y.id}>
+              <span className={cls} style={{ fontWeight: 700 }}>{sign}{H.fmt(Math.abs(amt))}</span>
+              <span style={{ color: '#222', marginLeft: 8 }}>
+                {emojiForId(y.id, defs)} {resName}
+                {periodLabel ? ` / ${periodLabel}` : ''}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+      <div style={{ borderTop: '1px solid rgba(0,0,0,0.08)', paddingTop: 0, display: 'grid', gap: 4, fontSize: 12 }}></div>
+    </div>
+  );
+}
+
 export default function UnitPage({ embedFamily = null, embed = false }) {
   const { data, isLoading, error, refreshData } = useGameData();
   const { data: header } = useHeaderSummary();
@@ -545,7 +640,13 @@ const openBuyConfirm = () => {
               ? Math.abs(Number(def?.stats?.[group.perItemStat] ?? 1)) || 1
               : Math.abs(Number(def?.stats?.[group.perItemStat] ?? 0)) || 0;
             const perLabel = isAnimal ? `Optager ${per} staldplads` : `Forbruger ${per} units`;
-            const hoverContent = <StatsEffectsTooltip def={def} translations={data?.i18n?.current ?? {}} />;
+            const hoverContent = (
+              <div style={{ minWidth: 220 }}>
+                <YieldBlock def={def} defs={defs} H={H} />
+                <div style={{ borderTop: '1px solid rgba(0,0,0,0.08)', paddingTop: 8, display: 'grid', gap: 4, fontSize: 12 }}></div> {/* giver linje i hover */}
+                <StatsEffectsTooltip def={def} translations={data?.i18n?.current ?? {}} />
+              </div>
+            );
 
             return (
               <DockHoverCard key={aniId} content={hoverContent}>
@@ -576,7 +677,13 @@ const openBuyConfirm = () => {
         <div className="section-head">Køb {group.label}</div>
         <div className="section-body">
           {availableDefs.map(([key, def]) => {
-            const hoverContent = <StatsEffectsTooltip def={def} translations={data?.i18n?.current ?? {}} />;
+            const hoverContent = (
+              <><div style={{ minWidth: 220 }}>
+                <YieldBlock def={def} defs={defs} H={H} />
+              
+                <StatsEffectsTooltip def={def} translations={data?.i18n?.current ?? {}} />
+                </div></>
+            );
             const aniId = `ani.${key}`;
             const per = isAnimal
               ? Math.abs(Number(def?.stats?.[group.perItemStat] ?? 1)) || 1

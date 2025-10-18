@@ -34,6 +34,7 @@ try {
   $rsdDefs = $defs['rsd'] ?? [];
   $aniDefs = $defs['ani'] ?? [];
   $resDefs = $defs['res'] ?? [];
+  
 
   $citDefs = cu_load_defs_citizens($defs);
 
