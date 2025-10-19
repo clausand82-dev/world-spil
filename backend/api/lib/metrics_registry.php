@@ -189,7 +189,7 @@ function metrics_registry(): array {
      ],
 
       // Tilføj under $metrics = [ ... ] som ny top-level metric:
-    'healthUnit' => [
+    /*'healthUnit' => [
       'label' => 'Health Units',
       'usageField' => 'healthUnitUsage',         // summary.usages.healthUnitUsage
       'capacityField' => 'healthUnitProvision',  // summary.capacities.healthUnitProvision
@@ -203,6 +203,23 @@ function metrics_registry(): array {
       'demands' => [],
       'flows' => [],
     ],
+
+     'storageUnit' => [
+      'label' => 'Storage Units',
+      'usageField' => 'storageUnitUsage',         // summary.usages.storageUnitUsage
+      'capacityField' => 'storageUnitProvision',  // summary.capacities.storageUnitProvision
+      'capacityStatKeys' => ['storageUnitProvision'],
+      'usageStatKeys' => ['storageUnitUsage'],
+      'sources' => ['bld'=>true,'add'=>true,'rsd'=>true,'ani'=>true,'res'=>true],
+      'stage' => ['unlock_at'=>1000,'visible_at'=>1000], // ikke tilgængelig
+      'happiness' => ['enabled'=>false],
+      'popularity'=> ['enabled'=>false],
+      'subs' => [],
+      'demands' => [],
+      'flows' => [],
+    ],*/
+
+     
 
     
 

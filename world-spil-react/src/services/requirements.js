@@ -1,6 +1,7 @@
 // services/requirements.js
 import { parseBldKey, normalizePrice } from './helpers.js';
 import { applySpeedBuffsToDuration } from './calcEngine-lite.js';
+import Icon from '../components/common/Icon.jsx'; // sti efter din struktur
 
 // G+t action ud fra item
 function inferAction(item) {
@@ -212,5 +213,43 @@ export function formatCost(cost, defs, sign) {
     })
     .join(' • ');
 }
+
+export function getIconMetaForId(id, defs) {
+  if (!id) return null;
+  if (id.startsWith('res.')) {
+    const key = id.replace(/^res\./, '');
+    const d = defs?.res?.[key];
+    if (!d) return null;
+    return { iconUrl: d.iconUrl || null, emoji: d.emoji || null, name: d.name || key };
+  }
+  if (id.startsWith('ani.')) {
+    const key = id.replace(/^ani\./, '');
+    const d = defs?.ani?.[key];
+    if (!d) return null;
+    return { iconUrl: d.iconUrl || null, emoji: d.emoji || null, name: d.name || key };
+  }
+  return null;
+}
+
+/**
+ * Returnerer token-liste for et price/yield-objekt så calleren selv kan renderere.
+ * Eksempel token: { id: 'res.wheat', amount: 10, prefix: '-', icon: { iconUrl, emoji, name } }
+ */
+export function getCostTokens(cost, defs, sign = '-') {
+  const map = normalizePrice(cost); // antager eksisterende normalizePrice
+  if (!Object.keys(map).length) return [];
+  return Object.values(map).map((entry) => {
+    const amount = Number(entry.amount || 0);
+    const prefix = sign === '+' ? '+' : '-';
+    const icon = getIconMetaForId(entry.id, defs);
+    return {
+      id: entry.id,
+      amount,
+      prefix,
+      icon, // {iconUrl, emoji, name} eller null
+    };
+  });
+}
+
 
 

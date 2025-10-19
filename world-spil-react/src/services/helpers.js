@@ -1,3 +1,6 @@
+
+import React from 'react';
+import Icon from '../components/common/Icon.jsx';
 /* =========================================================
    services/helpers.js
    - Et rent JavaScript-modul, der eksporterer genbrugelige funktioner.
@@ -167,3 +170,78 @@ export const pickNextTargetInSeries = (seriesItems, ownedMaxLevel) => {
     const targetLevel = (ownedMaxLevel || 0) + 1;
     return seriesItems.find(x => x.level === targetLevel) || null;
 };
+
+ /* Returnerer HTML-string for et icon givet et id og defs.
+ * - for resource/animal defs forventer vi normalizeDefsForIcons har sat emojiText eller iconUrl
+ * - bruges når du skal bygge HTML-strings (helpTopics og andre string-renderers)
+ */
+export function emojiHtmlForId(id, defs, { baseIconPath = '/assets/icons/' } = {}) {
+  if (!id || !defs) return '';
+  try {
+    if (id.startsWith('res.')) {
+      const key = id.replace(/^res\./, '');
+      const d = defs.res?.[key];
+      if (!d) return '';
+      // emojiText indeholder allerede <img/> string hvis det var filnavn
+      if (d.emojiText) return d.emojiText;
+      // fallback: if d.emoji is unicode string
+      if (typeof d.emoji === 'string' && d.emoji.length) return d.emoji;
+      // fallback to iconUrl -> build <img/>
+      if (d.iconUrl) return `<img src="${d.iconUrl}" alt="${(d.name||key).replace(/"/g,'&quot;')}" style="width:1em;height:1em;vertical-align:-0.15em;object-fit:contain;display:inline-block" />`;
+    }
+    if (id.startsWith('ani.')) {
+      const key = id.replace(/^ani\./, '');
+      const d = defs.ani?.[key];
+      if (!d) return '';
+      if (d.emojiText) return d.emojiText;
+      if (typeof d.emoji === 'string' && d.emoji.length) return d.emoji;
+      if (d.iconUrl) return `<img src="${d.iconUrl}" alt="${(d.name||key).replace(/"/g,'&quot;')}" style="width:1em;height:1em;vertical-align:-0.15em;object-fit:contain;display:inline-block" />`;
+    }
+  } catch (e) {
+    // swallow - return empty so caller kan fortsætte
+  }
+  return '';
+}
+
+/**
+ * Konverter en token-liste (fra getCostTokens) til en HTML-string (til string-renderers)
+ * tokens format: [{ id, amount, prefix, icon: { iconUrl, emoji, name } }, ...]
+ */
+export function tokensToHtmlString(tokens) {
+  if (!tokens || !tokens.length) return '';
+  const escapeHtml = (str) => (str || '').replace(/[&<>"']/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+  return tokens.map(t => {
+    const parts = [];
+    parts.push(`${t.prefix}${t.amount}`);
+    if (t.icon?.iconUrl) {
+      parts.push(`<img src="${escapeHtml(t.icon.iconUrl)}" alt="${escapeHtml(t.icon.name||'')}" style="width:1em;height:1em;vertical-align:-0.15em;object-fit:contain;display:inline-block;margin-left:6px;margin-right:6px" />`);
+    } else if (t.icon?.emoji) {
+      parts.push(escapeHtml(String(t.icon.emoji)));
+    }
+    return parts.join(' ');
+  }).join(' • ');
+}
+
+
+export function renderTextWithIcons(str, { baseIconPath = '/assets/icons/' } = {}) {
+  if (!str) return null;
+  const parts = [];
+  const re = /\[icon:([^\]]+)\]/g;
+  let last = 0;
+  let m;
+  while ((m = re.exec(str)) !== null) {
+    if (m.index > last) parts.push(str.slice(last, m.index));
+    const fname = m[1];
+    const isFile = /\.(png|jpe?g|gif|svg|webp)$/i.test(fname) || fname.startsWith('/');
+    const src = isFile ? (fname.startsWith('/') ? fname : baseIconPath + fname) : null;
+    if (src) {
+      // brug React.createElement i stedet for JSX
+      parts.push(React.createElement(Icon, { key: parts.length, iconUrl: src, size: '1em' }));
+    } else {
+      parts.push(m[0]); // unknown token left as-is
+    }
+    last = m.index + m[0].length;
+  }
+  if (last < str.length) parts.push(str.slice(last));
+  return parts;
+}

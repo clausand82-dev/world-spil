@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<animals source="World 2025.xlsx" sheet="Addon">
+
+ <!-- HEALTH UNITS--> 
+  <animal id="ani.healthbed_001"  family="health" stage="2">
+  <stats>healthUnitUsage=1;provisionUsage=1;waterUsage=1;healthCapacity=1,taxUsage=100</stats>
+    <cost>
+      <res id="res.money" amount="100"/>
+      <!--<res id="res.iron" amount="6"/>-->
+    </cost>
+    <emoji>simplehealthbed.png</emoji>
+  </animal>
+
+  <animal id="ani.liquidbarrel_001"  family="storage" stage="2">
+  <stats>storageUnitsUsage=2;storageLiquidCap=20</stats>
+    <cost>
+      <res id="res.money" amount="1"/>
+      <res id="res.plank" amount="10"/>
+      <res id="res.rope" amount="3"/>
+      <res id="res.bronzebar" amount="1"/>
+    </cost>
+    <emoji>liquidbarrel.png</emoji>
+  </animal>
+
+  <animal id="ani.solidbarrel_001"  family="storage" stage="2">
+  <stats>storageUnitsUsage=2;storageSolidCap=20</stats>
+    <cost>
+      <res id="res.money" amount="2"/>
+      <res id="res.plank" amount="10"/>
+      <res id="res.rope" amount="3"/>
+      <res id="res.bronzebar" amount="1"/>
+    </cost>
+    <emoji>solidbarrel.png</emoji>
+  </animal>
+
+  </animals>

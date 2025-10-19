@@ -2,7 +2,8 @@ import React from 'react';
 import ActionButton from '../../ActionButton.jsx';
 import BuildProgress from '../../BuildProgress.jsx';
 import RequirementSummary from '../RequirementSummary.jsx';
-import { requirementInfo, formatCost } from '../../../services/requirements.js';
+import { requirementInfo, /*formatCost,*/ getCostTokens } from '../../../services/requirements.js';
+import Icon from '../../common/Icon.jsx';
 import * as H from '../../../services/helpers.js';
 import { useT } from "../../../services/i18n.js";
 
@@ -34,6 +35,21 @@ function computeYieldSpace(def, defs) {
   return { solid, liquid };
 }
 
+function renderTokensAsNodes(tokens) {
+  if (!tokens || !tokens.length) return null;
+  return tokens.map((t, idx) => (
+    <span key={`${t.id}-${idx}`} style={{ whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: 6, marginRight: 8 }}>
+      <span style={{ fontVariantNumeric: 'tabular-nums' }}>{t.prefix}{t.amount}</span>
+      {t.icon?.iconUrl ? (
+        <Icon iconUrl={t.icon.iconUrl} alt={t.icon.name} size="0.95em" />
+      ) : t.icon?.emoji ? (
+        <span style={{ fontSize: '0.95em', lineHeight: 1 }}>{t.icon.emoji}</span>
+      ) : null}
+      {idx < tokens.length - 1 ? <span style={{ marginLeft: 6, marginRight: 6, opacity: 0.65 }}>•</span> : null}
+    </span>
+  ));
+}
+
 function RecipeRow({ entry, defs, state, baseOwned, requirementCaches }) {
   const { def, fullId, stageReq, stageOk } = entry;
   const t = useT();
@@ -63,8 +79,10 @@ function RecipeRow({ entry, defs, state, baseOwned, requirementCaches }) {
     def,
   };
 
-  const inputs = formatCost(def.cost || {}, defs, '-');
-  const outputs = formatCost(def.yield || {}, defs, '+');
+  // NY: brug tokens + JSX i stedet for tekst-formatteren
+  const inputTokens = getCostTokens(def.cost || {}, defs, '-');
+  const outputTokens = getCostTokens(def.yield || {}, defs, '+');
+
   const durationValue = requirement.duration?.final_s ?? null;
   const durationBase = requirement.duration?.base_s ?? null;
 
@@ -96,7 +114,12 @@ function RecipeRow({ entry, defs, state, baseOwned, requirementCaches }) {
           )}
         </div>
         {def.desc ? <div className="sub">🔍 {def.desc}</div> : null}
-        <div className="sub">{t("ui.emoji.recipe.h1")} {t("ui.text.recipe.h1")}: {inputs || '-'} · {outputs || '-'}</div>
+        <div className="sub">
+          {t("ui.emoji.recipe.h1")} {t("ui.text.recipe.h1")}:&nbsp;
+          {renderTokensAsNodes(inputTokens) || <em>-</em>}
+          &nbsp;·&nbsp;
+          {renderTokensAsNodes(outputTokens) || <em>-</em>}
+        </div>
         <RequirementSummary
           price={def.cost || {}}
           reqString={requirement.reqString}

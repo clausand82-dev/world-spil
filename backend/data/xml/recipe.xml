@@ -402,14 +402,191 @@
   </recipe>  
   
   
-  
-  
-
-  
 
 <!-- STAGE 2-->
 
 
+  <recipe id="rcp.stonebrick.l1" family="mine" type="mine" lvl="1" stage="2" mode="active">
+    <yield>
+      <res id="res.stonebrick" amount="5"/>
+    </yield>
+    <cost>
+      <res id="res.stone" amount="10"/>
+      <res id="res.clay" amount="2"/>
+      <res id="res.straw" amount="1"/>
+      <res id="res.water" amount="1"/>
+    </cost>
+    <time>1m</time>
+    <require>add.brickmoulding.l1</require>
+  </recipe>
+
+  <recipe id="rcp.seed.l1" family="farm" type="food" lvl="1" stage="2" mode="active">
+    <yield>
+      <res id="res.seed" amount="100"/>
+    </yield>
+    <cost>
+      <res id="res.fertilizer" amount="10"/>
+      <res id="res.wheat" amount="10"/>
+      <res id="res.maize" amount="10"/>
+      <res id="res.water" amount="10"/>
+    </cost>
+    <time>2m</time>
+    <require>rsd.seed.l1</require>
+  </recipe>
+
+  <recipe id="rcp.slaughterturtle.l1" family="farm" type="butchery" lvl="1" stage="2" mode="active">
+    <yield>
+      <res id="res.rawmeat" amount="5"/>
+      <res id="res.turtleshell" amount="8"/>
+      <res id="res.turtleoil" amount="1"/>
+      <res id="res.bone" amount="5"/>
+    </yield>
+    <cost>
+      <res id="ani.turtle" amount="10"/>
+    </cost>
+    <time>1h</time>
+    <require>add.barn_slaughterspot.l4</require>
+  </recipe>
+
+  <recipe id="rcp.medicin.l1" family="health" type="health" lvl="1" stage="2" mode="active">
+    <yield>
+      <res id="res.medicin" amount="2"/>
+    </yield>
+    <cost>
+      <res id="res.sunflower" amount="2"/>
+      <res id="res.wheat" amount="1"/>
+      <res id="res.maize" amount="1"/>
+      <res id="res.oat" amount="2"/>
+      <res id="res.water" amount="5"/>
+      <res id="res.salt" amount="1"/>
+      <res id="res.herb" amount="2"/>
+    </cost>
+    <time>5m</time>
+    <require>add.bigfireplace_mortarandpestle.l1</require>
+  </recipe>
+
+  <recipe id="rcp.medicin.l2" family="health" type="health" lvl="2" stage="2" mode="active">
+    <yield>
+      <res id="res.medicin" amount="25"/>
+    </yield>
+    <cost>
+      <res id="res.turtleoil" amount="2"/>
+      <res id="res.sunflower" amount="10"/>
+      <res id="res.herbs" amount="5"/>
+      <res id="res.salt" amount="2"/>
+      <res id="res.cockedfish" amount="1"/>
+      <res id="res.soup" amount="1"/>
+    </cost>
+    <time>5m</time>
+    <require>add.bigfireplace_mortarandpestle.l1</require>
+  </recipe>
+
+  <recipe id="rcp.oatmeal.l1" family="basecamp" type="food" lvl="1" stage="2" mode="active">
+    <yield>
+      <res id="res.oatmeal" amount="5"/>
+    </yield>
+    <cost>
+      <res id="res.oats" amount="100"/>
+      <res id="res.water" amount="25"/>
+      <res id="res.salt" amount="2"/>
+    </cost>
+    <time>20m</time>
+    <require>add.bigfireplace_bronzepot.l1</require>
+  </recipe>
+
+  <recipe id="rcp.oatmealtofood.l1" family="basecamp" type="food" lvl="1" stage="2" mode="active">
+    <yield>
+      <res id="res.food" amount="15"/>
+    </yield>
+    <cost>
+      <res id="res.oatmeal" amount="20"/>
+    </cost>
+    <time>10m</time>
+    <require>add.bigfireplace_bronzepot.l1, add.bigfireplace_mortarandpestle.l1</require>
+  </recipe>
+
+  <recipe id="rcp.animalfoodfromfish.l1" family="lake" type="food" lvl="1" stage="2" mode="active">
+    <yield>
+      <res id="res.animalfood" amount="100"/>
+    </yield>
+    <cost>
+      <res id="res.rawcommonfish" amount="100"/>
+      <res id="res.salt" amount="10"/>
+      <res id="res.water" amount="10"/>
+      <res id="res.oats" amount="10"/>
+    </cost>
+    <time>10m</time>
+    <require>rsd.irrigation.l2, add.mole.l2</require>
+  </recipe>
+
+  <recipe id="rcp.bronzebar.l1" family="mine" type="smelt" lvl="1" stage="2" mode="active">
+    <yield>
+      <res id="res.bronzebar" amount="1"/>
+    </yield>
+    <cost>
+      <res id="res.bronzeore" amount="5"/>
+      <res id="res.water" amount="2"/>
+      <res id="res.firewood" amount="4"/>
+      <res id="res.basictools" amount="1"/>
+    </cost>
+    <time>5m</time>
+    <require>add.bronzemoulding.l1</require>
+  </recipe>
+
+    <recipe id="rcp.mining.l1" family="mine" type="smelt" lvl="1" stage="2" mode="active">
+    <yield>
+      <res id="res.ironore" amount="1"/>
+      <res id="res.bronzeore" amount="5"/>
+      <res id="res.copperore" amount="3"/>
+      <res id="res.stone" amount="3"/>
+      <res id="res.coal" amount="2"/>
+      <res id="res.clay" amount="3"/>
+      <res id="res.sand" amount="10"/>
+      <res id="res.crystal" amount="1"/>
+    </yield>
+    <cost>
+      <res id="res.basictools" amount="1"/>
+      <res id="res.food" amount="10"/>
+    </cost>
+    <time>1h</time>
+    <require>add.mine.l3</require>
+  </recipe>
+
+  <recipe id="rcp.log.l1" family="forest" type="wood" lvl="1" stage="2" mode="active">
+    <yield>
+      <res id="res.log" amount="4"/>
+    </yield>
+    <cost>
+      <res id="res.wood" amount="1"/>
+    </cost>
+    <time>30s</time>
+    <require>rsd.logging.l1</require>
+  </recipe>
+
+  <recipe id="rcp.plank.l1" family="forest" type="wood" lvl="1" stage="2" mode="active">
+    <yield>
+      <res id="res.plank" amount="8"/>
+    </yield>
+    <cost>
+      <res id="res.log" amount="4"/>
+    </cost>
+    <time>1m</time>
+    <require>rcp.logging.l1</require>
+  </recipe>
+
+  <recipe id="rcp.chopwood.l1" family="forest" type="basic" lvl="1" stage="2" mode="active">
+    <yield>
+      <res id="res.wood" amount="2"/>
+    </yield>
+    <cost>
+      <res id="res.basictools" amount="1"/>
+      <res id="res.bread" amount="2"/>
+      <res id="res.water" amount="2"/>
+      <res id="res.salt" amount="1"/>
+    </cost>
+    <time>1m</time>
+    <require>add.forest.l2</require>
+  </recipe>
 
   
 

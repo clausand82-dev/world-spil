@@ -3,14 +3,81 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 const GameDataContext = createContext(null);
 
-async function fetchAllData() {
-  // Bevar dit eksisterende endpoint
-  const dataUrl = `/world-spil/backend/api/alldata.php?ts=${Date.now()}`;
-  const res = await fetch(dataUrl, { cache: 'no-store' });
-  if (!res.ok) throw new Error(`API error: ${res.status}`);
-  const json = await res.json();
-  if (!json?.ok) throw new Error(json?.error?.message || 'API data error');
-  return json.data;
+function isFileLikeEmoji(v) {
+  if (!v) return false;
+  const s = String(v).trim();
+  return /\.(png|jpe?g|gif|svg|webp)$/i.test(s) || /^https?:\/\//i.test(s) || s.startsWith('/');
+}
+
+// Normalize defs so emoji file‑navne bliver omdannet til image elements / iconUrl
+export function normalizeDefsForIcons(defs, { baseIconPath = '/assets/icons/' } = {}) {
+  if (!defs) return defs;
+
+  const makeSafeBucket = (bucket) => {
+    if (!bucket) return {};
+    const out = {};
+    Object.entries(bucket).forEach(([key, d]) => {
+      if (!d) return;
+      // copy the original def into a new object so we don't mutate frozen objects
+      const nd = { ...d };
+
+      const raw = (d.emoji || '').toString().trim();
+
+      // prefer existing iconUrl if present
+      if (nd.iconUrl) {
+        const src = nd.iconUrl;
+        // create React element but DON'T try to mutate it
+        const el = React.createElement('img', {
+          src,
+          alt: nd.name || key,
+          style: { width: '1em', height: '1em', objectFit: 'contain', verticalAlign: '-0.15em' },
+          className: 'res-icon-inline'
+        });
+        // keep element and a separate string/html representation
+        nd.emoji = el;
+        nd.emojiText = `<img src="${src}" alt="${(nd.name || key).replace(/"/g, '&quot;')}" style="width:1em;height:1em;vertical-align:-0.15em;object-fit:contain;display:inline-block" />`;
+        out[key] = nd;
+        return;
+      }
+
+      if (!raw) {
+        nd.emoji = '';
+        nd.emojiText = '';
+        out[key] = nd;
+        return;
+      }
+
+      if (isFileLikeEmoji(raw)) {
+        const src = raw.startsWith('/') || /^https?:\/\//i.test(raw) ? raw : (baseIconPath + raw);
+        nd.iconUrl = src;
+        const el = React.createElement('img', {
+          src,
+          alt: nd.name || key,
+          style: { width: '1em', height: '1em', objectFit: 'contain', verticalAlign: '-0.15em' },
+          className: 'res-icon-inline'
+        });
+        // DON'T set el.toString (non-extensible)
+        nd.emoji = el;
+        nd.emojiText = `<img src="${src}" alt="${(nd.name || key).replace(/"/g, '&quot;')}" style="width:1em;height:1em;vertical-align:-0.15em;object-fit:contain;display:inline-block" />`;
+        out[key] = nd;
+      } else {
+        // unicode emoji
+        nd.emoji = raw;
+        nd.emojiText = raw;
+        out[key] = nd;
+      }
+    });
+    return out;
+  };
+
+  // build new defs object with safe copies
+  const newDefs = { ...defs };
+  newDefs.res = makeSafeBucket(defs.res);
+  newDefs.ani = makeSafeBucket(defs.ani);
+  // copy other buckets untouched (or add them similarly if you need)
+  // e.g. newDefs.bld = makeSafeBucket(defs.bld);
+
+  return newDefs;
 }
 
 export function GameDataProvider({ children }) {
@@ -133,3 +200,35 @@ export function GameDataProvider({ children }) {
 }
 
 export const useGameData = () => useContext(GameDataContext);
+
+async function fetchAllData() {
+  // Bevar dit eksisterende endpoint
+  const dataUrl = `/world-spil/backend/api/alldata.php?ts=${Date.now()}`;
+  const res = await fetch(dataUrl, { cache: 'no-store' });
+  if (!res.ok) throw new Error(`API error: ${res.status}`);
+  const json = await res.json();
+  if (!json?.ok) throw new Error(json?.error?.message || 'API data error');
+
+  // --- NY: Normalize defs og skriv resultatet eksplicit tilbage + sæt global window.data for kompatibilitet ---
+  try {
+    if (json?.data?.defs) {
+      // sikre at normalizeDefsForIcons returnerer/ændrer defs
+      const normalized = normalizeDefsForIcons(json.data.defs, { baseIconPath: '/assets/icons/' });
+      // skriv eksplicit tilbage (for at være sikker på at det er samme objekt brugt fremadrettet)
+      json.data.defs = normalized;
+      // Sæt global window.data fordi en del kode læser window.data.defs direkte
+      try { window.data = json.data; } catch (e) { /* ignore if not allowed */ }
+
+      // Log et par ting til konsollen så vi kan debugge hurtigt i browseren
+      try {
+        // vælg en konkret res-id som du har (fx 'straw' eller en du kender)
+        const sampleKey = Object.keys(normalized.res || {})[0];
+        console.debug('[fetchAllData] normalized.defs.sample:', sampleKey, normalized.res?.[sampleKey]);
+      } catch (e) { /* ignore */ }
+    }
+  } catch (e) {
+    console.warn('normalizeDefsForIcons failed', e);
+  }
+
+  return json.data;
+}

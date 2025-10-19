@@ -2,6 +2,8 @@ import React from 'react';
 import { group, topic, leaf } from './helpTopicsBuilder.js';
 // import helpStats from 'assets/pic/help_statsview.png';
 const helpStats = `${import.meta.env.BASE_URL || '/'}assets/pic/help_statsview.png`;
+import { emojiHtmlForId, tokensToHtmlString, renderTextWithIcons } from '../services/helpers.js';
+import { getCostTokens } from '../services/requirements.js';
 
 // Eksempel: meget kortfattet, let at læse og udbygge
 export const HELP_TOPICS = [
@@ -39,8 +41,8 @@ export const HELP_TOPICS = [
           const rows = ids.map((id) => {
             const r = res[id] || {};
             const name = r.name || id;
-            const emoji = r.emoji || '';
-            return `<li>${emoji ? emoji + ' ' : ''}${name} <small class="muted">(${id})</small></li>`;
+            const emojiHtml = emojiHtmlForId(`res.${id}`, defs) || '';
+            return `<li>${emojiHtml ? emojiHtml + ' ' : ''}${name} <small class="muted">(${id})</small></li>`;
           });
           return `<h2>Ressourcer</h2>
           <p>Ressourcer bruges i spillet til at købe bygninger, addons og research med. Derudover bruges de i recipes (produktion), hvor en eller flere ressourcer bliver til en eller flere andre ressourcer (f.eks. 1xtræ --> 10 brænde).</p>

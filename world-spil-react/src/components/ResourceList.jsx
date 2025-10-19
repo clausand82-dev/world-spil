@@ -76,7 +76,8 @@ export default function ResourceList({ items, defs, format = 'detailed', columns
       const hoverContent = (
         <div style={{ maxWidth: 420, maxHeight: 320, overflowY: 'auto', whiteSpace: 'pre-wrap' }}>
           <div style={{ fontWeight: 700, marginBottom: 6 }}>
-            {def.emoji ? `${def.emoji} ` : ''}{def.name || id}
+            {def.emoji ? <span style={{ marginRight: 6, display: 'inline-flex', alignItems: 'center' }}>{def.emoji}</span> : null}
+{def.name || id}
           </div>
           <div style={{ marginBottom: 8, opacity: 0.85 }}>
             Mængde: {fmt(amount)}{def.unit ? ` ${def.unit}` : ''} • UnitSpace: {Number(def.unitSpace ?? 0)}
@@ -85,35 +86,37 @@ export default function ResourceList({ items, defs, format = 'detailed', columns
         </div>
       );
       
-      return (
-        <DockHoverCard key={id} content={hoverContent} style={{ display: 'block', width: '100%' }}>
-          <div
-            className="row"
-            role="button"
-            tabIndex={0}
-            onClick={(e) => handleClickWithRect(e, fullResId, def.name, def.emoji)}
-            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleClickWithRect(e, fullResId, def.name, def.emoji); } }}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: 8,
-              padding: '6px 8px',
-              cursor: 'pointer',
-              minWidth: 0,
-              borderRadius: 8,
-            }}
-          >
-            <div className="left" style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, flex: 1 }}>
-              <span>{def.emoji}</span>
-              <span title={def.name} style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{def.name}</span>
-            </div>
-            <div className="right" style={{ fontWeight: 600, marginLeft: 8, flexShrink: 0, fontVariantNumeric: 'tabular-nums' }}>
-              {fmt(amount)}
-            </div>
-          </div>
-        </DockHoverCard>
-      );
+const emojiTextForPayload = def.emojiText ?? (typeof def.emoji === 'string' ? def.emoji : '');
+
+     return (
+  <DockHoverCard key={id} content={hoverContent} style={{ display: 'block', width: '100%' }}>
+    <div
+      className="row"
+      role="button"
+      tabIndex={0}
+      onClick={(e) => handleClickWithRect(e, fullResId, def.name, emojiTextForPayload)}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleClickWithRect(e, fullResId, def.name, emojiTextForPayload); } }}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: 8,
+        padding: '6px 8px',
+        cursor: 'pointer',
+        minWidth: 0,
+        borderRadius: 8,
+      }}
+    >
+      <div className="left" style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, flex: 1 }}>
+        <span>{def.emoji}</span>
+        <span title={def.name} style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{def.name}</span>
+      </div>
+      <div className="right" style={{ fontWeight: 600, marginLeft: 8, flexShrink: 0, fontVariantNumeric: 'tabular-nums' }}>
+        {fmt(amount)}
+      </div>
+    </div>
+  </DockHoverCard>
+);
     });
 
     return (

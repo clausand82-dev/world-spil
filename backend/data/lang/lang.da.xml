@@ -662,8 +662,8 @@
   <entry key="res.wood.desc">Bruges til at bygge med; kan bearbejdes</entry>
   <entry key="res.stone.name">Sten</entry>
   <entry key="res.stone.desc">Bruges til at bygge med; kan bearbejdes</entry>
-  <entry key="res.stonebricks.name">Stenblokke</entry>
-  <entry key="res.stonebricks.desc">Bruges til at bygge med; kan bearbejdes</entry>
+  <entry key="res.stonebrick.name">Stenblokke</entry>
+  <entry key="res.stonebrick.desc">Bruges til at bygge med; kan bearbejdes</entry>
   <entry key="res.water.name">Vand</entry>
   <entry key="res.water.desc">Bruges til dyrehold</entry>
   <entry key="res.money.name">Kr</entry>
@@ -722,10 +722,10 @@
   <entry key="res.rawcommonfish.desc">Kan bruges som foder eller forarbejdes til mad</entry>
   <entry key="res.maize.name">Majs</entry>
   <entry key="res.maize.desc">Majs mark</entry>
-  <entry key="res.iron.name">Jern</entry>
-  <entry key="res.iron.desc">Jernmalm fra miner</entry>
-  <entry key="res.bronze.name">Bronze</entry>
-  <entry key="res.bronze.desc">Bronzeblending fra miner</entry>
+  <entry key="res.ironore.name">Jernmalm</entry>
+  <entry key="res.ironore.desc">Jernmalm fra miner</entry>
+  <entry key="res.bronzeore.name">Bronzemalm</entry>
+  <entry key="res.bronzeore.desc">Bronzeblending fra miner</entry>
 
   <entry key="res.flintstone.name">Flintsten</entry>
   <entry key="res.flintstone.desc">Kan bruges til at lave værktøj</entry>
@@ -781,8 +781,8 @@
 
 <!-- HEALTH UNITS-->
 
-  <entry key="ani.health_groundbed1.name">Simpel syge sengeplads</entry>
-  <entry key="ani.health_groundbed1.desc">Meget primitiv syge senge plads</entry>
+  <entry key="ani.healthbed_001.name">Simpel syge sengeplads</entry>
+  <entry key="ani.healthbed_001.desc">Meget primitiv syge senge plads</entry>
 
 
 

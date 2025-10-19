@@ -11,67 +11,67 @@
   <resource id="res.wood" family="basic" type="basicRessource" lvl="1" stage="1">
     <unit>pcs</unit>
     <unitSpace>0.5</unitSpace>
-    <emoji>🌲</emoji>
+    <emoji>wood.png</emoji>
   </resource>
 
   <resource id="res.stone" family="basic" type="minning" lvl="1" stage="1">
     <unit>pcs</unit>
     <unitSpace>0.1</unitSpace>
-    <emoji>🪨</emoji>
+    <emoji>stone.png</emoji>
   </resource>
 
   <resource id="res.water" family="basic" type="basicRessource" lvl="1" stage="1">
     <stats>waterCapacity=0.1</stats>
     <unit>l</unit>
     <unitSpace>0.1</unitSpace>
-    <emoji>💧</emoji>
+    <emoji>water.png</emoji>
   </resource>
 
   <resource id="res.flintstone" family="basic" type="product" lvl="1" stage="1">
     <stats></stats>
     <unit>kg</unit>
     <unitSpace>0.01</unitSpace>
-    <emoji>💨</emoji>
+    <emoji>flintstone.png</emoji>
   </resource>
 
    <resource id="res.rope" family="product" type="product" lvl="1" stage="1">
     <unit>pcs</unit>
     <unitSpace>0.05</unitSpace>
-    <emoji>🎗</emoji>
+    <emoji>rope.png</emoji>
   </resource>
 
   <resource id="res.salt" family="basic" type="basicRessource" lvl="1" stage="1">
     <unit>kg</unit>
     <unitSpace>0.4</unitSpace>
-    <emoji>🧂</emoji >
+    <emoji>salt.png</emoji >
   </resource>
 
   <resource id="res.rawhide" family="rawproduct" type="animalProduct" lvl="1" stage="1">
     <stats>heatCapacity=0.1</stats>
     <unit>pcs</unit>
     <unitSpace>0.1</unitSpace>
-    <emoji>🔶</emoji >    
+    <emoji>rawhide.png</emoji >    
   </resource>
 
 <resource id="res.hide" family="product" type="animalProduct" lvl="1" stage="1">
   <stats>heatCapacity=0.1</stats>
     <unit>pcs</unit>
     <unitSpace>0.2</unitSpace>
-    <emoji>🔶</emoji >
+    <emoji>hide.png</emoji >
   </resource>
 
   <resource id="res.leather" family="product" type="animalProduct" lvl="1" stage="1">
     <stats>heatCapacity=0.1</stats>
     <unit>pcs</unit>
     <unitSpace>0.2</unitSpace>
-    <emoji>👜</emoji  >
+    <emoji>leather.png</emoji  >
   </resource>
 
   <resource id="res.wool" family="rawproduct" type="animalProduct" lvl="1" stage="1">
     <stats>heatCapacity=0.1</stats>
     <unit>pcs</unit>
     <unitSpace>0.2</unitSpace>
-    <emoji>🐑</emoji >
+    <emoji>wool.png</emoji >
     <stats>origin_animal=sheep</stats>
   </resource>
 
@@ -79,21 +79,21 @@
     <stats>provisionCapacity=0.1</stats>
     <unit>kg</unit>
     <unitSpace>0.5</unitSpace>
-    <emoji>🌽</emoji >
+    <emoji>maize.png</emoji >
   </resource>  
   
   <resource id="res.wheat" family="food" type="grain" lvl="1" stage="1">
   <stats>provisionCapacity=0.1</stats>
     <unit>kg</unit>
     <unitSpace>0.5</unitSpace>
-    <emoji>🌾</emoji >
+    <emoji>wheat.png</emoji >
   </resource>
 
   <resource id="res.goatmilk" family="food" type="animalProduct" lvl="1" stage="1">
   <stats>provisionCapacity=0.1</stats>
     <unit>l</unit>
     <unitSpace>0.1</unitSpace>
-    <emoji>🥛</emoji>
+    <emoji>goatmilk.png</emoji>
     <stats>origin_animal=goat</stats>
   </resource>
 
@@ -101,7 +101,7 @@
   <stats>provisionCapacity=0.1</stats>
     <unit>l</unit>
     <unitSpace>0.1</unitSpace>
-    <emoji>🥛</emoji>
+    <emoji>cowmilk.png</emoji>
     <stats>origin_animal=cow</stats>
   </resource>
 
@@ -109,67 +109,67 @@
   <stats>provisionCapacity=0.1</stats>
     <unit>pcs</unit>
     <unitSpace>0.05</unitSpace>
-    <emoji>🥩</emoji >
+    <emoji>rawmeat.png</emoji >
   </resource>
 
   <resource id="res.rawcommonfish" family="product" type="product" lvl="1" stage="1">
   <stats>provisionCapacity=0.1</stats>
     <unit>pcs</unit>
     <unitSpace>0.05</unitSpace>
-    <emoji>🐟</emoji>
+    <emoji>rawcommonfish.png</emoji>
   </resource>
 
   <resource id="res.cockedfish" family="product" type="product" lvl="1" stage="1">
     <unit>pcs</unit>
     <unitSpace>0.05</unitSpace>
-    <emoji>🐡</emoji>
+    <emoji>cockedfish.png</emoji>
   </resource>
 
   <resource id="res.cockedmeat" family="product" type="product" lvl="1" stage="1">
   <stats>provisionCapacity=0.1</stats>
     <unit>pcs</unit>
     <unitSpace>0.05</unitSpace>
-    <emoji>🍖</emoji>
+    <emoji>cockedmeat.png</emoji>
   </resource>
 
   <resource id="res.food" family="food" type="product" lvl="1" stage="1">
     <stats>provisionCapacity=0.1</stats>
     <unit>kg</unit>
     <unitSpace>0.1</unitSpace>
-    <emoji>🍱</emoji>
+    <emoji>food.png</emoji>
   </resource>
 
   <resource id="res.soup" family="product" type="product" lvl="1" stage="1">
   <stats>provisionCapacity=0.1</stats>
     <unit>l</unit>
     <unitSpace>0.02</unitSpace>
-    <emoji>🍲</emoji>
+    <emoji>soup.png</emoji>
   </resource>
 
   <resource id="res.bone" family="byproduct" type="animalProduct" lvl="1" stage="1">
     <unit>pcs</unit>
     <unitSpace>0.02</unitSpace>
-    <emoji>🦴</emoji >
+    <emoji>bone.png</emoji >
   </resource>
 
   <resource id="res.bonemeal" family="byproduct" type="animalProduct" lvl="1" stage="1">
     <unit>pcs</unit>
     <unitSpace>0.01</unitSpace>
-    <emoji>🦴</emoji >
+    <emoji>bonemeal.png</emoji >
   </resource>
 
   <resource id="res.fertilizer" family="byproduct" type="fertilizer" lvl="1" stage="1">
   <stats>wasteOrganicUsage=0.5</stats>
     <unit>kg</unit>
     <unitSpace>0.2</unitSpace>
-    <emoji>💩</emoji >
+    <emoji>fertilizer.png</emoji >
   </resource>
 
   <resource id="res.egg" family="food" type="animalProduct" lvl="1" stage="1">
   <stats>provisionCapacity=0.1</stats>
     <unit>pcs</unit>
     <unitSpace>0.1</unitSpace>
-    <emoji>🥚</emoji>
+    <emoji>egg.png</emoji>
     <stats>origin_animal=chicken</stats>
   </resource>
 
@@ -177,129 +177,175 @@
   <stats>heatCapacity=0.1</stats>
     <unit>pcs</unit>
     <unitSpace>0.1</unitSpace>
-    <emoji>🧥</emoji>
+    <emoji>cloth.png</emoji>
   </resource>
 
   <resource id="res.animalfood" family="product" type="product" lvl="1" stage="1">
     <unit>pcs</unit>
     <unitSpace>0.1</unitSpace>
-    <emoji>🌿</emoji>
+    <emoji>animalfood.png</emoji>
   </resource>
 
   <resource id="res.coal" family="product" type="product" lvl="1" stage="1">
   <stats>heatFossilCapacity=0.1</stats>
     <unit>pcs</unit>
     <unitSpace>0.1</unitSpace>
-    <emoji>⏹</emoji>
+    <emoji>coal.png</emoji>
   </resource>
 
    <resource id="res.basictools" family="product" type="product" lvl="1" stage="1">
     <unit>pcs</unit>
     <unitSpace>0.5</unitSpace>
-    <emoji>🔨</emoji>
+    <emoji>basictools.png</emoji>
   </resource>
 
    <resource id="res.wheatflour" family="byproduct" type="fieldCrop" lvl="1" stage="1">
     <unit>kg</unit>
     <unitSpace>0.03</unitSpace>
-    <emoji>🌾</emoji >
+    <emoji>wheatflour.png</emoji >
   </resource>
 
    <resource id="res.straw" family="byproduct" type="fieldCrop" lvl="1" stage="1">
     <unit>kg</unit>
     <unitSpace>0.5</unitSpace>
-    <emoji>🌾</emoji >
+    <emoji>straw.png</emoji>
   </resource>
 
   <resource id="res.bread" family="product" type="product" lvl="1" stage="1">
   <stats>provision_cap=0.1</stats>
     <unit>pcs</unit>
     <unitSpace>0.1</unitSpace>
-    <emoji>🍞</emoji>
+    <emoji>bread.png</emoji>
   </resource>
 
  <resource id="res.feather" family="rawproduct" type="animalProduct" lvl="1" stage="1">
     <unit>pcs</unit>
     <unitSpace>0.1</unitSpace>
-    <emoji>🪶</emoji >
+    <emoji>feather.png</emoji >
   </resource>
 
   <resource id="res.firewood" family="product" type="product" lvl="1" stage="1">
     <stats>heatFossilCapacity=0.2</stats>
     <unit>pcs</unit>
     <unitSpace>0.1</unitSpace>
-    <emoji>🪵</emoji  >
+    <emoji>firewood.png</emoji>
   </resource>
-
-
-
-
-
- 
-
-
-
-
-
-
-
-
-
- 
-
-  
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  <resource id="res.wheatflour" family="product" type="product" lvl="1" stage="1">
-    <unit>pcs</unit>
-    <unitSpace>0.1</unitSpace>
-    <emoji>🐟</emoji>
-  </resource>
-
-
 
 <!-- STAGE 2 -->
-  <resource id="res.stonebricks" family="product" type="product" lvl="1" stage="1">
+
+<resource id="res.bronzebar" family="product" type="metal" lvl="1" stage="2">
+  <unit>pcs</unit>
+  <unitSpace>0.5</unitSpace>
+  <emoji>bronzebar.png</emoji>
+</resource>
+
+<resource id="res.herb" family="rawproduct" type="herb" lvl="1" stage="2">
+  <unit>pcs</unit>
+  <unitSpace>0.02</unitSpace>
+  <emoji>herb.png</emoji>
+</resource>
+
+<resource id="res.carrot" family="food" type="vegetable" lvl="1" stage="2">
+  <unit>pcs</unit>
+  <unitSpace>0.2</unitSpace>
+  <emoji>carrot.png</emoji>
+</resource>
+
+<resource id="res.sunflower" family="rawproduct" type="plant" lvl="1" stage="2">
+  <unit>pcs</unit>
+  <unitSpace>0.1</unitSpace>
+  <emoji>sunflower.png</emoji>
+</resource>
+
+<resource id="res.oatsmeal" family="product" type="food" lvl="1" stage="2">
+  <unit>kg</unit>
+  <unitSpace>0.3</unitSpace>
+  <emoji>oatmeal.png</emoji>
+</resource>
+
+<resource id="res.medicin" family="product" type="medical" lvl="1" stage="2">
+  <unit>pcs</unit>
+  <unitSpace>0.05</unitSpace>
+  <emoji>medicin.png</emoji>
+</resource>
+
+<resource id="res.clay" family="basic" type="minning" lvl="1" stage="2">
+  <unit>kg</unit>
+  <unitSpace>0.7</unitSpace>
+  <emoji>clay.png</emoji>
+</resource>
+
+<resource id="res.log" family="basic" type="wood" lvl="1" stage="2">
+  <unit>pcs</unit>
+  <unitSpace>1.0</unitSpace>
+  <emoji>log.png</emoji>
+</resource>
+
+<resource id="res.plank" family="product" type="wood" lvl="1" stage="2">
+  <unit>pcs</unit>
+  <unitSpace>0.6</unitSpace>
+  <emoji>plank.png</emoji>
+</resource>
+
+<resource id="res.crystal" family="basic" type="mineral" lvl="1" stage="2">
+  <unit>pcs</unit>
+  <unitSpace>0.3</unitSpace>
+  <emoji>crystal.png</emoji>
+</resource>
+
+<resource id="res.sand" family="basic" type="minning" lvl="1" stage="2">
+  <unit>kg</unit>
+  <unitSpace>0.5</unitSpace>
+  <emoji>sand.png</emoji>
+</resource>
+
+<resource id="res.seed" family="rawproduct" type="seed" lvl="1" stage="2">
+  <unit>pcs</unit>
+  <unitSpace>0.01</unitSpace>
+  <emoji>seed.png</emoji>
+</resource>
+
+<resource id="res.turtle" family="rawproduct" type="animal" lvl="1" stage="2">
+  <unit>pcs</unit>
+  <unitSpace>1.0</unitSpace>
+  <emoji>turtle.png</emoji>
+</resource>
+
+<resource id="res.turtleshell" family="product" type="animalProduct" lvl="1" stage="2">
+  <unit>pcs</unit>
+  <unitSpace>0.3</unitSpace>
+  <emoji>turtleshell.png</emoji>
+</resource>
+
+<resource id="res.turtleoil" family="product" type="oil" lvl="1" stage="2">
+  <unit>l</unit>
+  <unitSpace>0.2</unitSpace>
+  <emoji>turtleoil.png</emoji>
+</resource>
+
+  <resource id="res.stonebrick" family="product" type="product" lvl="1" stage="1">
     <unit>pcs</unit>
     <unitSpace>0.3</unitSpace>
-    <emoji>🪨</emoji>
+    <emoji>stonebrick.png</emoji>
   </resource>   
 
-    <resource id="res.oats" family="food" type="grain" lvl="1" stage="1">
+    <resource id="res.oat" family="food" type="grain" lvl="1" stage="1">
   <stats>provisionCapacity=0.1</stats>
     <unit>kg</unit>
     <unitSpace>0.5</unitSpace>
-    <emoji>🌾</emoji >
+    <emoji>oats.png</emoji >
   </resource>
 
-    <resource id="res.iron" family="basic" type="minning" lvl="1" stage="1">
+    <resource id="res.ironore" family="basic" type="minning" lvl="1" stage="1">
     <unit>pcs</unit>
     <unitSpace>0.7</unitSpace>
-    <emoji>🔗</emoji>
+    <emoji>ironore.png</emoji>
   </resource>
 
-    <resource id="res.bronze" family="basic" type="minning" lvl="1" stage="1">
+    <resource id="res.bronzeore" family="basic" type="minning" lvl="1" stage="1">
     <unit>pcs</unit>
     <unitSpace>0.7</unitSpace>
-    <emoji>🔶</emoji>
+    <emoji>bronzeore.png</emoji>
   </resource>
 
 

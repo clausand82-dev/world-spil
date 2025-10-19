@@ -450,185 +450,388 @@
       <time>20m</time>
   </addon>
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 <!-- STAGE 2 ADDON -->  
 
+  <addon id="add.maizefield.l2" family="farm" group="main" type="addons" lvl="2" stage="2">
+    <stats>footprint=-10;provision_cap=50</stats>
+    <cost>
+      <res id="res.money" amount="500"/>
+      <res id="res.fertilizer" amount="500"/>
+      <res id="res.water" amount="100"/>
+      <res id="res.basictools" amount="5"/>
+      <res id="res.seed" amount="1000"/>
+    </cost>
+    <yield period="1h">
+      <res id="res.maize" amount="8"/>
+    </yield>
+    <time>35m</time>
+    <require>rsd.fieldwork.l1</require>
+  </addon>
 
-      <addon id="add.storageliquid.l3" family="storage" type="addons" lvl="3" stage="2">
-    <stats>footprint=-1;storageLiquidCap=200</stats>
+  <addon id="add.wheatfield.l2" family="farm" group="main" type="addons" lvl="2" stage="2">
+    <stats>footprint=-10;provision_cap=100</stats>
+    <cost>
+      <res id="res.money" amount="500"/>
+      <res id="res.fertilizer" amount="500"/>
+      <res id="res.water" amount="100"/>
+      <res id="res.basictools" amount="5"/>
+      <res id="res.seed" amount="1000"/>
+    </cost>
+    <yield period="1h">
+      <res id="res.wheat" amount="9"/>
+      <res id="res.straw" amount="3"/>
+    </yield>
+    <time>45m</time>
+    <require>rsd.fieldwork.l1</require>
+  </addon>
+
+  <addon id="add.oatsfield.l1" family="farm" group="main" type="addons" lvl="1" stage="2">
+   <stats>footprint=-5;provision_cap=25</stats>
+    <cost>
+      <res id="res.money" amount="350"/>
+      <res id="res.fertilizer" amount="250"/>
+      <res id="res.water" amount="50"/>
+      <res id="res.basictools" amount="2"/>
+    </cost>
+    <require>rsd.oats.l1</require>
+        <yield period="1h">
+      <res id="res.oats" amount="3"/>
+      </yield>
+      <time>20m</time>
+  </addon>
+
+  <addon id="add.oatsfield.l2" family="farm" group="main" type="addons" lvl="2" stage="2">
+    <stats>footprint=-10;provision_cap=100</stats>
+    <cost>
+      <res id="res.money" amount="500"/>
+      <res id="res.fertilizer" amount="500"/>
+      <res id="res.water" amount="100"/>
+      <res id="res.basictools" amount="5"/>
+      <res id="res.seed" amount="1000"/>
+    </cost>
+    <yield period="1h">
+      <res id="res.oats" amount="7"/>
+    </yield>
+    <time>40m</time>
+    <require>rsd.fieldwork.l1</require>
+  </addon>
+
+  <!-- SLAUGHTERSPOT LVL4 -->
+  <addon id="add.barn_slaughterspot.l4" family="farm" group="barn" type="addons" lvl="4" stage="2">
+    <stats>footprint=-2</stats>
+    <cost>
+      <res id="res.money" amount="250"/>
+      <res id="res.stonebrick" amount="100"/>
+      <res id="res.bronzebar" amount="10"/>
+      <res id="res.food" amount="50"/>
+      <res id="res.soup" amount="1"/>
+    </cost>
+    <time>4h</time>
+    <require>add.barn_slaughterspot.l3</require>
+  </addon>
+
+  <!-- SLEEPING AREA LVL1 -->
+  <addon id="add.sleepingarea.l1" family="basecamp" type="addons" lvl="1" stage="2">
+    <stats>footprint=-2;housing=50;housingUnitCapacity=200</stats>
+    <cost>
+      <res id="res.hide" amount="25"/>
+      <res id="res.leather" amount="25"/>
+      <res id="res.cloth" amount="25"/>
+      <res id="res.feather" amount="150"/>
+    </cost>
+    <time>20m</time>
+    <require>rsd.bed.l1, bld.tent.l4</require>
+  </addon>
+
+  <!-- SAWMILL -->
+  <addon id="add.sawmill.l1" family="forest" group="main" type="addons" lvl="1" stage="2">
+    <stats>footprint=-5;provision_cap=25</stats>
+    <cost>
+      <res id="res.money" amount="300"/>
+      <res id="res.food" amount="100"/>
+      <res id="res.rope" amount="25"/>
+      <res id="res.basictools" amount="10"/>
+    </cost>
+    <yield period="1h">
+      <res id="res.log" amount="2"/>
+    </yield>
+    <buff applies_to="all">
+      <res id="res.wood" amount="10" type="mult" mode="yield"/>
+    </buff>
+    <time>20m</time>
+    <require>rsd.sawmill.l1,bld.forest.l2</require>
+  </addon>
+
+  <!-- HUNTERS CABIN LVL2 -->
+  <addon id="add.hunterscabin.l2" family="forest" group="main" type="addons" lvl="2" stage="2">
+    <stats>footprint=-5;provision_cap=25;housing=15;animal_cap=20</stats>
+    <cost>
+      <res id="res.money" amount="250"/>
+      <res id="res.wood" amount="100"/>
+      <res id="res.stonebrick" amount="50"/>
+      <res id="res.basictools" amount="10"/>
+      <res id="res.food" amount="20"/>
+      <res id="res.soup" amount="5"/>
+      <res id="res.bread" amount="1"/>
+    </cost>
+    <yield period="1h">
+      <res id="res.food" amount="1"/>
+    </yield>
+    <time>20m</time>
+    <require>bld.forest.l1</require>
+  </addon>
+
+    <addon id="add.storageliquid.l3" family="storage" type="addons" lvl="3" stage="2">
+    <stats>footprint=-2;storageLiquidCap=300, storageUnitsCapacity=100</stats>
     <cost>
       <res id="res.money" amount="125"/>
-      <res id="res.wood" amount="35"/>
+      <res id="res.wood" amount="30"/>
+      <res id="res.stonebrick" amount="100"/>
+      <res id="res.basictools" amount="2"/>
+      <res id="res.rope" amount="35"/>
     </cost>
-    <require>rsd.betterstorage.l1,rsd.tools.l2</require>
+    <require>bld.storage.l2</require>
+    <time>35m</time>
   </addon>
 
 
-      <addon id="add.storagesolid.l3" family="storage" type="addons" lvl="3" stage="2">
-    <stats>footprint=-1;storageSolidCap=200</stats>
+    <addon id="add.storagesolid.l3" family="storage" type="addons" lvl="3" stage="2">
+    <stats>footprint=-1;storageSolidCap=300, storageUnitsCapacity=100</stats>
     <cost>
       <res id="res.money" amount="250"/>
       <res id="res.wood" amount="35"/>
+      <res id="res.stonebrick" amount="75"/>
+      <res id="res.basictools" amount="5"/>
+      <res id="res.food" amount="10"/>
     </cost>
-    <require>rsd.betterstorage.l2</require>
+    <require>bld.storage.l2</require>
+    <time>45m</time>
   </addon>
 
-
-
-
-
-
   <addon id="add.bigfireplace.l2" family="basecamp" type="addons" lvl="2" stage="2">
-    <stats>footprint=-1;provision_cap=50;heatFossilCapacity=50;wasteOtherCapacity=100;socialCapacity=25</stats>
+    <stats>footprint=-1;provision_cap=50;heatFossilCapacity=50;wasteOtherCapacity=100;socialCapacity=50</stats>
     <cost>
       <res id="res.money" amount="225"/>
       <res id="res.wood" amount="30"/>
     </cost>
-    <require>rsd.social.l1</require>
+    <require>rsd.social.l1, bld.basecamp.l4</require>
     <yield period="45m">
-      <res id="res.money" amount="7"/>
+      <res id="res.money" amount="10"/>
+      <res id="res.coal" amount="3"/>
       </yield>
+    <time>50m</time>
   </addon>
 
-
+                          <addon id="add.bigfireplace_bronzepot.l1" family="basecamp" group="bigfireplace" type="addons" lvl="1" stage="2">
+                            <stats>provision_cap=10</stats>
+                            <cost>
+                              <res id="res.bronzebar" amount="1"/>
+                              <res id="res.food" amount="5"/>
+                            </cost>
+                            <require>add.bigfireplace.l2</require>
+                            <time>15m</time>
+                          </addon>  
 
     <addon id="add.well.l2" family="basecamp" type="addons" lvl="2" stage="2">
   <stats>footprint=-1,waterCapacity=25</stats>
     <cost>
-      <res id="res.money" amount="20"/>
-      <res id="res.wood" amount="2"/>
-      <res id="res.stone" amount="35"/>
+      <res id="res.money" amount="100"/>
+      <res id="res.stonebrick" amount="25"/>
+      <res id="res.basictools" amount="5"/>
+      <res id="res.soup" amount="2"/>
     </cost>
     <yield period="1h">
-      <res id="res.water" amount="4"/>
-      <res id="res.salt" amount="1"/>
+      <res id="res.water" amount="5"/>
+      <res id="res.salt" amount="3"/>
     </yield>
-    <require>rsd.iron.l1</require>
+    <require>bld.basecamp.l4</require>
+    <time>1h</time>
   </addon>
 
-  <addon id="add.well_bucket.l1" family="basecamp" group="well" type="addons" lvl="1" stage="2">
-  <stats>footprint=-1,waterCapacity=10</stats>
-    <cost>
-      <res id="res.money" amount="10"/>
-      <res id="res.wood" amount="10"/>
-      <res id="res.iron" amount="1"/>
-    </cost>
-    <yield period="1h">
-      <res id="res.water" amount="1"/>
-    </yield>
-    <require>rsd.iron.l1, addon.well.l2</require>
-  </addon>
-
-
+              <addon id="add.well_bucket.l1" family="basecamp" group="well" type="addons" lvl="1" stage="2">
+              <stats>waterCapacity=10</stats>
+                <cost>
+                  <res id="res.bronzebar" amount="1"/>
+                  <res id="res.food" amount="10"/>
+                  <res id="res.rope" amount="2"/>
+                  <res id="res.plank" amount="5"/>
+                  <res id="res.basictools" amount="2"/>
+                </cost>
+                <yield period="1h">
+                  <res id="res.water" amount="1"/>
+                </yield>
+                <time>30m</time>
+                <require>rsd.iron.l1, addon.well.l2</require>
+              </addon>
 
   <addon id="add.tailorspot.l2" family="basecamp" type="addons" lvl="2" stage="2">
   <stats>footprint=-1;productClothCapacity=16</stats>
     <cost>
-      <res id="res.money" amount="250"/>
-      <res id="res.wood" amount="55"/>
+      <res id="res.money" amount="100"/>
+      <res id="res.plank" amount="12"/>
+      <res id="res.basictools" amount="3"/>
+      <res id="res.food" amount="5"/>
     </cost>
-    <require>rsd.basiccloth.l1</require>
+    <require>bld.basecamp.l4</require>
+    <time>20m</time>
   </addon>
 
   <addon id="add.barn.l3" family="farm" type="addons" lvl="3" stage="2">
-    <stats>animal_cap=50</stats>
+    <stats>footprint=--10, animal_cap=250</stats>
     <cost>
-      <res id="res.money" amount="500"/>
-      <res id="res.wood" amount="265"/>
-      <res id="res.stone" amount="75"/>
+      <res id="res.plank" amount="25"/>
+      <res id="res.food" amount="10"/>
+      <res id="res.stonebrick" amount="20"/>
     </cost>
     <require>rsd.animalhusbandry.l3</require>
+    <time>2h</time>
   </addon>
-
-
-  <addon id="add.oatsfield.l1" family="farm" group="main" type="addons" lvl="1" stage="2">
-   <stats>footprint=-5;provision_cap=35</stats>
-    <cost>
-      <res id="res.money" amount="100"/>
-    </cost>
-    <require>rsd.oats.l1</require>
-        <yield period="1h">
-      <res id="res.oats" amount="2"/>
-      </yield>
-  </addon>
-
-    <!--addon fiske mole - åbner op for fiskeri -->
-
-
-        <addon id="add.mole.l2" family="lake" type="addons" lvl="2" stage="2">
+ 
+  <addon id="add.mole.l2" family="lake" type="addons" lvl="2" stage="2">
       <stats>footprint=-1</stats>
     <cost>
-      <res id="res.money" amount="250"/>
-      <res id="res.wood" amount="125"/>
-      <res id="res.iron" amount="10"/>
+      <res id="res.money" amount="240"/>
+      <res id="res.plank" amount="50"/>
+      <res id="res.stonebrick" amount="4"/> 
+      <res id="res.basictools" amount="4"/>
+      <res id="res.cockedfish" amount="20"/>
     </cost>
-    <require>rsd.fishing.l1</require>
+    <require>rsd.irrigation.l2,bld.lake.l2</require>
     <yield period="1h">
       <res id="res.rawcommonfish" amount="4"/>
       </yield>
-      <buff applies_to="all">
-        <res id="res.rawcommonfish" amount="15" type="mult" mode="yield"/>
-      </buff>
+      <time>45m</time>
   </addon>
 
-    <!--addon fiske net af tynd tråd - åbner op for fiskeri -->
-
-
-  <!-- FOREST -->
-
-
-
-  <!-- MINE -->
-
-  <addon id="add.brickmolding.l1" family="mine" group="main" type="addons" lvl="1" stage="2">
-  <stats>wasteOtherUsage=2</stats>
+  <addon id="add.brickmoulding.l1" family="mine" group="main" type="addons" lvl="1" stage="2">
+  <stats>footprint=-1, wasteOtherUsage=2</stats>
     <cost>
-      <res id="res.money" amount="500"/>
-      <res id="res.wood" amount="100"/>
+      <res id="res.money" amount="100"/>
+      <res id="res.plank" amount="25"/>
+      <res id="res.basictools" amount="10"/>
+      <res id="res.food" amount="20"/>
     </cost>
     <yield period="1h">
-      <res id="res.stonebricks" amount="2"/>
+      <res id="res.stonebricks" amount="1"/>
       </yield>
-    <require>rsd.useclay.l1,bld.mine.l2</require>
+    <require>rsd.mining.l3, ld.mine.l3</require>
+    <time>1h</time>
   </addon>
 
-    <addon id="add.bronzemolding.l1" family="mine" group="main" type="addons" lvl="1" stage="2">
+  <addon id="add.undergroundshelter.l1" family="mine" group="main" type="addons" lvl="1" stage="2">
+  <stats>footprint=-2, sanityCapacity=10, securityCapacity=5, provision_cap=25, housing=10</stats>
+    <cost>
+      <res id="res.money" amount="200"/>
+      <res id="res.plank" amount="25"/>
+      <res id="res.log" amount="4"/>
+      <res id="res.basictools" amount="10"/>
+    </cost>
+    <require>rsd.mining.l3, ld.mine.l3</require>
+    <time>2h</time>
+  </addon>
+
+    <addon id="add.bronzemoulding.l1" family="mine" group="main" type="addons" lvl="1" stage="2">
   <stats>wasteOtherUsage=2</stats>
     <cost>
-      <res id="res.money" amount="1000"/>
-      <res id="res.wood" amount="100"/>
+      <res id="res.money" amount="50"/>
+      <res id="res.stonebrick" amount="10"/>
+      <res id="res.basictools" amount="2"/>
     </cost>
     <yield period="1h">
-      <res id="res.bronze" amount="2"/>
+      <res id="res.bronzebar" amount="1"/>
       </yield>
-    <require>rsd.bronze.l1</require>
+    <require>rsd.bronzemoulding.l1</require>
+    <time>40m</time>
+  </addon>
+
+<addon id="add.garden.l1" family="health" group="main" type="addons" lvl="1" stage="2">
+    <stats>footprint=-3;productMedicinCapacity=15</stats>
+    <cost>
+      <res id="res.money" amount="100"/>
+      <res id="res.soup" amount="10"/>
+      <res id="res.food" amount="2"/>
+      <res id="res.basictools" amount="3"/>
+    </cost>
+    <time>20m</time>
+    <require>rsd.garden.l1</require>
+  </addon>
+
+              <!-- GARDEN SUB-ADDONS (fra vedhæftede billeder) -->
+              <addon id="add.garden_carrot.l1" family="health" group="garden" type="addons" lvl="1" stage="2">
+                <stats>footprint=-2,provision_cap=25</stats>
+                <cost>
+                  <res id="res.bronzebar" amount="1"/>
+                  <res id="res.food" amount="10"/>
+                  <res id="res.rope" amount="2"/>
+                  <res id="res.plank" amount="5"/>
+                  <res id="res.basictools" amount="2"/>
+                  <res id="res.seed" amount="10"/>
+                </cost>
+                <yield period="1h">
+                  <res id="res.carrot" amount="1"/>
+                </yield>
+                <time>1h</time>
+                <require>add.garden.l1</require>
+              </addon>
+
+              <addon id="add.garden_sunflower.l1" family="health" group="garden" type="addons" lvl="1" stage="2">
+                <stats>footprint=-2;provision_cap=5;productMedicinCapacity=25</stats>
+                <cost>
+                  <res id="res.money" amount="125"/>
+                  <res id="res.water" amount="100"/>
+                  <res id="res.fertilizer" amount="100"/>
+                  <res id="res.basictools" amount="2"/>
+                </cost>
+                <yield period="1h">
+                  <res id="res.sunflower" amount="1"/>
+                </yield>
+                <time>20m</time>
+                <require>add.garden.l1</require>
+              </addon>
+
+              <addon id="add.garden_herbs.l1" family="health" group="garden" type="addons" lvl="1" stage="2">
+                <stats>footprint=--2;provision_cap=5;productMedicinCapacity=10</stats>
+                <cost>
+                  <res id="res.seed" amount="25"/>
+                  <res id="res.water" amount="25"/>
+                  <res id="res.plank" amount="5"/>
+                  <res id="res.bronzebar" amount="1"/>
+                  <res id="res.basictools" amount="1"/>
+                </cost>
+                <yield period="1h">
+                  <res id="res.herbs" amount="1"/>
+                </yield>
+                <time>20m</time>
+                <require>add.garden.l1</require>
+              </addon>
+
+  <addon id="add.herbsstorage.l1_1" family="health" group="main" type="addons" lvl="1" stage="2">
+    <stats>footprint=-1;productMedicinCapacity=25;storageSolidCap=25</stats>
+    <cost>
+      <res id="res.money" amount="100"/>
+      <res id="res.soup" amount="10"/>
+      <res id="res.food" amount="2"/>
+      <res id="res.basictools" amount="3"/>
+    </cost>
+    <time>20m</time>
+    <require>rsd.herbalism.l1, rsd.storeherbs.l1</require>
+  </addon>
+
+
+
+ 
+
+
+
+<!-- STAGE 3-->
+
+    <addon id="add.sleepingbag.l1" family="tent" type="addons" lvl="1" stage="2">
+  <stats>footprint=-1;productClothCapacity=16</stats>
+    <cost>
+      <res id="res.money" amount="110"/>
+      <res id="res.hide" amount="4"/>
+    </cost>
+    <require>rsd.sleepingbag.l1,add.tailorspot.l2</require>
   </addon>
 
     <addon id="add.ironmolding.l1" family="mine" group="main" type="addons" lvl="1" stage="2">
@@ -642,50 +845,6 @@
       </yield>
     <require>rsd.iron.l1</require>
   </addon>
-
-   <addon id="add.undergroundshelter.l1" family="mine" group="main" type="addons" lvl="1" stage="2">
-  <stats>wasteOtherUsage=2;sanityCapacity=10, securityCapacity=5</stats>
-    <cost>
-      <res id="res.money" amount="500"/>
-      <res id="res.wood" amount="100"/>
-    </cost>
-    <require>rsd.mining.l2</require>
-  </addon>
-
-<!--HEALTH-->
-
-<addon id="add.storeherbs.l1" family="health" group="main" type="addons" lvl="2" stage="2">
-  <stats>healthCapacity=15, productMedicinCapacity=25</stats>
-    <cost>
-      <res id="res.money" amount="750"/>
-      <res id="res.wood" amount="100"/>
-    </cost>
-    <require>rsd.medicinstorage.l1</require>
-    <time>1h</time>
-  </addon>
-
-  <addon id="add.herbsgarden.l1" family="health" group="main" type="addons" lvl="2" stage="2">
-  <stats>healthCapacity=15, productMedicinCapacity=25</stats>
-    <cost>
-      <res id="res.money" amount="1000"/>
-      <res id="res.wood" amount="100"/>
-    </cost>
-    <require>rsd.medicinstorage.l1</require>
-    <time>1h</time>
-  </addon>
-
-<!--OTHER-->
-
-    <addon id="add.sleepingbag.l1" family="tent" type="addons" lvl="1" stage="2">
-  <stats>footprint=-1;productClothCapacity=16</stats>
-    <cost>
-      <res id="res.money" amount="110"/>
-      <res id="res.hide" amount="4"/>
-    </cost>
-    <require>rsd.sleepingbag.l1,add.tailorspot.l2</require>
-  </addon>
-
-
 
   
 

@@ -20,6 +20,24 @@ import { collectActiveBuffs } from '../services/requirements.js';
  *     - Unit-forbrug:  group.perItemStat        (f.eks. healthUnitUsage)
  */
 
+/**
+ * Helper: beregn per‑værdi for et ani‑def for en given gruppe.
+ * - Hvis der ikke findes en stat, returnerer vi:
+ *   - for animal grupper (capacityMode === 'animalCap'): default 1
+ *   - ellers: default 0
+ * Dette sikrer konsistent tælling på tværs af UI‑stier.
+ */
+function getPerForDef(def, group, isAnimal) {
+  if (!def || !group) return 0;
+  const statKey = group.perItemStat;
+  const raw = Number(def?.stats?.[statKey] ?? NaN);
+  if (!Number.isFinite(raw) || raw === 0) {
+    // hvis animalgruppe: default 1 (dette matcher eksisterende køb/logik)
+    return isAnimal ? 1 : 0;
+  }
+  return Math.abs(raw);
+}
+
 // Generisk fallback-beregning for alle non-animal grupper
 function computeUnitTotalsFallback(defs, state, group) {
   let total = 0;
@@ -47,7 +65,9 @@ function computeUnitTotalsFallback(defs, state, group) {
       .map((s) => s.trim())
       .filter(Boolean);
     if (!fams.includes(group.family)) continue;
-    const per = Math.abs(Number(adef?.stats?.[group.perItemStat] ?? 0)) || 0;
+    // Brug helper som håndterer default for animal grupper
+    const per = getPerForDef(adef, group, /* isAnimal */ false);
+    if (per <= 0) continue;
     used += per * qty;
   }
 
@@ -224,7 +244,7 @@ export default function UnitPage({ embedFamily = null, embed = false }) {
   const { data: header } = useHeaderSummary();
   const [selectedKey, setSelectedKey] = useState(null);
   const [confirm, setConfirm] = useState({ isOpen: false, title: '', body: '', onConfirm: null });
-  const [toBuyByGroup, setToBuyByGroup] = useState({}); // { [groupKey]: { 'ani.x': qty } }
+  const [toBuyByGroup, setToBuyByGroup] = useState({}); // { [groupKey]: { 'ani.x': qty } });
 
   if (isLoading) return <div className="sub">Indlæser...</div>;
   if (error || !data) return <div className="sub">Fejl.</div>;
@@ -242,8 +262,6 @@ export default function UnitPage({ embedFamily = null, embed = false }) {
   }, [state?.bld]);
 
   // Synlige grupper:
-  // - Normalt: dem man ejer (familiesOwned)
-  // - Embed: kun embedFamily (hvis def findes i UNIT_GROUPS), uanset familiesOwned
   const visibleGroups = useMemo(() => {
     if (embedFamily) {
       const g = UNIT_GROUPS.find((x) => x.family === embedFamily);
@@ -336,7 +354,9 @@ export default function UnitPage({ embedFamily = null, embed = false }) {
         .map((s) => s.trim())
         .filter(Boolean);
       if (!fams.includes(group.family)) continue;
-      const per = Math.abs(Number(adef?.stats?.[group.perItemStat] ?? 0)) || 0;
+      // Brug helper så vi ikke tæller enheter uden def for per (og sikrer animal-default hvor relevant)
+      const per = getPerForDef(adef, group, /* isAnimal */ false);
+      if (per <= 0) continue;
       fbUsed += per * qty;
     }
 
@@ -363,180 +383,180 @@ export default function UnitPage({ embedFamily = null, embed = false }) {
     [effectiveSelectedKey, group]
   );
 
-// inde i komponenten:
-const activeBuffs = useMemo(() => collectActiveBuffs(defs), [defs]);
+  // inde i komponenten:
+  const activeBuffs = useMemo(() => collectActiveBuffs(defs), [defs]);
 
-// Kurv – bevar base (til UI) og buffed (til afford)
-const basket = useMemo(() => {
-  if (!group) return null;
+  // Kurv – bevar base (til UI) og buffed (til afford)
+  const basket = useMemo(() => {
+    if (!group) return null;
 
-  const total = Number(totals.total || 0);
-  const used = Number(totals.used || 0);
+    const total = Number(totals.total || 0);
+    const used = Number(totals.used || 0);
 
-  let capToUse = 0;
-  const totalCostBase = {};
-  const totalCostBuffed = {};
+    let capToUse = 0;
+    const totalCostBase = {};
+    const totalCostBuffed = {};
 
-  for (const [aniId, qty] of Object.entries(toBuy)) {
-    if (!qty) continue;
-    const key = aniId.replace(/^ani\./, '');
-    const def = defs.ani?.[key];
-    if (!def) continue;
-
-    const per = isAnimal
-      ? Math.abs(Number(def?.stats?.[group.perItemStat] ?? 1)) || 1
-      : Math.abs(Number(def?.stats?.[group.perItemStat] ?? 0)) || 0;
-    capToUse += per * qty;
-
-    const costs = H.normalizePrice(def?.cost || {});
-    Object.values(costs).forEach((entry) => {
-      const rid = entry.id;
-      const baseAmt = (entry.amount || 0) * qty;
-
-      // Base (UI)
-      totalCostBase[rid] = (totalCostBase[rid] || 0) + baseAmt;
-
-      // Buffed (afford)
-      const effRid = rid.startsWith('res.') ? rid : (defs?.res?.[rid] ? `res.${rid}` : rid);
-      const buffedAmt = effRid.startsWith('res.')
-        ? applyCostBuffsToAmount(baseAmt, effRid, { appliesToCtx: 'all', activeBuffs })
-        : baseAmt;
-      totalCostBuffed[rid] = (totalCostBuffed[rid] || 0) + buffedAmt;
-    });
-  }
-
-  const availableCap = Math.max(0, total - used);
-  const hasCapacity = capToUse <= availableCap;
-
-  const getHave = (resId) => {
-    const key = String(resId).replace(/^res\./, '');
-    const liquid = Number(state?.inv?.liquid?.[key] || 0);
-    const solid = Number(state?.inv?.solid?.[key] || 0);
-    return liquid + solid;
-  };
-  const canAffordBuffed = Object.entries(totalCostBuffed).every(([rid, amt]) => getHave(rid) >= (amt || 0));
-  const totalQty = Object.values(toBuy).reduce((s, q) => s + (Number(q) || 0), 0);
-
-  return {
-    total,
-    used,
-    availableCap,
-    capToUse,
-    totalCostBase,      // til UI
-    totalCostBuffed,    // til afford
-    canAffordBuffed,
-    hasCapacity,
-    totalQty
-  };
-}, [group, totals, toBuy, defs, state, isAnimal, activeBuffs]);
-
-// Samlet dyr (på tværs af dyr-faner) med buffed beløb (kun fuld side)
-const combinedAnimals = useMemo(() => {
-  if (embed || !group || group.capacityMode !== 'animalCap') return null;
-
-  const total = Number(totals.total || 0);
-  const used = Number(totals.used || 0);
-
-  let capToUseAll = 0;
-  const costAllBuffed = {};
-
-  const animalGroups = UNIT_GROUPS.filter(g => g.capacityMode === 'animalCap');
-  for (const ag of animalGroups) {
-    const bucket = toBuyByGroup[ag.key] || {};
-    for (const [aniId, qty] of Object.entries(bucket)) {
+    for (const [aniId, qty] of Object.entries(toBuy)) {
       if (!qty) continue;
-      const key = String(aniId).replace(/^ani\./, '');
+      const key = aniId.replace(/^ani\./, '');
       const def = defs.ani?.[key];
       if (!def) continue;
 
-      const per = Math.abs(Number(def?.stats?.[ag.perItemStat] ?? 1)) || 1;
-      capToUseAll += per * (Number(qty) || 0);
+      const per = isAnimal
+        ? Math.abs(Number(def?.stats?.[group.perItemStat] ?? 1)) || 1
+        : Math.abs(Number(def?.stats?.[group.perItemStat] ?? 0)) || 0;
+      capToUse += per * qty;
 
       const costs = H.normalizePrice(def?.cost || {});
       Object.values(costs).forEach((entry) => {
         const rid = entry.id;
-        const baseAmt = (entry.amount || 0) * (Number(qty) || 0);
+        const baseAmt = (entry.amount || 0) * qty;
+
+        // Base (UI)
+        totalCostBase[rid] = (totalCostBase[rid] || 0) + baseAmt;
+
+        // Buffed (afford)
         const effRid = rid.startsWith('res.') ? rid : (defs?.res?.[rid] ? `res.${rid}` : rid);
         const buffedAmt = effRid.startsWith('res.')
           ? applyCostBuffsToAmount(baseAmt, effRid, { appliesToCtx: 'all', activeBuffs })
           : baseAmt;
-        costAllBuffed[rid] = (costAllBuffed[rid] || 0) + buffedAmt;
+        totalCostBuffed[rid] = (totalCostBuffed[rid] || 0) + buffedAmt;
       });
     }
-  }
 
-  const availableCap = Math.max(0, total - used);
-  const hasCapacity = capToUseAll <= availableCap;
+    const availableCap = Math.max(0, total - used);
+    const hasCapacity = capToUse <= availableCap;
 
-  const getHave = (resId) => {
-    const key = String(resId).replace(/^res\./, '');
-    const liquid = Number(state?.inv?.liquid?.[key] || 0);
-    const solid = Number(state?.inv?.solid?.[key] || 0);
-    return liquid + solid;
-  };
-  const canAfford = Object.entries(costAllBuffed).every(([rid, amt]) => getHave(rid) >= (amt || 0));
+    const getHave = (resId) => {
+      const key = String(resId).replace(/^res\./, '');
+      const liquid = Number(state?.inv?.liquid?.[key] || 0);
+      const solid = Number(state?.inv?.solid?.[key] || 0);
+      return liquid + solid;
+    };
+    const canAffordBuffed = Object.entries(totalCostBuffed).every(([rid, amt]) => getHave(rid) >= (amt || 0));
+    const totalQty = Object.values(toBuy).reduce((s, q) => s + (Number(q) || 0), 0);
 
-  return { hasCapacity, canAfford };
-}, [embed, group, totals, toBuyByGroup, defs, state, activeBuffs]);
+    return {
+      total,
+      used,
+      availableCap,
+      capToUse,
+      totalCostBase,      // til UI
+      totalCostBuffed,    // til afford
+      canAffordBuffed,
+      hasCapacity,
+      totalQty
+    };
+  }, [group, totals, toBuy, defs, state, isAnimal, activeBuffs]);
 
-// Disabled: brug samlet dyr-check i fuld side, ellers per-fane buffed
-const buyDisabled = useMemo(() => {
-  if (!basket || basket.totalQty === 0) return true;
-  if (!embed && group?.capacityMode === 'animalCap' && combinedAnimals) {
-    return !(combinedAnimals.canAfford && combinedAnimals.hasCapacity);
-  }
-  return !(basket.canAffordBuffed && basket.hasCapacity);
-}, [basket, embed, group, combinedAnimals]);
+  // Samlet dyr (på tværs af dyr-faner) med buffed beløb (kun fuld side)
+  const combinedAnimals = useMemo(() => {
+    if (embed || !group || group.capacityMode !== 'animalCap') return null;
 
-// KØB: brug samme afford‑kilde som disabled check
-const handleBuy = useCallback(async () => {
-  if (!basket) return;
-  const animals = Object.fromEntries(Object.entries(toBuy).filter(([, q]) => Number(q) > 0));
-  if (!Object.keys(animals).length || basket.totalQty <= 0) throw new Error('No items selected.');
+    const total = Number(totals.total || 0);
+    const used = Number(totals.used || 0);
 
-  // kapacitet pr. fane/samlet dyr tjek
-  if (!basket.hasCapacity) throw new Error('Insufficient capacity.');
-  const affordOk = (!embed && group?.capacityMode === 'animalCap' && combinedAnimals)
-    ? combinedAnimals.canAfford
-    : basket.canAffordBuffed;
-  if (!affordOk) throw new Error('Insufficient resources.');
+    let capToUseAll = 0;
+    const costAllBuffed = {};
 
-  const res = await fetch('/world-spil/backend/api/actions/animal.php', {
-    method: 'POST',
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ action: 'buy', animals }),
-  });
-  const json = await res.json();
-  if (json && json.ok === false) throw new Error(json.message || 'Server refused purchase.');
-  setToBuyByGroup((prev) => ({ ...prev, [effectiveSelectedKey]: {} }));
-  await refreshData();
-  return json;
-}, [basket, toBuy, effectiveSelectedKey, refreshData, embed, group, combinedAnimals]);
+    const animalGroups = UNIT_GROUPS.filter(g => g.capacityMode === 'animalCap');
+    for (const ag of animalGroups) {
+      const bucket = toBuyByGroup[ag.key] || {};
+      for (const [aniId, qty] of Object.entries(bucket)) {
+        if (!qty) continue;
+        const key = String(aniId).replace(/^ani\./, '');
+        const def = defs.ani?.[key];
+        if (!def) continue;
 
-// Bekræft-dialog: brug base-total (UI) så prisen ikke bliver dobbelt-rabatteret
-const openBuyConfirm = () => {
-  if (!basket?.totalQty) return;
+        const per = Math.abs(Number(def?.stats?.[ag.perItemStat] ?? 1)) || 1;
+        capToUseAll += per * (Number(qty) || 0);
 
-  // Før: const costText = renderCostInline(basket.totalCostBase, defs);
-  // Efter: brug buffede totals
-  const costText = renderCostInline(basket.totalCostBuffed, defs);
-
-  setConfirm({
-    isOpen: true,
-    title: `Bekræft køb (${group?.label || 'Units'})`,
-    body: `Du køber ${basket.totalQty} enhed(er).<br/><div style="margin-top:8px;">Pris: ${costText || '(ukendt)'}</div>`,
-    onConfirm: async () => {
-      try {
-        await handleBuy();
-      } catch (e) {
-        alert(e.message || 'Køb fejlede.');
-      } finally {
-        setConfirm((c) => ({ ...c, isOpen: false }));
+        const costs = H.normalizePrice(def?.cost || {});
+        Object.values(costs).forEach((entry) => {
+          const rid = entry.id;
+          const baseAmt = (entry.amount || 0) * (Number(qty) || 0);
+          const effRid = rid.startsWith('res.') ? rid : (defs?.res?.[rid] ? `res.${rid}` : rid);
+          const buffedAmt = effRid.startsWith('res.')
+            ? applyCostBuffsToAmount(baseAmt, effRid, { appliesToCtx: 'all', activeBuffs })
+            : baseAmt;
+          costAllBuffed[rid] = (costAllBuffed[rid] || 0) + buffedAmt;
+        });
       }
-    },
-  });
-};
+    }
+
+    const availableCap = Math.max(0, total - used);
+    const hasCapacity = capToUseAll <= availableCap;
+
+    const getHave = (resId) => {
+      const key = String(resId).replace(/^res\./, '');
+      const liquid = Number(state?.inv?.liquid?.[key] || 0);
+      const solid = Number(state?.inv?.solid?.[key] || 0);
+      return liquid + solid;
+    };
+    const canAfford = Object.entries(costAllBuffed).every(([rid, amt]) => getHave(rid) >= (amt || 0));
+
+    return { hasCapacity, canAfford };
+  }, [embed, group, totals, toBuyByGroup, defs, state, activeBuffs]);
+
+  // Disabled: brug samlet dyr-check i fuld side, ellers per-fane buffed
+  const buyDisabled = useMemo(() => {
+    if (!basket || basket.totalQty === 0) return true;
+    if (!embed && group?.capacityMode === 'animalCap' && combinedAnimals) {
+      return !(combinedAnimals.canAfford && combinedAnimals.hasCapacity);
+    }
+    return !(basket.canAffordBuffed && basket.hasCapacity);
+  }, [basket, embed, group, combinedAnimals]);
+
+  // KØB: brug samme afford‑kilde som disabled check
+  const handleBuy = useCallback(async () => {
+    if (!basket) return;
+    const animals = Object.fromEntries(Object.entries(toBuy).filter(([, q]) => Number(q) > 0));
+    if (!Object.keys(animals).length || basket.totalQty <= 0) throw new Error('No items selected.');
+
+    // kapacitet pr. fane/samlet dyr tjek
+    if (!basket.hasCapacity) throw new Error('Insufficient capacity.');
+    const affordOk = (!embed && group?.capacityMode === 'animalCap' && combinedAnimals)
+      ? combinedAnimals.canAfford
+      : basket.canAffordBuffed;
+    if (!affordOk) throw new Error('Insufficient resources.');
+
+    const res = await fetch('/world-spil/backend/api/actions/animal.php', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'buy', animals }),
+    });
+    const json = await res.json();
+    if (json && json.ok === false) throw new Error(json.message || 'Server refused purchase.');
+    setToBuyByGroup((prev) => ({ ...prev, [effectiveSelectedKey]: {} }));
+    await refreshData();
+    return json;
+  }, [basket, toBuy, effectiveSelectedKey, refreshData, embed, group, combinedAnimals]);
+
+  // Bekræft-dialog: brug base-total (UI) så prisen ikke bliver dobbelt-rabatteret
+  const openBuyConfirm = () => {
+    if (!basket?.totalQty) return;
+
+    // Før: const costText = renderCostInline(basket.totalCostBase, defs);
+    // Efter: brug buffede totals
+    const costText = renderCostInline(basket.totalCostBuffed, defs);
+
+    setConfirm({
+      isOpen: true,
+      title: `Bekræft køb (${group?.label || 'Units'})`,
+      body: `Du køber ${basket.totalQty} enhed(er).<br/><div style="margin-top:8px;">Pris: ${costText || '(ukendt)'}</div>`,
+      onConfirm: async () => {
+        try {
+          await handleBuy();
+        } catch (e) {
+          alert(e.message || 'Køb fejlede.');
+        } finally {
+          setConfirm((c) => ({ ...c, isOpen: false }));
+        }
+      },
+    });
+  };
 
   // SALG (per item)
   const handleSell = useCallback(
@@ -556,7 +576,6 @@ const openBuyConfirm = () => {
     [refreshData]
   );
 
-
   const openSellConfirm = (aniId, quantity) => {
     const key = aniId.replace(/^ani\./, '');
     const def = defs.ani?.[key];
@@ -572,7 +591,7 @@ const openBuyConfirm = () => {
     setConfirm({
       isOpen: true,
       title: quantity === 1 ? 'Sælg 1 enhed' : `Sælg ${quantity} enheder`,
-      body: `Du får følgende tilbage:<br/><div style={{ marginTop: '8px' }}>${refundText || '(ukendt værdi)'}</div>`,
+      body: `Du får følgende tilbage:<br/><div style="margin-top: 8px">${refundText || '(ukendt værdi)'}</div>`,
       onConfirm: async () => {
         try {
           await handleSell(aniId, quantity);
@@ -643,7 +662,7 @@ const openBuyConfirm = () => {
             const hoverContent = (
               <div style={{ minWidth: 220 }}>
                 <YieldBlock def={def} defs={defs} H={H} />
-                <div style={{ borderTop: '1px solid rgba(0,0,0,0.08)', paddingTop: 8, display: 'grid', gap: 4, fontSize: 12 }}></div> {/* giver linje i hover */}
+                
                 <StatsEffectsTooltip def={def} translations={data?.i18n?.current ?? {}} />
               </div>
             );

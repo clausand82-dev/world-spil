@@ -22,6 +22,30 @@ export const UNIT_GROUPS = [
     capacityLabel: 'Health units',
   },
   {
+    key: 'storage',
+    label: 'Storage',
+    emoji: '🗄️',
+    family: 'storage',
+    perItemStat: 'storageUnitsUsage',
+    buildingCapacityStat: 'storageUnitsCapacity',
+    capacityLabel: 'Storage units',
+    // Angiv sub-typer så UnitPage kan vise/liquide/solid-detaljer hvis nødvendigt.
+    subTypes: [
+      {
+        id: 'liquid',
+        label: 'Liquid',
+        headerCapacityKey: 'storageLiquidCap',
+        headerUsageKey: 'storageLiquidUsage',
+      },
+      {
+        id: 'solid',
+        label: 'Solid',
+        headerCapacityKey: 'storageSolidCap',
+        headerUsageKey: 'storageSolidUsage',
+      },
+    ],
+  },
+  {
     key: 'lake',
     label: 'Lake',
     emoji: '🐟',

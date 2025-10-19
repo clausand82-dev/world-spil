@@ -82,8 +82,8 @@ export default function ResourceHoverContent({
     <div style={{ maxWidth: 420, display: 'grid', gap: 10 }}>
       <div style={{ display: 'grid', gap: 4 }}>
         <div style={{ fontWeight: 700 }}>
-          {resourceDef?.emoji ? `${resourceDef.emoji} ` : ''}
-          {displayName}
+          {resourceDef?.emoji ? <span style={{ marginRight:6, display:'inline-flex', alignItems:'center' }}>{resourceDef.emoji}</span> : null}
+{displayName}
         </div>
         <div style={{ fontSize: 11, opacity: 0.8 }}>
           Mængde: {fmtAmount(amount)}{unitLabel}

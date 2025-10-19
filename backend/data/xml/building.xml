@@ -22,7 +22,8 @@
     kidsStudentCapacity=7;
     youngStudentCapacity=5;
     healthDentistCapacity=144;
-    adultsWorkerCapacity=100
+    adultsWorkerCapacity=100;
+    storageUnitsCapacity=500;
     </stats>
 
     <cost>
@@ -162,7 +163,7 @@
     <require>rsd.campmanagement.l1</require>
   </building>
 
-  <building id="bld.farm.l1" family="barn" type="animalFarm" lvl="1" stage="1">
+  <building id="bld.farm.l1" family="farm" type="animalFarm" lvl="1" stage="1">
     <stats>footprint=-10</stats>
     <cost>
       <res id="res.money" amount="50" />
@@ -260,11 +261,13 @@
 <!-- STAGE 2-->
 
    <building id="bld.basecamp.l4" family="basecamp" type="base" lvl="4" stage="2">
-    <stats>footprint=100; housing=50;provisionCapacity=100;</stats>
+    <stats>footprint=125; housing=500;provisionCapacity=250;heatFossilCapacity=25</stats>
     <cost>
       <res id="res.money" amount="1000" />
-      <res id="res.wood" amount="100" />
-      <res id="res.stone" amount="50" />
+      <res id="res.plank" amount="60" />
+      <res id="res.stonebrick" amount="200" />
+      <res id="res.basictools" amount="10" />
+      <res id="res.clay" amount="25" />
     </cost>
     <yield period="1h">
       <res id="res.money" amount="20" />
@@ -272,134 +275,154 @@
       <res id="res.stone" amount="5" />
       <res id="res.water" amount="5" />
     </yield>
-    <durability>35.0</durability>
+    <durability>100</durability>
     <upgradesTo>bld.basecamp.l5</upgradesTo>
     <require>rsd.campmanagement.l2</require>
     <time>6h</time>
   </building>
 
-<!-- TENTS -->
-
-  
-
     <building id="bld.tent.l4" family="tent" type="housing" lvl="4" stage="2">
-    <stats>footprint=-25;housing=100</stats>
+    <stats>footprint=-25;housing=100, housingUnitCapacity=200</stats>
     <cost>
       <res id="res.money" amount="100" />
       <res id="res.hide" amount="16" />
       <res id="res.wood" amount="16" />
+      <res id="res.basictools" amount="10" />
+      <res id="res.leather" amount="4" />
     </cost>
     <yield period="1h">
-      <res id="res.money" amount="5"/>
+      <res id="res.money" amount="10"/>
     </yield>
-    <time>3t</time>
-    <durability>15.0</durability>
+    <time>45m</time>
+    <durability>10</durability>
     <upgradesTo>bld.tent.l5</upgradesTo>
-    <require>rsd.sleeping.l1,rsd.basiccloth.l1</require>
+    <require>rsd.bed.l1</require>
   </building>
 
-<!-- FARM -->
-
-
-
-    <building id="bld.farm.l2" family="barn" type="animalFarm" lvl="2" stage="2">
-    <stats>footprint=-15;animal_cap=125</stats>
+    <building id="bld.farm.l2" family="farm" type="animalFarm" lvl="2" stage="2">
+    <stats>footprint=-15;animal_cap=200</stats>
     <cost>
       <res id="res.money" amount="100" />
       <res id="res.wood" amount="75" />
-      <res id="res.stone" amount="50" />
+      <res id="res.stonebrick" amount="20" />
+      <res id="res.clay" amount="10" />
+      <res id="res.basictools" amount="10" />
     </cost>
-    <durability>25.0</durability>
+    <durability>100</durability>
     <upgradesTo>bld.farm.l3</upgradesTo>
-    <time>5m</time>
+    <time>2t</time>
     <require>rsd.farming.l2</require>
   </building>
 
-<!-- FOREST -->
-
-
-
     <building id="bld.forest.l2" family="forest" type="nature" lvl="2" stage="2">
-    <stats>footprint=-15;animal_cap=100</stats>
+    <stats>footprint=-25;animal_cap=200</stats>
     <cost>
       <res id="res.money" amount="200" />
+      <res id="res.basictools" amount="5" />
+      <res id="res.wood" amount="50" />
+      <res id="res.food" amount="10" />
     </cost>
     <yield period="1h">
       <res id="res.wood" amount="5"/>
     </yield>
     <require>rsd.forestry.l2</require>
-    <time>5s</time>
-    <durability>10.0</durability>
+    <time>1h</time>
+    <durability>100</durability>
     <upgradesTo>bld.forest.l2</upgradesTo>
   </building>
 
-<!-- LAKE -->
-
-
-
     <building id="bld.lake.l2" family="lake" type="nature" lvl="2" stage="2">
-    <stats>footprint=-15;provision_cap=50</stats>
+    <stats>footprint=-20;provision_cap=100</stats>
     <cost>
       <res id="res.money" amount="1000" />
       <res id="res.stone" amount="115" />
       <res id="res.wood" amount="22" />
+      <res id="res.basictools" amount="5" />
+      <res id="res.food" amount="20" />
+      <res id="res.bread" amount="5" />
     </cost>
     <yield period="1h">
       <res id="res.water" amount="25"/>
-      <res id="res.rawcommonfish" amount="2"/>
+      <res id="res.rawcommonfish" amount="5"/>
+      <res id="res.turtle" amount="1"/>
     </yield>
     <require>rsd.irrigation.l2</require>
     <upgradesTo>bld.lake.l3</upgradesTo>
-    <durability>10.0</durability>
+    <durability>100</durability>
+    <time>1h</time>
   </building>
-
-<!-- MINE -->
-
-
-
-      <building id="bld.mine.l3" family="mine" type="extraction" lvl="3" stage="2">
+  
+  <building id="bld.mine.l3" family="mine" type="extraction" lvl="3" stage="2">
     <stats>footprint=-5</stats>
     <cost>
       <res id="res.money" amount="200" />
-      <res id="res.wood" amount="175" />
+      <res id="res.wood" amount="100" />
+      <res id="res.plank" amount="50" />
       <res id="res.stone" amount="100" />
     </cost>
     <yield period="1h">
       <res id="res.stone" amount="7"/>
+      <res id="res.bronzeore" amount="2"/>
+      <res id="res.ironore" amount="1"/>
+      <res id="res.clay" amount="2"/>      
     </yield>
     <require>rsd.mining.l2</require>
     <durability>100.0</durability>
+    <time>2h</time>
   </building>  
 
-<!-- STORAGE -->
-
-
-  
       <building id="bld.storage.l2" family="storage" type="storageSolid" lvl="2" stage="2">
-    <stats>footprint=-5;storageSolidCap=25,storageLiquidCap=25</stats>
+    <stats>footprint=-5;storageSolidCap=50,storageLiquidCap=50</stats>
     <cost>
       <res id="res.money" amount="200" />
       <res id="res.hide" amount="20" />
       <res id="res.wood" amount="200" />
+      <res id="res.basictools" amount="5" />
+      <res id="res.food" amount="25" />
     </cost>
-    <require>rsd.betterstorage.l1</require>
-    <durability>40.0</durability>
+    <require>rsd.stacking.l1</require>
+    <durability>100</durability>
     <upgradesTo>bld.storage.l3</upgradesTo>
+    <time>1h</time>
   </building>
 
 <!-- HEALTH-->
 
     <building id="bld.health.l1" family="health" type="health" lvl="1" stage="1">
-    <stats>footprint=-5;healthCapacity=10;healthUnitCapacity=10;adultsHealthCapacity=10</stats>
+    <stats>footprint=-5;healthCapacity=10;healthUnitCapacity=10</stats>
     <cost>
       <res id="res.money" amount="125" />
       <res id="res.hide" amount="22" />
       <res id="res.wood" amount="50" />
+      <res id="res.basictools" amount="5" />
+      <res id="res.cloth" amount="10" />
     </cost>
-    <require>rsd.herbalism.l1</require>
-    <durability>40.0</durability>
+    <require>rsd.health.l1</require>
+    <durability>100</durability>
     <upgradesTo>bld.health.l2</upgradesTo>
+    <time>35m</time>
     </building>
 
+
+    <building id="bld.monument.l1" family="monument" type="art" lvl="1" stage="2">
+    <stats>footprint=50;housing=50;socialCapacity=250;religionCapcacity=500;cultureCapacity=500;civilizationCapacity=500</stats>   
+    <cost>
+      <res id="res.money" amount="5000" />
+      <res id="res.stonebrick" amount="250" />
+      <res id="res.plank" amount="250" />
+      <res id="res.medicin" amount="50" />
+      <res id="res.basictools" amount="50" />
+      <res id="res.food" amount="100" />
+      <res id="res.crystal" amount="50" />
+      <res id="res.bronzebar" amount="10" />
+    </cost>
+    <yield> period="1h">
+      <res id="res.money" amount="10" />
+    </yield>
+    <require>rsd.culture.l1,rsd.civilization.l1</require>
+    <durability>100</durability>
+    <upgradesTo>bld.monument.l2</upgradesTo>
+    <time>48h</time>
+    </building>
 
 </buildings>

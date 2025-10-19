@@ -639,19 +639,76 @@ $data['yields_preview'] = $yields_preview;
             $qty = (int)($row['quantity'] ?? 0); if ($qty <= 0) continue;
             $key = preg_replace('/^ani\./', '', (string)$aniId);
             $def = $defs['ani'][$key] ?? null; if (!$def) continue;
-            $capPer = (int)abs((int)($def['stats']['animal_cap'] ?? 1)); if ($capPer <= 0) $capPer = 1;
-            $usedAnimalCapByAnimals += $capPer * $qty;
+           $capPer = 0;
+            if (isset($def['stats']['animal_cap'])) {
+                // brug absolut værdi og cast til int
+                $capPer = (int) abs((int) $def['stats']['animal_cap']);
+                // ignore zero/negative (tæl ikke) — hvis I vil behandle negative som 0, dette gør det
+                if ($capPer <= 0) $capPer = 0;
+            } else {
+                // ingen animal_cap i def -> tæl ikke automatisk som 1
+                $capPer = 0;
+            }
+          $usedAnimalCapByAnimals += $capPer * $qty;
           }
         }
 
         // storage caps
-        $availableSS=0; $usedSS=0;
-        foreach ($state['bld'] as $id => $val) { $key=preg_replace('/^bld\./','',$id); if(isset($defs['bld'][$key]['stats']['storageSolidCap'])){ $ss=(int)$defs['bld'][$key]['stats']['storageSolidCap']; if($ss>0)$availableSS+=$ss; elseif($ss<0)$usedSS+=$ss; } }
-        foreach ($state['add'] as $id => $val) { $key=preg_replace('/^add\./','',$id); if(isset($defs['add'][$key]['stats']['storageSolidCap'])){ $ss=(int)$defs['add'][$key]['stats']['storageSolidCap']; if($ss>0)$availableSS+=$ss; elseif($ss<0)$usedSS+=$ss; } }
-        $availableSL=0; $usedSL=0;
-        foreach ($state['bld'] as $id => $val) { $key=preg_replace('/^bld\./','',$id); if(isset($defs['bld'][$key]['stats']['storageLiquidCap'])){ $sl=(int)$defs['bld'][$key]['stats']['storageLiquidCap']; if($sl>0)$availableSL+=$sl; elseif($sl<0)$usedSL+=$sl; } }
-        foreach ($state['add'] as $id => $val) { $key=preg_replace('/^add\./','',$id); if(isset($defs['add'][$key]['stats']['storageLiquidCap'])){ $sl=(int)$defs['add'][$key]['stats']['storageLiquidCap']; if($sl>0)$availableSL+=$sl; elseif($sl<0)$usedSL+=$sl; } }
+        // --- Storage caps: solid ---
+$availableSS = 0; $usedSS = 0;
+// buildings
+foreach ($state['bld'] as $id => $val) {
+    $key = preg_replace('/^bld\\./','',$id);
+    $ss = isset($defs['bld'][$key]['stats']['storageSolidCap']) ? (int)$defs['bld'][$key]['stats']['storageSolidCap'] : 0;
+    if ($ss > 0) $availableSS += $ss;
+    elseif ($ss < 0) $usedSS += $ss;
+}
+// addons
+foreach ($state['add'] as $id => $val) {
+    $key = preg_replace('/^add\\./','',$id);
+    $ss = isset($defs['add'][$key]['stats']['storageSolidCap']) ? (int)$defs['add'][$key]['stats']['storageSolidCap'] : 0;
+    if ($ss > 0) $availableSS += $ss;
+    elseif ($ss < 0) $usedSS += $ss;
+}
+// animals: multiplicer med qty og kun hvis stat findes
+foreach ($state['ani'] as $id => $val) {
+    $key = preg_replace('/^ani\\./','',$id);
+    $qty = (int)($val['quantity'] ?? 0);
+    if ($qty <= 0) continue;
+    if (isset($defs['ani'][$key]['stats']['storageSolidCap'])) {
+        $ss = (int)$defs['ani'][$key]['stats']['storageSolidCap'];
+        if ($ss > 0) $availableSS += $ss * $qty;
+        elseif ($ss < 0) $usedSS += $ss * $qty;
+    }
+}
 
+// --- Storage caps: liquid ---
+$availableSL = 0; $usedSL = 0;
+// buildings
+foreach ($state['bld'] as $id => $val) {
+    $key = preg_replace('/^bld\\./','',$id);
+    $sl = isset($defs['bld'][$key]['stats']['storageLiquidCap']) ? (int)$defs['bld'][$key]['stats']['storageLiquidCap'] : 0;
+    if ($sl > 0) $availableSL += $sl;
+    elseif ($sl < 0) $usedSL += $sl;
+}
+// addons
+foreach ($state['add'] as $id => $val) {
+    $key = preg_replace('/^add\\./','',$id);
+    $sl = isset($defs['add'][$key]['stats']['storageLiquidCap']) ? (int)$defs['add'][$key]['stats']['storageLiquidCap'] : 0;
+    if ($sl > 0) $availableSL += $sl;
+    elseif ($sl < 0) $usedSL += $sl;
+}
+// animals: multiplicer med qty og kun hvis stat findes
+foreach ($state['ani'] as $id => $val) {
+    $key = preg_replace('/^ani\\./','',$id);
+    $qty = (int)($val['quantity'] ?? 0);
+    if ($qty <= 0) continue;
+    if (isset($defs['ani'][$key]['stats']['storageLiquidCap'])) {
+        $sl = (int)$defs['ani'][$key]['stats']['storageLiquidCap'];
+        if ($sl > 0) $availableSL += $sl * $qty;
+        elseif ($sl < 0) $usedSL += $sl * $qty;
+    }
+}
         // Base fra config
         $CONFIG = isset($config) ? $config : (isset($cfg) ? $cfg : []);
         $liquidBase = (int)($CONFIG['start_limitations_cap']['storageLiquidCap'] ?? $CONFIG['start_limitations_cap']['storageLiquidBaseCap'] ?? 0);
