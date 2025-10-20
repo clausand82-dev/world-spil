@@ -116,6 +116,7 @@ generelPopularityDemand:
 generelStrength: 
 generelArmor: 
 -->
+  
   <citizens id="baby">
     <useProvision>0.2</useProvision>
     <useWater>0.2</useWater>
@@ -144,7 +145,12 @@ generelArmor:
     <useTrafficPublic>0</useTrafficPublic>
     <useTrafficFossil>0</useTrafficFossil>
     <useTrafficEV>0</useTrafficEV>
-    <useTransport>0.1</useTransport>
+    <useTransport>0</useTransport>
+    <useTransportPassenger>0.01</useTransportPassenger>
+    <useTransportGods>0.01</useTransportGods>
+    <useReligion>0.1</useReligion>
+    <useCulture>0</useCulture>
+    <useCivilization>0</useCivilization>
     <useRoad></useRoad>
     <useParkingLot></useParkingLot>
     <useParkGreen></useParkGreen>
@@ -202,7 +208,7 @@ generelArmor:
     <taxPayMax></taxPayMax>
     <taxPayRageRate></taxPayRageRate>
     <wastePlastic>0.5</wastePlastic>
-    <wasteOrganic></wasteOrganic>
+    <wasteOrganic>0.6</wasteOrganic>
     <wasteGlass></wasteGlass>
     <wasteMetal></wasteMetal>
     <wasteWater></wasteWater>
@@ -259,6 +265,11 @@ generelArmor:
     <useTrafficFossil></useTrafficFossil>
     <useTrafficEV></useTrafficEV>
     <useTransport></useTransport>
+    <useTransportPassenger>0.02</useTransportPassenger>
+    <useTransportGods>0.02</useTransportGods>
+    <useReligion>0.01</useReligion>
+    <useCulture>0.02</useCulture>
+    <useCivilization>0.03</useCivilization>
     <useRoad></useRoad>
     <useParkingLot></useParkingLot>
     <useParkGreen></useParkGreen>
@@ -316,7 +327,7 @@ generelArmor:
     <taxPayMax></taxPayMax>
     <taxPayRageRate></taxPayRageRate>
     <wastePlastic></wastePlastic>
-    <wasteOrganic></wasteOrganic>
+    <wasteOrganic>0.75</wasteOrganic>
     <wasteGlass></wasteGlass>
     <wasteMetal></wasteMetal>
     <wasteWater></wasteWater>
@@ -373,6 +384,11 @@ generelArmor:
     <useTrafficFossil></useTrafficFossil>
     <useTrafficEV></useTrafficEV>
     <useTransport></useTransport>
+    <useTransportPassenger>0.5</useTransportPassenger>
+    <useTransportGods>0.2</useTransportGods>
+    <useReligion>0.1</useReligion>
+    <useCulture>0.5</useCulture>
+    <useCivilization>0.5</useCivilization>
     <useRoad></useRoad>
     <useParkingLot></useParkingLot>
     <useParkGreen></useParkGreen>
@@ -430,7 +446,7 @@ generelArmor:
     <taxPayMax></taxPayMax>
     <taxPayRageRate></taxPayRageRate>
     <wastePlastic></wastePlastic>
-    <wasteOrganic></wasteOrganic>
+    <wasteOrganic>0.95</wasteOrganic>
     <wasteGlass></wasteGlass>
     <wasteMetal></wasteMetal>
     <wasteWater></wasteWater>
@@ -487,6 +503,11 @@ generelArmor:
     <useTrafficFossil></useTrafficFossil>
     <useTrafficEV></useTrafficEV>
     <useTransport></useTransport>
+    <useTransportPassenger>0.9</useTransportPassenger>
+    <useTransportGods>0.4</useTransportGods>
+    <useReligion>0.3</useReligion>
+    <useCulture>0.6</useCulture>
+    <useCivilization>0.6</useCivilization>
     <useRoad></useRoad>
     <useParkingLot></useParkingLot>
     <useParkGreen></useParkGreen>
@@ -544,7 +565,7 @@ generelArmor:
     <taxPayMax></taxPayMax>
     <taxPayRageRate></taxPayRageRate>
     <wastePlastic></wastePlastic>
-    <wasteOrganic></wasteOrganic>
+    <wasteOrganic>1.1</wasteOrganic>
     <wasteGlass></wasteGlass>
     <wasteMetal></wasteMetal>
     <wasteWater></wasteWater>
@@ -601,6 +622,11 @@ generelArmor:
     <useTrafficFossil></useTrafficFossil>
     <useTrafficEV></useTrafficEV>
     <useTransport></useTransport>
+    <useTransportPassenger>0.7</useTransportPassenger>
+    <useTransportGods>0.2</useTransportGods>
+    <useReligion>0.1</useReligion>
+    <useCulture>0.1</useCulture>
+    <useCivilization>0.2</useCivilization>
     <useRoad></useRoad>
     <useParkingLot></useParkingLot>
     <useParkGreen></useParkGreen>
@@ -658,7 +684,7 @@ generelArmor:
     <taxPayMax></taxPayMax>
     <taxPayRageRate></taxPayRageRate>
     <wastePlastic>0.7</wastePlastic>
-    <wasteOrganic></wasteOrganic>
+    <wasteOrganic>1.1</wasteOrganic>
     <wasteGlass></wasteGlass>
     <wasteMetal></wasteMetal>
     <wasteWater></wasteWater>
@@ -715,6 +741,11 @@ generelArmor:
     <useTrafficFossil></useTrafficFossil>
     <useTrafficEV></useTrafficEV>
     <useTransport></useTransport>
+    <useTransportPassenger>1.2</useTransportPassenger>
+    <useTransportGods>0.4</useTransportGods>
+    <useReligion>1.5</useReligion>
+    <useCulture>0.9</useCulture>
+    <useCivilization>3</useCivilization>
     <useRoad></useRoad>
     <useParkingLot></useParkingLot>
     <useParkGreen></useParkGreen>
@@ -772,7 +803,7 @@ generelArmor:
     <taxPayMax></taxPayMax>
     <taxPayRageRate></taxPayRageRate>
     <wastePlastic></wastePlastic>
-    <wasteOrganic></wasteOrganic>
+    <wasteOrganic>0.6</wasteOrganic>
     <wasteGlass></wasteGlass>
     <wasteMetal></wasteMetal>
     <wasteWater></wasteWater>
@@ -829,6 +860,11 @@ generelArmor:
     <useTrafficFossil></useTrafficFossil>
     <useTrafficEV></useTrafficEV>
     <useTransport></useTransport>
+    <useTransportPassenger>0.4</useTransportPassenger>
+    <useTransportGods>0.2</useTransportGods>
+    <useReligion>1.4</useReligion>
+    <useCulture>0.6</useCulture>
+    <useCivilization>1.9</useCivilization>
     <useRoad></useRoad>
     <useParkingLot></useParkingLot>
     <useParkGreen></useParkGreen>
@@ -886,7 +922,7 @@ generelArmor:
     <taxPayMax></taxPayMax>
     <taxPayRageRate></taxPayRageRate>
     <wastePlastic></wastePlastic>
-    <wasteOrganic></wasteOrganic>
+    <wasteOrganic>0.75</wasteOrganic>
     <wasteGlass></wasteGlass>
     <wasteMetal></wasteMetal>
     <wasteWater></wasteWater>
@@ -943,6 +979,11 @@ generelArmor:
     <useTrafficFossil></useTrafficFossil>
     <useTrafficEV></useTrafficEV>
     <useTransport></useTransport>
+    <useTransportPassenger>0.3</useTransportPassenger>
+    <useTransportGods>0.4</useTransportGods>
+    <useReligion>0.8</useReligion>
+    <useCulture>0.1</useCulture>
+    <useCivilization>0.9</useCivilization>
     <useRoad></useRoad>
     <useParkingLot></useParkingLot>
     <useParkGreen></useParkGreen>
@@ -1000,7 +1041,7 @@ generelArmor:
     <taxPayMax></taxPayMax>
     <taxPayRageRate></taxPayRageRate>
     <wastePlastic></wastePlastic>
-    <wasteOrganic></wasteOrganic>
+    <wasteOrganic>1</wasteOrganic>
     <wasteGlass></wasteGlass>
     <wasteMetal></wasteMetal>
     <wasteWater></wasteWater>
@@ -1057,6 +1098,11 @@ generelArmor:
     <useTrafficFossil></useTrafficFossil>
     <useTrafficEV></useTrafficEV>
     <useTransport></useTransport>
+    <useTransportPassenger>0.4</useTransportPassenger>
+    <useTransportGods>0.2</useTransportGods>
+    <useReligion>1.5</useReligion>
+    <useCulture>0.8</useCulture>
+    <useCivilization>1.1</useCivilization>
     <useRoad></useRoad>
     <useParkingLot></useParkingLot>
     <useParkGreen></useParkGreen>
@@ -1114,7 +1160,7 @@ generelArmor:
     <taxPayMax></taxPayMax>
     <taxPayRageRate></taxPayRageRate>
     <wastePlastic></wastePlastic>
-    <wasteOrganic></wasteOrganic>
+    <wasteOrganic>0.65</wasteOrganic>
     <wasteGlass></wasteGlass>
     <wasteMetal></wasteMetal>
     <wasteWater></wasteWater>
@@ -1171,6 +1217,11 @@ generelArmor:
     <useTrafficFossil></useTrafficFossil>
     <useTrafficEV></useTrafficEV>
     <useTransport></useTransport>
+    <useTransportPassenger>0.3</useTransportPassenger>
+    <useTransportGods>0.5</useTransportGods>
+    <useReligion>0.9</useReligion>
+    <useCulture>0.2</useCulture>
+    <useCivilization>0.7</useCivilization>
     <useRoad></useRoad>
     <useParkingLot></useParkingLot>
     <useParkGreen></useParkGreen>
@@ -1228,7 +1279,7 @@ generelArmor:
     <taxPayMax></taxPayMax>
     <taxPayRageRate></taxPayRageRate>
     <wastePlastic></wastePlastic>
-    <wasteOrganic></wasteOrganic>
+    <wasteOrganic>1.1</wasteOrganic>
     <wasteGlass></wasteGlass>
     <wasteMetal></wasteMetal>
     <wasteWater></wasteWater>
@@ -1285,6 +1336,11 @@ generelArmor:
     <useTrafficFossil></useTrafficFossil>
     <useTrafficEV></useTrafficEV>
     <useTransport></useTransport>
+    <useTransportPassenger>0.5</useTransportPassenger>
+    <useTransportGods>0.3</useTransportGods>
+    <useReligion>1.6</useReligion>
+    <useCulture>1.4</useCulture>
+    <useCivilization>1.8</useCivilization>
     <useRoad></useRoad>
     <useParkingLot></useParkingLot>
     <useParkGreen></useParkGreen>
@@ -1342,7 +1398,7 @@ generelArmor:
     <taxPayMax></taxPayMax>
     <taxPayRageRate></taxPayRageRate>
     <wastePlastic></wastePlastic>
-    <wasteOrganic></wasteOrganic>
+    <wasteOrganic>0.95</wasteOrganic>
     <wasteGlass></wasteGlass>
     <wasteMetal></wasteMetal>
     <wasteWater></wasteWater>
@@ -1399,6 +1455,11 @@ generelArmor:
     <useTrafficFossil></useTrafficFossil>
     <useTrafficEV></useTrafficEV>
     <useTransport></useTransport>
+    <useTransportPassenger>0.4</useTransportPassenger>
+    <useTransportGods>0.4</useTransportGods>
+    <useReligion>1.2</useReligion>
+    <useCulture>0.6</useCulture>
+    <useCivilization>0.6</useCivilization>
     <useRoad></useRoad>
     <useParkingLot></useParkingLot>
     <useParkGreen></useParkGreen>
@@ -1456,7 +1517,7 @@ generelArmor:
     <taxPayMax></taxPayMax>
     <taxPayRageRate></taxPayRageRate>
     <wastePlastic></wastePlastic>
-    <wasteOrganic></wasteOrganic>
+    <wasteOrganic>1.3</wasteOrganic>
     <wasteGlass></wasteGlass>
     <wasteMetal></wasteMetal>
     <wasteWater></wasteWater>
@@ -1513,6 +1574,11 @@ generelArmor:
     <useTrafficFossil></useTrafficFossil>
     <useTrafficEV></useTrafficEV>
     <useTransport></useTransport>
+    <useTransportPassenger>0.3</useTransportPassenger>
+    <useTransportGods>0.05</useTransportGods>
+    <useReligion>1.5</useReligion>
+    <useCulture>0.8</useCulture>
+    <useCivilization>0.5</useCivilization>
     <useRoad></useRoad>
     <useParkingLot></useParkingLot>
     <useParkGreen></useParkGreen>
@@ -1570,7 +1636,7 @@ generelArmor:
     <taxPayMax></taxPayMax>
     <taxPayRageRate></taxPayRageRate>
     <wastePlastic></wastePlastic>
-    <wasteOrganic></wasteOrganic>
+    <wasteOrganic>1</wasteOrganic>
     <wasteGlass></wasteGlass>
     <wasteMetal></wasteMetal>
     <wasteWater></wasteWater>
@@ -1627,6 +1693,11 @@ generelArmor:
     <useTrafficFossil></useTrafficFossil>
     <useTrafficEV></useTrafficEV>
     <useTransport></useTransport>
+    <useTransportPassenger>0.2</useTransportPassenger>
+    <useTransportGods>0.1</useTransportGods>
+    <useReligion>2</useReligion>
+    <useCulture>0.1</useCulture>
+    <useCivilization>0.05</useCivilization>
     <useRoad></useRoad>
     <useParkingLot></useParkingLot>
     <useParkGreen></useParkGreen>
@@ -1684,7 +1755,7 @@ generelArmor:
     <taxPayMax></taxPayMax>
     <taxPayRageRate></taxPayRageRate>
     <wastePlastic></wastePlastic>
-    <wasteOrganic></wasteOrganic>
+    <wasteOrganic>0.75</wasteOrganic>
     <wasteGlass></wasteGlass>
     <wasteMetal></wasteMetal>
     <wasteWater></wasteWater>
@@ -1741,6 +1812,11 @@ generelArmor:
     <useTrafficFossil></useTrafficFossil>
     <useTrafficEV></useTrafficEV>
     <useTransport></useTransport>
+    <useTransportPassenger>1.1</useTransportPassenger>
+    <useTransportGods>0.7</useTransportGods>
+    <useReligion>1</useReligion>
+    <useCulture>1</useCulture>
+    <useCivilization>1</useCivilization>
     <useRoad></useRoad>
     <useParkingLot></useParkingLot>
     <useParkGreen></useParkGreen>
@@ -1798,7 +1874,7 @@ generelArmor:
     <taxPayMax></taxPayMax>
     <taxPayRageRate></taxPayRageRate>
     <wastePlastic></wastePlastic>
-    <wasteOrganic></wasteOrganic>
+    <wasteOrganic>1</wasteOrganic>
     <wasteGlass></wasteGlass>
     <wasteMetal></wasteMetal>
     <wasteWater></wasteWater>
@@ -1855,6 +1931,11 @@ generelArmor:
     <useTrafficFossil></useTrafficFossil>
     <useTrafficEV></useTrafficEV>
     <useTransport></useTransport>
+    <useTransportPassenger>1.3</useTransportPassenger>
+    <useTransportGods>0.5</useTransportGods>
+    <useReligion>1</useReligion>
+    <useCulture>1</useCulture>
+    <useCivilization>1</useCivilization>
     <useRoad></useRoad>
     <useParkingLot></useParkingLot>
     <useParkGreen></useParkGreen>
@@ -1912,7 +1993,7 @@ generelArmor:
     <taxPayMax></taxPayMax>
     <taxPayRageRate></taxPayRageRate>
     <wastePlastic></wastePlastic>
-    <wasteOrganic></wasteOrganic>
+    <wasteOrganic>1.1</wasteOrganic>
     <wasteGlass></wasteGlass>
     <wasteMetal></wasteMetal>
     <wasteWater></wasteWater>
@@ -1969,6 +2050,11 @@ generelArmor:
     <useTrafficFossil></useTrafficFossil>
     <useTrafficEV></useTrafficEV>
     <useTransport></useTransport>
+    <useTransportPassenger>1.5</useTransportPassenger>
+    <useTransportGods>0.9</useTransportGods>
+    <useReligion>1</useReligion>
+    <useCulture>6</useCulture>
+    <useCivilization>2</useCivilization>
     <useRoad></useRoad>
     <useParkingLot></useParkingLot>
     <useParkGreen></useParkGreen>
@@ -2026,7 +2112,7 @@ generelArmor:
     <taxPayMax></taxPayMax>
     <taxPayRageRate></taxPayRageRate>
     <wastePlastic></wastePlastic>
-    <wasteOrganic></wasteOrganic>
+    <wasteOrganic>4</wasteOrganic>
     <wasteGlass></wasteGlass>
     <wasteMetal></wasteMetal>
     <wasteWater></wasteWater>
@@ -2083,6 +2169,11 @@ generelArmor:
     <useTrafficFossil></useTrafficFossil>
     <useTrafficEV></useTrafficEV>
     <useTransport></useTransport>
+    <useTransportPassenger>1.7</useTransportPassenger>
+    <useTransportGods>0.7</useTransportGods>
+    <useReligion>1</useReligion>
+    <useCulture>11</useCulture>
+    <useCivilization>1</useCivilization>
     <useRoad></useRoad>
     <useParkingLot></useParkingLot>
     <useParkGreen></useParkGreen>
@@ -2140,7 +2231,7 @@ generelArmor:
     <taxPayMax></taxPayMax>
     <taxPayRageRate></taxPayRageRate>
     <wastePlastic></wastePlastic>
-    <wasteOrganic></wasteOrganic>
+    <wasteOrganic>5</wasteOrganic>
     <wasteGlass></wasteGlass>
     <wasteMetal></wasteMetal>
     <wasteWater></wasteWater>
@@ -2197,6 +2288,11 @@ generelArmor:
     <useTrafficFossil></useTrafficFossil>
     <useTrafficEV></useTrafficEV>
     <useTransport></useTransport>
+    <useTransportPassenger>0.4</useTransportPassenger>
+    <useTransportGods>0.01</useTransportGods>
+    <useReligion>0.8</useReligion>
+    <useCulture>0.65</useCulture>
+    <useCivilization>0.75</useCivilization>
     <useRoad></useRoad>
     <useParkingLot></useParkingLot>
     <useParkGreen></useParkGreen>
@@ -2254,7 +2350,7 @@ generelArmor:
     <taxPayMax></taxPayMax>
     <taxPayRageRate></taxPayRageRate>
     <wastePlastic></wastePlastic>
-    <wasteOrganic></wasteOrganic>
+    <wasteOrganic>1.3</wasteOrganic>
     <wasteGlass></wasteGlass>
     <wasteMetal></wasteMetal>
     <wasteWater></wasteWater>
@@ -2311,6 +2407,11 @@ generelArmor:
     <useTrafficFossil></useTrafficFossil>
     <useTrafficEV></useTrafficEV>
     <useTransport></useTransport>
+    <useTransportPassenger>0.5</useTransportPassenger>
+    <useTransportGods>0.04</useTransportGods>
+    <useReligion>0.4</useReligion>
+    <useCulture>0.25</useCulture>
+    <useCivilization>0.35</useCivilization>
     <useRoad></useRoad>
     <useParkingLot></useParkingLot>
     <useParkGreen></useParkGreen>
@@ -2368,7 +2469,7 @@ generelArmor:
     <taxPayMax></taxPayMax>
     <taxPayRageRate></taxPayRageRate>
     <wastePlastic></wastePlastic>
-    <wasteOrganic></wasteOrganic>
+    <wasteOrganic>1.5</wasteOrganic>
     <wasteGlass></wasteGlass>
     <wasteMetal></wasteMetal>
     <wasteWater></wasteWater>
@@ -2425,6 +2526,11 @@ generelArmor:
     <useTrafficFossil></useTrafficFossil>
     <useTrafficEV></useTrafficEV>
     <useTransport></useTransport>
+    <useTransportPassenger>0.8</useTransportPassenger>
+    <useTransportGods>0.1</useTransportGods>
+    <useReligion>0.7</useReligion>
+    <useCulture>0.95</useCulture>
+    <useCivilization>1.15</useCivilization>
     <useRoad></useRoad>
     <useParkingLot></useParkingLot>
     <useParkGreen></useParkGreen>
@@ -2482,7 +2588,7 @@ generelArmor:
     <taxPayMax></taxPayMax>
     <taxPayRageRate></taxPayRageRate>
     <wastePlastic></wastePlastic>
-    <wasteOrganic></wasteOrganic>
+    <wasteOrganic>0.85</wasteOrganic>
     <wasteGlass></wasteGlass>
     <wasteMetal></wasteMetal>
     <wasteWater></wasteWater>
@@ -2539,6 +2645,11 @@ generelArmor:
     <useTrafficFossil></useTrafficFossil>
     <useTrafficEV></useTrafficEV>
     <useTransport></useTransport>
+    <useTransportPassenger>0.7</useTransportPassenger>
+    <useTransportGods>0.3</useTransportGods>
+    <useReligion>0.3</useReligion>
+    <useCulture>0.45</useCulture>
+    <useCivilization>0.95</useCivilization>
     <useRoad></useRoad>
     <useParkingLot></useParkingLot>
     <useParkGreen></useParkGreen>
@@ -2596,7 +2707,7 @@ generelArmor:
     <taxPayMax></taxPayMax>
     <taxPayRageRate></taxPayRageRate>
     <wastePlastic></wastePlastic>
-    <wasteOrganic></wasteOrganic>
+    <wasteOrganic>0.95</wasteOrganic>
     <wasteGlass></wasteGlass>
     <wasteMetal></wasteMetal>
     <wasteWater></wasteWater>
@@ -2653,6 +2764,11 @@ generelArmor:
     <useTrafficFossil></useTrafficFossil>
     <useTrafficEV></useTrafficEV>
     <useTransport></useTransport>
+    <useTransportPassenger>0.02</useTransportPassenger>
+    <useTransportGods>0.01</useTransportGods>
+    <useReligion>0.8</useReligion>
+    <useCulture>0.01</useCulture>
+    <useCivilization>0.5</useCivilization>
     <useRoad></useRoad>
     <useParkingLot></useParkingLot>
     <useParkGreen></useParkGreen>
@@ -2710,7 +2826,7 @@ generelArmor:
     <taxPayMax></taxPayMax>
     <taxPayRageRate></taxPayRageRate>
     <wastePlastic></wastePlastic>
-    <wasteOrganic></wasteOrganic>
+    <wasteOrganic>3.5</wasteOrganic>
     <wasteGlass></wasteGlass>
     <wasteMetal></wasteMetal>
     <wasteWater></wasteWater>
@@ -2767,6 +2883,11 @@ generelArmor:
     <useTrafficFossil></useTrafficFossil>
     <useTrafficEV></useTrafficEV>
     <useTransport></useTransport>
+    <useTransportPassenger>0.03</useTransportPassenger>
+    <useTransportGods>0.03</useTransportGods>
+    <useReligion>0.4</useReligion>
+    <useCulture>0.01</useCulture>
+    <useCivilization>0.25</useCivilization>
     <useRoad></useRoad>
     <useParkingLot></useParkingLot>
     <useParkGreen></useParkGreen>
@@ -2824,7 +2945,7 @@ generelArmor:
     <taxPayMax></taxPayMax>
     <taxPayRageRate></taxPayRageRate>
     <wastePlastic></wastePlastic>
-    <wasteOrganic></wasteOrganic>
+    <wasteOrganic>4</wasteOrganic>
     <wasteGlass></wasteGlass>
     <wasteMetal></wasteMetal>
     <wasteWater></wasteWater>
@@ -2852,5 +2973,4 @@ generelArmor:
     <generelStrength></generelStrength>
     <generelArmor></generelArmor>
   </citizens>
-
 </citizensData>

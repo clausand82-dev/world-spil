@@ -1,0 +1,106 @@
+Change/update History (working/prototype versions)
+
+4.3
+- STAGE 1 pipeline clean up (see help system for more information on STAGE 1) 
+
+4.2
+- fixed research page where it did scroll effect more then once
+- fixed research page to only show higest lvl of research (so no more downgrade research)
+- fixed research time on research page to show correct time when buff changes research time
+- fixed messy citizens hover to a more clean one
+- sidebar has new and more informativ hover
+- more stage 2 building, addons and research added
+- tax system slightly implimented
+- crime lite introduced
+- now lang can be selected (current danish and english) - not all game text has been translated yet
+- stage popup added and fixed
+- local and global marketplace added
+- new extra stats system, where you can take choices, are implemented
+- buildingdetail page now have units tab and special tab working (same as units and camp management in main menu)
+- fixed URL cheat
+- use or change in resources or stats related system now instant update
+
+4.1
+- STAGE 2 and 3 system introduced
+- citizens system is introduced
+- citizens rebirth, death and growing is handled manual
+- health system is introduced
+- happiness system is introduced
+- popularity system is introduced
+- citymanagement system as housing, provision, medicin, water, heat, power, cloth, waste and health is unlocked
+- fixed error with storage not working as intended
+- education system coded - maybe for another stage
+- Introduced a more informativ hover to buildings, addons and research (located right lower corner)
+- Animal system has been rework and renamed to be a units system
+- Flowchart (research and overview) is now on one page - not done yet
+- Link to research now go to and mark the research
+- Helping system in work (only danish for know)
+
+4.0
+- moving all code to react code instead
+- code optimizing (long code split to component)
+- complete buff system (current only yield, cost and speed) and only support permanent buff - works frontend and backend
+- dashboard works
+- beginning simple research tech tree with React Flow
+- behind the scenes: no more dublicate of name and desc
+- animal on inventory list AND sidebar
+- more lang put in (still missing alot)
+- log system added
+- login and out works again
+- make new use works again
+- active productions can now be seen on production site
+- still missing active production on production sites
+- experimentel fold up/down boards and moveable and resizeable boards (not use yet, just tested)
+- 
+- MISSING:
+- yield have to have a cap (passive and active)
+- durability and repair functions
+- build more than one active production (or maybe let it's production scale up when time goes up???)
+- maybe a new user system, where you do some selection there have influenze on you yield and so on
+- is destroy an options (or shall there be a tag in xml to deside - aka a "canBeDemolished" false/true)
+- new user system, old user tjek system (tjeck if old user have correct needed info or else make new user chose)
+
+3.5:
+- active recipes added
+- animal can now be slaughtered to yield one time yield
+- animal no longer yield slaughter resources like rawmeat, hide and so on
+- animal you have any more of, won't show an own status
+- animal is now part of inventory tap and added to side bar
+- small fixes and tweaks
+- can't buy addons and start jobs and research in buildings you don't own
+- optimized some javascript code all around
+- fold-out is back on dashboard for passiv yield reosurces
+- splitting up files for easy code fixing
+- added a extra addon system (sub addons to addons, but in same system)
+
+3.4:
+- added build time for buildings (preparations for addons, research and production/recipes)<br>
+- visuel changes and additions for building list page and building detail pages <br>
+- added passive yields from buildings and addons
+- adding animal system
+- fixed errors
+- dashboard now have overview over build jobs and research 
+- building jobs and research can now be canceled from dashboard
+- dashboard have overview over all passive yields and where they come from
+- Animal system know works and produce yields
+
+3.3:
+- Added DB support for buy buildings
+- Added update system for resource use (aka auto update without refresh hole site)
+
+3.2:
+- Added demo addons system there render actual requested ressources and research
+
+3.1:
+- remove demo data and intergrate real data from DB 
+
+3.0:
+- New layout
+- Behind the scenes movement of code and files to be more orginized
+- third attempt and approved
+
+2.0:
+- second attempt - also abandoned
+
+1.0:
+- 1 attempt but abandoned

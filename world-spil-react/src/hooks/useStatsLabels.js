@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useT } from '../services/i18n.js';
 
-// BRUGES TIL HEADER HAPPINESS OG POPULARITY
+// BRUGES TIL HEADER HAPPINESS OG POPULARITY OG SIDEBAR
 export function useStatsLabels() { 
   const t = useT();
   return useMemo(() => ({
@@ -32,6 +32,12 @@ export function useStatsLabels() {
   taxHealth: t("ui.emoji.tax_health.h1") + ' ' + t("ui.label.tax_health.h1") || 'Skat (sundhed)',
   taxCitizens: t("ui.emoji.tax_citizens.h1") + ' ' + t("ui.label.tax_citizens.h1") || 'Skat (borgere)',
   police: t("ui.emoji.adults_police.h1") + ' ' + t("ui.citizens.adults_police.h1") || 'Police',
+
+  // NYE / TILFØJTE
+  religion: t("ui.emoji.religion.h1") + ' ' + t("ui.label.religion.h1") || 'Religion',
+  culture: t("ui.emoji.culture.h1") + ' ' + t("ui.label.culture.h1") || 'Culture',
+  civilization: t("ui.emoji.civilization.h1") + ' ' + t("ui.label.civilization.h1") || 'Civilization',
+  transport: t("ui.emoji.transport.h1") + ' ' + t("ui.label.transport.h1") || 'Transport',
 
   }), [t]);
 }
@@ -72,11 +78,10 @@ export function defaultLabelMap() {
 
 
     'healthCapacity': { label: t("ui.emoji.health.h1")+t("ui.label.health.h1"), desc: t("ui.capdesc.health.h1") },
-    'healthUnitUsage': { label: t("ui.emoji.health_unit.h1")+t("ui.label.health_unit.h1"), desc: t("ui.usagedesc.health_unit.h1") },
-    'healthUnitCapacity': { label: t("ui.emoji.health_unit.h1")+t("ui.label.health_unit.h1"), desc: t("ui.capdesc.health_unit.h1") },
+    /*'healthUnitUsage': { label: t("ui.emoji.health_unit.h1")+t("ui.label.health_unit.h1"), desc: t("ui.usagedesc.health_unit.h1") },
+    'healthUnitCapacity': { label: t("ui.emoji.health_unit.h1")+t("ui.label.health_unit.h1"), desc: t("ui.capdesc.health_unit.h1") },*/
     'healthDentistUsage': { label: t("ui.emoji.health_dentist.h1")+t("ui.label.health_dentist.h1"), desc: t("ui.usagedesc.health_dentist.h1") },
     'healthDentistCapacity': { label: t("ui.emoji.health_dentist.h1")+t("ui.label.health_dentist.h1"), desc: t("ui.capdesc.health_dentist.h1") },
-
 
     'adultsPoliceCapacity': { label: t("ui.emoji.adults_police.h1")+t("ui.citizens.adults_police.h1"), desc: t("ui.capdesc.adults_police.h1") },
     'adultsFireCapacity': { label: t("ui.emoji.adults_fire.h1")+t("ui.citizens.adults_fire.h1"), desc: t("ui.capdesc.adults_fire.h1") },
@@ -84,10 +89,6 @@ export function defaultLabelMap() {
     'adultsSoldierCapacity': { label: t("ui.emoji.adults_soldier.h1")+t("ui.citizens.adults_soldier.h1"), desc: t("ui.capdesc.adults_soldier.h1") },
     'kidsStudentCapacity': { label: t("ui.emoji.kids_student.h1")+t("ui.citizens.kids_student.h1"), desc: t("ui.capdesc.kids_student.h1") },
     'youngStudentCapacity': { label: t("ui.emoji.young_student.h1")+t("ui.citizens.young_student.h1"), desc: t("ui.capdesc.young_student.h1") },
-
-      
-    
-
 
     'productClothUsage': { label: t("ui.emoji.cloth.h1")+t("ui.label.product_cloth.h1"), desc: t("ui.usagedesc.product_cloth.h1") },
     'productClothCapacity': { label: t("ui.emoji.cloth.h1")+t("ui.label.product_cloth.h1"), desc: t("ui.capdesc.product_cloth.h1") },
@@ -98,12 +99,28 @@ export function defaultLabelMap() {
     'taxHealthUsage': { label: t("ui.emoji.tax_health.h1")+t("ui.label.tax_health.h1"), desc: t("ui.capdesc.tax_health.h1") },
     'taxHealthCapacity': { label: t("ui.emoji.tax_health.h1")+t("ui.label.tax_health.h1"), desc: t("ui.usagedesc.tax_health.h1") },
 
+    'transportUsage': { label: t("ui.emoji.transport.h1")+t("ui.label.transport.h1"), desc: t("ui.capdesc.transport.h1") },
+    'transportCapacity': { label: t("ui.emoji.transport.h1")+t("ui.label.transport.h1"), desc: t("ui.usagedesc.transport.h1") },
+    'transportGodsUsage': { label: t("ui.emoji.transport_gods.h1")+t("ui.label.transport_gods.h1"), desc: t("ui.capdesc.transport_gods.h1") },
+    'transportGodsCapacity': { label: t("ui.emoji.transport_gods.h1")+t("ui.label.transport_gods.h1"), desc: t("ui.usagedesc.transport_gods.h1") },
+    'transportPassengerCapacity': { label: t("ui.emoji.transport_passenger.h1")+t("ui.label.transport_passenger.h1"), desc: t("ui.capdesc.transport_passenger.h1") },
+    'transportPassengerUsage': { label: t("ui.emoji.transport_passenger.h1")+t("ui.label.transport_passenger.h1"), desc: t("ui.usagedesc.transport_passenger.h1") },
+    'socialCapacity': { label: t("ui.emoji.social.h1")+t("ui.label.social.h1"), desc: t("ui.capdesc.social.h1") },
+    'socialUsage': { label: t("ui.emoji.social.h1")+t("ui.label.social.h1"), desc: t("ui.usagedesc.social.h1") },
+    'cultureCapacity': { label: t("ui.emoji.culture.h1")+t("ui.label.culture.h1"), desc: t("ui.capdesc.culture.h1") },
+    'cultureUsage': { label: t("ui.emoji.culture.h1")+t("ui.label.culture.h1"), desc: t("ui.usagedesc.culture.h1") },
+    'religionCapacity': { label: t("ui.emoji.religion.h1")+t("ui.label.religion.h1"), desc: t("ui.capdesc.religion.h1") },  
+    'religionUsage': { label: t("ui.emoji.religion.h1")+t("ui.label.religion.h1"), desc: t("ui.usagedesc.religion.h1") },
+    'civilizationCapacity': { label: t("ui.emoji.civilization.h1")+t("ui.label.civilization.h1"), desc: t("ui.capdesc.civilization.h1") },  
+    'civilizationUsage': { label: 't("ui.emoji.civilization.h1")+t("ui.label.civilization.h1")', desc: t("ui.usagedesc.civilization.h1") },
+
 
     // ... tilføj flere efter behov
   };
 
   // alias: sørg for gamle/alternate nøgler peger på samme entry
   map.provision_cap = map.provisionCapacity;
+  map.housing = map.housingCapacity;
   // hvis du vil aliasere flere varianter, tilføj dem her:
   // map.provision = map.provisionCapacity;
 

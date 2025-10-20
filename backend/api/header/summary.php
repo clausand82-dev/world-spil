@@ -180,8 +180,8 @@ try {
     'useHousing','useProvision','useWater',
     'useCloth','useMedicin',
     'deathHealthExpose','deathHealthWeight','deathHealthBaseline',
-    'birthRate','movingIn','movingOut','usePolice','useSocial',
-
+    'birthRate','movingIn','movingOut','usePolice','useSocial', 'useCulture', 'useCivilization', 'useReligion',
+   
     // Heat/Power sub uses
     'useHeat','useHeatFossil','useHeatGreen','useHeatNuclear',
     'usePower','usePowerFossil','usePowerGreen','usePowerNuclear',
@@ -194,6 +194,9 @@ try {
 
     // Waste
     'useWaste','useWasteOrganic','useWasteOther',
+
+    // Transport
+    'useTransport','useTransportPassenger','useTransportGods',
   ];
   $usages = [];
   foreach ($USAGE_FIELDS as $field) {
@@ -368,6 +371,9 @@ if (!empty($summary['capChoice']) && is_array($summary['capChoice'])) {
   $usePowerTop = (float)($usages['usePower']['total'] ?? 0);
   $useHealthTop  = (float)($usages['useHealth']['total']  ?? 0);
   $healthDen  = (float)($usages['useHealthDentist']['total'] ?? 0);
+  $transportT  = (float)($usages['useTransport']['total'] ?? 0);
+  $transportP = (float)($usages['useTransportPassenger']['total'] ?? 0);
+  $transportG = (float)($usages['useTransportGods']['total'] ?? 0);
 
   $wasteOrg = (float)($usages['wasteOrganic']['total'] ?? 0);
   $wasteOth = (float)($usages['wasteOther']['total'] ?? 0);  
@@ -382,6 +388,7 @@ if (!empty($summary['capChoice']) && is_array($summary['capChoice'])) {
   $usages['usePower']['total']   = $powerF + $powerG + $powerN + $usePowerTop;
   $usages['useHealth']['total']  = $healthDen + $useHealthTop;
   $usages['useTax']['total']     = $taxHealth + $taxOther + $taxCitizens;
+  $usages['useTransport']['total'] = $transportP + $transportG + $transportT;
 
     // Aggreger totals for heat/power/health
   $capacities['heatCapacity']  = (float)(
@@ -409,6 +416,11 @@ if (!empty($summary['capChoice']) && is_array($summary['capChoice'])) {
     ($capacities['wasteOrganicCapacity']  ?? 0) +
     ($capacities['wasteOtherCapacity']  ?? 0) +
     ($capacities['wasteCapacity']         ?? 0)
+  );
+  $capacities['transportCapacity'] = (float)(
+    ($capacities['transportPassengerCapacity']  ?? 0) +
+    ($capacities['transportGodsCapacity']  ?? 0) +
+    ($capacities['transportCapacity']         ?? 0)
   );
 
 

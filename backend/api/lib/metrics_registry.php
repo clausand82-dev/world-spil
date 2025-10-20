@@ -389,6 +389,114 @@ function metrics_registry(): array {
       ],
     ],
 
+      'religion' => [
+      'label' => 'Religion',
+      'usageField' => 'useReligion',
+      'capacityField' => 'religionCapacity',
+      'capacityStatKeys' => ['religionCapacity'],
+      'usageStatKeys' => ['religionUsage'],
+      'sources' => ['bld'=>true,'add'=>true,'rsd'=>true,'ani'=>true,'res'=>true],
+      'stage' => ['unlock_at'=>2,'visible_at'=>2],
+      'happiness' => ['enabled'=>false, 'weight_key'=>'religionHappinessWeight'], // eksempel
+      'popularity'=> ['enabled'=>false],
+      'subs' => [],
+      'demands' => [],
+      'flows' => [
+        // Eksempel på borger-flow du kan bruge senere:
+        // ['citizenField'=>'wastePlastic', 'unit'=>'per_hour'],
+      ],
+    ],
+
+      'culture' => [
+      'label' => 'Culture',
+      'usageField' => 'useCulture',
+      'capacityField' => 'cultureCapacity',
+      'capacityStatKeys' => ['cultureCapacity'],
+      'usageStatKeys' => ['cultureUsage'],
+      'sources' => ['bld'=>true,'add'=>true,'rsd'=>true,'ani'=>true,'res'=>true],
+      'stage' => ['unlock_at'=>2,'visible_at'=>2],
+      'happiness' => ['enabled'=>false, 'weight_key'=>'cultureHappinessWeight'], // eksempel
+      'popularity'=> ['enabled'=>false],
+      'subs' => [],
+      'demands' => [],
+      'flows' => [
+        // Eksempel på borger-flow du kan bruge senere:
+        // ['citizenField'=>'wastePlastic', 'unit'=>'per_hour'],
+      ],
+    ],
+
+      'civilization' => [
+      'label' => 'Civilization',
+      'usageField' => 'useCivilization',
+      'capacityField' => 'civilizationCapacity',
+      'capacityStatKeys' => ['civilizationCapacity'],
+      'usageStatKeys' => ['civilizationUsage'],
+      'sources' => ['bld'=>true,'add'=>true,'rsd'=>true,'ani'=>true,'res'=>true],
+      'stage' => ['unlock_at'=>2,'visible_at'=>2],
+      'happiness' => ['enabled'=>false, 'weight_key'=>'civilizationHappinessWeight'], // eksempel
+      'popularity'=> ['enabled'=>false],
+      'subs' => [],
+      'demands' => [],
+      'flows' => [
+        // Eksempel på borger-flow du kan bruge senere:
+        // ['citizenField'=>'wastePlastic', 'unit'=>'per_hour'],
+      ],
+    ],
+
+      'transport' => [
+      'label' => 'Transport',
+      'usageField' => 'useTransport',
+      'capacityField' => 'transportCapacity',
+      'capacityStatKeys' => ['transportCapacity'],
+      'usageStatKeys' => ['transportUsage'],
+      'sources' => ['bld'=>true,'add'=>true,'rsd'=>true,'ani'=>true,'res'=>true],
+      'stage' => ['unlock_at'=>2,'visible_at'=>2],
+      'happiness' => ['enabled'=>false, 'weight_key'=>'transportHappinessWeight'], // eksempel
+      'popularity'=> ['enabled'=>false],
+      'subs' => ['transportPassenger','transportGods'],
+      'demands' => [],
+      'flows' => [
+        // Eksempel på borger-flow du kan bruge senere:
+        // ['citizenField'=>'wastePlastic', 'unit'=>'per_hour'],
+      ],
+    ],
+
+     'transportPassenger' => [
+      'label' => 'Transport (Passenger)',
+      'usageField' => 'useTransportPassenger',
+      'capacityField' => 'transportPassengerCapacity',
+      'capacityStatKeys' => ['transportPassengerCapacity'],
+      'usageStatKeys' => ['transportPassengerUsage'],
+      'sources' => ['bld'=>true,'add'=>true,'rsd'=>true,'ani'=>true,'res'=>true],
+      'stage' => ['unlock_at'=>2,'visible_at'=>2],
+      'happiness' => ['enabled'=>false, 'weight_key'=>'transportPassengerHappinessWeight'], // eksempel
+      'popularity'=> ['enabled'=>false],
+      'parent' => ['transport'],
+      'demands' => [],
+      'flows' => [
+        // Eksempel på borger-flow du kan bruge senere:
+        // ['citizenField'=>'wastePlastic', 'unit'=>'per_hour'],
+      ],
+    ],
+
+      'transportGods' => [
+      'label' => 'Transport (Gods)',
+      'usageField' => 'useTransportGods',
+      'capacityField' => 'transportGodsCapacity',
+      'capacityStatKeys' => ['transportGodsCapacity'],
+      'usageStatKeys' => ['transportGodsUsage'],
+      'sources' => ['bld'=>true,'add'=>true,'rsd'=>true,'ani'=>true,'res'=>true],
+      'stage' => ['unlock_at'=>2,'visible_at'=>2],
+      'happiness' => ['enabled'=>true, 'weight_key'=>'transportGodsHappinessWeight'], // eksempel
+      'popularity'=> ['enabled'=>false],
+      'parent' => ['transport'],
+      'demands' => [],
+      'flows' => [
+        // Eksempel på borger-flow du kan bruge senere:
+        // ['citizenField'=>'wastePlastic', 'unit'=>'per_hour'],
+      ],
+    ],
+
 
 
       'police' => [
@@ -398,7 +506,7 @@ function metrics_registry(): array {
       'capacityStatKeys' => ['policeCapacity'],
       'usageStatKeys' => ['policeUsage'],
       'sources' => ['bld'=>true,'add'=>true,'rsd'=>true,'ani'=>true,'res'=>true],
-      'stage' => ['unlock_at'=>2,'visible_at'=>2],
+      'stage' => ['unlock_at'=>3,'visible_at'=>3],
       'happiness' => ['enabled'=>false, 'weight_key'=>'policeHappinessWeight'], // eksempel
       'popularity'=> ['enabled'=>false],
       'subs' => [],
