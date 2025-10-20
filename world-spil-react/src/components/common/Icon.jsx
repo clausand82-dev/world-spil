@@ -6,6 +6,8 @@ function isFileLike(v) {
   return /\.(png|jpe?g|gif|svg|webp)$/i.test(s) || /^https?:\/\//i.test(s) || s.startsWith('/');
 }
 
+// <Icon iconUrl={`/assets/icons/NAVN.png`} size="2em" /> kan bruges til at sætte ikoner ind (kræver Icon.jsx er importeret)
+
 /**
  * value: enten emoji-tegn eller filnavn/URL (fx "straw.png" eller "/img/straw.png")
  * iconUrl: eksplicit URL hvis allerede normaliseret (foretrukket)

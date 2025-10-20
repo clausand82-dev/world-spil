@@ -61,6 +61,9 @@
   <entry key="ui.headers.addons.h1">Bygnings Addons</entry>
   <entry key="ui.headers.research.h1">Relateret Forskning</entry>
 
+  <entry key="ui.labels.resources">Ressourcekrav:</entry>
+  <entry key="ui.labels.requirements">Øvrige krav:</entry>
+
 
   
 
