@@ -6,6 +6,10 @@ import { requirementInfo, /*formatCost,*/ getCostTokens } from '../../../service
 import Icon from '../../common/Icon.jsx';
 import * as H from '../../../services/helpers.js';
 import { useT } from "../../../services/i18n.js";
+import DockHoverCard from '../../../components/ui/DockHoverCard.jsx';
+import StatsEffectsTooltip from '../../ui/StatsEffectsTooltip.jsx';
+import RequirementPanel from '../../../components/requirements/RequirementPanel.jsx';
+import { useGameData } from '../../../context/GameDataContext.jsx';
 
 function computeYieldSpace(def, defs) {
   // Summer samlet pladsbehov pr. type ud fra recipe-yield
@@ -50,9 +54,12 @@ function renderTokensAsNodes(tokens) {
   ));
 }
 
-function RecipeRow({ entry, defs, state, baseOwned, requirementCaches }) {
+function RecipeRow({ entry, defs: passedDefs, state, baseOwned, requirementCaches }) {
   const { def, fullId, stageReq, stageOk } = entry;
   const t = useT();
+  const { data } = useGameData();
+  const defs = passedDefs || data?.defs || {};
+  const translations = data?.i18n?.current ?? {};
 
   const requirement = requirementInfo(
     {
@@ -101,51 +108,69 @@ function RecipeRow({ entry, defs, state, baseOwned, requirementCaches }) {
     ? `Mangler plads: Solid +${needSolid} (tilgængelig ${availSolid}), Liquid +${needLiquid} (tilgængelig ${availLiquid})`
     : undefined;
 
-  return (
-    <div className="item" data-recipe-row={fullId}>
-      <div className="icon">{t("ui.emoji.research.h1")}</div>
-      <div className="grow">
-        <div className="title">
-          {def.name || fullId}
-          {!stageOk && (
-            <span className="badge stage-locked price-bad" title={`${t("ui.text.demandingstage.h1")} ${stageReq}`} style={{ marginLeft: 8 }}>
-              {t("ui.text.stagelocked.h1")}
-            </span>
-          )}
-        </div>
-        {def.desc ? <div className="sub">🔍 {def.desc}</div> : null}
-        <div className="sub">
-          {t("ui.emoji.recipe.h1")} {t("ui.text.recipe.h1")}:&nbsp;
-          {renderTokensAsNodes(inputTokens) || <em>-</em>}
-          &nbsp;·&nbsp;
-          {renderTokensAsNodes(outputTokens) || <em>-</em>}
-        </div>
-        <RequirementSummary
-          price={def.cost || {}}
-          reqString={requirement.reqString}
-          duration={durationValue}
-          durationBase={durationBase}
-          footprint={0}
-          footprintOk
-        />
-      </div>
-      <div className="right">
-        {!baseOwned ? (
-          <button className="btn" disabled>{t("ui.btn.demandbuilding.h1")}</button>
-        ) : !spaceOk ? (
-          <>
-            <button className="btn" disabled title={spaceTitle}>Mangler plads</button>
-            <BuildProgress bldId={fullId} />
-          </>
-        ) : (
-          <>
-            <ActionButton item={actionItem} allOk={allOk} />
-            <BuildProgress bldId={fullId} />
-          </>
-        )}
-      </div>
+  // Hover content: Stats + RequirementPanel
+  const hoverContent = (
+    <div style={{ minWidth: 300 }}>
+      <StatsEffectsTooltip def={def} translations={translations} />
+      <div style={{ height: 8 }} />
+      <RequirementPanel def={def} defs={defs} state={state} requirementCaches={requirementCaches} />
     </div>
   );
+
+  const row = (
+
+      <div className="item" data-recipe-row={fullId}>
+        <div className="icon">{t("ui.emoji.research.h1")}</div>
+        <div className="grow">
+          <div className="title">
+            {def.name || fullId}
+            {!stageOk && (
+              <span className="badge stage-locked price-bad" title={`${t("ui.text.demandingstage.h1")} ${stageReq}`} style={{ marginLeft: 8 }}>
+                {t("ui.text.stagelocked.h1")}
+              </span>
+            )}
+          </div>
+          {def.desc ? <div className="sub">🔍 {def.desc}</div> : null}
+          <div className="sub">
+            {t("ui.emoji.recipe.h1")} {t("ui.text.recipe.h1")}:&nbsp;
+            {renderTokensAsNodes(inputTokens) || <em>-</em>}
+            &nbsp;·&nbsp;
+            {renderTokensAsNodes(outputTokens) || <em>-</em>}
+          </div>
+          <RequirementSummary
+            price={def.cost || {}}
+            reqString={requirement.reqString}
+            duration={durationValue}
+            durationBase={durationBase}
+            footprint={0}
+            footprintOk
+          />
+        </div>
+        <div className="right">
+          {!baseOwned ? (
+            <button className="btn" disabled>{t("ui.btn.demandbuilding.h1")}</button>
+          ) : !spaceOk ? (
+            <>
+              <button className="btn" disabled title={spaceTitle}>Mangler plads</button>
+              <BuildProgress bldId={fullId} />
+            </>
+          ) : (
+            <>
+              <ActionButton item={actionItem} allOk={allOk} />
+              <BuildProgress bldId={fullId} />
+            </>
+          )}
+        </div>
+      </div>
+
+  );
+
+   return (
+      <DockHoverCard content={hoverContent} style={{ display: 'block', width: '100%' }}>
+        {row}
+      </DockHoverCard>
+    );
+
 }
 
 export default RecipeRow;

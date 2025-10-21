@@ -7,11 +7,19 @@ import DockHoverCard from '../../../components/ui/DockHoverCard.jsx';
 import StatsEffectsTooltip from '../../ui/StatsEffectsTooltip.jsx';
 import { useT } from "../../../services/i18n.js";
 import { useGameData } from '../../../context/GameDataContext.jsx';
+import RequirementPanel from '../../../components/requirements/RequirementPanel.jsx';
 
+/**
+ * AddonRow
+ * - bruger entry (fra parent) som før
+ * - henter defs og translations via useGameData
+ * - viser StatsEffectsTooltip + RequirementPanel i hover
+ */
 function AddonRow({ entry, state, baseOwned, requirementCaches }) {
-  const { def, fullId, stageReq, stageOk, ownedLevel, displayLevel } = entry;
-const t = useT();
+  const { def, fullId, stageReq, stageOk, ownedLevel, displayLevel, isMax } = entry;
+  const t = useT();
   const { data } = useGameData();
+  const defs = data?.defs || {};
   const translations = data?.i18n?.current ?? {};
 
   const requirement = requirementInfo(
@@ -46,7 +54,18 @@ const t = useT();
   const hasBuff = durationValue != null && durationBase != null && Math.round(durationValue) !== Math.round(durationBase);
   const durationText = hasBuff ? null : (def.time_str || def.duration_text || null);
 
-  const hoverContent = <StatsEffectsTooltip def={def} translations={translations} />;
+  // Hover: StatsEffectsTooltip + RequirementPanel (eller "max level" tekst hvis isMax flag er sat)
+  const hoverContent = (
+    <div style={{ minWidth: 300 }}>
+      <StatsEffectsTooltip def={def} translations={translations} />
+      <div style={{ height: 8 }} />
+      {isMax ? (
+        <div style={{ padding: 8, fontWeight: 600 }}>{t("ui.text.maxlevel.h1") || 'Addonet kan ikke opgraderes mere'}</div>
+      ) : (
+        <RequirementPanel def={def} defs={defs} state={state} requirementCaches={requirementCaches} />
+      )}
+    </div>
+  );
 
   const row =  (
     <div className="item" data-addon-row={fullId}>
@@ -84,13 +103,12 @@ const t = useT();
     </div>
   );
 
-  // Wrapper: HoverCard skal fylde hele rækken, så vi sætter style display:block,width:100%
+  // Wrapper: HoverCard skal fylde hele rækken
   return (
-    <DockHoverCard   content={hoverContent} style={{ display: 'block', width: '100%' }}>
+    <DockHoverCard content={hoverContent} style={{ display: 'block', width: '100%' }}>
       {row}
     </DockHoverCard >
   );
-
 }
 
 export default AddonRow;

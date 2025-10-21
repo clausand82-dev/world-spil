@@ -344,6 +344,8 @@
   <entry key="bld.storage.l2.desc">Øger lager plads yderligere</entry>
   <entry key="bld.health.l1.name">Medicin telt</entry>
   <entry key="bld.health.l1.desc">Et medicin telt, hvor der kan udøves basal første hjælp.</entry>
+  <entry key="bld.monument.l1.name">Monument L1</entry>
+  <entry key="bld.monument.l1.desc">Et simpelt monument til at fejre sejre</entry>
 
 
 <!--ADDONS BASECAMP-->  
@@ -792,6 +794,58 @@
 
   <entry key="res.bonemeal.name">Benmel</entry>
   <entry key="res.bonemeal.desc">Kan laves af knogler</entry>
+
+  <entry key="res.seed.name">Frø</entry>
+  <entry key="res.seed.desc">Kan bruges til at plante afgrøder</entry>
+  <entry key="res.straw.name">Halmskær</entry>
+  <entry key="res.straw.desc">Kan bruges som strøelse til dyr</entry>
+
+  <entry key="res.bronzebar.name">Bronzebar</entry>
+  <entry key="res.bronzebar.desc">Kan bruges til at lave værktøj</entry>
+  <entry key="res.log.name">Træstamme</entry>
+  <entry key="res.log.desc">Kan bruges til at lave brænde</entry>
+  <entry key="res.plank.name">Planke</entry>
+  <entry key="res.plank.desc">Kan bruges til at lave møbler</entry>
+  <entry key="res.stonebricks.name">Stenblokke</entry>
+  <entry key="res.stonebricks.desc">Kan bruges til at lave bygninger</entry>
+  <entry key="res.carrot.name">Gulerod</entry>
+  <entry key="res.carrot.desc">Kan bruges til at lave mad</entry>
+  <entry key="res.sunflower.name">Solsikke</entry>
+  <entry key="res.sunflower.desc">Kan bruges til at lave olie</entry>
+  <entry key="res.herbs.name">Urter</entry>
+  <entry key="res.herbs.desc">Kan bruges til medicin</entry>
+  <entry key="res.iron.name">Jern</entry>
+  <entry key="res.iron.desc">Kan bruges til at lave værktøj</entry>
+
+  <entry key="res.clay.name">Ler</entry>
+  <entry key="res.clay.desc">Kan bruges til at lave keramik</entry>
+  <entry key="res.turtle.name">Skildpadde</entry>
+  <entry key="res.turtle.desc">Kan bruges til at lave skildpadde-suppe</entry>
+  <entry key="res.medicin.name">Medicin</entry>
+  <entry key="res.medicin.desc">Kan bruges til at helbrede enheder</entry>
+  <entry key="res.crystal.name">Krystal</entry>
+  <entry key="res.crystal.desc">Kan bruges til at lave magiske genstande</entry>
+  <entry key="res.oat.name">Havre</entry>
+  <entry key="res.oat.desc">Kan bruges til at lave havregryn</entry>
+  <entry key="res.herb.name">Urter</entry>
+  <entry key="res.herb.desc">Kan bruges til at lave medicin</entry>
+  <entry key="res.oatmeal.name">Havregryn</entry>
+  <entry key="res.oatmeal.desc">Kan laves af havre</entry>
+  <entry key="res.copperore.name">Kobbermalm</entry>
+  <entry key="res.copperore.desc">Kan bruges til at lave kobber</entry>
+  <entry key="res.sand.name">Sand</entry>
+  <entry key="res.sand.desc">Kan bruges til at lave glas</entry>
+  <entry key="res.cookedmeat.name">Kogt kød</entry>
+  <entry key="res.cookedmeat.desc">Kan laves af rå kød</entry>
+  <entry key="res.cookedfish.name">Kogt fisk</entry>
+  <entry key="res.cookedfish.desc">Kan laves af rå fisk</entry>
+  <entry key="res.bronze.name">Bronze</entry>
+  <entry key="res.bronze.desc">Kan bruges til at lave værktøj</entry>
+  <entry key="res.turtleshell.name">Skildpadde-skal</entry>
+  <entry key="res.turtleshell.desc">Kan bruges til at lave beskyttelse</entry>
+  <entry key="res.turtleoil.name">Skildpadde-olie</entry>
+  <entry key="res.turtleoil.desc">Kan bruges til at lave medicin</entry>
+
 
 <!--ANIMALS-->
   <entry key="ani.cow.name">Kalv</entry>

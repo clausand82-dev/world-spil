@@ -8,7 +8,7 @@ import { fmt } from '../services/helpers.js';
 export default function ItemRow({ icon, title, subtitle, value, children }) {
     return (
         <div className="item">
-            <div className="icon">{icon}</div>
+            <div className="icon" style={{ fontSize: '2em' }}>{icon}</div>
             {/* Hvis der er "children", render dem. Ellers, brug standard-layout. */}
             {children ? (
                 children
@@ -18,7 +18,7 @@ export default function ItemRow({ icon, title, subtitle, value, children }) {
                         <div className="title">{title}</div>
                         {subtitle && <div className="sub">{subtitle}</div>}
                     </div>
-                    <div className="right">
+                    <div className="right" >
                         <strong>{value}</strong>
                     </div>
                 </>

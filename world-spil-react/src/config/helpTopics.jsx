@@ -41,8 +41,9 @@ export const HELP_TOPICS = [
           const rows = ids.map((id) => {
             const r = res[id] || {};
             const name = r.name || id;
-            const emojiHtml = emojiHtmlForId(`res.${id}`, defs) || '';
-            return `<li>${emojiHtml ? emojiHtml + ' ' : ''}${name} <small class="muted">(${id})</small></li>`;
+            const desc = r.desc || id;
+            const emojiHtml = emojiHtmlForId(`res.${id}`, defs, { size: '2em' }) || '';
+            return `<li>${emojiHtml ? emojiHtml + ' ' : ''}${name} ${desc ? ' - ' + desc : ''}</li>`;
           });
           return `<h2>Ressourcer</h2>
           <p>Ressourcer bruges i spillet til at købe bygninger, addons og research med. Derudover bruges de i recipes (produktion), hvor en eller flere ressourcer bliver til en eller flere andre ressourcer (f.eks. 1xtræ --> 10 brænde).</p>

@@ -1,6 +1,6 @@
 import React from 'react';
 import ItemRow from './ItemRow.jsx';
-import ResourceHoverContent from './resources/ResourceHoverContent.jsx';
+import ResourceHoverContent, { SimpleResourceSummary } from './resources/ResourceHoverContent.jsx';
 import StatsEffectsTooltip from './ui/StatsEffectsTooltip.jsx';
 import DockHoverCard from './ui/DockHoverCard.jsx';
 import { useGameData } from '../context/GameDataContext.jsx';
@@ -73,16 +73,11 @@ export default function ResourceList({ items, defs, format = 'detailed', columns
         });
       } catch (e) { hoverText = ''; }
 
+      // reuse the simple summary component here so simple + detailed are consistent
       const hoverContent = (
         <div style={{ maxWidth: 420, maxHeight: 320, overflowY: 'auto', whiteSpace: 'pre-wrap' }}>
-          <div style={{ fontWeight: 700, marginBottom: 6 }}>
-            {def.emoji ? <span style={{ marginRight: 6, display: 'inline-flex', alignItems: 'center' }}>{def.emoji}</span> : null}
-{def.name || id}
-          </div>
-          <div style={{ marginBottom: 8, opacity: 0.85 }}>
-            Mængde: {fmt(amount)}{def.unit ? ` ${def.unit}` : ''} • UnitSpace: {Number(def.unitSpace ?? 0)}
-          </div>
-          {hoverText ? <div>{hoverText}</div> : <div style={{ opacity: 0.7 }}>Ingen passive kilder fundet.</div>}
+          <SimpleResourceSummary resourceDef={def} amount={amount} totalSpace={(def.unitSpace || 0) * amount} />
+          {hoverText ? <div style={{ marginTop: 6 }}>{hoverText}</div> : <div style={{ marginTop: 6, opacity: 0.7 }}>Ingen passive kilder fundet.</div>}
         </div>
       );
       
@@ -92,23 +87,19 @@ const emojiTextForPayload = def.emojiText ?? (typeof def.emoji === 'string' ? de
   <DockHoverCard key={id} content={hoverContent} style={{ display: 'block', width: '100%' }}>
     <div
       className="row"
-      role="button"
-      tabIndex={0}
-      onClick={(e) => handleClickWithRect(e, fullResId, def.name, emojiTextForPayload)}
-      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleClickWithRect(e, fullResId, def.name, emojiTextForPayload); } }}
       style={{
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
         gap: 8,
         padding: '6px 8px',
-        cursor: 'pointer',
         minWidth: 0,
         borderRadius: 8,
+        cursor: 'default' // ikke klikbar i simple view
       }}
     >
       <div className="left" style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, flex: 1 }}>
-        <span>{def.emoji}</span>
+        <span style={{ fontSize: '1.2em', lineHeight: 1 }}>{def.emoji}</span>
         <span title={def.name} style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{def.name}</span>
       </div>
       <div className="right" style={{ fontWeight: 600, marginLeft: 8, flexShrink: 0, fontVariantNumeric: 'tabular-nums' }}>

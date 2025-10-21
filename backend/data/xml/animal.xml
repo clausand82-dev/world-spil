@@ -12,7 +12,7 @@
         <res id="res.fertilizer" amount="1"/>
         <res id="res.cowmilk" amount="1"/>
     </yield>
-    <emoji>🐄</emoji>
+    <emoji>cow.png</emoji>
   </animal>
 
   <animal id="ani.pig" family="farm" stage="1">
@@ -24,7 +24,7 @@
     <yield period="1h">
         <res id="res.fertilizer" amount="4"/>
     </yield>
-    <emoji>🐖</emoji>   
+    <emoji>pig.png</emoji>   
   </animal>
 
   <animal id="ani.goat" family="farm" stage="1">
@@ -37,7 +37,7 @@
         <res id="res.goatmilk" amount="2"/>
         <res id="res.fertilizer" amount="1"/>
     </yield>
-    <emoji>🐐</emoji>
+    <emoji>goat.png</emoji>
   </animal>
 
   <animal id="ani.sheep" family="farm" stage="1">
@@ -50,7 +50,7 @@
         <res id="res.wool" amount="2"/>
         <res id="res.fertilizer" amount="1"/>
     </yield>
-    <emoji>🐏</emoji>
+    <emoji>sheep.png</emoji>
   </animal> 
     
   <animal id="ani.chicken" family="farm" stage="1">
@@ -64,7 +64,7 @@
         <res id="res.feather" amount="1"/>
         <res id="res.fertilizer" amount="1"/>
     </yield>
-    <emoji>🐔</emoji>
+    <emoji>chicken.png</emoji>
   </animal>
 
 <!-- BASIS SKOV DYR -->  
@@ -77,7 +77,7 @@
     </cost>
     <yield period="1h">
     </yield>
-    <emoji>🦌</emoji>
+    <emoji>deer.png</emoji>
   </animal>
 
   <animal id="ani.duck" family="lake" stage="1">
@@ -90,7 +90,29 @@
         <res id="res.egg" amount="1"/>
         <res id="res.feather" amount="1"/>
     </yield>
-    <emoji>🦆</emoji>
+    <emoji>duck.png</emoji>
+  </animal>
+
+    <animal id="ani.turtle" family="none" stage="2">
+   <stats>animal_cap=-1;provisionCapacity=0.2;waterUsage=0.4</stats>
+    <cost>
+    </cost>
+    <yield period="1h">
+    </yield>
+    <emoji>turtle.png</emoji>
+  </animal>
+
+  <animal id="ani.horse" family="farm" stage="2">
+   <stats>animal_cap=-12;waterUsage=0.6;transportPassengerCapacity=2;transportGoodsCapacity=1</stats>
+    <cost>
+      <res id="res.money" amount="200"/>
+      <res id="res.oat" amount="2"/>
+      <res id="res.carrot" amount="1"/>
+    </cost>
+    <yield period="1h">
+      <res id="res.fertilizer" amount="1"/>
+    </yield>
+    <emoji>horse.png</emoji>
   </animal>
 
 <!--
@@ -98,6 +120,8 @@ TO DO DYR SENERE
 
 RÆV: pels
 HVAL: kød 
+
+
 
 -->
 

@@ -26,10 +26,37 @@ function buildChartData(items, resDefs, totalCapacity) {
       const pctRaw = totalCapacity > 0 ? (usedSpace / totalCapacity) * 100 : 0;
       const pct = Number.isFinite(pctRaw) ? Math.max(0, pctRaw) : 0;
 
+      // Normalize emoji: support unicode emoji or image URL / file name
+      const rawEmoji = def.emoji ?? def.iconUrl ?? '';
+      let emojiChar = '';
+      let emojiUrl = '';
+      if (rawEmoji) {
+        if (typeof rawEmoji === 'string') {
+          // file name with image extension -> treat as url
+          if (/\.(png|jpg|jpeg|svg|webp)$/i.test(rawEmoji)) {
+            // if already absolute/relative path -> use as-is, otherwise prefix to public assets folder
+            if (rawEmoji.startsWith('/') || rawEmoji.startsWith('http')) {
+              emojiUrl = rawEmoji;
+            } else {
+              // adjust this path to where you store icons (public folder)
+              emojiUrl = `/assets/icons/${rawEmoji}`;
+            }
+          } else {
+            // treat as a unicode emoji/string
+            emojiChar = rawEmoji;
+          }
+        } else if (typeof rawEmoji === 'object') {
+          // support { iconUrl: '...' } or similar
+          const maybe = rawEmoji.iconUrl ?? rawEmoji.url ?? '';
+          if (maybe) emojiUrl = (maybe.startsWith('/') || maybe.startsWith('http')) ? maybe : `/assets/icons/${maybe}`;
+        }
+      }
+
       return {
         id,
         name: def.name || id,
-        emoji: def.emoji || '',
+        emojiChar,
+        emojiUrl,
         amount,
         unit: def.unit || '',
         unitSpace,
@@ -58,9 +85,13 @@ function CapacityTooltip({ active, payload }) {
 
   return (
     <div style={tooltipStyle}>
-      <div style={{ fontWeight: 700, marginBottom: 4 }}>
-        {entry.emoji ? `${entry.emoji} ` : ''}
-        {entry.name}
+      <div style={{ fontWeight: 700, marginBottom: 4, display: 'flex', alignItems: 'center', gap: 8 }}>
+        {entry.emojiUrl ? (
+          <img src={entry.emojiUrl} alt="" style={{ width: 20, height: 20, objectFit: 'contain' }} />
+        ) : entry.emojiChar ? (
+          <span style={{ fontSize: 18 }}>{entry.emojiChar}</span>
+        ) : null}
+        <span>{entry.name}</span>
       </div>
       <div style={{ fontSize: 12, display: 'grid', gap: 2 }}>
         <span>Kapacitet: {fmt(entry.usedSpace)} ({entry.pct.toFixed(1)}%)</span>
@@ -145,8 +176,8 @@ export default function ResourceCapacityModal({
                   dataKey="name"
                   width={180}
                   tickFormatter={(name, index) => {
-                    const emoji = data[index]?.emoji || '';
-                    return `${emoji ? `${emoji} ` : ''}${name}`;
+                    const emojiChar = data[index]?.emojiChar || '';
+                    return `${emojiChar ? `${emojiChar} ` : ''}${name}`;
                   }}
                   stroke="#94a3b8"
                   style={{ fontSize: 12 }}

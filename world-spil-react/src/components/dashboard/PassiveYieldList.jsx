@@ -32,7 +32,7 @@ function YieldResource({ resId, data, defs }) {
   return (
     <>
       <div className="item collapsible-item" onClick={() => setIsExpanded(!isExpanded)}>
-        <div className="icon">{emoji}</div>
+        <div className="icon" style={{ fontSize: '2em' }}>{emoji}</div>
         <div className="grow"><div className="title">{resDef.name || bareId}</div></div>
         <div className="right">
           <strong>+{H.fmt(Math.round(data.total))} / time</strong>
@@ -45,7 +45,7 @@ function YieldResource({ resId, data, defs }) {
             const qty = source.quantity ?? 1;
             const perHour = (source.amount / source.period_s) * 3600 * qty;
             return (
-              <div className="yield-source-item" key={index}>
+              <div className="yield-source-item" key={index} >
                 <span>{source.icon} {source.name} {qty > 1 ? `(x${qty})` : ''}</span>
                 <span>+{H.fmt(perHour)} / time</span>
               </div>

@@ -20,8 +20,45 @@ export default function ResourceActionModal({ isOpen, onClose, onPick, canGlobal
       .replace(/\b\w/g, (m) => m.toUpperCase());
   };
   const displayName = resName || formatResName(resId);
-  const displayEmoji = typeof resEmoji === 'string' ? resEmoji : '';
- 
+  // Renderer for provided resEmoji (string/url/html/object) -> returns JSX node
+  const renderEmojiNode = (e) => {
+    if (!e && e !== 0) return null;
+    // If it's already a React node
+    if (React.isValidElement(e)) return e;
+    // If object with iconUrl
+    if (typeof e === 'object') {
+      const url = e.iconUrl ?? e.url ?? e.src ?? '';
+      if (url) return <img src={url} alt="" style={{ width: '2em', height: '2em', objectFit: 'contain', verticalAlign: '-0.15em', display: 'inline-block' }} />;
+      if (typeof e.emoji === 'string') return <span style={{ fontSize: '2em', lineHeight: 1 }}>{e.emoji}</span>;
+      return null;
+    }
+    let s = String(e).trim();
+    // strip a leading + or - if present (some sources prefix sign)
+    s = s.replace(/^[+\-]\s*/, '');
+    // raw <img ...> HTML -> extract src
+    const m = s.match(/<img[^>]+src=(?:'|")?([^'">\s]+)/i);
+    if (m && m[1]) {
+      const src = m[1].startsWith('/') || m[1].startsWith('http') ? m[1] : `/assets/icons/${m[1]}`;
+      return <img src={src} alt="" style={{ width: '2em', height: '2em', objectFit: 'contain', verticalAlign: '-0.15em', display: 'inline-block' }} />;
+    }
+    // if looks like URL or filename
+    if (/^(\/|https?:\/\/)/.test(s) || /\.(png|jpe?g|svg|webp|gif)$/i.test(s)) {
+      const src = (s.startsWith('/') || s.startsWith('http')) ? s : `/assets/icons/${s}`;
+      return <img src={src} alt="" style={{ width: '2em', height: '2em', objectFit: 'contain', verticalAlign: '-0.15em', display: 'inline-block' }} />;
+    }
+    // otherwise treat as unicode/text emoji
+    return <span style={{ fontSize: '2em', lineHeight: 1 }}>{s}</span>;
+  };
+
+  // Debug: log incoming emoji value (remove in production)
+  useEffect(() => {
+    if (!isOpen) return;
+    console.debug('ResourceActionModal resEmoji:', resEmoji);
+  }, [isOpen, resEmoji]);
+  
+  // keep a ready-to-use node (preserves older code that referenced displayEmoji)
+  const displayEmoji = renderEmojiNode(resEmoji);
+
   // click outside to close
   useEffect(() => {
     if (!isOpen) return;
@@ -60,8 +97,8 @@ export default function ResourceActionModal({ isOpen, onClose, onPick, canGlobal
           Ressource:{' '}
           <b style={{ color: '#fff', display: 'inline-flex', alignItems: 'center', gap: 8 }}>
             <span style={{ marginRight: 8 }}>{displayEmoji}</span>
-            <span>{displayName}</span>
-          </b>
+             <span>{displayName}</span>
+           </b>
         </div>
 
         <button className="tab" onClick={() => onPick('local')} style={{ display: 'block', width: '100%', textAlign: 'center' }}>

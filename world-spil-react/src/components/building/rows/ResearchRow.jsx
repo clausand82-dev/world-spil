@@ -7,12 +7,14 @@ import DockHoverCard from '../../../components/ui/DockHoverCard.jsx';
 import StatsEffectsTooltip from '../../ui/StatsEffectsTooltip.jsx';
 import { useT } from "../../../services/i18n.js";
 import { useGameData } from '../../../context/GameDataContext.jsx';
+import RequirementPanel from '../../../components/requirements/RequirementPanel.jsx';
 
 function ResearchRow({ entry, state, baseOwned, requirementCaches }) {
-  const { def, fullId, stageReq, stageOk, ownedLevel, displayLevel } = entry;
+  const { def, fullId, stageReq, stageOk, ownedLevel, displayLevel, isMax } = entry;
   const t = useT();
 
   const { data } = useGameData();
+  const defs = data?.defs || {};
   const translations = data?.i18n?.current ?? {};
 
   const requirement = requirementInfo(
@@ -44,7 +46,18 @@ function ResearchRow({ entry, state, baseOwned, requirementCaches }) {
   const hasBuff = durationValue != null && durationBase != null && Math.round(durationValue) !== Math.round(durationBase);
   const durationText = hasBuff ? null : (def.time_str || def.duration_text || null);
 
-  const hoverContent = <StatsEffectsTooltip def={def} translations={translations} />;
+  // Hover: show StatsEffectsTooltip + RequirementPanel (or max-text if isMax)
+  const hoverContent = (
+    <div style={{ minWidth: 300 }}>
+      <StatsEffectsTooltip def={def} translations={translations} />
+      <div style={{ height: 8 }} />
+      {isMax ? (
+        <div style={{ padding: 8, fontWeight: 600 }}>{t("ui.text.maxlevel.h1") || 'Forskningen kan ikke opgraderes mere'}</div>
+      ) : (
+        <RequirementPanel def={def} defs={defs} state={state} requirementCaches={requirementCaches} />
+      )}
+    </div>
+  );
 
   const row = (
     <div className="item" data-research-row={fullId}>

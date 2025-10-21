@@ -5,7 +5,7 @@
     <resource id="res.money" family="basic" type="economy" lvl="1" stage="1">
     <unit>pcs</unit>
     <unitSpace>0.0</unitSpace>
-    <emoji>💰</emoji>
+    <emoji>money.png</emoji>
   </resource>   
 
   <resource id="res.wood" family="basic" type="basicRessource" lvl="1" stage="1">
@@ -257,7 +257,7 @@
   <emoji>sunflower.png</emoji>
 </resource>
 
-<resource id="res.oatsmeal" family="product" type="food" lvl="1" stage="2">
+<resource id="res.oatmeal" family="product" type="food" lvl="1" stage="2">
   <unit>kg</unit>
   <unitSpace>0.3</unitSpace>
   <emoji>oatmeal.png</emoji>

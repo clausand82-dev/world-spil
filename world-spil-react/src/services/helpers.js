@@ -1,4 +1,3 @@
-
 import React from 'react';
 import Icon from '../components/common/Icon.jsx';
 /* =========================================================
@@ -175,31 +174,12 @@ export const pickNextTargetInSeries = (seriesItems, ownedMaxLevel) => {
  * - for resource/animal defs forventer vi normalizeDefsForIcons har sat emojiText eller iconUrl
  * - bruges når du skal bygge HTML-strings (helpTopics og andre string-renderers)
  */
-export function emojiHtmlForId(id, defs, { baseIconPath = '/assets/icons/' } = {}) {
-  if (!id || !defs) return '';
-  try {
-    if (id.startsWith('res.')) {
-      const key = id.replace(/^res\./, '');
-      const d = defs.res?.[key];
-      if (!d) return '';
-      // emojiText indeholder allerede <img/> string hvis det var filnavn
-      if (d.emojiText) return d.emojiText;
-      // fallback: if d.emoji is unicode string
-      if (typeof d.emoji === 'string' && d.emoji.length) return d.emoji;
-      // fallback to iconUrl -> build <img/>
-      if (d.iconUrl) return `<img src="${d.iconUrl}" alt="${(d.name||key).replace(/"/g,'&quot;')}" style="width:1em;height:1em;vertical-align:-0.15em;object-fit:contain;display:inline-block" />`;
-    }
-    if (id.startsWith('ani.')) {
-      const key = id.replace(/^ani\./, '');
-      const d = defs.ani?.[key];
-      if (!d) return '';
-      if (d.emojiText) return d.emojiText;
-      if (typeof d.emoji === 'string' && d.emoji.length) return d.emoji;
-      if (d.iconUrl) return `<img src="${d.iconUrl}" alt="${(d.name||key).replace(/"/g,'&quot;')}" style="width:1em;height:1em;vertical-align:-0.15em;object-fit:contain;display:inline-block" />`;
-    }
-  } catch (e) {
-    // swallow - return empty so caller kan fortsætte
-  }
+export function emojiHtmlForId(fullId, defs, opts = {}) {
+  const size = opts.size || '1.2em';
+  const def = defs?.res?.[fullId.replace(/^res\./, '')] || defs?.[fullId];
+  if (!def) return '';
+  if (def.iconUrl) return `<img src="${def.iconUrl}" style="width:${size};height:${size};object-fit:contain;vertical-align:middle" />`;
+  if (def.emoji) return `<span style="font-size:${size};line-height:1;display:inline-block">${def.emoji}</span>`;
   return '';
 }
 

@@ -26,13 +26,13 @@ try {
     $baseSamples = array(
       array('res.wood', 50, 12.2),
       array('res.stone', 40, 13.1),
-      array('res.iron', 4, 16.0),
+      array('res.ironbar', 4, 16.0),
       array('res.water', 100, 11.0),
       array('res.food', 24, 14.2),
       array('res.hide', 30, 15.5),
       array('res.wool', 50, 17.5),
-      array('res.bronze', 4, 17.5),
-      array('res.stonebricks', 50, 17.5),
+      array('res.bronzebar', 4, 17.5),
+      array('res.stonebrick', 50, 17.5),
       array('res.basictools', 10, 17.5),
       array('res.bread', 10, 17.5),
     );

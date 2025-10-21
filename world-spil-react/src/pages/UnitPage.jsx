@@ -210,31 +210,88 @@ function YieldBlock({ def, defs, H }) {
   }
 
   return (
-    <div style={{ marginBottom: 8 }}>
+    <div style={{ marginBottom: 8, marginTop: 8 }}><div style={{ borderTop: '1px solid rgba(0,0,0,0.08)', paddingTop: 0, display: 'grid', gap: 4, fontSize: 12 }}></div>
       <div className="sub"><strong>Yield / Produktion</strong></div>
-      <div style={{fontSize: 13, marginBottom: 8 }}>
-        {yields.map((y) => {
-          const resKey = String(y.id).replace(/^res\./, '');
-          const resDef = defs?.res?.[resKey];
-          const resName = (resDef && (resDef.name || resDef.label || resDef.title)) || resKey;
-          const amt = Number(y.amount || 0);
-          const sign = amt > 0 ? '+' : (amt < 0 ? '−' : '');
-          const cls = amt > 0 ? 'price-good' : (amt < 0 ? 'price-bad' : '');
-          // yield period: prefer explicit on yield entry, then on def fields (def.yield_period_s or def.stats.yield_period_s)
-          const periodSec = Number(def?.yield_period_s || 0);
-          const periodLabel = formatPeriod(periodSec);
-          return (
-            <div key={y.id}>
-              <span className={cls} style={{ fontWeight: 700 }}>{sign}{H.fmt(Math.abs(amt))}</span>
-              <span style={{ color: '#222', marginLeft: 8 }}>
-                {emojiForId(y.id, defs)} {resName}
-                {periodLabel ? ` / ${periodLabel}` : ''}
-              </span>
-            </div>
-          );
-        })}
+      <div style={{ fontSize: 13, marginBottom: 8 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          {yields.map((y) => {
+            const resKey = String(y.id).replace(/^res\./, '');
+            const resDef = defs?.res?.[resKey];
+            const resName = (resDef && (resDef.name || resDef.label || resDef.title)) || resKey;
+            const amt = Number(y.amount || 0);
+            const sign = amt > 0 ? '+' : (amt < 0 ? '−' : '');
+            // period: prefer explicit on yield entry, then on def fields
+            const periodSec = Number(def?.yield_period_s || 0);
+            const periodLabel = formatPeriod(periodSec);
+
+            return (
+              <div key={y.id} style={{ padding: '6px 0' }}>
+                <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                  {/* Icon (visuelt større; optager cirka to rækker) */}
+                  <div style={{ width: '2.4em', minWidth: '2.4em', height: '2.4em', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <div className="icon" style={{ fontSize: '2em', lineHeight: 1 }}>
+                      {emojiForId(y.id, defs)}
+                    </div>
+                  </div>
+
+                  {/* Stacked tekst: navn (øverst) og antal / periode (nederst) */}
+                  <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: '#333' }}>{resName}</div>
+                    <div style={{ fontSize: 13, color: '#333', marginTop: 4 }}>
+                      <span style={{ fontWeight: 700 }}>{sign}{H.fmt(Math.abs(amt))}</span>
+                      {periodLabel ? <span style={{fontWeight: 700, color: '#333', marginLeft: 8 }}>{`/ ${periodLabel}`}</span> : null}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
-      <div style={{ borderTop: '1px solid rgba(0,0,0,0.08)', paddingTop: 0, display: 'grid', gap: 4, fontSize: 12 }}></div>
+       
+    </div>
+  );
+}
+
+// PriceBlock: vis cost i samme layout som YieldBlock (stor ikon, navn + beløb under)
+function PriceBlock({ def, defs, H, activeBuffs, qty = 1 }) {
+  const entries = Object.values(H.normalizePrice(def?.cost || {}));
+  if (!entries.length) return null;
+
+  // compute buffed amounts (uses applyCostBuffsToAmount if res)
+  const items = entries.map((e) => {
+    const base = Math.max(0, Number(e.amount || 0) * Number(qty || 1));
+    const effRid = e.id.startsWith('res.') ? e.id : (defs?.res?.[e.id] ? `res.${e.id}` : e.id);
+    const buffed = effRid.startsWith('res.')
+      ? Math.ceil(applyCostBuffsToAmount(base, effRid, { appliesToCtx: 'all', activeBuffs }) || 0)
+      : base;
+    return { ...e, base, buffed };
+  });
+
+  return (
+    <div style={{ marginBottom: 8, marginTop: 8 }}><div style={{ borderTop: '1px solid rgba(0,0,0,0.08)', paddingTop: 0, display: 'grid', gap: 4, fontSize: 12 }}></div>
+      <div className="sub"><strong>Pris</strong></div>
+      <div style={{ fontSize: 13, marginBottom: 8 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          {items.map((it) => {
+            const resKey = String(it.id).replace(/^res\./, '');
+            const resDef = defs?.res?.[resKey];
+            const name = (resDef && (resDef.name || resDef.label || resDef.title)) || resKey;
+            const amountLabel = (it.base !== it.buffed) ? `${H.fmt(it.base)} → ${H.fmt(it.buffed)}` : H.fmt(it.buffed);
+            return (
+              <div key={it.id} style={{ padding: '6px 0', display: 'flex', gap: 12, alignItems: 'center' }}>
+                <div style={{ width: '2.4em', minWidth: '2.4em', height: '2.4em', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div className="icon" style={{ fontSize: '2em', lineHeight: 1 }}>{emojiForId(it.id, defs)}</div>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+                  <div style={{ fontSize: 13, fontWeight: 600 }}>{name}</div>
+                  <div style={{ fontSize: 13, color: '#333', marginTop: 4 }}>{amountLabel}</div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 }
@@ -670,7 +727,7 @@ export default function UnitPage({ embedFamily = null, embed = false }) {
             return (
               <DockHoverCard key={aniId} content={hoverContent}>
                 <div className="item">
-                  <div className="icon">{def.emoji || (isAnimal ? '🐄' : '🏷️')}</div>
+                  <div className="icon" style={{ fontSize: '2em' }}>{def.emoji || (isAnimal ? '🐄' : '🏷️')}</div>
                   <div>
                     <div className="title">
                       {def.name} (x{H.fmt(qty)})
@@ -697,11 +754,11 @@ export default function UnitPage({ embedFamily = null, embed = false }) {
         <div className="section-body">
           {availableDefs.map(([key, def]) => {
             const hoverContent = (
-              <><div style={{ minWidth: 220 }}>
+              <div style={{ minWidth: 220 }}>
+                 <StatsEffectsTooltip def={def} translations={data?.i18n?.current ?? {}} />
+                 <PriceBlock def={def} defs={defs} H={H} activeBuffs={activeBuffs} qty={1} />
                 <YieldBlock def={def} defs={defs} H={H} />
-              
-                <StatsEffectsTooltip def={def} translations={data?.i18n?.current ?? {}} />
-                </div></>
+              </div>
             );
             const aniId = `ani.${key}`;
             const per = isAnimal
@@ -714,7 +771,7 @@ export default function UnitPage({ embedFamily = null, embed = false }) {
             return (
               <DockHoverCard key={key} content={hoverContent}>
                 <div className="item">
-                  <div className="icon">{def.emoji || (isAnimal ? '🐄' : '🏷️')}</div>
+                  <div className="icon" style={{ fontSize: '2em' }}>{def.emoji || (isAnimal ? '🐄' : '🏷️')}</div>
                   <div className="grow">
                     <div className="title">{def.name}</div>
                     <div className="sub">

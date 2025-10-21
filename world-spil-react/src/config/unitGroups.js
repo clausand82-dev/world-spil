@@ -3,7 +3,7 @@
 export const UNIT_GROUPS = [
   {
     key: 'farm',
-    label: 'Dyr',
+    label: 'Gårddyr',
     emoji: '🐾',
     family: 'farm',
     perItemStat: 'animal_cap',     // per item “pladsforbrug”
