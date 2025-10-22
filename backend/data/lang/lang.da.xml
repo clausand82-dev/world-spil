@@ -59,6 +59,7 @@
   <entry key="ui.timeshort.s.h1">s</entry>
 
   <entry key="ui.text.main.h1">Hoved</entry>
+  <entry key="ui.text.none.h1">GRATIS!</entry>
 
   <entry key="ui.text.demandingstage.h1">Kræver Stage</entry>
   <entry key="ui.text.stagelocked.h1">Stage låst</entry>
@@ -74,6 +75,8 @@
   <entry key="ui.labels.requirements">Øvrige krav:</entry>
   <entry key="ui.labels.footprint">Byggepoint:</entry>
   <entry key="ui.labels.duration">Tid:</entry>
+  <entry key="ui.labels.products">Produkter (per start)</entry>
+  <entry key="ui.labels.formula">Opskrift</entry>
 
   <entry key="ui.emoji.buildcost.h1">🔨</entry>
   <entry key="ui.emoji.demands.h1">📜</entry>
@@ -352,7 +355,7 @@
   <entry key="bld.storage.l2.desc">Øger lager plads yderligere</entry>
   <entry key="bld.health.l1.name">Medicin telt</entry>
   <entry key="bld.health.l1.desc">Et medicin telt, hvor der kan udøves basal første hjælp.</entry>
-  <entry key="bld.monument.l1.name">Monument L1</entry>
+  <entry key="bld.monument.l1.name">Lille Sten Monument</entry>
   <entry key="bld.monument.l1.desc">Et simpelt monument til at fejre sejre</entry>
 
 
@@ -457,8 +460,8 @@
   <entry key="add.maizefield.l1.name">Majsmark</entry>
   <entry key="add.maizefield.l1.desc">Mark til at dyrke majs; giver majs som afgrøde.</entry>
 
-  <entry key="add.oatsfield.l1.name">Havremark</entry>
-  <entry key="add.oatsfield.l1.desc">Mark til at dyrke havre; øger madproduktionen.</entry>
+  <entry key="add.oatfield.l1.name">Havremark</entry>
+  <entry key="add.oatfield.l1.desc">Mark til at dyrke havre; øger madproduktionen.</entry>
 
   <entry key="add.wheatfield.l1.name">Hvedemark</entry>
   <entry key="add.wheatfield.l1.desc">Mark til at dyrke hvede; øger madproduktionen.</entry>
@@ -565,8 +568,8 @@
   <entry key="rsd.betterfeeding.l1.name">Forbedret fodring</entry>
   <entry key="rsd.betterfeeding.l1.desc">Forbedrer fodringseffektivitet og dyrs trivsel</entry>
 
-  <entry key="rsd.oats.l1.name">Havreavl</entry>
-  <entry key="rsd.oats.l1.desc">Giver mulighed for at dyrke og udnytte havre som afgrøde</entry>
+  <entry key="rsd.oat.l1.name">Havreavl</entry>
+  <entry key="rsd.oat.l1.desc">Giver mulighed for at dyrke og udnytte havre som afgrøde</entry>
 
   <entry key="rsd.useclay.l1.name">Lerudnyttelse</entry>
   <entry key="rsd.useclay.l1.desc">Giver evnen til at udvinde og bruge ler til byggeri og keramik</entry>
@@ -658,8 +661,8 @@
 
   <entry key="rcp.fertilizer.l1.name">Lav gødning</entry>
   <entry key="rcp.fertilizer.l1.desc">Producer gødning ud fra det du lige har ved hånden.</entry>
-  <entry key="rcp.flintstone.l1.name">Lav flintesten værktøj</entry>
-  <entry key="rcp.flintstone.l1.desc">Producer værktøj med flintesten</entry>
+  <entry key="rcp.flintstone.l1.name">Lav flintesten</entry>
+  <entry key="rcp.flintstone.l1.desc">Producer flintesten</entry>
   <entry key="rcp.woodtorope.l1.name">Lav reb af træ</entry>
   <entry key="rcp.woodtorope.l1.desc">Producer reb af træ</entry>
   <entry key="rcp.basictools.l1.name">Lav basis værktøj</entry>
@@ -720,8 +723,8 @@
   <entry key="res.wool.desc">Fra fåret; senere fra geder også</entry>
   <entry key="res.wheat.name">Hvede</entry>
   <entry key="res.wheat.desc">Fra marken; kan bruges til brød</entry>
-  <entry key="res.oats.name">Havre</entry>
-  <entry key="res.oats.desc">Fra marken; kan bruges til foder</entry>
+  <entry key="res.oat.name">Havre</entry>
+  <entry key="res.oat.desc">Fra marken; kan bruges til foder</entry>
   <entry key="res.salt.name">Salt</entry>
   <entry key="res.salt.desc">[Beskrivelse mangler for res.salt]</entry>
   <entry key="res.straw.name">Halm</entry>
@@ -876,6 +879,8 @@
   <entry key="ani.healthbed_001.name">Simpel syge sengeplads</entry>
   <entry key="ani.healthbed_001.desc">Meget primitiv syge senge plads</entry>
 
+<entry key="ani.bed_001.name">Simpel  sengeplads</entry>
+  <entry key="ani.bed_001.desc">Meget primitiv senge plads</entry>
 
 
 </language>

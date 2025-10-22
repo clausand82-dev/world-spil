@@ -486,7 +486,7 @@
       <res id="res.oatmeal" amount="5"/>
     </yield>
     <cost>
-      <res id="res.oats" amount="100"/>
+      <res id="res.oat" amount="100"/>
       <res id="res.water" amount="25"/>
       <res id="res.salt" amount="2"/>
     </cost>
@@ -513,7 +513,7 @@
       <res id="res.rawcommonfish" amount="100"/>
       <res id="res.salt" amount="10"/>
       <res id="res.water" amount="10"/>
-      <res id="res.oats" amount="10"/>
+      <res id="res.oat" amount="10"/>
     </cost>
     <time>10m</time>
     <require>rsd.irrigation.l2, add.mole.l2</require>

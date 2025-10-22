@@ -22,6 +22,17 @@ export const UNIT_GROUPS = [
     capacityLabel: 'Health units',
   },
   {
+    key: 'housing',
+    label: 'Housing',
+    emoji: '🏕️',
+    family: 'tent',
+    perItemStat: 'housingUnitUsage',
+    headerCapacityKey: 'housingUnitCapacity',  // header.capacities.housingUnitCapacity
+    headerUsageKey: 'housingUnitUsage',        // header.usages.housingUnitUsage
+    buildingCapacityStat: 'housingUnitCapacity',
+    capacityLabel: 'Housing units',
+  },
+  {
     key: 'storage',
     label: 'Storage',
     emoji: '🗄️',

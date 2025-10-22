@@ -160652,3 +160652,3279 @@ Array
     [adultsHomeless] => 677
     [crimeHomeless] => 338
 )
+NOTICE: using fallback birthRates
+BEFORE #0
+Array
+(
+    [baby] => 246
+    [kidsStreet] => 602
+    [kidsStudent] => 10
+    [youngStudent] => 8
+    [youngWorker] => 694
+    [old] => 9
+    [adultsPolice] => 0
+    [crimePolice] => 0
+    [adultsFire] => 0
+    [crimeFire] => 0
+    [adultsHealth] => 0
+    [crimeHealth] => 0
+    [adultsSoldier] => 0
+    [crimeSoldier] => 0
+    [adultsGovernment] => 0
+    [crimeGovernment] => 0
+    [adultsPolitician] => 0
+    [crimePolitician] => 0
+    [adultsUnemployed] => 0
+    [crimeUnemployed] => 0
+    [adultsWorker] => 0
+    [crimeWorker] => 0
+    [adultsHomeless] => 677
+    [crimeHomeless] => 338
+)
+RAW CONTRIBUTIONS #0:
+Array
+(
+    [adultsUnemployed] => Array
+        (
+            [count] => 5
+            [birthRate] => 0.06
+            [contrib] => 0.3
+        )
+
+    [adultsWorker] => Array
+        (
+            [count] => 0
+            [birthRate] => 0.04
+            [contrib] => 0
+        )
+
+    [youngWorker] => Array
+        (
+            [count] => 695
+            [birthRate] => 0.03
+            [contrib] => 20.85
+        )
+
+    [youngStudent] => Array
+        (
+            [count] => 8
+            [birthRate] => 0.02
+            [contrib] => 0.16
+        )
+
+    [kidsStreet] => Array
+        (
+            [count] => 599
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+    [kidsStudent] => Array
+        (
+            [count] => 11
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+    [baby] => Array
+        (
+            [count] => 241
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+    [old] => Array
+        (
+            [count] => 11
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+)
+BIRTHS #0: rawEff=6
+IMM #0: imm=51
+EMI #0: emi=13
+DEATHS #0: Array
+(
+    [baby] => 3
+    [kidsStreet] => 3
+    [kidsStudent] => 0
+    [youngWorker] => 6
+    [youngStudent] => 1
+    [old] => 2
+    [adultsUnemployed] => 1
+    [adultsHomeless] => 17
+)
+
+AFTER CHANGES #0:
+Array
+(
+    [baby] => 248
+    [kidsStreet] => 605
+    [kidsStudent] => 11
+    [youngStudent] => 8
+    [youngWorker] => 699
+    [old] => 10
+    [adultsPolice] => 0
+    [crimePolice] => 0
+    [adultsFire] => 0
+    [crimeFire] => 0
+    [adultsHealth] => 0
+    [crimeHealth] => 0
+    [adultsSoldier] => 0
+    [crimeSoldier] => 0
+    [adultsGovernment] => 0
+    [crimeGovernment] => 0
+    [adultsPolitician] => 0
+    [crimePolitician] => 0
+    [adultsUnemployed] => 0
+    [crimeUnemployed] => 0
+    [adultsWorker] => 0
+    [crimeWorker] => 0
+    [adultsHomeless] => 678
+    [crimeHomeless] => 339
+)
+BEFORE #1
+Array
+(
+    [baby] => 248
+    [kidsStreet] => 605
+    [kidsStudent] => 11
+    [youngStudent] => 8
+    [youngWorker] => 699
+    [old] => 10
+    [adultsPolice] => 0
+    [crimePolice] => 0
+    [adultsFire] => 0
+    [crimeFire] => 0
+    [adultsHealth] => 0
+    [crimeHealth] => 0
+    [adultsSoldier] => 0
+    [crimeSoldier] => 0
+    [adultsGovernment] => 0
+    [crimeGovernment] => 0
+    [adultsPolitician] => 0
+    [crimePolitician] => 0
+    [adultsUnemployed] => 0
+    [crimeUnemployed] => 0
+    [adultsWorker] => 0
+    [crimeWorker] => 0
+    [adultsHomeless] => 678
+    [crimeHomeless] => 339
+)
+RAW CONTRIBUTIONS #1:
+Array
+(
+    [adultsUnemployed] => Array
+        (
+            [count] => 5
+            [birthRate] => 0.06
+            [contrib] => 0.3
+        )
+
+    [adultsWorker] => Array
+        (
+            [count] => 0
+            [birthRate] => 0.04
+            [contrib] => 0
+        )
+
+    [youngWorker] => Array
+        (
+            [count] => 699
+            [birthRate] => 0.03
+            [contrib] => 20.97
+        )
+
+    [youngStudent] => Array
+        (
+            [count] => 8
+            [birthRate] => 0.02
+            [contrib] => 0.16
+        )
+
+    [kidsStreet] => Array
+        (
+            [count] => 604
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+    [kidsStudent] => Array
+        (
+            [count] => 11
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+    [baby] => Array
+        (
+            [count] => 243
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+    [old] => Array
+        (
+            [count] => 12
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+)
+BIRTHS #1: rawEff=5
+IMM #1: imm=52
+EMI #1: emi=13
+DEATHS #1: Array
+(
+    [baby] => 3
+    [kidsStreet] => 3
+    [kidsStudent] => 0
+    [youngWorker] => 7
+    [youngStudent] => 0
+    [old] => 3
+    [adultsUnemployed] => 1
+    [adultsHomeless] => 17
+)
+
+AFTER CHANGES #1:
+Array
+(
+    [baby] => 249
+    [kidsStreet] => 610
+    [kidsStudent] => 11
+    [youngStudent] => 8
+    [youngWorker] => 703
+    [old] => 10
+    [adultsPolice] => 0
+    [crimePolice] => 0
+    [adultsFire] => 0
+    [crimeFire] => 0
+    [adultsHealth] => 0
+    [crimeHealth] => 0
+    [adultsSoldier] => 0
+    [crimeSoldier] => 0
+    [adultsGovernment] => 0
+    [crimeGovernment] => 0
+    [adultsPolitician] => 0
+    [crimePolitician] => 0
+    [adultsUnemployed] => 0
+    [crimeUnemployed] => 0
+    [adultsWorker] => 0
+    [crimeWorker] => 0
+    [adultsHomeless] => 680
+    [crimeHomeless] => 340
+)
+BEFORE #2
+Array
+(
+    [baby] => 249
+    [kidsStreet] => 610
+    [kidsStudent] => 11
+    [youngStudent] => 8
+    [youngWorker] => 703
+    [old] => 10
+    [adultsPolice] => 0
+    [crimePolice] => 0
+    [adultsFire] => 0
+    [crimeFire] => 0
+    [adultsHealth] => 0
+    [crimeHealth] => 0
+    [adultsSoldier] => 0
+    [crimeSoldier] => 0
+    [adultsGovernment] => 0
+    [crimeGovernment] => 0
+    [adultsPolitician] => 0
+    [crimePolitician] => 0
+    [adultsUnemployed] => 0
+    [crimeUnemployed] => 0
+    [adultsWorker] => 0
+    [crimeWorker] => 0
+    [adultsHomeless] => 680
+    [crimeHomeless] => 340
+)
+RAW CONTRIBUTIONS #2:
+Array
+(
+    [adultsUnemployed] => Array
+        (
+            [count] => 5
+            [birthRate] => 0.06
+            [contrib] => 0.3
+        )
+
+    [adultsWorker] => Array
+        (
+            [count] => 0
+            [birthRate] => 0.04
+            [contrib] => 0
+        )
+
+    [youngWorker] => Array
+        (
+            [count] => 704
+            [birthRate] => 0.03
+            [contrib] => 21.12
+        )
+
+    [youngStudent] => Array
+        (
+            [count] => 8
+            [birthRate] => 0.02
+            [contrib] => 0.16
+        )
+
+    [kidsStreet] => Array
+        (
+            [count] => 608
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+    [kidsStudent] => Array
+        (
+            [count] => 11
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+    [baby] => Array
+        (
+            [count] => 244
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+    [old] => Array
+        (
+            [count] => 11
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+)
+BIRTHS #2: rawEff=6
+IMM #2: imm=53
+EMI #2: emi=13
+DEATHS #2: Array
+(
+    [baby] => 2
+    [kidsStreet] => 3
+    [kidsStudent] => 1
+    [youngWorker] => 8
+    [youngStudent] => 0
+    [old] => 2
+    [adultsUnemployed] => 1
+    [adultsHomeless] => 17
+)
+
+AFTER CHANGES #2:
+Array
+(
+    [baby] => 253
+    [kidsStreet] => 614
+    [kidsStudent] => 10
+    [youngStudent] => 9
+    [youngWorker] => 707
+    [old] => 10
+    [adultsPolice] => 0
+    [crimePolice] => 0
+    [adultsFire] => 0
+    [crimeFire] => 0
+    [adultsHealth] => 0
+    [crimeHealth] => 0
+    [adultsSoldier] => 0
+    [crimeSoldier] => 0
+    [adultsGovernment] => 0
+    [crimeGovernment] => 0
+    [adultsPolitician] => 0
+    [crimePolitician] => 0
+    [adultsUnemployed] => 0
+    [crimeUnemployed] => 0
+    [adultsWorker] => 0
+    [crimeWorker] => 0
+    [adultsHomeless] => 683
+    [crimeHomeless] => 341
+)
+BEFORE #3
+Array
+(
+    [baby] => 253
+    [kidsStreet] => 614
+    [kidsStudent] => 10
+    [youngStudent] => 9
+    [youngWorker] => 707
+    [old] => 10
+    [adultsPolice] => 0
+    [crimePolice] => 0
+    [adultsFire] => 0
+    [crimeFire] => 0
+    [adultsHealth] => 0
+    [crimeHealth] => 0
+    [adultsSoldier] => 0
+    [crimeSoldier] => 0
+    [adultsGovernment] => 0
+    [crimeGovernment] => 0
+    [adultsPolitician] => 0
+    [crimePolitician] => 0
+    [adultsUnemployed] => 0
+    [crimeUnemployed] => 0
+    [adultsWorker] => 0
+    [crimeWorker] => 0
+    [adultsHomeless] => 683
+    [crimeHomeless] => 341
+)
+RAW CONTRIBUTIONS #3:
+Array
+(
+    [adultsUnemployed] => Array
+        (
+            [count] => 5
+            [birthRate] => 0.06
+            [contrib] => 0.3
+        )
+
+    [adultsWorker] => Array
+        (
+            [count] => 0
+            [birthRate] => 0.04
+            [contrib] => 0
+        )
+
+    [youngWorker] => Array
+        (
+            [count] => 708
+            [birthRate] => 0.03
+            [contrib] => 21.24
+        )
+
+    [youngStudent] => Array
+        (
+            [count] => 9
+            [birthRate] => 0.02
+            [contrib] => 0.18
+        )
+
+    [kidsStreet] => Array
+        (
+            [count] => 612
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+    [kidsStudent] => Array
+        (
+            [count] => 10
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+    [baby] => Array
+        (
+            [count] => 248
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+    [old] => Array
+        (
+            [count] => 11
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+)
+BIRTHS #3: rawEff=5
+IMM #3: imm=52
+EMI #3: emi=12
+DEATHS #3: Array
+(
+    [baby] => 3
+    [kidsStreet] => 3
+    [kidsStudent] => 0
+    [youngWorker] => 8
+    [youngStudent] => 0
+    [old] => 2
+    [adultsUnemployed] => 1
+    [adultsHomeless] => 18
+)
+
+AFTER CHANGES #3:
+Array
+(
+    [baby] => 252
+    [kidsStreet] => 617
+    [kidsStudent] => 11
+    [youngStudent] => 9
+    [youngWorker] => 712
+    [old] => 10
+    [adultsPolice] => 0
+    [crimePolice] => 0
+    [adultsFire] => 0
+    [crimeFire] => 0
+    [adultsHealth] => 0
+    [crimeHealth] => 0
+    [adultsSoldier] => 0
+    [crimeSoldier] => 0
+    [adultsGovernment] => 0
+    [crimeGovernment] => 0
+    [adultsPolitician] => 0
+    [crimePolitician] => 0
+    [adultsUnemployed] => 0
+    [crimeUnemployed] => 0
+    [adultsWorker] => 0
+    [crimeWorker] => 0
+    [adultsHomeless] => 686
+    [crimeHomeless] => 343
+)
+BEFORE #4
+Array
+(
+    [baby] => 252
+    [kidsStreet] => 617
+    [kidsStudent] => 11
+    [youngStudent] => 9
+    [youngWorker] => 712
+    [old] => 10
+    [adultsPolice] => 0
+    [crimePolice] => 0
+    [adultsFire] => 0
+    [crimeFire] => 0
+    [adultsHealth] => 0
+    [crimeHealth] => 0
+    [adultsSoldier] => 0
+    [crimeSoldier] => 0
+    [adultsGovernment] => 0
+    [crimeGovernment] => 0
+    [adultsPolitician] => 0
+    [crimePolitician] => 0
+    [adultsUnemployed] => 0
+    [crimeUnemployed] => 0
+    [adultsWorker] => 0
+    [crimeWorker] => 0
+    [adultsHomeless] => 686
+    [crimeHomeless] => 343
+)
+RAW CONTRIBUTIONS #4:
+Array
+(
+    [adultsUnemployed] => Array
+        (
+            [count] => 6
+            [birthRate] => 0.06
+            [contrib] => 0.36
+        )
+
+    [adultsWorker] => Array
+        (
+            [count] => 0
+            [birthRate] => 0.04
+            [contrib] => 0
+        )
+
+    [youngWorker] => Array
+        (
+            [count] => 711
+            [birthRate] => 0.03
+            [contrib] => 21.33
+        )
+
+    [youngStudent] => Array
+        (
+            [count] => 9
+            [birthRate] => 0.02
+            [contrib] => 0.18
+        )
+
+    [kidsStreet] => Array
+        (
+            [count] => 616
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+    [kidsStudent] => Array
+        (
+            [count] => 11
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+    [baby] => Array
+        (
+            [count] => 247
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+    [old] => Array
+        (
+            [count] => 11
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+)
+BIRTHS #4: rawEff=5
+IMM #4: imm=53
+EMI #4: emi=13
+DEATHS #4: Array
+(
+    [baby] => 3
+    [kidsStreet] => 3
+    [kidsStudent] => 0
+    [youngWorker] => 8
+    [youngStudent] => 0
+    [old] => 2
+    [adultsUnemployed] => 1
+    [adultsHomeless] => 18
+)
+
+AFTER CHANGES #4:
+Array
+(
+    [baby] => 255
+    [kidsStreet] => 622
+    [kidsStudent] => 11
+    [youngStudent] => 10
+    [youngWorker] => 714
+    [old] => 9
+    [adultsPolice] => 0
+    [crimePolice] => 0
+    [adultsFire] => 0
+    [crimeFire] => 0
+    [adultsHealth] => 0
+    [crimeHealth] => 0
+    [adultsSoldier] => 0
+    [crimeSoldier] => 0
+    [adultsGovernment] => 0
+    [crimeGovernment] => 0
+    [adultsPolitician] => 0
+    [crimePolitician] => 0
+    [adultsUnemployed] => 0
+    [crimeUnemployed] => 0
+    [adultsWorker] => 0
+    [crimeWorker] => 0
+    [adultsHomeless] => 689
+    [crimeHomeless] => 344
+)
+BEFORE #5
+Array
+(
+    [baby] => 255
+    [kidsStreet] => 622
+    [kidsStudent] => 11
+    [youngStudent] => 10
+    [youngWorker] => 714
+    [old] => 9
+    [adultsPolice] => 0
+    [crimePolice] => 0
+    [adultsFire] => 0
+    [crimeFire] => 0
+    [adultsHealth] => 0
+    [crimeHealth] => 0
+    [adultsSoldier] => 0
+    [crimeSoldier] => 0
+    [adultsGovernment] => 0
+    [crimeGovernment] => 0
+    [adultsPolitician] => 0
+    [crimePolitician] => 0
+    [adultsUnemployed] => 0
+    [crimeUnemployed] => 0
+    [adultsWorker] => 0
+    [crimeWorker] => 0
+    [adultsHomeless] => 689
+    [crimeHomeless] => 344
+)
+RAW CONTRIBUTIONS #5:
+Array
+(
+    [adultsUnemployed] => Array
+        (
+            [count] => 5
+            [birthRate] => 0.06
+            [contrib] => 0.3
+        )
+
+    [adultsWorker] => Array
+        (
+            [count] => 0
+            [birthRate] => 0.04
+            [contrib] => 0
+        )
+
+    [youngWorker] => Array
+        (
+            [count] => 715
+            [birthRate] => 0.03
+            [contrib] => 21.45
+        )
+
+    [youngStudent] => Array
+        (
+            [count] => 10
+            [birthRate] => 0.02
+            [contrib] => 0.2
+        )
+
+    [kidsStreet] => Array
+        (
+            [count] => 620
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+    [kidsStudent] => Array
+        (
+            [count] => 11
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+    [baby] => Array
+        (
+            [count] => 250
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+    [old] => Array
+        (
+            [count] => 10
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+)
+BIRTHS #5: rawEff=5
+IMM #5: imm=53
+EMI #5: emi=13
+DEATHS #5: Array
+(
+    [baby] => 2
+    [kidsStreet] => 4
+    [kidsStudent] => 0
+    [youngWorker] => 8
+    [youngStudent] => 0
+    [old] => 2
+    [adultsUnemployed] => 1
+    [adultsHomeless] => 19
+)
+
+AFTER CHANGES #5:
+Array
+(
+    [baby] => 257
+    [kidsStreet] => 624
+    [kidsStudent] => 11
+    [youngStudent] => 10
+    [youngWorker] => 718
+    [old] => 9
+    [adultsPolice] => 0
+    [crimePolice] => 0
+    [adultsFire] => 0
+    [crimeFire] => 0
+    [adultsHealth] => 0
+    [crimeHealth] => 0
+    [adultsSoldier] => 0
+    [crimeSoldier] => 0
+    [adultsGovernment] => 0
+    [crimeGovernment] => 0
+    [adultsPolitician] => 0
+    [crimePolitician] => 0
+    [adultsUnemployed] => 0
+    [crimeUnemployed] => 0
+    [adultsWorker] => 0
+    [crimeWorker] => 0
+    [adultsHomeless] => 691
+    [crimeHomeless] => 345
+)
+BEFORE #6
+Array
+(
+    [baby] => 257
+    [kidsStreet] => 624
+    [kidsStudent] => 11
+    [youngStudent] => 10
+    [youngWorker] => 718
+    [old] => 9
+    [adultsPolice] => 0
+    [crimePolice] => 0
+    [adultsFire] => 0
+    [crimeFire] => 0
+    [adultsHealth] => 0
+    [crimeHealth] => 0
+    [adultsSoldier] => 0
+    [crimeSoldier] => 0
+    [adultsGovernment] => 0
+    [crimeGovernment] => 0
+    [adultsPolitician] => 0
+    [crimePolitician] => 0
+    [adultsUnemployed] => 0
+    [crimeUnemployed] => 0
+    [adultsWorker] => 0
+    [crimeWorker] => 0
+    [adultsHomeless] => 691
+    [crimeHomeless] => 345
+)
+RAW CONTRIBUTIONS #6:
+Array
+(
+    [adultsUnemployed] => Array
+        (
+            [count] => 5
+            [birthRate] => 0.06
+            [contrib] => 0.3
+        )
+
+    [adultsWorker] => Array
+        (
+            [count] => 0
+            [birthRate] => 0.04
+            [contrib] => 0
+        )
+
+    [youngWorker] => Array
+        (
+            [count] => 719
+            [birthRate] => 0.03
+            [contrib] => 21.57
+        )
+
+    [youngStudent] => Array
+        (
+            [count] => 10
+            [birthRate] => 0.02
+            [contrib] => 0.2
+        )
+
+    [kidsStreet] => Array
+        (
+            [count] => 622
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+    [kidsStudent] => Array
+        (
+            [count] => 11
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+    [baby] => Array
+        (
+            [count] => 252
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+    [old] => Array
+        (
+            [count] => 10
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+)
+BIRTHS #6: rawEff=5
+IMM #6: imm=53
+EMI #6: emi=13
+DEATHS #6: Array
+(
+    [baby] => 3
+    [kidsStreet] => 4
+    [kidsStudent] => 0
+    [youngWorker] => 8
+    [youngStudent] => 0
+    [old] => 2
+    [adultsUnemployed] => 1
+    [adultsHomeless] => 18
+)
+
+AFTER CHANGES #6:
+Array
+(
+    [baby] => 260
+    [kidsStreet] => 626
+    [kidsStudent] => 12
+    [youngStudent] => 10
+    [youngWorker] => 723
+    [old] => 9
+    [adultsPolice] => 0
+    [crimePolice] => 0
+    [adultsFire] => 0
+    [crimeFire] => 0
+    [adultsHealth] => 0
+    [crimeHealth] => 0
+    [adultsSoldier] => 0
+    [crimeSoldier] => 0
+    [adultsGovernment] => 0
+    [crimeGovernment] => 0
+    [adultsPolitician] => 0
+    [crimePolitician] => 0
+    [adultsUnemployed] => 0
+    [crimeUnemployed] => 0
+    [adultsWorker] => 0
+    [crimeWorker] => 0
+    [adultsHomeless] => 692
+    [crimeHomeless] => 346
+)
+BEFORE #7
+Array
+(
+    [baby] => 260
+    [kidsStreet] => 626
+    [kidsStudent] => 12
+    [youngStudent] => 10
+    [youngWorker] => 723
+    [old] => 9
+    [adultsPolice] => 0
+    [crimePolice] => 0
+    [adultsFire] => 0
+    [crimeFire] => 0
+    [adultsHealth] => 0
+    [crimeHealth] => 0
+    [adultsSoldier] => 0
+    [crimeSoldier] => 0
+    [adultsGovernment] => 0
+    [crimeGovernment] => 0
+    [adultsPolitician] => 0
+    [crimePolitician] => 0
+    [adultsUnemployed] => 0
+    [crimeUnemployed] => 0
+    [adultsWorker] => 0
+    [crimeWorker] => 0
+    [adultsHomeless] => 692
+    [crimeHomeless] => 346
+)
+RAW CONTRIBUTIONS #7:
+Array
+(
+    [adultsUnemployed] => Array
+        (
+            [count] => 5
+            [birthRate] => 0.06
+            [contrib] => 0.3
+        )
+
+    [adultsWorker] => Array
+        (
+            [count] => 0
+            [birthRate] => 0.04
+            [contrib] => 0
+        )
+
+    [youngWorker] => Array
+        (
+            [count] => 723
+            [birthRate] => 0.03
+            [contrib] => 21.69
+        )
+
+    [youngStudent] => Array
+        (
+            [count] => 10
+            [birthRate] => 0.02
+            [contrib] => 0.2
+        )
+
+    [kidsStreet] => Array
+        (
+            [count] => 625
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+    [kidsStudent] => Array
+        (
+            [count] => 12
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+    [baby] => Array
+        (
+            [count] => 255
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+    [old] => Array
+        (
+            [count] => 10
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+)
+BIRTHS #7: rawEff=5
+IMM #7: imm=54
+EMI #7: emi=12
+DEATHS #7: Array
+(
+    [baby] => 3
+    [kidsStreet] => 4
+    [kidsStudent] => 0
+    [youngWorker] => 8
+    [youngStudent] => 0
+    [old] => 2
+    [adultsUnemployed] => 1
+    [adultsHomeless] => 19
+)
+
+AFTER CHANGES #7:
+Array
+(
+    [baby] => 261
+    [kidsStreet] => 630
+    [kidsStudent] => 11
+    [youngStudent] => 11
+    [youngWorker] => 726
+    [old] => 9
+    [adultsPolice] => 0
+    [crimePolice] => 0
+    [adultsFire] => 0
+    [crimeFire] => 0
+    [adultsHealth] => 0
+    [crimeHealth] => 0
+    [adultsSoldier] => 0
+    [crimeSoldier] => 0
+    [adultsGovernment] => 0
+    [crimeGovernment] => 0
+    [adultsPolitician] => 0
+    [crimePolitician] => 0
+    [adultsUnemployed] => 0
+    [crimeUnemployed] => 0
+    [adultsWorker] => 0
+    [crimeWorker] => 0
+    [adultsHomeless] => 695
+    [crimeHomeless] => 347
+)
+BEFORE #8
+Array
+(
+    [baby] => 261
+    [kidsStreet] => 630
+    [kidsStudent] => 11
+    [youngStudent] => 11
+    [youngWorker] => 726
+    [old] => 9
+    [adultsPolice] => 0
+    [crimePolice] => 0
+    [adultsFire] => 0
+    [crimeFire] => 0
+    [adultsHealth] => 0
+    [crimeHealth] => 0
+    [adultsSoldier] => 0
+    [crimeSoldier] => 0
+    [adultsGovernment] => 0
+    [crimeGovernment] => 0
+    [adultsPolitician] => 0
+    [crimePolitician] => 0
+    [adultsUnemployed] => 0
+    [crimeUnemployed] => 0
+    [adultsWorker] => 0
+    [crimeWorker] => 0
+    [adultsHomeless] => 695
+    [crimeHomeless] => 347
+)
+RAW CONTRIBUTIONS #8:
+Array
+(
+    [adultsUnemployed] => Array
+        (
+            [count] => 5
+            [birthRate] => 0.06
+            [contrib] => 0.3
+        )
+
+    [adultsWorker] => Array
+        (
+            [count] => 0
+            [birthRate] => 0.04
+            [contrib] => 0
+        )
+
+    [youngWorker] => Array
+        (
+            [count] => 727
+            [birthRate] => 0.03
+            [contrib] => 21.81
+        )
+
+    [youngStudent] => Array
+        (
+            [count] => 11
+            [birthRate] => 0.02
+            [contrib] => 0.22
+        )
+
+    [kidsStreet] => Array
+        (
+            [count] => 628
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+    [kidsStudent] => Array
+        (
+            [count] => 11
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+    [baby] => Array
+        (
+            [count] => 256
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+    [old] => Array
+        (
+            [count] => 10
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+)
+BIRTHS #8: rawEff=5
+IMM #8: imm=54
+EMI #8: emi=12
+DEATHS #8: Array
+(
+    [baby] => 3
+    [kidsStreet] => 4
+    [kidsStudent] => 0
+    [youngWorker] => 8
+    [youngStudent] => 0
+    [old] => 2
+    [adultsUnemployed] => 1
+    [adultsHomeless] => 20
+)
+
+AFTER CHANGES #8:
+Array
+(
+    [baby] => 262
+    [kidsStreet] => 632
+    [kidsStudent] => 11
+    [youngStudent] => 12
+    [youngWorker] => 731
+    [old] => 9
+    [adultsPolice] => 0
+    [crimePolice] => 0
+    [adultsFire] => 0
+    [crimeFire] => 0
+    [adultsHealth] => 0
+    [crimeHealth] => 0
+    [adultsSoldier] => 0
+    [crimeSoldier] => 0
+    [adultsGovernment] => 0
+    [crimeGovernment] => 0
+    [adultsPolitician] => 0
+    [crimePolitician] => 0
+    [adultsUnemployed] => 0
+    [crimeUnemployed] => 0
+    [adultsWorker] => 0
+    [crimeWorker] => 0
+    [adultsHomeless] => 697
+    [crimeHomeless] => 348
+)
+BEFORE #9
+Array
+(
+    [baby] => 262
+    [kidsStreet] => 632
+    [kidsStudent] => 11
+    [youngStudent] => 12
+    [youngWorker] => 731
+    [old] => 9
+    [adultsPolice] => 0
+    [crimePolice] => 0
+    [adultsFire] => 0
+    [crimeFire] => 0
+    [adultsHealth] => 0
+    [crimeHealth] => 0
+    [adultsSoldier] => 0
+    [crimeSoldier] => 0
+    [adultsGovernment] => 0
+    [crimeGovernment] => 0
+    [adultsPolitician] => 0
+    [crimePolitician] => 0
+    [adultsUnemployed] => 0
+    [crimeUnemployed] => 0
+    [adultsWorker] => 0
+    [crimeWorker] => 0
+    [adultsHomeless] => 697
+    [crimeHomeless] => 348
+)
+RAW CONTRIBUTIONS #9:
+Array
+(
+    [adultsUnemployed] => Array
+        (
+            [count] => 5
+            [birthRate] => 0.06
+            [contrib] => 0.3
+        )
+
+    [adultsWorker] => Array
+        (
+            [count] => 0
+            [birthRate] => 0.04
+            [contrib] => 0
+        )
+
+    [youngWorker] => Array
+        (
+            [count] => 731
+            [birthRate] => 0.03
+            [contrib] => 21.93
+        )
+
+    [youngStudent] => Array
+        (
+            [count] => 13
+            [birthRate] => 0.02
+            [contrib] => 0.26
+        )
+
+    [kidsStreet] => Array
+        (
+            [count] => 632
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+    [kidsStudent] => Array
+        (
+            [count] => 10
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+    [baby] => Array
+        (
+            [count] => 256
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+    [old] => Array
+        (
+            [count] => 10
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+)
+BIRTHS #9: rawEff=5
+IMM #9: imm=54
+EMI #9: emi=13
+DEATHS #9: Array
+(
+    [baby] => 2
+    [kidsStreet] => 4
+    [kidsStudent] => 0
+    [youngWorker] => 7
+    [youngStudent] => 1
+    [old] => 2
+    [adultsUnemployed] => 1
+    [adultsHomeless] => 19
+)
+
+AFTER CHANGES #9:
+Array
+(
+    [baby] => 263
+    [kidsStreet] => 638
+    [kidsStudent] => 10
+    [youngStudent] => 12
+    [youngWorker] => 736
+    [old] => 8
+    [adultsPolice] => 0
+    [crimePolice] => 0
+    [adultsFire] => 0
+    [crimeFire] => 0
+    [adultsHealth] => 0
+    [crimeHealth] => 0
+    [adultsSoldier] => 0
+    [crimeSoldier] => 0
+    [adultsGovernment] => 0
+    [crimeGovernment] => 0
+    [adultsPolitician] => 0
+    [crimePolitician] => 0
+    [adultsUnemployed] => 0
+    [crimeUnemployed] => 0
+    [adultsWorker] => 0
+    [crimeWorker] => 0
+    [adultsHomeless] => 699
+    [crimeHomeless] => 349
+)
+BEFORE #10
+Array
+(
+    [baby] => 263
+    [kidsStreet] => 638
+    [kidsStudent] => 10
+    [youngStudent] => 12
+    [youngWorker] => 736
+    [old] => 8
+    [adultsPolice] => 0
+    [crimePolice] => 0
+    [adultsFire] => 0
+    [crimeFire] => 0
+    [adultsHealth] => 0
+    [crimeHealth] => 0
+    [adultsSoldier] => 0
+    [crimeSoldier] => 0
+    [adultsGovernment] => 0
+    [crimeGovernment] => 0
+    [adultsPolitician] => 0
+    [crimePolitician] => 0
+    [adultsUnemployed] => 0
+    [crimeUnemployed] => 0
+    [adultsWorker] => 0
+    [crimeWorker] => 0
+    [adultsHomeless] => 699
+    [crimeHomeless] => 349
+)
+RAW CONTRIBUTIONS #10:
+Array
+(
+    [adultsUnemployed] => Array
+        (
+            [count] => 5
+            [birthRate] => 0.06
+            [contrib] => 0.3
+        )
+
+    [adultsWorker] => Array
+        (
+            [count] => 0
+            [birthRate] => 0.04
+            [contrib] => 0
+        )
+
+    [youngWorker] => Array
+        (
+            [count] => 737
+            [birthRate] => 0.03
+            [contrib] => 22.11
+        )
+
+    [youngStudent] => Array
+        (
+            [count] => 12
+            [birthRate] => 0.02
+            [contrib] => 0.24
+        )
+
+    [kidsStreet] => Array
+        (
+            [count] => 636
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+    [kidsStudent] => Array
+        (
+            [count] => 10
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+    [baby] => Array
+        (
+            [count] => 258
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+    [old] => Array
+        (
+            [count] => 10
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+)
+BIRTHS #10: rawEff=5
+IMM #10: imm=55
+EMI #10: emi=13
+DEATHS #10: Array
+(
+    [baby] => 3
+    [kidsStreet] => 3
+    [kidsStudent] => 1
+    [youngWorker] => 9
+    [youngStudent] => 0
+    [old] => 2
+    [adultsUnemployed] => 1
+    [adultsHomeless] => 20
+)
+
+AFTER CHANGES #10:
+Array
+(
+    [baby] => 264
+    [kidsStreet] => 641
+    [kidsStudent] => 10
+    [youngStudent] => 13
+    [youngWorker] => 740
+    [old] => 9
+    [adultsPolice] => 0
+    [crimePolice] => 0
+    [adultsFire] => 0
+    [crimeFire] => 0
+    [adultsHealth] => 0
+    [crimeHealth] => 0
+    [adultsSoldier] => 0
+    [crimeSoldier] => 0
+    [adultsGovernment] => 0
+    [crimeGovernment] => 0
+    [adultsPolitician] => 0
+    [crimePolitician] => 0
+    [adultsUnemployed] => 0
+    [crimeUnemployed] => 0
+    [adultsWorker] => 0
+    [crimeWorker] => 0
+    [adultsHomeless] => 699
+    [crimeHomeless] => 349
+)
+BEFORE #11
+Array
+(
+    [baby] => 264
+    [kidsStreet] => 641
+    [kidsStudent] => 10
+    [youngStudent] => 13
+    [youngWorker] => 740
+    [old] => 9
+    [adultsPolice] => 0
+    [crimePolice] => 0
+    [adultsFire] => 0
+    [crimeFire] => 0
+    [adultsHealth] => 0
+    [crimeHealth] => 0
+    [adultsSoldier] => 0
+    [crimeSoldier] => 0
+    [adultsGovernment] => 0
+    [crimeGovernment] => 0
+    [adultsPolitician] => 0
+    [crimePolitician] => 0
+    [adultsUnemployed] => 0
+    [crimeUnemployed] => 0
+    [adultsWorker] => 0
+    [crimeWorker] => 0
+    [adultsHomeless] => 699
+    [crimeHomeless] => 349
+)
+RAW CONTRIBUTIONS #11:
+Array
+(
+    [adultsUnemployed] => Array
+        (
+            [count] => 5
+            [birthRate] => 0.06
+            [contrib] => 0.3
+        )
+
+    [adultsWorker] => Array
+        (
+            [count] => 0
+            [birthRate] => 0.04
+            [contrib] => 0
+        )
+
+    [youngWorker] => Array
+        (
+            [count] => 742
+            [birthRate] => 0.03
+            [contrib] => 22.26
+        )
+
+    [youngStudent] => Array
+        (
+            [count] => 12
+            [birthRate] => 0.02
+            [contrib] => 0.24
+        )
+
+    [kidsStreet] => Array
+        (
+            [count] => 639
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+    [kidsStudent] => Array
+        (
+            [count] => 10
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+    [baby] => Array
+        (
+            [count] => 259
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+    [old] => Array
+        (
+            [count] => 11
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+)
+BIRTHS #11: rawEff=6
+IMM #11: imm=55
+EMI #11: emi=13
+DEATHS #11: Array
+(
+    [baby] => 3
+    [kidsStreet] => 4
+    [kidsStudent] => 0
+    [youngWorker] => 9
+    [youngStudent] => 0
+    [old] => 2
+    [adultsUnemployed] => 1
+    [adultsHomeless] => 20
+)
+
+AFTER CHANGES #11:
+Array
+(
+    [baby] => 265
+    [kidsStreet] => 644
+    [kidsStudent] => 10
+    [youngStudent] => 12
+    [youngWorker] => 745
+    [old] => 10
+    [adultsPolice] => 0
+    [crimePolice] => 0
+    [adultsFire] => 0
+    [crimeFire] => 0
+    [adultsHealth] => 0
+    [crimeHealth] => 0
+    [adultsSoldier] => 0
+    [crimeSoldier] => 0
+    [adultsGovernment] => 0
+    [crimeGovernment] => 0
+    [adultsPolitician] => 0
+    [crimePolitician] => 0
+    [adultsUnemployed] => 0
+    [crimeUnemployed] => 0
+    [adultsWorker] => 0
+    [crimeWorker] => 0
+    [adultsHomeless] => 701
+    [crimeHomeless] => 350
+)
+BEFORE #12
+Array
+(
+    [baby] => 265
+    [kidsStreet] => 644
+    [kidsStudent] => 10
+    [youngStudent] => 12
+    [youngWorker] => 745
+    [old] => 10
+    [adultsPolice] => 0
+    [crimePolice] => 0
+    [adultsFire] => 0
+    [crimeFire] => 0
+    [adultsHealth] => 0
+    [crimeHealth] => 0
+    [adultsSoldier] => 0
+    [crimeSoldier] => 0
+    [adultsGovernment] => 0
+    [crimeGovernment] => 0
+    [adultsPolitician] => 0
+    [crimePolitician] => 0
+    [adultsUnemployed] => 0
+    [crimeUnemployed] => 0
+    [adultsWorker] => 0
+    [crimeWorker] => 0
+    [adultsHomeless] => 701
+    [crimeHomeless] => 350
+)
+RAW CONTRIBUTIONS #12:
+Array
+(
+    [adultsUnemployed] => Array
+        (
+            [count] => 5
+            [birthRate] => 0.06
+            [contrib] => 0.3
+        )
+
+    [adultsWorker] => Array
+        (
+            [count] => 0
+            [birthRate] => 0.04
+            [contrib] => 0
+        )
+
+    [youngWorker] => Array
+        (
+            [count] => 746
+            [birthRate] => 0.03
+            [contrib] => 22.38
+        )
+
+    [youngStudent] => Array
+        (
+            [count] => 12
+            [birthRate] => 0.02
+            [contrib] => 0.24
+        )
+
+    [kidsStreet] => Array
+        (
+            [count] => 643
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+    [kidsStudent] => Array
+        (
+            [count] => 10
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+    [baby] => Array
+        (
+            [count] => 259
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+    [old] => Array
+        (
+            [count] => 11
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+)
+BIRTHS #12: rawEff=5
+IMM #12: imm=55
+EMI #12: emi=13
+DEATHS #12: Array
+(
+    [baby] => 3
+    [kidsStreet] => 3
+    [kidsStudent] => 1
+    [youngWorker] => 9
+    [youngStudent] => 0
+    [old] => 2
+    [adultsUnemployed] => 1
+    [adultsHomeless] => 21
+)
+
+AFTER CHANGES #12:
+Array
+(
+    [baby] => 265
+    [kidsStreet] => 648
+    [kidsStudent] => 10
+    [youngStudent] => 12
+    [youngWorker] => 748
+    [old] => 10
+    [adultsPolice] => 0
+    [crimePolice] => 0
+    [adultsFire] => 0
+    [crimeFire] => 0
+    [adultsHealth] => 0
+    [crimeHealth] => 0
+    [adultsSoldier] => 0
+    [crimeSoldier] => 0
+    [adultsGovernment] => 0
+    [crimeGovernment] => 0
+    [adultsPolitician] => 0
+    [crimePolitician] => 0
+    [adultsUnemployed] => 0
+    [crimeUnemployed] => 0
+    [adultsWorker] => 0
+    [crimeWorker] => 0
+    [adultsHomeless] => 702
+    [crimeHomeless] => 351
+)
+BEFORE #13
+Array
+(
+    [baby] => 265
+    [kidsStreet] => 648
+    [kidsStudent] => 10
+    [youngStudent] => 12
+    [youngWorker] => 748
+    [old] => 10
+    [adultsPolice] => 0
+    [crimePolice] => 0
+    [adultsFire] => 0
+    [crimeFire] => 0
+    [adultsHealth] => 0
+    [crimeHealth] => 0
+    [adultsSoldier] => 0
+    [crimeSoldier] => 0
+    [adultsGovernment] => 0
+    [crimeGovernment] => 0
+    [adultsPolitician] => 0
+    [crimePolitician] => 0
+    [adultsUnemployed] => 0
+    [crimeUnemployed] => 0
+    [adultsWorker] => 0
+    [crimeWorker] => 0
+    [adultsHomeless] => 702
+    [crimeHomeless] => 351
+)
+RAW CONTRIBUTIONS #13:
+Array
+(
+    [adultsUnemployed] => Array
+        (
+            [count] => 6
+            [birthRate] => 0.06
+            [contrib] => 0.36
+        )
+
+    [adultsWorker] => Array
+        (
+            [count] => 0
+            [birthRate] => 0.04
+            [contrib] => 0
+        )
+
+    [youngWorker] => Array
+        (
+            [count] => 747
+            [birthRate] => 0.03
+            [contrib] => 22.41
+        )
+
+    [youngStudent] => Array
+        (
+            [count] => 13
+            [birthRate] => 0.02
+            [contrib] => 0.26
+        )
+
+    [kidsStreet] => Array
+        (
+            [count] => 648
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+    [kidsStudent] => Array
+        (
+            [count] => 9
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+    [baby] => Array
+        (
+            [count] => 259
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+    [old] => Array
+        (
+            [count] => 12
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+)
+BIRTHS #13: rawEff=5
+IMM #13: imm=55
+EMI #13: emi=13
+DEATHS #13: Array
+(
+    [baby] => 3
+    [kidsStreet] => 3
+    [kidsStudent] => 0
+    [youngWorker] => 8
+    [youngStudent] => 0
+    [old] => 2
+    [adultsUnemployed] => 1
+    [adultsHomeless] => 20
+)
+
+AFTER CHANGES #13:
+Array
+(
+    [baby] => 265
+    [kidsStreet] => 654
+    [kidsStudent] => 8
+    [youngStudent] => 13
+    [youngWorker] => 750
+    [old] => 11
+    [adultsPolice] => 0
+    [crimePolice] => 0
+    [adultsFire] => 0
+    [crimeFire] => 0
+    [adultsHealth] => 0
+    [crimeHealth] => 0
+    [adultsSoldier] => 0
+    [crimeSoldier] => 0
+    [adultsGovernment] => 0
+    [crimeGovernment] => 0
+    [adultsPolitician] => 0
+    [crimePolitician] => 0
+    [adultsUnemployed] => 0
+    [crimeUnemployed] => 0
+    [adultsWorker] => 0
+    [crimeWorker] => 0
+    [adultsHomeless] => 704
+    [crimeHomeless] => 352
+)
+BEFORE #14
+Array
+(
+    [baby] => 265
+    [kidsStreet] => 654
+    [kidsStudent] => 8
+    [youngStudent] => 13
+    [youngWorker] => 750
+    [old] => 11
+    [adultsPolice] => 0
+    [crimePolice] => 0
+    [adultsFire] => 0
+    [crimeFire] => 0
+    [adultsHealth] => 0
+    [crimeHealth] => 0
+    [adultsSoldier] => 0
+    [crimeSoldier] => 0
+    [adultsGovernment] => 0
+    [crimeGovernment] => 0
+    [adultsPolitician] => 0
+    [crimePolitician] => 0
+    [adultsUnemployed] => 0
+    [crimeUnemployed] => 0
+    [adultsWorker] => 0
+    [crimeWorker] => 0
+    [adultsHomeless] => 704
+    [crimeHomeless] => 352
+)
+RAW CONTRIBUTIONS #14:
+Array
+(
+    [adultsUnemployed] => Array
+        (
+            [count] => 5
+            [birthRate] => 0.06
+            [contrib] => 0.3
+        )
+
+    [adultsWorker] => Array
+        (
+            [count] => 0
+            [birthRate] => 0.04
+            [contrib] => 0
+        )
+
+    [youngWorker] => Array
+        (
+            [count] => 751
+            [birthRate] => 0.03
+            [contrib] => 22.53
+        )
+
+    [youngStudent] => Array
+        (
+            [count] => 13
+            [birthRate] => 0.02
+            [contrib] => 0.26
+        )
+
+    [kidsStreet] => Array
+        (
+            [count] => 652
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+    [kidsStudent] => Array
+        (
+            [count] => 8
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+    [baby] => Array
+        (
+            [count] => 260
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+    [old] => Array
+        (
+            [count] => 13
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+)
+BIRTHS #14: rawEff=6
+IMM #14: imm=56
+EMI #14: emi=13
+DEATHS #14: Array
+(
+    [baby] => 3
+    [kidsStreet] => 4
+    [kidsStudent] => 0
+    [youngWorker] => 9
+    [youngStudent] => 0
+    [old] => 3
+    [adultsUnemployed] => 1
+    [adultsHomeless] => 20
+)
+
+AFTER CHANGES #14:
+Array
+(
+    [baby] => 267
+    [kidsStreet] => 658
+    [kidsStudent] => 8
+    [youngStudent] => 13
+    [youngWorker] => 755
+    [old] => 12
+    [adultsPolice] => 0
+    [crimePolice] => 0
+    [adultsFire] => 0
+    [crimeFire] => 0
+    [adultsHealth] => 0
+    [crimeHealth] => 0
+    [adultsSoldier] => 0
+    [crimeSoldier] => 0
+    [adultsGovernment] => 0
+    [crimeGovernment] => 0
+    [adultsPolitician] => 0
+    [crimePolitician] => 0
+    [adultsUnemployed] => 0
+    [crimeUnemployed] => 0
+    [adultsWorker] => 0
+    [crimeWorker] => 0
+    [adultsHomeless] => 704
+    [crimeHomeless] => 352
+)
+BEFORE #15
+Array
+(
+    [baby] => 267
+    [kidsStreet] => 658
+    [kidsStudent] => 8
+    [youngStudent] => 13
+    [youngWorker] => 755
+    [old] => 12
+    [adultsPolice] => 0
+    [crimePolice] => 0
+    [adultsFire] => 0
+    [crimeFire] => 0
+    [adultsHealth] => 0
+    [crimeHealth] => 0
+    [adultsSoldier] => 0
+    [crimeSoldier] => 0
+    [adultsGovernment] => 0
+    [crimeGovernment] => 0
+    [adultsPolitician] => 0
+    [crimePolitician] => 0
+    [adultsUnemployed] => 0
+    [crimeUnemployed] => 0
+    [adultsWorker] => 0
+    [crimeWorker] => 0
+    [adultsHomeless] => 704
+    [crimeHomeless] => 352
+)
+RAW CONTRIBUTIONS #15:
+Array
+(
+    [adultsUnemployed] => Array
+        (
+            [count] => 5
+            [birthRate] => 0.06
+            [contrib] => 0.3
+        )
+
+    [adultsWorker] => Array
+        (
+            [count] => 0
+            [birthRate] => 0.04
+            [contrib] => 0
+        )
+
+    [youngWorker] => Array
+        (
+            [count] => 756
+            [birthRate] => 0.03
+            [contrib] => 22.68
+        )
+
+    [youngStudent] => Array
+        (
+            [count] => 13
+            [birthRate] => 0.02
+            [contrib] => 0.26
+        )
+
+    [kidsStreet] => Array
+        (
+            [count] => 657
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+    [kidsStudent] => Array
+        (
+            [count] => 8
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+    [baby] => Array
+        (
+            [count] => 261
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+    [old] => Array
+        (
+            [count] => 13
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+)
+BIRTHS #15: rawEff=6
+IMM #15: imm=55
+EMI #15: emi=14
+DEATHS #15: Array
+(
+    [baby] => 3
+    [kidsStreet] => 4
+    [kidsStudent] => 0
+    [youngWorker] => 9
+    [youngStudent] => 0
+    [old] => 3
+    [adultsUnemployed] => 1
+    [adultsHomeless] => 21
+)
+
+AFTER CHANGES #15:
+Array
+(
+    [baby] => 268
+    [kidsStreet] => 662
+    [kidsStudent] => 8
+    [youngStudent] => 14
+    [youngWorker] => 758
+    [old] => 11
+    [adultsPolice] => 0
+    [crimePolice] => 0
+    [adultsFire] => 0
+    [crimeFire] => 0
+    [adultsHealth] => 0
+    [crimeHealth] => 0
+    [adultsSoldier] => 0
+    [crimeSoldier] => 0
+    [adultsGovernment] => 0
+    [crimeGovernment] => 0
+    [adultsPolitician] => 0
+    [crimePolitician] => 0
+    [adultsUnemployed] => 0
+    [crimeUnemployed] => 0
+    [adultsWorker] => 0
+    [crimeWorker] => 0
+    [adultsHomeless] => 704
+    [crimeHomeless] => 352
+)
+BEFORE #16
+Array
+(
+    [baby] => 268
+    [kidsStreet] => 662
+    [kidsStudent] => 8
+    [youngStudent] => 14
+    [youngWorker] => 758
+    [old] => 11
+    [adultsPolice] => 0
+    [crimePolice] => 0
+    [adultsFire] => 0
+    [crimeFire] => 0
+    [adultsHealth] => 0
+    [crimeHealth] => 0
+    [adultsSoldier] => 0
+    [crimeSoldier] => 0
+    [adultsGovernment] => 0
+    [crimeGovernment] => 0
+    [adultsPolitician] => 0
+    [crimePolitician] => 0
+    [adultsUnemployed] => 0
+    [crimeUnemployed] => 0
+    [adultsWorker] => 0
+    [crimeWorker] => 0
+    [adultsHomeless] => 704
+    [crimeHomeless] => 352
+)
+RAW CONTRIBUTIONS #16:
+Array
+(
+    [adultsUnemployed] => Array
+        (
+            [count] => 5
+            [birthRate] => 0.06
+            [contrib] => 0.3
+        )
+
+    [adultsWorker] => Array
+        (
+            [count] => 0
+            [birthRate] => 0.04
+            [contrib] => 0
+        )
+
+    [youngWorker] => Array
+        (
+            [count] => 759
+            [birthRate] => 0.03
+            [contrib] => 22.77
+        )
+
+    [youngStudent] => Array
+        (
+            [count] => 14
+            [birthRate] => 0.02
+            [contrib] => 0.28
+        )
+
+    [kidsStreet] => Array
+        (
+            [count] => 660
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+    [kidsStudent] => Array
+        (
+            [count] => 8
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+    [baby] => Array
+        (
+            [count] => 263
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+    [old] => Array
+        (
+            [count] => 13
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+)
+BIRTHS #16: rawEff=5
+IMM #16: imm=55
+EMI #16: emi=13
+DEATHS #16: Array
+(
+    [baby] => 3
+    [kidsStreet] => 4
+    [kidsStudent] => 0
+    [youngWorker] => 9
+    [youngStudent] => 0
+    [old] => 3
+    [adultsUnemployed] => 1
+    [adultsHomeless] => 21
+)
+
+AFTER CHANGES #16:
+Array
+(
+    [baby] => 271
+    [kidsStreet] => 666
+    [kidsStudent] => 8
+    [youngStudent] => 14
+    [youngWorker] => 762
+    [old] => 11
+    [adultsPolice] => 0
+    [crimePolice] => 0
+    [adultsFire] => 0
+    [crimeFire] => 0
+    [adultsHealth] => 0
+    [crimeHealth] => 0
+    [adultsSoldier] => 0
+    [crimeSoldier] => 0
+    [adultsGovernment] => 0
+    [crimeGovernment] => 0
+    [adultsPolitician] => 0
+    [crimePolitician] => 0
+    [adultsUnemployed] => 0
+    [crimeUnemployed] => 0
+    [adultsWorker] => 0
+    [crimeWorker] => 0
+    [adultsHomeless] => 702
+    [crimeHomeless] => 351
+)
+BEFORE #17
+Array
+(
+    [baby] => 271
+    [kidsStreet] => 666
+    [kidsStudent] => 8
+    [youngStudent] => 14
+    [youngWorker] => 762
+    [old] => 11
+    [adultsPolice] => 0
+    [crimePolice] => 0
+    [adultsFire] => 0
+    [crimeFire] => 0
+    [adultsHealth] => 0
+    [crimeHealth] => 0
+    [adultsSoldier] => 0
+    [crimeSoldier] => 0
+    [adultsGovernment] => 0
+    [crimeGovernment] => 0
+    [adultsPolitician] => 0
+    [crimePolitician] => 0
+    [adultsUnemployed] => 0
+    [crimeUnemployed] => 0
+    [adultsWorker] => 0
+    [crimeWorker] => 0
+    [adultsHomeless] => 702
+    [crimeHomeless] => 351
+)
+RAW CONTRIBUTIONS #17:
+Array
+(
+    [adultsUnemployed] => Array
+        (
+            [count] => 6
+            [birthRate] => 0.06
+            [contrib] => 0.36
+        )
+
+    [adultsWorker] => Array
+        (
+            [count] => 0
+            [birthRate] => 0.04
+            [contrib] => 0
+        )
+
+    [youngWorker] => Array
+        (
+            [count] => 761
+            [birthRate] => 0.03
+            [contrib] => 22.83
+        )
+
+    [youngStudent] => Array
+        (
+            [count] => 15
+            [birthRate] => 0.02
+            [contrib] => 0.3
+        )
+
+    [kidsStreet] => Array
+        (
+            [count] => 666
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+    [kidsStudent] => Array
+        (
+            [count] => 7
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+    [baby] => Array
+        (
+            [count] => 265
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+    [old] => Array
+        (
+            [count] => 12
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+)
+BIRTHS #17: rawEff=5
+IMM #17: imm=56
+EMI #17: emi=13
+DEATHS #17: Array
+(
+    [baby] => 3
+    [kidsStreet] => 4
+    [kidsStudent] => 0
+    [youngWorker] => 8
+    [youngStudent] => 1
+    [old] => 2
+    [adultsUnemployed] => 1
+    [adultsHomeless] => 21
+)
+
+AFTER CHANGES #17:
+Array
+(
+    [baby] => 270
+    [kidsStreet] => 671
+    [kidsStudent] => 8
+    [youngStudent] => 14
+    [youngWorker] => 765
+    [old] => 11
+    [adultsPolice] => 0
+    [crimePolice] => 0
+    [adultsFire] => 0
+    [crimeFire] => 0
+    [adultsHealth] => 0
+    [crimeHealth] => 0
+    [adultsSoldier] => 0
+    [crimeSoldier] => 0
+    [adultsGovernment] => 0
+    [crimeGovernment] => 0
+    [adultsPolitician] => 0
+    [crimePolitician] => 0
+    [adultsUnemployed] => 0
+    [crimeUnemployed] => 0
+    [adultsWorker] => 0
+    [crimeWorker] => 0
+    [adultsHomeless] => 705
+    [crimeHomeless] => 352
+)
+BEFORE #18
+Array
+(
+    [baby] => 270
+    [kidsStreet] => 671
+    [kidsStudent] => 8
+    [youngStudent] => 14
+    [youngWorker] => 765
+    [old] => 11
+    [adultsPolice] => 0
+    [crimePolice] => 0
+    [adultsFire] => 0
+    [crimeFire] => 0
+    [adultsHealth] => 0
+    [crimeHealth] => 0
+    [adultsSoldier] => 0
+    [crimeSoldier] => 0
+    [adultsGovernment] => 0
+    [crimeGovernment] => 0
+    [adultsPolitician] => 0
+    [crimePolitician] => 0
+    [adultsUnemployed] => 0
+    [crimeUnemployed] => 0
+    [adultsWorker] => 0
+    [crimeWorker] => 0
+    [adultsHomeless] => 705
+    [crimeHomeless] => 352
+)
+RAW CONTRIBUTIONS #18:
+Array
+(
+    [adultsUnemployed] => Array
+        (
+            [count] => 6
+            [birthRate] => 0.06
+            [contrib] => 0.36
+        )
+
+    [adultsWorker] => Array
+        (
+            [count] => 0
+            [birthRate] => 0.04
+            [contrib] => 0
+        )
+
+    [youngWorker] => Array
+        (
+            [count] => 765
+            [birthRate] => 0.03
+            [contrib] => 22.95
+        )
+
+    [youngStudent] => Array
+        (
+            [count] => 15
+            [birthRate] => 0.02
+            [contrib] => 0.3
+        )
+
+    [kidsStreet] => Array
+        (
+            [count] => 669
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+    [kidsStudent] => Array
+        (
+            [count] => 7
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+    [baby] => Array
+        (
+            [count] => 265
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+    [old] => Array
+        (
+            [count] => 12
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+)
+BIRTHS #18: rawEff=5
+IMM #18: imm=56
+EMI #18: emi=13
+DEATHS #18: Array
+(
+    [baby] => 3
+    [kidsStreet] => 4
+    [kidsStudent] => 0
+    [youngWorker] => 9
+    [youngStudent] => 0
+    [old] => 3
+    [adultsUnemployed] => 1
+    [adultsHomeless] => 21
+)
+
+AFTER CHANGES #18:
+Array
+(
+    [baby] => 272
+    [kidsStreet] => 674
+    [kidsStudent] => 7
+    [youngStudent] => 14
+    [youngWorker] => 768
+    [old] => 10
+    [adultsPolice] => 0
+    [crimePolice] => 0
+    [adultsFire] => 0
+    [crimeFire] => 0
+    [adultsHealth] => 0
+    [crimeHealth] => 0
+    [adultsSoldier] => 0
+    [crimeSoldier] => 0
+    [adultsGovernment] => 0
+    [crimeGovernment] => 0
+    [adultsPolitician] => 0
+    [crimePolitician] => 0
+    [adultsUnemployed] => 0
+    [crimeUnemployed] => 0
+    [adultsWorker] => 0
+    [crimeWorker] => 0
+    [adultsHomeless] => 706
+    [crimeHomeless] => 353
+)
+BEFORE #19
+Array
+(
+    [baby] => 272
+    [kidsStreet] => 674
+    [kidsStudent] => 7
+    [youngStudent] => 14
+    [youngWorker] => 768
+    [old] => 10
+    [adultsPolice] => 0
+    [crimePolice] => 0
+    [adultsFire] => 0
+    [crimeFire] => 0
+    [adultsHealth] => 0
+    [crimeHealth] => 0
+    [adultsSoldier] => 0
+    [crimeSoldier] => 0
+    [adultsGovernment] => 0
+    [crimeGovernment] => 0
+    [adultsPolitician] => 0
+    [crimePolitician] => 0
+    [adultsUnemployed] => 0
+    [crimeUnemployed] => 0
+    [adultsWorker] => 0
+    [crimeWorker] => 0
+    [adultsHomeless] => 706
+    [crimeHomeless] => 353
+)
+RAW CONTRIBUTIONS #19:
+Array
+(
+    [adultsUnemployed] => Array
+        (
+            [count] => 6
+            [birthRate] => 0.06
+            [contrib] => 0.36
+        )
+
+    [adultsWorker] => Array
+        (
+            [count] => 0
+            [birthRate] => 0.04
+            [contrib] => 0
+        )
+
+    [youngWorker] => Array
+        (
+            [count] => 768
+            [birthRate] => 0.03
+            [contrib] => 23.04
+        )
+
+    [youngStudent] => Array
+        (
+            [count] => 14
+            [birthRate] => 0.02
+            [contrib] => 0.28
+        )
+
+    [kidsStreet] => Array
+        (
+            [count] => 673
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+    [kidsStudent] => Array
+        (
+            [count] => 7
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+    [baby] => Array
+        (
+            [count] => 266
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+    [old] => Array
+        (
+            [count] => 12
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+)
+BIRTHS #19: rawEff=6
+IMM #19: imm=56
+EMI #19: emi=14
+DEATHS #19: Array
+(
+    [baby] => 3
+    [kidsStreet] => 4
+    [kidsStudent] => 0
+    [youngWorker] => 9
+    [youngStudent] => 0
+    [old] => 3
+    [adultsUnemployed] => 1
+    [adultsHomeless] => 22
+)
+
+AFTER CHANGES #19:
+Array
+(
+    [baby] => 273
+    [kidsStreet] => 678
+    [kidsStudent] => 7
+    [youngStudent] => 14
+    [youngWorker] => 772
+    [old] => 11
+    [adultsPolice] => 0
+    [crimePolice] => 0
+    [adultsFire] => 0
+    [crimeFire] => 0
+    [adultsHealth] => 0
+    [crimeHealth] => 0
+    [adultsSoldier] => 0
+    [crimeSoldier] => 0
+    [adultsGovernment] => 0
+    [crimeGovernment] => 0
+    [adultsPolitician] => 0
+    [crimePolitician] => 0
+    [adultsUnemployed] => 0
+    [crimeUnemployed] => 0
+    [adultsWorker] => 0
+    [crimeWorker] => 0
+    [adultsHomeless] => 703
+    [crimeHomeless] => 351
+)
+BEFORE #20
+Array
+(
+    [baby] => 273
+    [kidsStreet] => 678
+    [kidsStudent] => 7
+    [youngStudent] => 14
+    [youngWorker] => 772
+    [old] => 11
+    [adultsPolice] => 0
+    [crimePolice] => 0
+    [adultsFire] => 0
+    [crimeFire] => 0
+    [adultsHealth] => 0
+    [crimeHealth] => 0
+    [adultsSoldier] => 0
+    [crimeSoldier] => 0
+    [adultsGovernment] => 0
+    [crimeGovernment] => 0
+    [adultsPolitician] => 0
+    [crimePolitician] => 0
+    [adultsUnemployed] => 0
+    [crimeUnemployed] => 0
+    [adultsWorker] => 0
+    [crimeWorker] => 0
+    [adultsHomeless] => 703
+    [crimeHomeless] => 351
+)
+RAW CONTRIBUTIONS #20:
+Array
+(
+    [adultsUnemployed] => Array
+        (
+            [count] => 6
+            [birthRate] => 0.06
+            [contrib] => 0.36
+        )
+
+    [adultsWorker] => Array
+        (
+            [count] => 0
+            [birthRate] => 0.04
+            [contrib] => 0
+        )
+
+    [youngWorker] => Array
+        (
+            [count] => 772
+            [birthRate] => 0.03
+            [contrib] => 23.16
+        )
+
+    [youngStudent] => Array
+        (
+            [count] => 14
+            [birthRate] => 0.02
+            [contrib] => 0.28
+        )
+
+    [kidsStreet] => Array
+        (
+            [count] => 677
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+    [kidsStudent] => Array
+        (
+            [count] => 7
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+    [baby] => Array
+        (
+            [count] => 267
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+    [old] => Array
+        (
+            [count] => 13
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+)
+BIRTHS #20: rawEff=5
+IMM #20: imm=57
+EMI #20: emi=13
+DEATHS #20: Array
+(
+    [baby] => 4
+    [kidsStreet] => 4
+    [kidsStudent] => 0
+    [youngWorker] => 10
+    [youngStudent] => 0
+    [old] => 3
+    [adultsUnemployed] => 1
+    [adultsHomeless] => 22
+)
+
+AFTER CHANGES #20:
+Array
+(
+    [baby] => 273
+    [kidsStreet] => 683
+    [kidsStudent] => 7
+    [youngStudent] => 14
+    [youngWorker] => 775
+    [old] => 11
+    [adultsPolice] => 0
+    [crimePolice] => 0
+    [adultsFire] => 0
+    [crimeFire] => 0
+    [adultsHealth] => 0
+    [crimeHealth] => 0
+    [adultsSoldier] => 0
+    [crimeSoldier] => 0
+    [adultsGovernment] => 0
+    [crimeGovernment] => 0
+    [adultsPolitician] => 0
+    [crimePolitician] => 0
+    [adultsUnemployed] => 0
+    [crimeUnemployed] => 0
+    [adultsWorker] => 0
+    [crimeWorker] => 0
+    [adultsHomeless] => 702
+    [crimeHomeless] => 351
+)
+BEFORE #21
+Array
+(
+    [baby] => 273
+    [kidsStreet] => 683
+    [kidsStudent] => 7
+    [youngStudent] => 14
+    [youngWorker] => 775
+    [old] => 11
+    [adultsPolice] => 0
+    [crimePolice] => 0
+    [adultsFire] => 0
+    [crimeFire] => 0
+    [adultsHealth] => 0
+    [crimeHealth] => 0
+    [adultsSoldier] => 0
+    [crimeSoldier] => 0
+    [adultsGovernment] => 0
+    [crimeGovernment] => 0
+    [adultsPolitician] => 0
+    [crimePolitician] => 0
+    [adultsUnemployed] => 0
+    [crimeUnemployed] => 0
+    [adultsWorker] => 0
+    [crimeWorker] => 0
+    [adultsHomeless] => 702
+    [crimeHomeless] => 351
+)
+RAW CONTRIBUTIONS #21:
+Array
+(
+    [adultsUnemployed] => Array
+        (
+            [count] => 5
+            [birthRate] => 0.06
+            [contrib] => 0.3
+        )
+
+    [adultsWorker] => Array
+        (
+            [count] => 0
+            [birthRate] => 0.04
+            [contrib] => 0
+        )
+
+    [youngWorker] => Array
+        (
+            [count] => 777
+            [birthRate] => 0.03
+            [contrib] => 23.31
+        )
+
+    [youngStudent] => Array
+        (
+            [count] => 14
+            [birthRate] => 0.02
+            [contrib] => 0.28
+        )
+
+    [kidsStreet] => Array
+        (
+            [count] => 680
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+    [kidsStudent] => Array
+        (
+            [count] => 7
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+    [baby] => Array
+        (
+            [count] => 268
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+    [old] => Array
+        (
+            [count] => 12
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+)
+BIRTHS #21: rawEff=5
+IMM #21: imm=56
+EMI #21: emi=14
+DEATHS #21: Array
+(
+    [baby] => 3
+    [kidsStreet] => 4
+    [kidsStudent] => 0
+    [youngWorker] => 10
+    [youngStudent] => 0
+    [old] => 3
+    [adultsUnemployed] => 1
+    [adultsHomeless] => 22
+)
+
+AFTER CHANGES #21:
+Array
+(
+    [baby] => 274
+    [kidsStreet] => 685
+    [kidsStudent] => 7
+    [youngStudent] => 14
+    [youngWorker] => 779
+    [old] => 10
+    [adultsPolice] => 0
+    [crimePolice] => 0
+    [adultsFire] => 0
+    [crimeFire] => 0
+    [adultsHealth] => 0
+    [crimeHealth] => 0
+    [adultsSoldier] => 0
+    [crimeSoldier] => 0
+    [adultsGovernment] => 0
+    [crimeGovernment] => 0
+    [adultsPolitician] => 0
+    [crimePolitician] => 0
+    [adultsUnemployed] => 0
+    [crimeUnemployed] => 0
+    [adultsWorker] => 0
+    [crimeWorker] => 0
+    [adultsHomeless] => 702
+    [crimeHomeless] => 351
+)
+BEFORE #22
+Array
+(
+    [baby] => 274
+    [kidsStreet] => 685
+    [kidsStudent] => 7
+    [youngStudent] => 14
+    [youngWorker] => 779
+    [old] => 10
+    [adultsPolice] => 0
+    [crimePolice] => 0
+    [adultsFire] => 0
+    [crimeFire] => 0
+    [adultsHealth] => 0
+    [crimeHealth] => 0
+    [adultsSoldier] => 0
+    [crimeSoldier] => 0
+    [adultsGovernment] => 0
+    [crimeGovernment] => 0
+    [adultsPolitician] => 0
+    [crimePolitician] => 0
+    [adultsUnemployed] => 0
+    [crimeUnemployed] => 0
+    [adultsWorker] => 0
+    [crimeWorker] => 0
+    [adultsHomeless] => 702
+    [crimeHomeless] => 351
+)
+RAW CONTRIBUTIONS #22:
+Array
+(
+    [adultsUnemployed] => Array
+        (
+            [count] => 6
+            [birthRate] => 0.06
+            [contrib] => 0.36
+        )
+
+    [adultsWorker] => Array
+        (
+            [count] => 0
+            [birthRate] => 0.04
+            [contrib] => 0
+        )
+
+    [youngWorker] => Array
+        (
+            [count] => 780
+            [birthRate] => 0.03
+            [contrib] => 23.4
+        )
+
+    [youngStudent] => Array
+        (
+            [count] => 14
+            [birthRate] => 0.02
+            [contrib] => 0.28
+        )
+
+    [kidsStreet] => Array
+        (
+            [count] => 682
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+    [kidsStudent] => Array
+        (
+            [count] => 7
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+    [baby] => Array
+        (
+            [count] => 269
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+    [old] => Array
+        (
+            [count] => 12
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+)
+BIRTHS #22: rawEff=5
+IMM #22: imm=56
+EMI #22: emi=13
+DEATHS #22: Array
+(
+    [baby] => 3
+    [kidsStreet] => 3
+    [kidsStudent] => 1
+    [youngWorker] => 9
+    [youngStudent] => 0
+    [old] => 3
+    [adultsUnemployed] => 1
+    [adultsHomeless] => 22
+)
+
+AFTER CHANGES #22:
+Array
+(
+    [baby] => 275
+    [kidsStreet] => 688
+    [kidsStudent] => 6
+    [youngStudent] => 14
+    [youngWorker] => 784
+    [old] => 10
+    [adultsPolice] => 0
+    [crimePolice] => 0
+    [adultsFire] => 0
+    [crimeFire] => 0
+    [adultsHealth] => 0
+    [crimeHealth] => 0
+    [adultsSoldier] => 0
+    [crimeSoldier] => 0
+    [adultsGovernment] => 0
+    [crimeGovernment] => 0
+    [adultsPolitician] => 0
+    [crimePolitician] => 0
+    [adultsUnemployed] => 0
+    [crimeUnemployed] => 0
+    [adultsWorker] => 0
+    [crimeWorker] => 0
+    [adultsHomeless] => 702
+    [crimeHomeless] => 351
+)
+BEFORE #23
+Array
+(
+    [baby] => 275
+    [kidsStreet] => 688
+    [kidsStudent] => 6
+    [youngStudent] => 14
+    [youngWorker] => 784
+    [old] => 10
+    [adultsPolice] => 0
+    [crimePolice] => 0
+    [adultsFire] => 0
+    [crimeFire] => 0
+    [adultsHealth] => 0
+    [crimeHealth] => 0
+    [adultsSoldier] => 0
+    [crimeSoldier] => 0
+    [adultsGovernment] => 0
+    [crimeGovernment] => 0
+    [adultsPolitician] => 0
+    [crimePolitician] => 0
+    [adultsUnemployed] => 0
+    [crimeUnemployed] => 0
+    [adultsWorker] => 0
+    [crimeWorker] => 0
+    [adultsHomeless] => 702
+    [crimeHomeless] => 351
+)
+RAW CONTRIBUTIONS #23:
+Array
+(
+    [adultsUnemployed] => Array
+        (
+            [count] => 5
+            [birthRate] => 0.06
+            [contrib] => 0.3
+        )
+
+    [adultsWorker] => Array
+        (
+            [count] => 0
+            [birthRate] => 0.04
+            [contrib] => 0
+        )
+
+    [youngWorker] => Array
+        (
+            [count] => 785
+            [birthRate] => 0.03
+            [contrib] => 23.55
+        )
+
+    [youngStudent] => Array
+        (
+            [count] => 14
+            [birthRate] => 0.02
+            [contrib] => 0.28
+        )
+
+    [kidsStreet] => Array
+        (
+            [count] => 687
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+    [kidsStudent] => Array
+        (
+            [count] => 6
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+    [baby] => Array
+        (
+            [count] => 269
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+    [old] => Array
+        (
+            [count] => 12
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+)
+BIRTHS #23: rawEff=6
+IMM #23: imm=56
+EMI #23: emi=14
+DEATHS #23: Array
+(
+    [baby] => 4
+    [kidsStreet] => 3
+    [kidsStudent] => 1
+    [youngWorker] => 10
+    [youngStudent] => 0
+    [old] => 3
+    [adultsUnemployed] => 1
+    [adultsHomeless] => 22
+)
+
+AFTER CHANGES #23:
+Array
+(
+    [baby] => 276
+    [kidsStreet] => 693
+    [kidsStudent] => 5
+    [youngStudent] => 14
+    [youngWorker] => 787
+    [old] => 10
+    [adultsPolice] => 0
+    [crimePolice] => 0
+    [adultsFire] => 0
+    [crimeFire] => 0
+    [adultsHealth] => 0
+    [crimeHealth] => 0
+    [adultsSoldier] => 0
+    [crimeSoldier] => 0
+    [adultsGovernment] => 0
+    [crimeGovernment] => 0
+    [adultsPolitician] => 0
+    [crimePolitician] => 0
+    [adultsUnemployed] => 0
+    [crimeUnemployed] => 0
+    [adultsWorker] => 0
+    [crimeWorker] => 0
+    [adultsHomeless] => 699
+    [crimeHomeless] => 349
+)
+BEFORE #24
+Array
+(
+    [baby] => 276
+    [kidsStreet] => 693
+    [kidsStudent] => 5
+    [youngStudent] => 14
+    [youngWorker] => 787
+    [old] => 10
+    [adultsPolice] => 0
+    [crimePolice] => 0
+    [adultsFire] => 0
+    [crimeFire] => 0
+    [adultsHealth] => 0
+    [crimeHealth] => 0
+    [adultsSoldier] => 0
+    [crimeSoldier] => 0
+    [adultsGovernment] => 0
+    [crimeGovernment] => 0
+    [adultsPolitician] => 0
+    [crimePolitician] => 0
+    [adultsUnemployed] => 0
+    [crimeUnemployed] => 0
+    [adultsWorker] => 0
+    [crimeWorker] => 0
+    [adultsHomeless] => 699
+    [crimeHomeless] => 349
+)
+RAW CONTRIBUTIONS #24:
+Array
+(
+    [adultsUnemployed] => Array
+        (
+            [count] => 6
+            [birthRate] => 0.06
+            [contrib] => 0.36
+        )
+
+    [adultsWorker] => Array
+        (
+            [count] => 0
+            [birthRate] => 0.04
+            [contrib] => 0
+        )
+
+    [youngWorker] => Array
+        (
+            [count] => 788
+            [birthRate] => 0.03
+            [contrib] => 23.64
+        )
+
+    [youngStudent] => Array
+        (
+            [count] => 14
+            [birthRate] => 0.02
+            [contrib] => 0.28
+        )
+
+    [kidsStreet] => Array
+        (
+            [count] => 691
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+    [kidsStudent] => Array
+        (
+            [count] => 5
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+    [baby] => Array
+        (
+            [count] => 270
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+    [old] => Array
+        (
+            [count] => 11
+            [birthRate] => 0
+            [contrib] => 0
+        )
+
+)
+BIRTHS #24: rawEff=6
+IMM #24: imm=57
+EMI #24: emi=14
+DEATHS #24: Array
+(
+    [baby] => 3
+    [kidsStreet] => 4
+    [kidsStudent] => 0
+    [youngWorker] => 10
+    [youngStudent] => 0
+    [old] => 3
+    [adultsUnemployed] => 1
+    [adultsHomeless] => 23
+)
+
+AFTER CHANGES #24:
+Array
+(
+    [baby] => 278
+    [kidsStreet] => 696
+    [kidsStudent] => 5
+    [youngStudent] => 15
+    [youngWorker] => 789
+    [old] => 9
+    [adultsPolice] => 0
+    [crimePolice] => 0
+    [adultsFire] => 0
+    [crimeFire] => 0
+    [adultsHealth] => 0
+    [crimeHealth] => 0
+    [adultsSoldier] => 0
+    [crimeSoldier] => 0
+    [adultsGovernment] => 0
+    [crimeGovernment] => 0
+    [adultsPolitician] => 0
+    [crimePolitician] => 0
+    [adultsUnemployed] => 0
+    [crimeUnemployed] => 0
+    [adultsWorker] => 0
+    [crimeWorker] => 0
+    [adultsHomeless] => 699
+    [crimeHomeless] => 349
+)

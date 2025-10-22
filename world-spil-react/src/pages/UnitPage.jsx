@@ -141,7 +141,37 @@ function emojiForId(id, defs) {
 function renderCostInline(costLike, defs) {
   const entries = Object.values(H.normalizePrice(costLike || {}));
   if (!entries.length) return '';
-  return entries.map((e) => `${emojiForId(e.id, defs)} ${H.fmt(e.amount)}`).join(' · ');
+
+  const escape = (s) => String(s || '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+  const iconHtmlForId = (id) => {
+    if (!id) return '';
+    const isRes = String(id).startsWith('res.');
+    const isAni = String(id).startsWith('ani.');
+    const key = String(id).replace(/^(res\.|ani\.)/, '');
+    let def = null;
+    if (isRes) def = defs?.res?.[key];
+    else if (isAni) def = defs?.ani?.[key];
+    else def = defs?.res?.[key] || defs?.ani?.[key] || defs?.[key];
+
+    if (!def) return '';
+    // prefer explicit iconUrl/icon, then emoji object, then emoji string
+    let url = def.iconUrl || def.icon || (def.emoji && typeof def.emoji === 'object' && (def.emoji.iconUrl || def.emoji.url)) || '';
+    const emojiStr = (typeof def.emoji === 'string' && def.emoji.trim()) ? def.emoji.trim() : (def.emojiChar || '');
+    if (url && !/^\/|https?:\/\//i.test(url)) url = `/assets/icons/${url}`;
+    if (url) {
+      return `<img src="${escape(url)}" alt="${escape(def.name || key)}" style="width:1em;height:1em;vertical-align:-0.15em;object-fit:contain;display:inline-block;margin:0 6px" />`;
+    }
+    if (emojiStr) return escape(emojiStr);
+    return '';
+  };
+
+  return entries
+    .map((e) => {
+      const icon = iconHtmlForId(e.id);
+      return `${icon ? icon + ' ' : ''}${escape(H.fmt(e.amount))}`;
+    })
+    .join(' · ');
 }
 
 // helper: try extract yield/produce entries from various possible def shapes

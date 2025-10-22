@@ -33,4 +33,17 @@
     <emoji>solidbarrel.png</emoji>
   </animal>
 
+  <animal id="ani.bed_001"  family="tent" stage="2">
+  <stats>housing=1;housingUnitUsage=1;provisionUsage=1</stats>
+    <cost>
+      <res id="res.money" amount="50"/>
+      <res id="res.cloth" amount="5"/>
+      <res id="res.hide" amount="2"/>
+      <res id="res.leather" amount="1"/>
+      <res id="res.feather" amount="50"/>
+    </cost>
+    <emoji>simplebed.png</emoji>
+  </animal>
+
+
   </animals>

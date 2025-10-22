@@ -485,7 +485,7 @@
     <require>rsd.fieldwork.l1</require>
   </addon>
 
-  <addon id="add.oatsfield.l1" family="farm" group="main" type="addons" lvl="1" stage="2">
+  <addon id="add.oatfield.l1" family="farm" group="main" type="addons" lvl="1" stage="2">
    <stats>footprint=-5;provision_cap=25</stats>
     <cost>
       <res id="res.money" amount="350"/>
@@ -493,14 +493,14 @@
       <res id="res.water" amount="50"/>
       <res id="res.basictools" amount="2"/>
     </cost>
-    <require>rsd.oats.l1</require>
+    <require>rsd.oat.l1</require>
         <yield period="1h">
-      <res id="res.oats" amount="3"/>
+      <res id="res.oat" amount="3"/>
       </yield>
       <time>20m</time>
   </addon>
 
-  <addon id="add.oatsfield.l2" family="farm" group="main" type="addons" lvl="2" stage="2">
+  <addon id="add.oatfield.l2" family="farm" group="main" type="addons" lvl="2" stage="2">
     <stats>footprint=-10;provision_cap=100</stats>
     <cost>
       <res id="res.money" amount="500"/>
@@ -510,7 +510,7 @@
       <res id="res.seed" amount="1000"/>
     </cost>
     <yield period="1h">
-      <res id="res.oats" amount="7"/>
+      <res id="res.oat" amount="7"/>
     </yield>
     <time>40m</time>
     <require>rsd.fieldwork.l1</require>
@@ -677,7 +677,7 @@
   </addon>
 
   <addon id="add.barn.l3" family="farm" type="addons" lvl="3" stage="2">
-    <stats>footprint=--10, animal_cap=250</stats>
+    <stats>footprint=-10, animal_cap=250</stats>
     <cost>
       <res id="res.plank" amount="25"/>
       <res id="res.food" amount="10"/>
@@ -714,7 +714,7 @@
     <yield period="1h">
       <res id="res.stonebricks" amount="1"/>
       </yield>
-    <require>rsd.mining.l3, ld.mine.l3</require>
+    <require>rsd.mining.l3, bld.mine.l3</require>
     <time>1h</time>
   </addon>
 
@@ -841,7 +841,7 @@
       <res id="res.wood" amount="100"/>
     </cost>
     <yield period="1h">
-      <res id="res.iron" amount="2"/>
+      <res id="res.ironbar" amount="2"/>
       </yield>
     <require>rsd.iron.l1</require>
   </addon>

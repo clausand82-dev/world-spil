@@ -19,7 +19,17 @@ function utcNowMinus(ms) {
 }
 
 function formatLocal(ts, assumeUtc = true) {
-  const d = assumeUtc ? new Date(ts.replace(' ', 'T') + 'Z') : new Date(ts);
+  // Robust parsing:
+  // - If ts already contains timezone info (Z or +HH[:MM]/-HH[:MM]) or 'T' use it as-is.
+  // - If not and assumeUtc=true, append 'Z' to treat it as UTC.
+  // - Otherwise treat as local time.
+  if (!ts) return '';
+  let s = String(ts).trim();
+  // If already ISO-like or contains explicit timezone offset -> use directly
+  const hasTZ = /[Tt]/.test(s) || /Z$|[+\-]\d{2}(:?\d{2})?$/.test(s);
+  const iso = s.replace(' ', 'T');
+  const d = hasTZ ? new Date(iso) : (assumeUtc ? new Date(iso + 'Z') : new Date(iso));
+
   const yyyy = d.getFullYear();
   const mm   = z(d.getMonth() + 1);
   const dd   = z(d.getDate());
@@ -174,6 +184,16 @@ export default function SidebarLog({
     }
   }
 
+  // beslutter om et event's tid skal tolkes som UTC eller lokal tid
+  function eventTimesAreUTC(ev) {
+    // default fra prop
+    if (!ev) return timesAreUTC;
+    // treat build events as local timestamps (undo the +1h issue)
+    if (ev.event_type && ev.event_type.startsWith('build')) return false;
+    // ellers brug komponentens indstilling
+    return timesAreUTC;
+  }
+
   return (
     <div className="sidebar-log">
       <div className="sl-header">
@@ -197,7 +217,7 @@ export default function SidebarLog({
           const { text, className } = formatLine(ev);
           return (
             <li className="sl-item" key={idx}>
-              <span className="sl-time">{formatLocal(ev.event_time, timesAreUTC)}:</span>
+              <span className="sl-time">{formatLocal(ev.event_time, eventTimesAreUTC(ev))}:</span>
               <span className={`sl-body ${className}`}>{text}</span>
             </li>
           );

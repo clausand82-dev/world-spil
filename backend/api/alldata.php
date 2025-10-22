@@ -443,8 +443,79 @@ if (WS_RUN_MODE === 'run') {
           }
 
             // Lige før I returnerer payload, efter stateMin er kendt og apply_passive_yields_for_user er kaldt:
+// collect active buffs from defs (existing) + stat-based buffs (new)
 if (!function_exists('collect_active_buffs')) require_once __DIR__ . '/actions/buffs.php';
+
+// existing buffs from defs
 $activeBuffs = collect_active_buffs($defs, ['bld'=>$owned_bld,'add'=>$owned_add,'rsd'=>$owned_rsd,'ani'=>$owned_ani], time());
+
+// --- stat-based buffs: (no DB) compute from rules + summary metrics ---
+require_once __DIR__ . '/lib/stat_rules.php';
+require_once __DIR__ . '/lib/stat_watchers.php';
+
+// Build a metrics array from your existing summary variables. Adapt keys if different.
+// I use $fine[...] as in your repo snippets; adjust if your summary uses other variable names.
+function _extract_metric_value($candidate) {
+  if ($candidate === null) return 0.0;
+  if (is_numeric($candidate)) return floatval($candidate);
+  if (is_array($candidate)) {
+    // almindelige navne vi forsøger at støtte:
+    foreach (['effective','happiness','popularity','value','val'] as $k) {
+      if (isset($candidate[$k]) && is_numeric($candidate[$k])) return floatval($candidate[$k]);
+    }
+    // nogle gange kommer SimpleXMLElement -> object med properties
+    if (isset($candidate['happiness']) && is_numeric($candidate['happiness'])) return floatval($candidate['happiness']);
+    return 0.0;
+  }
+  // SimpleXMLElement eller object-like
+  if (is_object($candidate)) {
+    if (isset($candidate->effective) && is_numeric((string)$candidate->effective)) return floatval((string)$candidate->effective);
+    if (isset($candidate->happiness) && is_numeric((string)$candidate->happiness)) return floatval((string)$candidate->happiness);
+    if (isset($candidate->popularity) && is_numeric((string)$candidate->popularity)) return floatval((string)$candidate->popularity);
+  }
+  // fallback: attempt numeric string
+  if (is_string($candidate) && is_numeric($candidate)) return floatval($candidate);
+  return 0.0;
+}
+
+$metrics = [];
+$metrics['happiness'] = _extract_metric_value($fine['happiness'] ?? ($data['happiness'] ?? null));
+$metrics['popularity'] = _extract_metric_value($fine['popularity'] ?? ($data['popularity'] ?? null));
+
+// crimePercent: use explicit field if present, else compute from adultsCrime/adults counts
+if (isset($data['crimePercent'])) {
+  $metrics['crimePercent'] = _extract_metric_value($data['crimePercent']);
+} elseif (isset($fine['adultsCrime']) && isset($fine['adults']) && $fine['adults'] > 0) {
+  $metrics['crimePercent'] = floatval($fine['adultsCrime']) / max(1.0, floatval($fine['adults']));
+} else {
+  $metrics['crimePercent'] = 0.0;
+}
+
+$metrics['useFire']      = _extract_metric_value($fine['useFire'] ?? ($data['useFire'] ?? null));
+$metrics['fireCapacity'] = _extract_metric_value($fine['fireCapacity'] ?? ($data['fireCapacity'] ?? null));
+$metrics['weather']      = isset($data['weather']) ? $data['weather'] : (isset($fine['weather']) ? $fine['weather'] : null);
+
+// user stage: adjust variable name if different in your code
+$userStage = isset($userStage) ? intval($userStage) : (isset($fine['stage']) ? intval($fine['stage']) : 1);
+
+// load rules and compute stat buffs
+$statRules = stat_rules_config();
+$statBuffs = stat_watcher_compute_buffs($statRules, $metrics, $userStage, time());
+
+// efter $statRules = stat_rules_config();
+// efter $statBuffs = stat_watcher_compute_buffs(...)
+error_log("stat_rules: " . json_encode(array_keys($statRules)));
+error_log("userStage: " . json_encode($userStage));
+error_log("metrics: " . json_encode($metrics));
+error_log("statBuffs: " . json_encode($statBuffs));
+
+// Merge stat buffs into activeBuffs so downstream code sees them
+if (!empty($statBuffs) && is_array($statBuffs)) {
+  $activeBuffs = array_merge($activeBuffs, $statBuffs);
+}
+
+// (optional) expose activeBuffs in alldata response for frontend convenience:
+$data['activeBuffs'] = $activeBuffs;
 
 $yields_preview = []; // pr. entitet, efter buffs, for én fuld periode
 foreach (['bld','add','rsd','ani'] as $bucket) {
@@ -734,7 +805,13 @@ foreach ($state['ani'] as $id => $val) {
         if (!empty($_GET['debug']) && $capWarns) $state['__cap_warnings']=$capWarns;
 
         /* 7) Output */
-        $out = ['defs' => $defs, 'state' => $state, 'lang' => $langMap, 'config' => $cfg];
+        $out = [
+  'defs' => $defs,
+  'state' => $state,
+  'lang' => $langMap,
+  'config' => $cfg,
+  'activeBuffs' => $activeBuffs,
+];
         if ($debug) $out['__debug'] = ['xml_scan' => $debugXml ?? []];
 
         // ETag / cache helpers: send 304 if client already has same payload
