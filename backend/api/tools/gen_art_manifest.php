@@ -1,5 +1,5 @@
 <?php
-$dir = __DIR__ . '/../../../frontend/public/assets/art';
+$dir = __DIR__ . '/../../../world-spil-react/public/assets/art';
 $out = $dir . '/manifest.json';
 
 $files = [];

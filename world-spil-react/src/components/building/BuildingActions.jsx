@@ -4,6 +4,7 @@ import BuildProgress from '../BuildProgress.jsx';
 import { useT } from "../../services/i18n.js";
 import { useGameData } from '../../context/GameDataContext.jsx';
 import { postJSON } from '../../services/api.js';
+import Modal from '../ui/Modal.jsx';
 
 function fmtAmount(n) {
   const v = Number(n || 0);
@@ -84,6 +85,7 @@ function RepairButton({ buildingId, jobActiveId, repairBasePrice }) {
   const t = useT();
   const { refreshData, applyResourceDeltaMap } = useGameData() || {};
   const [busy, setBusy] = useState(false);
+  const [errModal, setErrModal] = useState(null);
 
   const pct = useDurabilityPct(buildingId);
   const prev = useRepairPreview(buildingId);
@@ -108,7 +110,31 @@ function RepairButton({ buildingId, jobActiveId, repairBasePrice }) {
     (pct < 100 ? 'Klik for at reparere' : '100%');
 
   const onClick = async () => {
-    if (!canRepair) return;
+    if (!canRepair) {
+      // vis pæn modal med forklaring / estimeret cost
+      const body = (
+        <div style={{ display: 'grid', gap: 8 }}>
+          <div>{pct < 100 ? 'Bygning har ikke fuld holdbarhed.' : 'Kan ikke reparere nu.'}</div>
+          {prev?.cost?.length ? (
+            <div>
+              <div style={{ opacity: 0.8, marginBottom: 6 }}>Krævet pris (preview):</div>
+              <ul style={{ margin: 0, paddingLeft: 16 }}>
+                {prev.cost.map((c, i) => <li key={i}>{String(c.res_id).replace(/^res\./,'')}: {fmtAmount(c.amount)}</li>)}
+              </ul>
+            </div>
+          ) : estCost?.length ? (
+            <div>
+              <div style={{ opacity: 0.8, marginBottom: 6 }}>Estimeret pris:</div>
+              <ul style={{ margin: 0, paddingLeft: 16 }}>
+                {estCost.map((c, i) => <li key={i}>{String(c.res_id).replace(/^res\./,'')}: {fmtAmount(c.amount)}</li>)}
+              </ul>
+            </div>
+          ) : null}
+        </div>
+      );
+      setErrModal({ title: 'Kan ikke reparere', body });
+      return;
+    }
     setBusy(true);
     try {
       const res = await postJSON('/world-spil/backend/api/actions/repair_building.php', { bld_id: buildingId });
@@ -118,19 +144,26 @@ function RepairButton({ buildingId, jobActiveId, repairBasePrice }) {
         }
         refreshData && refreshData();
       } else {
-        alert(res?.message || 'Repair failed');
+        setErrModal({ title: 'Reparation fejlede', body: res?.message || 'Repair failed' });
       }
     } catch (e) {
-      alert(e?.message || 'Repair request failed');
+      setErrModal({ title: 'Fejl', body: e?.message || 'Repair request failed' });
     } finally {
       setBusy(false);
     }
   };
 
   return (
-    <button className="btn" title={title} onClick={onClick} disabled={!canRepair}>
-      {busy ? t("ui.btn.repair.working") : t("ui.btn.repair.h1")}
-    </button>
+    <>
+      <button className="btn" title={title} onClick={onClick} disabled={!canRepair}>
+        {busy ? t("ui.btn.repair.working") : t("ui.btn.repair.h1")}
+      </button>
+      <Modal open={!!errModal} onClose={() => setErrModal(null)} title={errModal?.title || ''} size="small">
+        <div style={{ padding: 6 }}>
+          {errModal?.body}
+        </div>
+      </Modal>
+    </>
   );
 }
 

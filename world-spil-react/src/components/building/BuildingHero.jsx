@@ -15,11 +15,12 @@ function BuildingHero({ heroDef, heroId, durabilityPct, jobActiveId, footprintTe
   const timeValue = actionTarget?.duration != null ? prettyTime(actionTarget.duration) : '-';
   const timeTitle = hasBuffedTime ? `Normal: ${prettyTime(actionTarget.durationBase ?? 0)}` : undefined;
 const t = useT(); // bruges til sprog
+const imgKey = String(heroId || '').replace(/^bld\./, '').replace(/\.l\d+$/i, '');
   return (
     <div className="detail-hero">
       <div className="photo">
         <GameImage
-          src={`/assets/art/${heroId}.big.png`}
+          src={`/assets/art/${imgKey}.png`}
           fallback="/assets/art/placeholder.big.png"
           alt={heroDef?.name || heroId}
           width={256}
@@ -29,7 +30,7 @@ const t = useT(); // bruges til sprog
       <div>
         <div style={{ fontWeight: 800, fontSize: 18, marginBottom: 6 }}>
           {heroDef?.icon || ''} {heroDef?.name || heroId}
-          {heroDef?.lvl ? <span className="sub" style={{ marginLeft: 8 }}>Level {heroDef.lvl}</span> : null}
+          {heroDef?.lvl ? <span className="sub" style={{ marginLeft: 8 }}>(Level {heroDef.lvl})</span> : null}
         </div>
         {heroDef?.desc ? <div className="sub" style={{ marginBottom: 10 }}>{heroDef.desc}</div> : null}
         <div className="statgrid">

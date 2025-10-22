@@ -53,7 +53,7 @@ export default function DashboardPage() {
                 <div className="section-body"><ActiveJobsList type="rsd" title="Forsker" /></div>
             </section>
             <section className="panel section">
-                <div className="section-head">🍲 Aktive Opskrifter</div>
+                <div className="section-head">🧾 Aktive Opskrifter</div>
                 <div className="section-body"><ActiveJobsList type="rcp" title="Opskrift" /></div>
             </section>
             <section className="panel section">

@@ -7,7 +7,7 @@ export default function ProductionPage() {
     <div className="page">
       <ActiveRecipes />
       <section className="panel section">
-        <div className="section-head">🏗️ Passive Yields</div>
+        <div className="section-head">📊 Passive Yields</div>
         <div className="section-body"><PassiveYieldList /></div>
       </section>
     </div>
@@ -57,7 +57,7 @@ EKSEMPEL PÅ BRUG AF BOARDS DER KAN FOLDES UD/IND:
         <PassiveYieldList />
       </Board>
 
-      <Board id="active-recipes" title="🏗️ Aktive Opskrifter" initialOpen>
+      <Board id="active-recipes" title="📊 Aktive Opskrifter" initialOpen>
         <ActiveRecipes />
       </Board>
       */

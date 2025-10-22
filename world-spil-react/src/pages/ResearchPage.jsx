@@ -298,7 +298,7 @@ export default function ResearchPage() {
 
   return (
     <section className="panel section">
-      <div className="section-head">Research</div>
+      <div className="section-head">🔬 Research</div>
       <div className="section-body">
 
         <div className="tabs-bar" role="tablist" style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
