@@ -49,6 +49,15 @@
   <entry key="ui.animals.h1">Dyr</entry>
   <entry key="ui.fills.h1"></entry>
 
+  <entry key="ui.time.d.h1">Dage</entry>
+  <entry key="ui.time.t.h1">Timer</entry>
+  <entry key="ui.time.m.h1">Minutter</entry>
+  <entry key="ui.time.s.h1">Sekunder</entry>
+  <entry key="ui.timeshort.d.h1">d</entry>
+  <entry key="ui.timeshort.t.h1">t</entry>
+  <entry key="ui.timeshort.m.h1">m</entry>
+  <entry key="ui.timeshort.s.h1">s</entry>
+
   <entry key="ui.text.main.h1">Hoved</entry>
 
   <entry key="ui.text.demandingstage.h1">Kræver Stage</entry>
@@ -63,9 +72,8 @@
 
   <entry key="ui.labels.resources">Ressourcekrav:</entry>
   <entry key="ui.labels.requirements">Øvrige krav:</entry>
-
-
-  
+  <entry key="ui.labels.footprint">Byggepoint:</entry>
+  <entry key="ui.labels.duration">Tid:</entry>
 
   <entry key="ui.emoji.buildcost.h1">🔨</entry>
   <entry key="ui.emoji.demands.h1">📜</entry>

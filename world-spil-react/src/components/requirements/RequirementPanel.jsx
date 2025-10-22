@@ -4,6 +4,7 @@ import { collectActiveBuffs, requirementInfo } from '../../services/requirements
 import { applyCostBuffsToAmount } from '../../services/calcEngine-lite.js';
 import Icon from '../common/Icon.jsx';
 import { useT } from '../../services/i18n.js';
+import { formatDurationFull, formatDurationSmart } from '../../services/time.js';
 
 /**
  * RequirementPanel
@@ -43,22 +44,61 @@ export default function RequirementPanel({
   }, [def, defs, state, requirementCaches]);
 
   // Normalize cost entries and compute base/buffed amounts
-  const costEntries = useMemo(() => {
+const costEntries = useMemo(() => {
     if (!def || !show.resources) return [];
     const map = H.normalizePrice(def.cost || {});
     const out = [];
     Object.values(map).forEach((entry, idx) => {
       const rawId = String(entry.id || '');
-      const effRid = rawId.startsWith('res.') ? rawId : (defs?.res?.[rawId] ? `res.${rawId}` : rawId);
+      // EffRid: prefer explicit prefixes, otherwise try defs.res / defs.ani
+      let effRid;
+      if (rawId.startsWith('res.') || rawId.startsWith('ani.')) {
+        effRid = rawId;
+      } else if (defs?.res?.[rawId]) {
+        effRid = `res.${rawId}`;
+      } else if (defs?.ani?.[rawId]) {
+        effRid = `ani.${rawId}`;
+      } else {
+        effRid = rawId; // unknown, keep as-is
+      }
+
       const baseAmt = Number(entry.amount || 0);
-      const buffedAmt = String(effRid).startsWith('res.')
+
+      // compute buffed amount — allow buffs to target animals as well if defined
+      const buffedAmt = (typeof effRid === 'string')
         ? applyCostBuffsToAmount(baseAmt, effRid, { appliesToCtx: 'all', activeBuffs })
         : baseAmt;
-      const resKey = String(effRid).replace(/^res\./, '');
-      const resDef = defs?.res?.[resKey];
-      const icon = resDef ? (resDef.iconUrl ? { iconUrl: resDef.iconUrl } : { emoji: resDef.emoji }) : null;
-      // store stable index _idx for key generation
-      out.push({ id: entry.id, effRid, baseAmt, buffedAmt, icon, name: resDef?.name || resKey, _idx: idx });
+
+      // Resolve display name + icon depending on type (res / ani / fallback)
+      let name = String(entry.id || rawId);
+      let icon = null;
+      if (String(effRid).startsWith('res.')) {
+        const resKey = String(effRid).replace(/^res\./, '');
+        const resDef = defs?.res?.[resKey];
+        name = resDef?.name || resKey;
+        icon = resDef ? (resDef.iconUrl ? { iconUrl: resDef.iconUrl } : { emoji: resDef.emoji }) : null;
+      } else if (String(effRid).startsWith('ani.')) {
+        const aniKey = String(effRid).replace(/^ani\./, '');
+        const aniDef = defs?.ani?.[aniKey];
+        name = aniDef?.name || aniKey;
+        icon = aniDef ? (aniDef.iconUrl ? { iconUrl: aniDef.iconUrl } : { emoji: aniDef.emoji }) : null;
+      } else {
+        // fallback: try generic defs lookup (maybe other categories)
+        const key = String(effRid).replace(/^[^.]+\./, '');
+        const generic = defs?.[key] || {};
+        name = generic?.name || key || rawId;
+        icon = generic?.iconUrl ? { iconUrl: generic.iconUrl } : (generic?.emoji ? { emoji: generic.emoji } : null);
+      }
+
+      out.push({
+        id: entry.id,
+        effRid,
+        baseAmt,
+        buffedAmt,
+        icon,
+        name,
+        _idx: idx,
+      });
     });
     return out;
   }, [def, defs, activeBuffs, show.resources]);
@@ -122,85 +162,146 @@ const isReqSatisfied = (reqId) => {
 
   const normalize = (s) => String(s || '').trim();
 
-  // Helper: try several keys on an object (returns true if any exists/truthy)
-  const anyKeyExists = (obj, keys) => {
+  // helper: try presence/positive value in an object for a set of keys
+  const anyKeyTruthy = (obj, keys) => {
     if (!obj) return false;
     for (const k of keys) {
-      if (k in obj) {
-        // some stored values may be objects/arrays - treat presence as satisfied
-        const v = obj[k];
-        if (v === null || v === undefined) continue;
-        // if numeric qty or object, consider satisfied if qty>0 or object present
-        if (typeof v === 'number') { if (v > 0) return true; }
-        else if (typeof v === 'object') return true;
-        else if (v) return true;
+      if (!(k in obj)) continue;
+      const v = obj[k];
+      if (v === null || v === undefined) continue;
+      if (typeof v === 'boolean') {
+        if (v) return true;
+      } else if (typeof v === 'number') {
+        if (v > 0) return true;
+      } else if (typeof v === 'object') {
+        // object presence (e.g. stored meta) counts as satisfied
+        return true;
+      } else if (String(v).length > 0) {
+        return true;
       }
     }
     return false;
   };
 
-  // bld.<family>.lN pattern (level checks)
+  // helper: check keys like 'rsd.foo.lN' existing with level >= needed
+  const anyLevelAtLeast = (obj, prefix, key, needed) => {
+    if (!obj) return false;
+    // exact forms first
+    const candidates = [
+      `${prefix}.${key}.l${needed}`,
+      `${prefix}.${key}`,
+      key,
+      `${key}.l${needed}`
+    ];
+    if (anyKeyTruthy(obj, candidates)) return true;
+
+    // then check any stored keys with .lX where X >= needed (e.g. 'rsd.foo.l3')
+    for (const k of Object.keys(obj)) {
+      const m = k.match(new RegExp(`^${prefix}\\.${key}\\.l(\\d+)$`));
+      if (m) {
+        const lvl = Number(m[1]);
+        if (lvl >= needed) return true;
+      }
+      // also check keys like 'foo.l3' (without prefix)
+      const m2 = k.match(new RegExp(`^${key}\\.l(\\d+)$`));
+      if (m2) {
+        const lvl2 = Number(m2[1]);
+        if (lvl2 >= needed) return true;
+      }
+    }
+
+    // also if obj[prefix.key] holds a numeric level or object with level
+    const alt = obj[`${prefix}.${key}`];
+    if (typeof alt === 'number' && alt >= needed) return true;
+    if (alt && typeof alt === 'object' && typeof alt.level === 'number' && alt.level >= needed) return true;
+
+    return false;
+  };
+
+  // BUILDINGS: bld.family.lN
   if (reqId.startsWith('bld.')) {
+    // extract family and level (if any)
     const m = reqId.match(/^bld\.([^.]*)\.l?(\d+)$/);
     if (m) {
-      const family = m[1];
-      const levelNeeded = Number(m[2]);
-      // check state.bld keys for any matching series at equal/greater level
+      const family = m[1]; const levelNeeded = Number(m[2]);
+      // scan state.bld for owned levels of same family
       let ownedMax = 0;
       for (const key of Object.keys(state.bld || {})) {
         const mm = key.match(/^bld\.([^.]*)\.l(\d+)$/);
         if (!mm) continue;
         if (mm[1] === family) ownedMax = Math.max(ownedMax, Number(mm[2]));
       }
+      // also accept state.bld entries that are objects with .level property
+      for (const key of Object.keys(state.bld || {})) {
+        const obj = state.bld[key];
+        if (obj && typeof obj === 'object' && typeof obj.level === 'number') {
+          const m2 = key.match(/^bld\.([^.]*)/);
+          if (m2 && m2[1] === family) ownedMax = Math.max(ownedMax, obj.level);
+        }
+      }
       return ownedMax >= levelNeeded;
     }
-    // fallback: check exact key presence
-    if (state.bld && (reqId in state.bld)) return true;
+    // fallback: treat any presence of exact key as satisfied
+    if (state.bld && reqId in state.bld) return true;
     return false;
   }
 
-  // research -- allow many key forms: 'rsd.foo.l1', 'rsd.foo', 'foo' and check state.rsd or state.research
-  if (reqId.startsWith('rsd.') || reqId.startsWith('research.') || reqId.startsWith('rsd_') ) {
+  // RESEARCH: rsd.foo.lN or rsd.foo
+  if (reqId.startsWith('rsd.') || reqId.startsWith('research.')) {
     const raw = normalize(reqId).replace(/^research\./, '').replace(/^rsd\./, '');
-    const rawNoLevel = raw.replace(/\.l\d+$/,'');
-    const candidates = [
-      reqId,
-      `rsd.${rawNoLevel}`,
-      `rsd.${raw}`,
-      raw,
-      rawNoLevel,
-    ];
-    // check both state.rsd and state.research
-    if (anyKeyExists(state.rsd, candidates)) return true;
-    if (anyKeyExists(state.research, candidates)) return true;
-    // also check state.rsd keyed by full id forms (sometimes keys include prefix)
-    for (const k of candidates) {
-      if (state.rsd && (k in state.rsd)) return true;
+    const rawNoLevel = raw.replace(/\.l\d+$/, '');
+    const m = raw.match(/^(.+)\.l(\d+)$/);
+    if (m) {
+      const key = m[1];
+      const need = Number(m[2]);
+      // check state.rsd and state.research for any key with level >= need (or boolean presence)
+      if (anyLevelAtLeast(state.rsd, 'rsd', key, need)) return true;
+      if (anyLevelAtLeast(state.research, 'rsd', key, need)) return true;
+      // also direct object keyed by key
+      if (anyLevelAtLeast(state.rsd, '', key, need)) return true;
+      if (anyLevelAtLeast(state.research, '', key, need)) return true;
+      return false;
+    } else {
+      // no level specified – accept presence in multiple possible storages
+      const candidates = [
+        `rsd.${rawNoLevel}`,
+        rawNoLevel,
+        `research.${rawNoLevel}`
+      ];
+      if (anyKeyTruthy(state.rsd, candidates)) return true;
+      if (anyKeyTruthy(state.research, candidates)) return true;
+      return false;
     }
-    return false;
   }
 
-  // addon 'add.<key>.lX' or 'add.<key>'
+  // ADDONS: add.key.lN or add.key
   if (reqId.startsWith('add.')) {
-    const raw = normalize(reqId).replace(/^add\./,'');
-    const noLevel = raw.replace(/\.l\d+$/,'');
-    const candidates = [
-      reqId,
-      `add.${noLevel}`,
-      `add.${raw}`,
-      noLevel,
-    ];
-    if (anyKeyExists(state.add, candidates)) return true;
-    // some state.add entries may be keyed by the exact id (with .lX) or by base add.<key>
-    for (const k of candidates) {
-      if (state.add && (k in state.add)) return true;
+    const raw = normalize(reqId).replace(/^add\./, '');
+    const m = raw.match(/^(.+)\.l(\d+)$/);
+    if (m) {
+      const key = m[1];
+      const need = Number(m[2]);
+      // check state.add for any matching keys with level >= need
+      if (anyLevelAtLeast(state.add, 'add', key, need)) return true;
+      // some systems store addons as state.add['add.key'] = { level: X } or state.add['add.key.lX']
+      // the anyLevelAtLeast helper already scans for these
+      return false;
+    } else {
+      // no level -> any presence counts
+      const candidates = [`add.${raw}`, raw];
+      if (anyKeyTruthy(state.add, candidates)) return true;
+      return false;
     }
-    return false;
   }
 
-  // Fallback: if requirement looks like a simple id that may be stored directly in state (rare)
-  const plain = normalize(reqId).replace(/^res\./,'');
-  if (plain && (plain in (state || {}))) return !!state[plain];
+  // fallback: if a simple id (maybe 'farming' or 'rsdHealth') exists in top-level state
+  const plain = normalize(reqId).replace(/^res\./, '');
+  if (plain && (plain in (state || {}))) {
+    const v = state[plain];
+    if (typeof v === 'number') return v > 0;
+    if (typeof v === 'boolean') return v;
+    if (v && typeof v === 'object') return true;
+  }
 
   return false;
 };
@@ -357,9 +458,10 @@ const isReqSatisfied = (reqId) => {
           </div>
           <div>
             <div style={{ fontWeight: 700 }}>{t('ui.labels.duration', 'Byggetid')}</div>
-            <div className="sub" style={{ color: '#333' }}>
-              {H.fmt(duration.base)}s{duration.base !== duration.buffed ? ` → ${H.fmt(duration.buffed)}s` : ''}
-            </div>
+            <div className="sub">
+  {formatDurationFull(duration.base)}
+  {duration.base !== duration.buffed ? ` → ${formatDurationFull(duration.buffed)}` : ''}
+</div>
           </div>
         </div>
       )}
