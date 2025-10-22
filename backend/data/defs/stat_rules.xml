@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <statRules version="1.0">
-  <!-- Rule 1: happiness <= 0.50 => halve yield (all resources) -->
+  <!-- Regel 1: happiness <= 0.50 => halve yield (alle ressourcer) -->
   <rule id="happiness_low" enabled="true">
     <title lang="da">Lav trivsel — reducer produktion</title>
     <expr>happiness <= 0.50</expr>
@@ -8,19 +8,16 @@
     <scope>player</scope>
     <buff>
       <kind>res</kind>
-      <mode>yield</mode>         <!-- kun påvirke yield -->
+      <mode>yield</mode>
       <op>mult</op>
-      <amount>-50</amount>       <!-- pct: -50 => 50% (se buffs.php logic) -->
+      <amount>-50</amount>
       <scopeTarget>all</scopeTarget>
       <source>stat.happiness_low</source>
     </buff>
     <refreshPolicy>refresh</refreshPolicy>
-    <ui>
-      <message lang="da">Happiness er lav — alle ressource‑yields reduceres.</message>
-    </ui>
   </rule>
 
-  <!-- Rule 2: happiness > 0.80 => double yield (all resources) -->
+  <!-- Regel 2: happiness > 0.80 => double yield -->
   <rule id="happiness_high" enabled="true">
     <title lang="da">Høj trivsel — øget produktion</title>
     <expr>happiness &gt; 0.80</expr>
@@ -30,17 +27,14 @@
       <kind>res</kind>
       <mode>yield</mode>
       <op>mult</op>
-      <amount>100</amount>       <!-- pct: +100 => 2x -->
+      <amount>100</amount>
       <scopeTarget>all</scopeTarget>
       <source>stat.happiness_high</source>
     </buff>
     <refreshPolicy>refresh</refreshPolicy>
-    <ui>
-      <message lang="da">Høj happiness — alle ressource‑yields forøges.</message>
-    </ui>
   </rule>
 
-  <!-- Rule 3: popularity < 0.50 => build times increase by 25% -->
+  <!-- Regel 3: popularity < 0.50 => byggetid +25% -->
   <rule id="popularity_low_speed_penalty" enabled="true">
     <title lang="da">Lav popularitet — langsommere byggerier</title>
     <expr>popularity &lt; 0.50</expr>
@@ -49,19 +43,16 @@
     <buff>
       <kind>speed</kind>
       <op>mult</op>
-      <amount>-25</amount>         <!-- pct: -25 -> dur multiplier 1.25 i apply_speed_buffs -->
+      <amount>-25</amount> <!-- -25% speed => 1.25x varighed -->
       <appliesTo>buildings</appliesTo>
-      <actions>build</actions>
+      <actions>all</actions>
       <source>stat.popularity_low</source>
       <mode>speed</mode>
     </buff>
     <refreshPolicy>refresh</refreshPolicy>
-    <ui>
-      <message lang="da">Lav popularity — byggevarigheder øges.</message>
-    </ui>
   </rule>
 
-  <!-- Rule 4: (commented out / disabled) rainy weather halves certain crops -->
+  <!-- Regel 4: (deaktiveret) regn halverer korn-yield -->
   <rule id="weather_rain_crop_penalty" enabled="false">
     <title lang="da">Regn — korn påvirkes</title>
     <expr>weather == 'rain'</expr>
@@ -78,7 +69,7 @@
     <refreshPolicy>refresh</refreshPolicy>
   </rule>
 
-  <!-- Rule 5: crime percent > 0.50 => money yield -10% -->
+  <!-- Regel 5: crimePercent > 0.50 => money yield -10% -->
   <rule id="crime_money_penalty" enabled="true">
     <title lang="da">Høj kriminalitet — mindre penge</title>
     <expr>crimePercent &gt; 0.50</expr>
@@ -93,12 +84,9 @@
       <source>stat.crime_money_penalty</source>
     </buff>
     <refreshPolicy>refresh</refreshPolicy>
-    <ui>
-      <message lang="da">Høj kriminalitet — money yield reduceres.</message>
-    </ui>
   </rule>
 
-  <!-- Rule 6: (commented out) fire usage > capacity -> double durability damage -->
+  <!-- Regel 6: (deaktiveret) fire overload -> durability x2 -->
   <rule id="fire_overload_durability" enabled="false">
     <title lang="da">Brandsårbarhed (midlertidigt deaktiveret)</title>
     <expr>useFire/fireCapacity &gt; 1.0</expr>

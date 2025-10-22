@@ -453,50 +453,101 @@ $activeBuffs = collect_active_buffs($defs, ['bld'=>$owned_bld,'add'=>$owned_add,
 require_once __DIR__ . '/lib/stat_rules.php';
 require_once __DIR__ . '/lib/stat_watchers.php';
 
-// Build a metrics array from your existing summary variables. Adapt keys if different.
-// I use $fine[...] as in your repo snippets; adjust if your summary uses other variable names.
-function _extract_metric_value($candidate) {
-  if ($candidate === null) return 0.0;
-  if (is_numeric($candidate)) return floatval($candidate);
-  if (is_array($candidate)) {
-    // almindelige navne vi forsøger at støtte:
-    foreach (['effective','happiness','popularity','value','val'] as $k) {
-      if (isset($candidate[$k]) && is_numeric($candidate[$k])) return floatval($candidate[$k]);
+// --- Hent server-side summary fra header/summary.php (intern request) ---
+function _fetch_internal_summary(): ?array {
+  $host = $_SERVER['HTTP_HOST'] ?? '127.0.0.1';
+  $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
+  $url = $scheme . $host . '/backend/api/header/summary.php';
+  $ch = curl_init($url);
+  curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+  if (session_status() !== PHP_SESSION_ACTIVE) @session_start();
+  $sid = session_id();
+  if ($sid) {
+    $cookie = session_name() . '=' . $sid;
+    curl_setopt($ch, CURLOPT_COOKIE, $cookie);
+  }
+  curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 2);
+  curl_setopt($ch, CURLOPT_TIMEOUT, 4);
+  $resp = curl_exec($ch);
+  curl_close($ch);
+  if (!$resp) return null;
+  $json = json_decode($resp, true);
+  return (is_array($json) && !empty($json['data'])) ? $json['data'] : null;
+}
+
+function _num($v): float {
+  if (is_numeric($v)) return (float)$v;
+  if (is_array($v)) {
+    foreach (['effective','happiness','popularity','value','val','total'] as $k) {
+      if (isset($v[$k]) && is_numeric($v[$k])) return (float)$v[$k];
     }
-    // nogle gange kommer SimpleXMLElement -> object med properties
-    if (isset($candidate['happiness']) && is_numeric($candidate['happiness'])) return floatval($candidate['happiness']);
-    return 0.0;
   }
-  // SimpleXMLElement eller object-like
-  if (is_object($candidate)) {
-    if (isset($candidate->effective) && is_numeric((string)$candidate->effective)) return floatval((string)$candidate->effective);
-    if (isset($candidate->happiness) && is_numeric((string)$candidate->happiness)) return floatval((string)$candidate->happiness);
-    if (isset($candidate->popularity) && is_numeric((string)$candidate->popularity)) return floatval((string)$candidate->popularity);
+  if (is_object($v)) {
+    foreach (['effective','happiness','popularity','value','val','total'] as $k) {
+      if (isset($v->$k) && is_numeric((string)$v->$k)) return (float)$v->$k;
+    }
   }
-  // fallback: attempt numeric string
-  if (is_string($candidate) && is_numeric($candidate)) return floatval($candidate);
+  if (is_string($v) && is_numeric($v)) return (float)$v;
   return 0.0;
 }
 
-$metrics = [];
-$metrics['happiness'] = _extract_metric_value($fine['happiness'] ?? ($data['happiness'] ?? null));
-$metrics['popularity'] = _extract_metric_value($fine['popularity'] ?? ($data['popularity'] ?? null));
+$summaryData = _fetch_internal_summary();
 
-// crimePercent: use explicit field if present, else compute from adultsCrime/adults counts
-if (isset($data['crimePercent'])) {
-  $metrics['crimePercent'] = _extract_metric_value($data['crimePercent']);
-} elseif (isset($fine['adultsCrime']) && isset($fine['adults']) && $fine['adults'] > 0) {
-  $metrics['crimePercent'] = floatval($fine['adultsCrime']) / max(1.0, floatval($fine['adults']));
-} else {
-  $metrics['crimePercent'] = 0.0;
+$happinessVal  = 0.0;
+$popularityVal = 0.0;
+$crimePercent  = 0.0;
+$useFire       = 0.0;
+$fireCapacity  = 0.0;
+$weather       = null;
+$userStage     = (int)($state['user']['currentstage'] ?? 1);
+
+if ($summaryData) {
+  if (isset($summaryData['happiness']))  $happinessVal  = _num($summaryData['happiness']);
+  if (isset($summaryData['popularity'])) $popularityVal = _num($summaryData['popularity']);
+
+  if (isset($summaryData['crimePercent'])) {
+    $crimePercent = _num($summaryData['crimePercent']);
+  } else {
+    $adults = (float)($summaryData['citizens']['groupCounts']['adults'] ?? 0);
+    $crime  = (float)($summaryData['citizens']['groupCounts']['crime']  ?? ($summaryData['crime']['crime'] ?? 0));
+    if ($adults > 0) $crimePercent = max(0.0, min(1.0, $crime / $adults));
+  }
+
+  $useFire      = _num($summaryData['usages']['useFire']['total'] ?? 0.0);
+  $fireCapacity = _num($summaryData['capacities']['fireCapacity']    ?? 0.0);
+  $weather      = $summaryData['state']['weather'] ?? null;
+  if (isset($summaryData['state']['user']['currentstage'])) {
+    $userStage = (int)$summaryData['state']['user']['currentstage'];
+  }
 }
 
-$metrics['useFire']      = _extract_metric_value($fine['useFire'] ?? ($data['useFire'] ?? null));
-$metrics['fireCapacity'] = _extract_metric_value($fine['fireCapacity'] ?? ($data['fireCapacity'] ?? null));
-$metrics['weather']      = isset($data['weather']) ? $data['weather'] : (isset($fine['weather']) ? $fine['weather'] : null);
+$metrics = [
+  'happiness'   => $happinessVal,
+  'popularity'  => $popularityVal,
+  'crimePercent'=> $crimePercent,
+  'useFire'     => $useFire,
+  'fireCapacity'=> $fireCapacity,
+  'weather'     => $weather,
+];
 
-// user stage: adjust variable name if different in your code
-$userStage = isset($userStage) ? intval($userStage) : (isset($fine['stage']) ? intval($fine['stage']) : 1);
+$userStage = max(1, (int)$userStage);
+
+// load rules and compute stat buffs
+$statRules = stat_rules_config();
+$statBuffs = stat_watcher_compute_buffs($statRules, $metrics, $userStage, time());
+
+// Byg metrics til watcher
+$metrics = [
+  'happiness'   => $happinessVal,
+  'popularity'  => $popularityVal,
+  'crimePercent'=> $crimePercent,
+  'useFire'     => $useFire,
+  'fireCapacity'=> $fireCapacity,
+  'weather'     => $weather,
+];
+
+// Stage‑gate for regler
+$userStage = max(1, (int)$userStage);
 
 // load rules and compute stat buffs
 $statRules = stat_rules_config();
