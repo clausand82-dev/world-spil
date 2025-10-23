@@ -442,123 +442,13 @@ if (WS_RUN_MODE === 'run') {
          $owned_ani=[]; $stmt=$pdo->prepare("SELECT ani_id, quantity FROM animals WHERE user_id=?"); $stmt->execute([$uid]); foreach($stmt as $r){ $owned_ani[$r['ani_id']] = ['quantity'=>(int)($r['quantity'] ?? 0)]; 
           }
 
-            // Lige før I returnerer payload, efter stateMin er kendt og apply_passive_yields_for_user er kaldt:
+// Lige før I returnerer payload, efter stateMin er kendt og apply_passive_yields_for_user er kaldt:
 // collect active buffs from defs (existing) + stat-based buffs (new)
 if (!function_exists('collect_active_buffs')) require_once __DIR__ . '/actions/buffs.php';
 
 // existing buffs from defs
 $activeBuffs = collect_active_buffs($defs, ['bld'=>$owned_bld,'add'=>$owned_add,'rsd'=>$owned_rsd,'ani'=>$owned_ani], time());
 
-// --- stat-based buffs: (no DB) compute from rules + summary metrics ---
-require_once __DIR__ . '/lib/stat_rules.php';
-require_once __DIR__ . '/lib/stat_watchers.php';
-
-// --- Hent server-side summary fra header/summary.php (intern request) ---
-function _fetch_internal_summary(): ?array {
-  $host = $_SERVER['HTTP_HOST'] ?? '127.0.0.1';
-  $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
-  $url = $scheme . $host . '/backend/api/header/summary.php';
-  $ch = curl_init($url);
-  curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-  if (session_status() !== PHP_SESSION_ACTIVE) @session_start();
-  $sid = session_id();
-  if ($sid) {
-    $cookie = session_name() . '=' . $sid;
-    curl_setopt($ch, CURLOPT_COOKIE, $cookie);
-  }
-  curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 2);
-  curl_setopt($ch, CURLOPT_TIMEOUT, 4);
-  $resp = curl_exec($ch);
-  curl_close($ch);
-  if (!$resp) return null;
-  $json = json_decode($resp, true);
-  return (is_array($json) && !empty($json['data'])) ? $json['data'] : null;
-}
-
-function _num($v): float {
-  if (is_numeric($v)) return (float)$v;
-  if (is_array($v)) {
-    foreach (['effective','happiness','popularity','value','val','total'] as $k) {
-      if (isset($v[$k]) && is_numeric($v[$k])) return (float)$v[$k];
-    }
-  }
-  if (is_object($v)) {
-    foreach (['effective','happiness','popularity','value','val','total'] as $k) {
-      if (isset($v->$k) && is_numeric((string)$v->$k)) return (float)$v->$k;
-    }
-  }
-  if (is_string($v) && is_numeric($v)) return (float)$v;
-  return 0.0;
-}
-
-$summaryData = _fetch_internal_summary();
-
-$happinessVal  = 0.0;
-$popularityVal = 0.0;
-$crimePercent  = 0.0;
-$useFire       = 0.0;
-$fireCapacity  = 0.0;
-$weather       = null;
-$userStage     = (int)($state['user']['currentstage'] ?? 1);
-
-if ($summaryData) {
-  if (isset($summaryData['happiness']))  $happinessVal  = _num($summaryData['happiness']);
-  if (isset($summaryData['popularity'])) $popularityVal = _num($summaryData['popularity']);
-
-  if (isset($summaryData['crimePercent'])) {
-    $crimePercent = _num($summaryData['crimePercent']);
-  } else {
-    $adults = (float)($summaryData['citizens']['groupCounts']['adults'] ?? 0);
-    $crime  = (float)($summaryData['citizens']['groupCounts']['crime']  ?? ($summaryData['crime']['crime'] ?? 0));
-    if ($adults > 0) $crimePercent = max(0.0, min(1.0, $crime / $adults));
-  }
-
-  $useFire      = _num($summaryData['usages']['useFire']['total'] ?? 0.0);
-  $fireCapacity = _num($summaryData['capacities']['fireCapacity']    ?? 0.0);
-  $weather      = $summaryData['state']['weather'] ?? null;
-  if (isset($summaryData['state']['user']['currentstage'])) {
-    $userStage = (int)$summaryData['state']['user']['currentstage'];
-  }
-}
-
-$metrics = [
-  'happiness'   => $happinessVal,
-  'popularity'  => $popularityVal,
-  'crimePercent'=> $crimePercent,
-  'useFire'     => $useFire,
-  'fireCapacity'=> $fireCapacity,
-  'weather'     => $weather,
-];
-
-$userStage = max(1, (int)$userStage);
-
-// load rules and compute stat buffs
-$statRules = stat_rules_config();
-$statBuffs = stat_watcher_compute_buffs($statRules, $metrics, $userStage, time());
-
-// Byg metrics til watcher
-$metrics = [
-  'happiness'   => $happinessVal,
-  'popularity'  => $popularityVal,
-  'crimePercent'=> $crimePercent,
-  'useFire'     => $useFire,
-  'fireCapacity'=> $fireCapacity,
-  'weather'     => $weather,
-];
-
-// Stage‑gate for regler
-$userStage = max(1, (int)$userStage);
-
-// load rules and compute stat buffs
-$statRules = stat_rules_config();
-$statBuffs = stat_watcher_compute_buffs($statRules, $metrics, $userStage, time());
-
-// efter $statRules = stat_rules_config();
-// efter $statBuffs = stat_watcher_compute_buffs(...)
-error_log("stat_rules: " . json_encode(array_keys($statRules)));
-error_log("userStage: " . json_encode($userStage));
-error_log("metrics: " . json_encode($metrics));
-error_log("statBuffs: " . json_encode($statBuffs));
 
 // Merge stat buffs into activeBuffs so downstream code sees them
 if (!empty($statBuffs) && is_array($statBuffs)) {

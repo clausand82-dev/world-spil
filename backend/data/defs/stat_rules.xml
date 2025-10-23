@@ -10,7 +10,7 @@
       <kind>res</kind>
       <mode>yield</mode>
       <op>mult</op>
-      <amount>-50</amount>
+      <amount>-50</amount>         <!-- -50% => 0.5x -->
       <scopeTarget>all</scopeTarget>
       <source>stat.happiness_low</source>
     </buff>
@@ -27,7 +27,7 @@
       <kind>res</kind>
       <mode>yield</mode>
       <op>mult</op>
-      <amount>100</amount>
+      <amount>100</amount>         <!-- +100% => 2x -->
       <scopeTarget>all</scopeTarget>
       <source>stat.happiness_high</source>
     </buff>
@@ -43,7 +43,7 @@
     <buff>
       <kind>speed</kind>
       <op>mult</op>
-      <amount>-25</amount> <!-- -25% speed => 1.25x varighed -->
+      <amount>-25</amount>         <!-- -25% speed => 1.25x varighed -->
       <appliesTo>buildings</appliesTo>
       <actions>all</actions>
       <source>stat.popularity_low</source>
