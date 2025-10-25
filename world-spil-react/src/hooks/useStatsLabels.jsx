@@ -65,7 +65,7 @@ export function useStatsLabels() {
   const makeLabelNode = useMemo(() => makeLabelNodeFactory(defs, t), [defs, t]);
 
   return useMemo(() => ({
-  housing: t("ui.emoji.housing.h1") + ' ' + t("ui.label.housing.h1") || 'Housing',
+  housing: makeLabelNode("stats_housing", "ui.label.housing.h1") || 'Housing',
   food: makeLabelNode("stats_food", "ui.label.provision.h1") || 'Provision',
   water: makeLabelNode("stats_water", "ui.label.water.h1") || 'Water',
   health: makeLabelNode("stats_health", "ui.label.health.h1") || 'Health',
@@ -85,7 +85,7 @@ export function useStatsLabels() {
   medicin: makeLabelNode("stats_medicin", "ui.label.product_medicin.h1") || 'Medicine',
   social: makeLabelNode("stats_social", "ui.label.social.h1") || 'Social',
 
-  waste: t("ui.emoji.waste.h1") + ' ' + t("ui.label.waste.h1") || 'Waste',
+  waste: makeLabelNode("stats_waste", "ui.label.waste.h1") || 'Waste',
   wasteOrganic: makeLabelNode('stats_wasteorganic', 'ui.label.waste_organic.h1', 'Organic Waste'),
   wasteOther: makeLabelNode("stats_wasteother", "ui.label.waste_other.h1", "Other Waste"),
   wasteMetal: makeLabelNode("stats_wastemetal", "ui.label.waste_metal.h1", "Metal Waste"),
@@ -95,10 +95,10 @@ export function useStatsLabels() {
   wasteDanger: makeLabelNode("stats_wastedanger", "ui.label.waste_danger.h1", "Dangerous Waste"),
   wastePaper: makeLabelNode("stats_wastepaper", "ui.label.waste_paper.h1", "Paper Waste"),
 
-  tax: t("ui.emoji.tax.h1") + ' ' + t("ui.label.tax.h1") || 'Tax',
-  taxHealth: t("ui.emoji.tax_health.h1") + ' ' + t("ui.label.tax_health.h1") || 'Skat (sundhed)',
-  taxCitizens: t("ui.emoji.tax_citizens.h1") + ' ' + t("ui.label.tax_citizens.h1") || 'Skat (borgere)',
-  police: t("ui.emoji.adults_police.h1") + ' ' + t("ui.citizens.adults_police.h1") || 'Police',
+  tax: makeLabelNode("stats_tax", "ui.label.tax.h1") || 'Tax',
+  taxHealth: makeLabelNode("stats_taxhealth", "ui.label.tax_health.h1") || 'Skat (sundhed)',
+  taxCitizens: makeLabelNode("stats_taxcitizens", "ui.label.tax_citizens.h1") || 'Skat (borgere)',
+  police: makeLabelNode("stats_police", "ui.label.police.h1") || 'Police',
 
   // NYE / TILFØJTE
   religion: t("ui.emoji.religion.h1") + ' ' + t("ui.label.religion.h1") || 'Religion',
@@ -125,9 +125,9 @@ export function defaultLabelMap() {
     'housing': { label: t("ui.emoji.housing.h1")+t("ui.label.housing.h1"), desc: t("ui.capdesc.housing.h1") },
     'housingCapacity': { label: t("ui.emoji.housing.h1")+t("ui.label.housing.h1"), desc: t("ui.capdesc.housing.h1") },
 
-    'provision_cap': { label: makeLabelNode("stats_food")+t("ui.label.provision.h1"), desc: t("ui.capdesc.provision.h1") },
-    'provisionCapacity': { label: makeLabelNode("stats_food")+t("ui.label.provision.h1"), desc: t("ui.capdesc.provision.h1") },
-    'provisionUsage': { label: makeLabelNode("stats_food")+t("ui.label.provision.h1"), desc: t("ui.usagedesc.provision.h1") },
+    'provision_cap': { label: makeLabelNode("stats_food", "ui.label.provision.h1"), desc: t("ui.capdesc.provision.h1") },
+    'provisionCapacity': { label: makeLabelNode("stats_food", "ui.label.provision.h1"), desc: t("ui.capdesc.provision.h1") },
+    'provisionUsage': { label: makeLabelNode("stats_food", "ui.label.provision.h1"), desc: t("ui.usagedesc.provision.h1") },
 
     'heatFossilCapacity': { label: makeLabelNode("stats_heat", "ui.label.heat.h1"), desc: t("ui.capdesc.heat.h1") },
 

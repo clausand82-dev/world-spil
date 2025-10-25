@@ -83,16 +83,20 @@ try {
   ];
 
   // Capacity keys (udvides dynamisk fra registry)
-  $CAP_KEYS = [];
-  $registry = metrics_registry();
-  foreach ($registry as $id => $m) {
-    $capField = (string)($m['capacityField'] ?? '');
-    if ($capField === '') continue;
-    if (!isset($CAP_KEYS[$capField])) {
-      $keys = array_values(array_unique(array_filter((array)($m['capacityStatKeys'] ?? []))));
-      if ($keys) $CAP_KEYS[$capField] = $keys;
-    }
+$CAP_KEYS = [];
+$registry = metrics_registry();
+foreach ($registry as $id => $m) {
+  // HOP over metrikker som er låst ift. brugerens stage
+  $unlockAt = (int)($m['stage']['unlock_at'] ?? 1);
+  if ($userStage < $unlockAt) continue;
+
+  $capField = (string)($m['capacityField'] ?? '');
+  if ($capField === '') continue;
+  if (!isset($CAP_KEYS[$capField])) {
+    $keys = array_values(array_unique(array_filter((array)($m['capacityStatKeys'] ?? []))));
+    if ($keys) $CAP_KEYS[$capField] = $keys;
   }
+}
 
   $USE_ALIAS = [
     'useCloth'   => 'useProductCloth',
@@ -175,8 +179,7 @@ try {
     }
   }
 
-  // Usages (citizen-baseret)
-  $USAGE_FIELDS = [
+$USAGE_FIELDS_STATIC = [/*
     'useHousing','useProvision','useWater',
     
     'deathHealthExpose','deathHealthWeight','deathHealthBaseline',
@@ -199,12 +202,30 @@ try {
     'useTransport','useTransportPassenger','useTransportGods',
 
     //Products
-    'useCloth','useMedicin',
-  ];
-  $usages = [];
-  foreach ($USAGE_FIELDS as $field) {
-    $usages[$field] = cu_usage_breakdown($rawCit, $citDefs, $field, $USE_ALIAS);
+    'useCloth','useMedicin',*/
+];
+
+// Start med den statiske liste
+$USAGE_FIELDS = $USAGE_FIELDS_STATIC;
+
+// Tilføj registry-provided usageField kun hvis metric er oplåst for brugeren
+$registry = metrics_registry();
+foreach ($registry as $id => $m) {
+  $usageField = (string)($m['usageField'] ?? '');
+  if ($usageField === '') continue;
+  $unlockAt = (int)($m['stage']['unlock_at'] ?? 1);
+  if ($userStage < $unlockAt) continue; // hop over låste metrikker
+
+  if (!in_array($usageField, $USAGE_FIELDS, true)) {
+    $USAGE_FIELDS[] = $usageField;
   }
+}
+
+// --- Beregn usages kun for de felter vi netop har samlet (og som er oplåst hvis de kommer fra registry) ---
+$usages = [];
+foreach ($USAGE_FIELDS as $field) {
+  $usages[$field] = cu_usage_breakdown($rawCit, $citDefs, $field, $USE_ALIAS);
+}
 
   // INFRA usage via registry
   foreach ($registry as $id => $m) {

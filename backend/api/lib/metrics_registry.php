@@ -183,7 +183,7 @@ function metrics_registry(): array {
       'capacityStatKeys' => ['healthDentistCapacity'],
       'usageStatKeys' => ['healthDentistUsage'],
       'sources' => ['bld'=>true,'add'=>true,'rsd'=>true,'ani'=>true,'res'=>true],
-      'stage' => ['unlock_at'=>2,'visible_at'=>2],
+      'stage' => ['unlock_at'=>5,'visible_at'=>5],
       'happiness' => ['enabled'=>true, 'weight_key'=>'healthDentistHappinessWeight'], 
       'popularity'=> ['enabled'=>false],
       'parent' => 'health',
@@ -378,7 +378,7 @@ function metrics_registry(): array {
       'capacityStatKeys' => ['wasteOrganicCapacity'],
       'usageStatKeys' => ['wasteOrganicUsage'],
       'sources' => ['bld'=>true,'add'=>true,'rsd'=>true,'ani'=>true,'res'=>true],
-      'stage' => ['unlock_at'=>4,'visible_at'=>4],
+      'stage' => ['unlock_at'=>1,'visible_at'=>1],
       'happiness' => ['enabled'=>true, 'weight_key'=>'wasteOrganicHappinessWeight'], // eksempel
       'popularity'=> ['enabled'=>false],
       'parent' => ['waste'],
@@ -396,7 +396,7 @@ function metrics_registry(): array {
       'capacityStatKeys' => ['wasteGlassCapacity'],
       'usageStatKeys' => ['wasteGlassUsage'],
       'sources' => ['bld'=>true,'add'=>true,'rsd'=>true,'ani'=>true,'res'=>true],
-      'stage' => ['unlock_at'=>1,'visible_at'=>1],
+      'stage' => ['unlock_at'=>4,'visible_at'=>4],
       'happiness' => ['enabled'=>true, 'weight_key'=>'wasteGlassHappinessWeight'], // eksempel
       'popularity'=> ['enabled'=>false],
       'parent' => ['waste'],
@@ -414,7 +414,7 @@ function metrics_registry(): array {
       'capacityStatKeys' => ['wasteMetalCapacity'],
       'usageStatKeys' => ['wasteMetalUsage'],
       'sources' => ['bld'=>true,'add'=>true,'rsd'=>true,'ani'=>true,'res'=>true],
-      'stage' => ['unlock_at'=>1,'visible_at'=>1],
+      'stage' => ['unlock_at'=>4,'visible_at'=>4],
       'happiness' => ['enabled'=>true, 'weight_key'=>'wasteMetalHappinessWeight'], // eksempel
       'popularity'=> ['enabled'=>false],
       'parent' => ['waste'],
@@ -432,7 +432,7 @@ function metrics_registry(): array {
       'capacityStatKeys' => ['wastePlasticCapacity'],
       'usageStatKeys' => ['wastePlasticUsage'],
       'sources' => ['bld'=>true,'add'=>true,'rsd'=>true,'ani'=>true,'res'=>true],
-      'stage' => ['unlock_at'=>1,'visible_at'=>1],
+      'stage' => ['unlock_at'=>4,'visible_at'=>4],
       'happiness' => ['enabled'=>true, 'weight_key'=>'wastePlasticHappinessWeight'], // eksempel
       'popularity'=> ['enabled'=>false],
       'parent' => ['waste'],
@@ -450,7 +450,7 @@ function metrics_registry(): array {
       'capacityStatKeys' => ['wasteElectronicCapacity'],
       'usageStatKeys' => ['wasteElectronicUsage'],
       'sources' => ['bld'=>true,'add'=>true,'rsd'=>true,'ani'=>true,'res'=>true],
-      'stage' => ['unlock_at'=>1,'visible_at'=>1],
+      'stage' => ['unlock_at'=>4,'visible_at'=>4],
       'happiness' => ['enabled'=>true, 'weight_key'=>'wasteElectronicHappinessWeight'], // eksempel
       'popularity'=> ['enabled'=>false],
       'parent' => ['waste'],
@@ -468,7 +468,7 @@ function metrics_registry(): array {
       'capacityStatKeys' => ['wastePaperCapacity'],
       'usageStatKeys' => ['wastePaperUsage'],
       'sources' => ['bld'=>true,'add'=>true,'rsd'=>true,'ani'=>true,'res'=>true],
-      'stage' => ['unlock_at'=>1,'visible_at'=>1],
+      'stage' => ['unlock_at'=>4,'visible_at'=>4],
       'happiness' => ['enabled'=>true, 'weight_key'=>'wastePaperHappinessWeight'], // eksempel
       'popularity'=> ['enabled'=>false],
       'parent' => ['waste'],
@@ -486,7 +486,7 @@ function metrics_registry(): array {
       'capacityStatKeys' => ['wasteDangerCapacity'],
       'usageStatKeys' => ['wasteDangerUsage'],
       'sources' => ['bld'=>true,'add'=>true,'rsd'=>true,'ani'=>true,'res'=>true],
-      'stage' => ['unlock_at'=>1,'visible_at'=>1],
+      'stage' => ['unlock_at'=>4,'visible_at'=>4],
       'happiness' => ['enabled'=>true, 'weight_key'=>'wasteDangerHappinessWeight'], // eksempel
       'popularity'=> ['enabled'=>false],
       'parent' => ['waste'],

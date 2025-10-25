@@ -85,7 +85,8 @@ export default function HeaderBudgetBadge() {
   const taxHealthByPolicy = usages.useTaxHealth?.choiceByPolicy || {};
   const taxHealthMeta = metaMap?.taxHealth || {};
   const taxCitizens = usages.useTaxCitizens?.total || {};
-  const taxCitizensIncome = capacities.taxCitizensCapacity || {};
+  // const taxCitizensIncome = capacities.taxCitizensCapacity || {};
+  const taxCitizensIncome = Number(extractValue(capacities.taxCitizensCapacity) || 0);
   const taxCitizensByPolicy = usages.useTaxCitizens?.citizens || {};
 
   const diff = (Number(taxCap) || 0) - (Number(taxUsed) || 0);
