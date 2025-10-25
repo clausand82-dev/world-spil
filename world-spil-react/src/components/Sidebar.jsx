@@ -7,6 +7,8 @@ import { fmt } from '../services/helpers.js';
 import { useT } from "../services/i18n.js";
 import HeaderCapacities from './sidebar/SidebarCapacities.jsx';
 import ResourceCapacityModal from './resources/ResourceCapacityModal.jsx';
+import { StatsIcon } from '../components/common/Icon.jsx';
+
 
 export default function Sidebar() {
   const { data } = useGameData();
@@ -55,7 +57,7 @@ export default function Sidebar() {
             style={headerButtonStyle}
             aria-haspopup="dialog"
           >
-            <span role="img" aria-hidden>💧</span>
+            <span role="img" aria-hidden><StatsIcon name="stats_storageliquid.png"/></span>
             <span>{t("ui.liquid.h1")}</span>
           </button>
           <span style={{ marginLeft: 'auto', fontWeight: 600 }}>
@@ -76,7 +78,7 @@ export default function Sidebar() {
             style={headerButtonStyle}
             aria-haspopup="dialog"
           >
-            <span role="img" aria-hidden>🧱</span>
+            <span role="img" aria-hidden><StatsIcon name="stats_storagesolid.png"/></span>
             <span>{t('ui.solid.h1')}</span>
           </button>
           <span style={{ marginLeft: 'auto', fontWeight: 600 }}>

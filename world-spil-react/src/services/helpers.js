@@ -176,10 +176,42 @@ export const pickNextTargetInSeries = (seriesItems, ownedMaxLevel) => {
  */
 export function emojiHtmlForId(fullId, defs, opts = {}) {
   const size = opts.size || '1.2em';
-  const def = defs?.res?.[fullId.replace(/^res\./, '')] || defs?.[fullId];
+  if (!fullId) return '';
+
+  // Normalize input
+  const idStr = String(fullId || '').trim();
+  let key = idStr;
+  let def = null;
+
+  // Detect namespace prefixes
+  if (idStr.startsWith('res.')) {
+    key = idStr.slice(4);
+    def = defs?.res?.[key];
+  } else if (idStr.startsWith('ani.')) {
+    key = idStr.slice(4);
+    def = defs?.ani?.[key];
+  } else {
+    // No explicit prefix: try common places
+    def = defs?.res?.[key] || defs?.ani?.[key] || defs?.[key];
+  }
+
+  // Fallbacks: maybe caller passed unprefixed key but actual def uses namespace, try both
+  if (!def) {
+    def = defs?.res?.[key] || defs?.ani?.[key] || defs?.[idStr] || defs?.[key];
+  }
+
   if (!def) return '';
-  if (def.iconUrl) return `<img src="${def.iconUrl}" style="width:${size};height:${size};object-fit:contain;vertical-align:middle" />`;
-  if (def.emoji) return `<span style="font-size:${size};line-height:1;display:inline-block">${def.emoji}</span>`;
+
+  // If def provides absolute/relative iconUrl, use it
+  if (def.iconUrl) {
+    // If iconUrl looks relative and we want to preserve existing behaviour, do not alter
+    return `<img src="${String(def.iconUrl)}" style="width:${size};height:${size};object-fit:contain;vertical-align:middle" />`;
+  }
+  // If def provides emoji (unicode or string), use that
+  if (def.emoji) {
+    return `<span style="font-size:${size};line-height:1;display:inline-block">${def.emoji}</span>`;
+  }
+
   return '';
 }
 

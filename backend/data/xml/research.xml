@@ -335,7 +335,7 @@
     <buffs applies_to="all">
       <res id="res.bronzeore" type="mult" amount="10" mode="yield"/> <!-- 10% more bronze from all -->
     </buffs>
-    <require>rsd.stonebricks.l1</require>
+    <require>rsd.stonebrick.l1</require>
   </research>
 
   <research id="rsd.mining.l3" family="mine" type="storage" lvl="3" stage="2">

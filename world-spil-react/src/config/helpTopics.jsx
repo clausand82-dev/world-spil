@@ -4,6 +4,8 @@ import { group, topic, leaf } from './helpTopicsBuilder.js';
 const helpStats = `${import.meta.env.BASE_URL || '/'}assets/pic/help_statsview.png`;
 import { emojiHtmlForId, tokensToHtmlString, renderTextWithIcons } from '../services/helpers.js';
 import { getCostTokens } from '../services/requirements.js';
+import { makeHelpers } from './helpTopicHelpers.js';
+
 
 // Eksempel: meget kortfattet, let at læse og udbygge
 export const HELP_TOPICS = [
@@ -35,7 +37,6 @@ export const HELP_TOPICS = [
         id: 'resources-overview',
         title: 'Ressourcer Generelt',
         render: ({ defs, t }) => {
-          const emoji = defs?.res?.water?.emoji || (t?.('ui.emoji.water') ?? '💧');
           const res = defs?.res || {};
           const ids = Object.keys(res).sort();
           const rows = ids.map((id) => {
@@ -63,7 +64,7 @@ export const HELP_TOPICS = [
         id: 'res-water',
         title: 'Vand (ressource)',
         component: ({ defs }) => {
-          const emoji = defs?.res?.water?.emoji || '💧';
+          const emoji = defs?.res?.water?.emoji || '⛔';
           return (
             <div className="help-article">
               <h2>Vand {emoji}</h2>
@@ -74,6 +75,30 @@ export const HELP_TOPICS = [
           );
         },searchText: 'ressource vand water forbrug',
       }),
+
+      topic({
+        id: 'res-money',
+        title: 'Penge (ressource)',
+        component: ({ defs }) => {
+          const emoji = defs?.res?.money?.emoji || '⛔';
+          return (
+            <div className="help-article">
+              <h2>Penge {emoji}</h2>
+              <p>Penge bruges i næsten alt der kan bygge, opgraderes og udvides. Det er en grundlæggende ressource, men også den eneste ressource, der ikke optager plads i ens lager. Der er INGEN penge begrænsning.</p>
+
+              <p>Penge fås automatisk fra den base bygning man starter med, og alle basebygninger producerer penge over tid. Opgraderes base bygningen forbedres mængden af penge man får som regel. Andre bygninger, addons eller research kan også give penge, eller endda forbedre mængden af penge man får pr. time.</p>
+
+              <p>Penge som ressource skal ikke forveksles med stats som skat og andre økonomiske stats.</p>
+
+              <p>Se også <a data-topic-link="resources-overview">Ressourcer Generelt</a>.</p>
+            </div>
+          );
+        },searchText: 'ressource kr penge økonomi',
+      }),
+
+
+
+
     ],
   }),
 
@@ -100,9 +125,8 @@ export const HELP_TOPICS = [
       topic({
         id: 'stage-1',
         title: 'Stage 1',
-        component: ({ defs }) => {
-          const emoji = (name) => defs?.res?.[name]?.emoji || '⛔';
-          const name = (name) => defs?.res?.[name]?.name || 'NN';
+        component: ({ defs, t }) => {
+          const { iconElement, name, emoji } = makeHelpers(defs, t);
           return (
             <div className="help-article">
               <h2>Stage 1 </h2>
@@ -154,16 +178,16 @@ footprint, animal_cap, provision_cap, housing, heatFossilCapacity, waterCapacity
 
               <p>Stage 1 introducerer også følgende <a data-topic-link="stats-overview">stats</a>:</p>
               <ul>
-              <li><strong>Byggepoint</strong> — Mange af bygninger og addons kræver en vis mængde plads for at kan bygge. Byggepoint er afgørende for, om du har plads nok eller ej til at bygge et mere.</li> 
-              <li><strong>Staldplads</strong> — Dyr fylder forskelligt i stalden, og staldpladsen bestemmer, hvor mange dyr du kan have.</li>
-              <li><strong>Housing</strong> — Dine borger fylder ikke lige meget; nogle fylder mere og nogle fylder mindre. Housing styre om du har plads nok eller ej.</li>
-              <li><strong>Forsyning</strong> — Forsyning repræsenterer den mængde mad du har i flow til dine borgere. Housing kan sagtens være større end hvad du kan forsyne med mad. Og forsyning kan være større end housing, men konsekvenser afgøres allerede ved laveste fællesnævner.</li>
-              <li><strong>Vand</strong> — Borger og dyr skal have vand. Stats: vand, repræsenterer dit flow af vand. Sørg for du altid kan leverer mere vand end der kræves.</li>
-              <li><strong>Varme (Fossil)</strong> — Dine borgere vil gerne have varme. Her i starten kan brænde og bålet bidrage til at give dig varme. Der er forskellige slags varme og dette her er fossil varm, der forurener mere.</li>
-              <li><strong>Plads (flydende ressourcer)</strong> — Dette udgør din kapacitet til at opbevare flydende ressourcer som vand, mælk og suppe. Løber du tør for plads modtager du ikke mere produktion, før der er plads igen.</li>
-              <li><strong>Plads (faste ressourcer)</strong> — Dette udgør din kapacitet til at opbevare faste ressourcer som træ, sten og mad. Løber du tør for plads modtager du ikke mere produktion, før der er plads igen.</li>
-              <li><strong>Affald (organisk)</strong> — Mængde organisk affald produceret af borgere og processer.</li>
-              <li><strong>Affald (andet)</strong> — Mængde blandet affald produceret af borgere og processer.</li>
+              <li><strong>{iconElement('stats_footprint')} Byggepoint</strong> — Mange af bygninger og addons kræver en vis mængde plads for at kan bygge. Byggepoint er afgørende for, om du har plads nok eller ej til at bygge et mere.</li> 
+              <li><strong>{iconElement('stats_animalcap')} Staldplads</strong> — Dyr fylder forskelligt i stalden, og staldpladsen bestemmer, hvor mange dyr du kan have.</li>
+              <li><strong>{iconElement('stats_housing')} Housing</strong> — Dine borger fylder ikke lige meget; nogle fylder mere og nogle fylder mindre. Housing styre om du har plads nok eller ej.</li>
+              <li><strong>{iconElement('stats_food')} Forsyning</strong> — Forsyning repræsenterer den mængde mad du har i flow til dine borgere. Housing kan sagtens være større end hvad du kan forsyne med mad. Og forsyning kan være større end housing, men konsekvenser afgøres allerede ved laveste fællesnævner.</li>
+              <li><strong>{iconElement('stats_water')} Vand</strong> — Borger og dyr skal have vand. Stats: vand, repræsenterer dit flow af vand. Sørg for du altid kan leverer mere vand end der kræves.</li>
+              <li><strong>{iconElement('stats_heatfossil')} Varme (Fossil)</strong> — Dine borgere vil gerne have varme. Her i starten kan brænde og bålet bidrage til at give dig varme. Der er forskellige slags varme og dette her er fossil varm, der forurener mere.</li>
+              <li><strong>{iconElement('stats_storageliquid')} Plads (flydende ressourcer)</strong> — Dette udgør din kapacitet til at opbevare flydende ressourcer som vand, mælk og suppe. Løber du tør for plads modtager du ikke mere produktion, før der er plads igen.</li>
+              <li><strong>{iconElement('stats_storagesolid')} Plads (faste ressourcer)</strong> — Dette udgør din kapacitet til at opbevare faste ressourcer som træ, sten og mad. Løber du tør for plads modtager du ikke mere produktion, før der er plads igen.</li>
+              <li><strong>{iconElement('stats_wasteorganic')} Affald (organisk)</strong> — Mængde organisk affald produceret af borgere og processer.</li>
+              <li><strong>{iconElement('stats_wasteother')} Affald (andet)</strong> — Mængde blandet affald produceret af borgere og processer.</li>
               </ul>
             </div>
           );
@@ -181,8 +205,7 @@ footprint, animal_cap, provision_cap, housing, heatFossilCapacity, waterCapacity
         id: 'stats-overview',
         title: 'Stats Generelt',
         component: ({ defs, t }) => {
-          const emoji = (name) => defs?.res?.[name]?.emoji || '⛔';
-          const name = (name) => defs?.res?.[name]?.name || 'NN';
+          const { iconElement, name, emoji } = makeHelpers(defs, t);
           return (
             <div className="help-article">
               <h2>Stats</h2>
@@ -202,7 +225,7 @@ footprint, animal_cap, provision_cap, housing, heatFossilCapacity, waterCapacity
                 når dyret er væk; ligeledes med ressourcer. Bruges en ressource der giver stats, forsvinder bonusen.
               </p>
               <p>
-                Eksempelvis giver vand {emoji('firewood')} i ens inventory bonus i <a data-topic-link="stats-water">stats vand</a>,
+                Eksempelvis giver <a data-topic-link="res-water">vand</a>{iconElement('water')} i ens inventory bonus i <a data-topic-link="stats-water">stats vand</a> {iconElement('stats_water')},
                 som er den mængde vand ens borgere kræver for at være glade osv - se borger for yderligere info.
               </p>
               <p>
@@ -508,15 +531,17 @@ group({
     topic({
         id: 'animals-list',
         title: 'Alle dyr',
-        render: ({ defs }) => {
+        render: ({ defs, t }) => {
           const ani = defs?.ani || {};
-          const rows = Object.keys(ani).sort().map(id => {
-          const name = ani[id]?.name || id;
-          const emoji = ani[id]?.emoji || '';
-          // link -> interne help links eller direkte til building-siden
-          return `<li>${emoji || ''} ${name}</li>`;
+          const ids = Object.keys(ani).sort();
+          const rows = ids.map((id) => {
+            const r = ani[id] || {};
+            const name = r.name || id;
+            const desc = r.desc || id;
+            const emojiHtml = emojiHtmlForId(`ani.${id}`, defs, { size: '2em' }) || '';
+            return `<li>${emojiHtml ? emojiHtml + ' ' : ''}${name} ${desc ? ' - ' + desc : ''}</li>`;
           });
-    return `<h2>Dyr</h2><p>Her er en liste over alle definerede dyr, der pt er mulige:</p><ul>${rows.join('')}</ul>`;
+          return `<h2>Dyr</h2><p>Her er en liste over alle definerede dyr, der pt er mulige:</p><ul>${rows.join('')}</ul>`;
        },
     searchText: 'dyr liste alle animals dyretyper',
     }),
@@ -525,3 +550,8 @@ group({
     ],
   }),
 ];
+
+
+/*
+{iconElement('money', { size: '1.4em' })}
+*/

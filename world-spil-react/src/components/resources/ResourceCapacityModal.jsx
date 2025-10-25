@@ -27,29 +27,39 @@ function buildChartData(items, resDefs, totalCapacity) {
       const pct = Number.isFinite(pctRaw) ? Math.max(0, pctRaw) : 0;
 
       // Normalize emoji: support unicode emoji or image URL / file name
-      const rawEmoji = def.emoji ?? def.iconUrl ?? '';
+      const rawEmoji =
+        def.iconUrl ?? def.icon ?? def.emoji ?? def.image ?? def.icon_file ?? '';
       let emojiChar = '';
       let emojiUrl = '';
       if (rawEmoji) {
         if (typeof rawEmoji === 'string') {
-          // file name with image extension -> treat as url
-          if (/\.(png|jpg|jpeg|svg|webp)$/i.test(rawEmoji)) {
-            // if already absolute/relative path -> use as-is, otherwise prefix to public assets folder
-            if (rawEmoji.startsWith('/') || rawEmoji.startsWith('http')) {
-              emojiUrl = rawEmoji;
-            } else {
-              // adjust this path to where you store icons (public folder)
-              emojiUrl = `/assets/icons/${rawEmoji}`;
-            }
-          } else {
-            // treat as a unicode emoji/string
+          // If looks like a URL or absolute path, use as-is
+          if (rawEmoji.startsWith('/') || rawEmoji.startsWith('http')) {
+            emojiUrl = rawEmoji;
+          } else if (/\.(png|jpg|jpeg|svg|webp)$/i.test(rawEmoji)) {
+            // file name only -> try assets/pic (game uses assets/pic for res/stats icons)
+            emojiUrl = (import.meta?.env?.BASE_URL || '/') + `assets/pic/${rawEmoji}`;
+          } else if (/^[\p{Emoji}\u200d]+$/u.test(rawEmoji)) {
+            // plain unicode emoji(s)
             emojiChar = rawEmoji;
+          } else {
+            // fallback: maybe a plain name like "stats_water" -> try assets/pic/stats_water.png
+            const nameNormalized = rawEmoji.replace(/\.[a-z0-9]+$/i, '').replace(/[.\s\-]+/g, '_');
+            emojiUrl = (import.meta?.env?.BASE_URL || '/') + `assets/pic/${nameNormalized}.png`;
           }
         } else if (typeof rawEmoji === 'object') {
-          // support { iconUrl: '...' } or similar
-          const maybe = rawEmoji.iconUrl ?? rawEmoji.url ?? '';
-          if (maybe) emojiUrl = (maybe.startsWith('/') || maybe.startsWith('http')) ? maybe : `/assets/icons/${maybe}`;
+          const maybe = rawEmoji.iconUrl ?? rawEmoji.url ?? rawEmoji.path ?? '';
+          if (maybe) {
+            emojiUrl = (maybe.startsWith('/') || maybe.startsWith('http')) ? maybe : (import.meta?.env?.BASE_URL || '/') + `assets/pic/${maybe}`;
+          } else if (rawEmoji.emoji) {
+            emojiChar = rawEmoji.emoji;
+          }
         }
+      }
+
+      // Debugging helper: hvis ingen emojiUrl/char findes, log def id så du kan tjekke i Network
+      if (!emojiUrl && !emojiChar) {
+        // console.debug(`No icon for res ${id} (def keys: ${Object.keys(def||{}).join(',')})`);
       }
 
       return {
@@ -69,13 +79,14 @@ function buildChartData(items, resDefs, totalCapacity) {
     .sort((a, b) => b.usedSpace - a.usedSpace);
 }
 
+// Styre den lille hover boks i diagrammet
 const tooltipStyle = {
   background: 'rgba(15, 23, 42, 0.92)',
   color: '#e2e8f0',
   borderRadius: 6,
   padding: '8px 10px',
   boxShadow: '0 8px 20px rgba(2, 6, 23, 0.55)',
-  border: '1px solid rgba(148,163,184,0.2)',
+  border: '1px solid rgba(184, 148, 148, 0.2)',
 };
 
 function CapacityTooltip({ active, payload }) {
@@ -156,7 +167,7 @@ export default function ResourceCapacityModal({
             </div>
           </div>
 
-          <div style={{ width: '100%', height: 420 }}>
+          <div style={{ width: '100%', height: 420 }}>  
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={data}
@@ -182,7 +193,7 @@ export default function ResourceCapacityModal({
                   stroke="#94a3b8"
                   style={{ fontSize: 12 }}
                 />
-                <Tooltip content={<CapacityTooltip />} cursor={{ fill: 'rgba(148,163,184,0.08)' }} />
+                <Tooltip content={<CapacityTooltip />} cursor={{ fill: 'rgba(184, 148, 148, 0.08)' }} />
                 <Bar dataKey="pctClamped" fill="#38bdf8" radius={[0, 6, 6, 0]} />
               </BarChart>
             </ResponsiveContainer>

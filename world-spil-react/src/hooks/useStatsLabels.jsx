@@ -81,8 +81,8 @@ export function useStatsLabels() {
   powerGreen: makeLabelNode("stats_powergreen", "ui.label.power_green.h1") || 'Power (Green)',
   powerNuclear: makeLabelNode("stats_powernuclear", "ui.label.power_nuclear.h1") || 'Power (Nuclear)',
   product: makeLabelNode("stats_product", "ui.label.product.h1") || 'Product',
-  cloth: makeLabelNode("stats_productcloth", "ui.label.product_cloth.h1") || 'Cloth',
-  medicin: makeLabelNode("stats_productmedicin", "ui.label.product_medicin.h1") || 'Medicine',
+  productClothing: makeLabelNode("stats_productclothing", "ui.label.product_clothing.h1") || 'Clothing',
+  productMedicin: makeLabelNode("stats_productmedicin", "ui.label.product_medicin.h1") || 'Medicine',
   social: makeLabelNode("stats_social", "ui.label.social.h1") || 'Social',
 
   waste: makeLabelNode("stats_waste", "ui.label.waste.h1") || 'Waste',
@@ -121,10 +121,10 @@ export function defaultLabelMap() {
 
   const map = {
 // STAGE 1
-    'footprint': { label: t("ui.emoji.footprint.h1")+t("ui.label.footprint.h1"), desc: t("ui.desc.footprint.h1") },
-    'animal_cap': { label: t("ui.emoji.animalcap.h1")+t("ui.label.animalcap.h1"), desc: t("ui.desc.animalcap.h1") },
-    'housing': { label: t("ui.emoji.housing.h1")+t("ui.label.housing.h1"), desc: t("ui.capdesc.housing.h1") },
-    'housingCapacity': { label: t("ui.emoji.housing.h1")+t("ui.label.housing.h1"), desc: t("ui.capdesc.housing.h1") },
+    'footprint': { label: makeLabelNode("stats_footprint", "ui.label.footprint.h1"), desc: t("ui.desc.footprint.h1") },
+    'animal_cap': { label: makeLabelNode("stats_animalcap", "ui.label.animalcap.h1"), desc: t("ui.desc.animalcap.h1") },
+    'housing': { label: makeLabelNode("stats_housing", "ui.label.housing.h1"), desc: t("ui.capdesc.housing.h1") },
+    'housingCapacity': { label: makeLabelNode("stats_housing", "ui.label.housing.h1"), desc: t("ui.capdesc.housing.h1") },
 
     'provision_cap': { label: makeLabelNode("stats_food", "ui.label.provision.h1"), desc: t("ui.capdesc.provision.h1") },
     'provisionCapacity': { label: makeLabelNode("stats_food", "ui.label.provision.h1"), desc: t("ui.capdesc.provision.h1") },
@@ -132,8 +132,8 @@ export function defaultLabelMap() {
 
     'heatFossilCapacity': { label: makeLabelNode("stats_heat", "ui.label.heat.h1"), desc: t("ui.capdesc.heat.h1") },
 
-    'storageSolidCap': { label: makeLabelNode("stats_storage_solid", "ui.label.storage_solid.h1"), desc: t("ui.capdesc.storage_solid.h1") },
-    'storageLiquidCap': { label: makeLabelNode("stats_storage_liquid", "ui.label.storage_liquid.h1"), desc: t("ui.capdesc.storage_liquid.h1") },
+    'storageSolidCap': { label: makeLabelNode("stats_storagesolid", "ui.label.storage_solid.h1"), desc: t("ui.capdesc.storage_solid.h1") },
+    'storageLiquidCap': { label: makeLabelNode("stats_storageliquid", "ui.label.storage_liquid.h1"), desc: t("ui.capdesc.storage_liquid.h1") },
 
     'waterUsage': { label: makeLabelNode("stats_water", "ui.label.water.h1"), desc: t("ui.usagedesc.water.h1") },
     'waterCapacity': { label: makeLabelNode("stats_water", "ui.label.water.h1"), desc: t("ui.capdesc.water.h1") },
@@ -161,43 +161,82 @@ export function defaultLabelMap() {
 // OTHER STAGE    
 
 
-    'healthCapacity': { label: t("ui.emoji.health.h1")+t("ui.label.health.h1"), desc: t("ui.capdesc.health.h1") },
+    'healthCapacity': { label: makeLabelNode("stats_health", "ui.label.health.h1"), desc: t("ui.capdesc.health.h1") },
     /*'healthUnitUsage': { label: t("ui.emoji.health_unit.h1")+t("ui.label.health_unit.h1"), desc: t("ui.usagedesc.health_unit.h1") },
     'healthUnitCapacity': { label: t("ui.emoji.health_unit.h1")+t("ui.label.health_unit.h1"), desc: t("ui.capdesc.health_unit.h1") },*/
-    'healthDentistUsage': { label: t("ui.emoji.health_dentist.h1")+t("ui.label.health_dentist.h1"), desc: t("ui.usagedesc.health_dentist.h1") },
-    'healthDentistCapacity': { label: t("ui.emoji.health_dentist.h1")+t("ui.label.health_dentist.h1"), desc: t("ui.capdesc.health_dentist.h1") },
+    'healthDentistUsage': { label: makeLabelNode("stats_healthdentist", "ui.label.health_dentist.h1"), desc: t("ui.usagedesc.health_dentist.h1") },
+    'healthDentistCapacity': { label: makeLabelNode("stats_healthdentist", "ui.label.health_dentist.h1"), desc: t("ui.capdesc.health_dentist.h1") },
 
-    'adultsPoliceCapacity': { label: t("ui.emoji.adults_police.h1")+t("ui.citizens.adults_police.h1"), desc: t("ui.capdesc.adults_police.h1") },
-    'adultsFireCapacity': { label: t("ui.emoji.adults_fire.h1")+t("ui.citizens.adults_fire.h1"), desc: t("ui.capdesc.adults_fire.h1") },
-    'adultsHealthCapacity': { label: t("ui.emoji.adults_health.h1")+t("ui.citizens.adults_health.h1"), desc: t("ui.capdesc.adults_health.h1") },
-    'adultsSoldierCapacity': { label: t("ui.emoji.adults_soldier.h1")+t("ui.citizens.adults_soldier.h1"), desc: t("ui.capdesc.adults_soldier.h1") },
-    'kidsStudentCapacity': { label: t("ui.emoji.kids_student.h1")+t("ui.citizens.kids_student.h1"), desc: t("ui.capdesc.kids_student.h1") },
-    'youngStudentCapacity': { label: t("ui.emoji.young_student.h1")+t("ui.citizens.young_student.h1"), desc: t("ui.capdesc.young_student.h1") },
+    'adultsPoliceCapacity': { label: makeLabelNode("stats_police", "ui.citizens.adults_police.h1"), desc: t("ui.capdesc.adults_police.h1") },
+    'adultsFireCapacity': { label: makeLabelNode("stats_fire", "ui.citizens.adults_fire.h1"), desc: t("ui.capdesc.adults_fire.h1") },
+    'adultsHealthCapacity': { label: makeLabelNode("stats_health", "ui.citizens.adults_health.h1"), desc: t("ui.capdesc.adults_health.h1") },
+    'adultsSoldierCapacity': { label: makeLabelNode("stats_soldier", "ui.citizens.adults_soldier.h1"), desc: t("ui.capdesc.adults_soldier.h1") },
+    'kidsStudentCapacity': { label: makeLabelNode("stats_student", "ui.citizens.kids_student.h1"), desc: t("ui.capdesc.kids_student.h1") },
+    'youngStudentCapacity': { label: makeLabelNode("stats_student", "ui.citizens.young_student.h1"), desc: t("ui.capdesc.young_student.h1") },
 
-    'productClothUsage': { label: t("ui.emoji.cloth.h1")+t("ui.label.product_cloth.h1"), desc: t("ui.usagedesc.product_cloth.h1") },
-    'productClothCapacity': { label: t("ui.emoji.cloth.h1")+t("ui.label.product_cloth.h1"), desc: t("ui.capdesc.product_cloth.h1") },
+    'productClothingUsage': { label: makeLabelNode("stats_productclothing", "ui.label.product_clothing.h1"), desc: t("ui.usagedesc.product_clothing.h1") },
+    'productClothingCapacity': { label: makeLabelNode("stats_productclothing", "ui.label.product_clothing.h1"), desc: t("ui.capdesc.product_clothing.h1") },
 
-    'taxUsage': { label: t("ui.emoji.tax.h1")+t("ui.label.tax.h1"), desc: t("ui.capdesc.tax.h1") },
-    'taxCapacity': { label: t("ui.emoji.tax.h1")+t("ui.label.tax.h1"), desc: t("ui.usagedesc.tax.h1") },
+    'taxUsage': { label: makeLabelNode("stats_tax", "ui.label.tax.h1"), desc: t("ui.capdesc.tax.h1") },
+    'taxCapacity': { label: makeLabelNode("stats_tax", "ui.label.tax.h1"), desc: t("ui.usagedesc.tax.h1") },
 
-    'taxHealthUsage': { label: t("ui.emoji.tax_health.h1")+t("ui.label.tax_health.h1"), desc: t("ui.capdesc.tax_health.h1") },
-    'taxHealthCapacity': { label: t("ui.emoji.tax_health.h1")+t("ui.label.tax_health.h1"), desc: t("ui.usagedesc.tax_health.h1") },
+    'taxHealthUsage': { label: makeLabelNode("stats_taxhealth", "ui.label.tax_health.h1"), desc: t("ui.capdesc.tax_health.h1") },
+    'taxHealthCapacity': { label: makeLabelNode("stats_taxhealth", "ui.label.tax_health.h1"), desc: t("ui.usagedesc.tax_health.h1") },
 
-    'transportUsage': { label: t("ui.emoji.transport.h1")+t("ui.label.transport.h1"), desc: t("ui.capdesc.transport.h1") },
-    'transportCapacity': { label: t("ui.emoji.transport.h1")+t("ui.label.transport.h1"), desc: t("ui.usagedesc.transport.h1") },
-    'transportGodsUsage': { label: t("ui.emoji.transport_gods.h1")+t("ui.label.transport_gods.h1"), desc: t("ui.capdesc.transport_gods.h1") },
-    'transportGodsCapacity': { label: t("ui.emoji.transport_gods.h1")+t("ui.label.transport_gods.h1"), desc: t("ui.usagedesc.transport_gods.h1") },
-    'transportPassengerCapacity': { label: t("ui.emoji.transport_passenger.h1")+t("ui.label.transport_passenger.h1"), desc: t("ui.capdesc.transport_passenger.h1") },
-    'transportPassengerUsage': { label: t("ui.emoji.transport_passenger.h1")+t("ui.label.transport_passenger.h1"), desc: t("ui.usagedesc.transport_passenger.h1") },
-    'socialCapacity': { label: t("ui.emoji.social.h1")+t("ui.label.social.h1"), desc: t("ui.capdesc.social.h1") },
-    'socialUsage': { label: t("ui.emoji.social.h1")+t("ui.label.social.h1"), desc: t("ui.usagedesc.social.h1") },
-    'cultureCapacity': { label: t("ui.emoji.culture.h1")+t("ui.label.culture.h1"), desc: t("ui.capdesc.culture.h1") },
-    'cultureUsage': { label: t("ui.emoji.culture.h1")+t("ui.label.culture.h1"), desc: t("ui.usagedesc.culture.h1") },
-    'religionCapacity': { label: t("ui.emoji.religion.h1")+t("ui.label.religion.h1"), desc: t("ui.capdesc.religion.h1") },  
-    'religionUsage': { label: t("ui.emoji.religion.h1")+t("ui.label.religion.h1"), desc: t("ui.usagedesc.religion.h1") },
-    'civilizationCapacity': { label: t("ui.emoji.civilization.h1")+t("ui.label.civilization.h1"), desc: t("ui.capdesc.civilization.h1") },  
-    'civilizationUsage': { label: 't("ui.emoji.civilization.h1")+t("ui.label.civilization.h1")', desc: t("ui.usagedesc.civilization.h1") },
+    'transportUsage': { label: makeLabelNode("stats_transport", "ui.label.transport.h1"), desc: t("ui.capdesc.transport.h1") },
+    'transportCapacity': { label: makeLabelNode("stats_transport", "ui.label.transport.h1"), desc: t("ui.usagedesc.transport.h1") },
+    'transportGoodsUsage': { label: makeLabelNode("stats_transportgoods", "ui.label.transport_goods.h1"), desc: t("ui.capdesc.transport_goods.h1") },
+    'transportGoodsCapacity': { label: makeLabelNode("stats_transportgoods", "ui.label.transport_goods.h1"), desc: t("ui.usagedesc.transport_goods.h1") },
+    'transportPassengerCapacity': { label: makeLabelNode("stats_transportpassenger", "ui.label.transport_passenger.h1"), desc: t("ui.capdesc.transport_passenger.h1") },
+    'transportPassengerUsage': { label: makeLabelNode("stats_transportpassenger", "ui.label.transport_passenger.h1"), desc: t("ui.usagedesc.transport_passenger.h1") },
 
+    'socialCapacity': { label: makeLabelNode("stats_social", "ui.label.social.h1"), desc: t("ui.capdesc.social.h1") },
+    'socialUsage': { label: makeLabelNode("stats_social", "ui.label.social.h1"), desc: t("ui.usagedesc.social.h1") },
+    'cultureCapacity': { label: makeLabelNode("stats_culture", "ui.label.culture.h1"), desc: t("ui.capdesc.culture.h1") },
+    'cultureUsage': { label: makeLabelNode("stats_culture", "ui.label.culture.h1"), desc: t("ui.usagedesc.culture.h1") },
+    'religionCapacity': { label: makeLabelNode("stats_religion", "ui.label.religion.h1"), desc: t("ui.capdesc.religion.h1") },
+    'religionUsage': { label: makeLabelNode("stats_religion", "ui.label.religion.h1"), desc: t("ui.usagedesc.religion.h1") },
+    'civilizationCapacity': { label: makeLabelNode("stats_civilization", "ui.label.civilization.h1"), desc: t("ui.capdesc.civilization.h1") },
+    'civilizationUsage': { label: makeLabelNode("stats_civilization", "ui.label.civilization.h1"), desc: t("ui.usagedesc.civilization.h1") },
+
+    'storageSolidUnitCapacity': { label: makeLabelNode("stats_storagesolid", "ui.label.storage_solid.h1"), desc: t("ui.capdesc.storage_solid_unit.h1") },
+    'storageSolidUnitUsage': { label: makeLabelNode("stats_storagesolid", "ui.label.storage_solid.h1"), desc: t("ui.usagedesc.storage_solid.h1") },
+
+    'storageLiquidUnitCapacity': { label: makeLabelNode("stats_storageliquid", "ui.label.storage_liquid.h1"), desc: t("ui.capdesc.storage_liquid_unit.h1") },
+    'storageLiquidUnitUsage': { label: makeLabelNode("stats_storageliquid", "ui.label.storage_liquid.h1"), desc: t("ui.usagedesc.storage_liquid.h1") },
+    
+    'adultsWorkerCapacity': { label: makeLabelNode("stats_worker", "ui.citizens.adults_worker.h1"), desc: t("ui.capdesc.adults_worker.h1") },
+    
+    'storageUnitsCapacity': { label: makeLabelNode("stats_storageunits", "ui.label.storage_units.h1"), desc: t("ui.capdesc.storage_units.h1") },
+    
+    'adultsPoliceCapacity': { label: makeLabelNode("stats_police", "ui.citizens.adults_police.h1"), desc: t("ui.capdesc.adults_police.h1") },
+    
+    'youngStudentCapacity': { label: makeLabelNode("stats_student", "ui.citizens.young_student.h1"), desc: t("ui.capdesc.young_student.h1") },
+    
+    'healthDentistCapacity': { label: makeLabelNode("stats_healthdentist", "ui.label.health_dentist.h1"), desc: t("ui.capdesc.health_dentist.h1") },
+    
+    'kidsStudentCapacity': { label: makeLabelNode("stats_student", "ui.citizens.kids_student.h1"), desc: t("ui.capdesc.kids_student.h1") },
+    
+    'healthUnitCapacity': { label: makeLabelNode("stats_health", "ui.label.health_unit.h1"), desc: t("ui.capdesc.health_unit.h1") },
+    'healthUnitUsage': { label: makeLabelNode("stats_health", "ui.label.health_unit.h1"), desc: t("ui.usagedesc.health_unit.h1") },
+
+    'housingUnitCapacity': { label: makeLabelNode("simplebed", "ui.label.housing_unit.h1"), desc: t("ui.capdesc.housing_unit.h1") },
+    'housingUnitUsage': { label: makeLabelNode("simplebed", "ui.label.housing_unit.h1"), desc: t("ui.usagedesc.housing_unit.h1") },
+
+    'productMedicinUsage': { label: makeLabelNode("stats_productmedicin", "ui.label.product_medicin.h1"), desc: t("ui.usagedesc.product_medicin.h1") },
+    'productMedicinCapacity': { label: makeLabelNode("stats_productmedicin", "ui.label.product_medicin.h1"), desc: t("ui.capdesc.product_medicin.h1") },
+
+
+    /*
+       adultsPoliceCapacity=10;
+    kidsStudentCapacity=7;
+    youngStudentCapacity=5;
+    healthDentistCapacity=144;
+    adultsWorkerCapacity=100;
+    storageUnitsCapacity=500;
+    footprint=100;
+    storageLiquidCap=5000;
+    storageSolidCap=5000;*/
 
     // ... tilføj flere efter behov
   };

@@ -28,3 +28,49 @@ export default function Icon({ value, iconUrl, alt = '', basePath = '/assets/ico
   }
   return fallback ? <span style={{ fontSize: size }}>{fallback}</span> : null;
 }
+
+function deriveBase() {
+  return (import.meta?.env?.BASE_URL || '/') + 'assets/pic/';
+}
+
+/**
+ * Icon component
+ * - name: filnavn uden .png (kan indeholde dots/underscores/spaces)
+ * - prefix: valgfri prefix (fx 'stats') hvis du vil auto-prefixe
+ */
+export function StatsIcon({ name, size = 18, className, style = {}, alt, prefix }) {
+  if (!name) return null;
+  // normaliser navn -> underscore, fjern extension
+  let key = String(name).replace(/\.[a-z0-9]+$/i, '').trim();
+  key = key.replace(/[.\s\-]+/g, '_');
+  if (prefix) key = `${prefix}_${key}`;
+  const filename = `${key}.png`;
+  const base = deriveBase();
+  const src = base + filename;
+  const fallback = (import.meta?.env?.BASE_URL || '/') + 'assets/icons/' + filename;
+
+  return (
+    <img
+      src={src}
+      alt={alt || key}
+      width={size}
+      height={size}
+      className={className}
+      style={{ width: size, height: size, objectFit: 'contain', verticalAlign: 'middle', marginRight: 6, ...style }}
+      onError={(e) => {
+        try {
+          if (e?.target?.src && e.target.src !== fallback) {
+            e.target.src = fallback;
+          } else {
+            e.target.style.display = 'none';
+          }
+        } catch {
+          if (e?.target) e.target.style.display = 'none';
+        }
+      }}
+    />
+  );
+}
+
+// kort helper så du kan skrive icon(name) i JSX
+export const icon = (name, props = {}) => <StatsIcon name={name} {...props} />;

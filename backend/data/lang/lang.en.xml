@@ -508,8 +508,8 @@
   <entry key="rsd.useclay.l1.name">Clay Utilization</entry>
   <entry key="rsd.useclay.l1.desc">Allows extraction and use of clay for construction and pottery.</entry>
 
-  <entry key="rsd.stonebricks.l1.name">Stone Bricks</entry>
-  <entry key="rsd.stonebricks.l1.desc">Enables production of stone bricks for stronger buildings.</entry>
+  <entry key="rsd.stonebrick.l1.name">Stone Bricks</entry>
+  <entry key="rsd.stonebrick.l1.desc">Enables production of stone bricks for stronger buildings.</entry>
 
   <entry key="rsd.bronze.l1.name">Bronze</entry>
   <entry key="rsd.bronze.l1.desc">Allows crafting and use of bronze tools and components.</entry>

@@ -472,7 +472,7 @@
     <cost>
       <res id="res.turtleoil" amount="2"/>
       <res id="res.sunflower" amount="10"/>
-      <res id="res.herbs" amount="5"/>
+      <res id="res.herb" amount="5"/>
       <res id="res.salt" amount="2"/>
       <res id="res.cockedfish" amount="1"/>
       <res id="res.soup" amount="1"/>
@@ -571,7 +571,7 @@
       <res id="res.log" amount="4"/>
     </cost>
     <time>1m</time>
-    <require>rcp.logging.l1</require>
+    <require>rsd.logging.l1</require>
   </recipe>
 
   <recipe id="rcp.chopwood.l1" family="forest" type="basic" lvl="1" stage="2" mode="active">

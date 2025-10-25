@@ -99,8 +99,8 @@ foreach ($registry as $id => $m) {
 }
 
   $USE_ALIAS = [
-    'useCloth'   => 'useProductCloth',
-    'useMedicin' => 'useProductMedicin',
+    /*'useCloth'   => 'useProductCloth',
+    'useMedicin' => 'useProductMedicin',*/
   ];
 
   // Kapaciteter + kilde-lister
@@ -412,8 +412,9 @@ if (!empty($summary['capChoice']) && is_array($summary['capChoice'])) {
   $taxCitizens = (float)($usages['useTaxCitizens']['total'] ?? 0);
   $taxOther  = (float)($usages['useTax']['total'] ?? 0);
 
-  $usages['useCloth']['total']   = (float)($usages['useCloth']['total'] ?? 0);
-  $usages['useMedicin']['total']  = (float)($usages['useMedicin']['total'] ?? 0);
+  $productClothing = (float)($usages['useProductClothing']['total'] ?? 0);
+  $productMedicin  = (float)($usages['useProductMedicin']['total'] ?? 0);
+
 
   $usages['useHeat']['total']    = $heatF + $heatG + $heatN + $useHeatTop;
   $usages['useWaste']['total']   = $wasteOrg + $wasteOth + $wasteMet + $wastePla + $wasteGla + $wasteEle + $wasteDng + $wastePap;
@@ -423,7 +424,7 @@ if (!empty($summary['capChoice']) && is_array($summary['capChoice'])) {
   $usages['useTax']['total']     = $taxHealth + $taxOther + $taxCitizens;
   $usages['useTransport']['total'] = $transportP + $transportG + $transportT;
 
-  $usages['useProduct']['total'] = $usages['useCloth']['total'] + $usages['useMedicin']['total'];
+  $usages['useProduct']['total'] = $usages['useProductClothing']['total'] + $usages['useProductMedicin']['total'];
 
     // Aggreger totals for heat/power/health
   $capacities['heatCapacity']  = (float)(

@@ -221,10 +221,10 @@
   <entry key="ui.capdesc.product.h1">Kapacitet til produkter (hvormange produkter der kan opbevares).</entry>
   <entry key="ui.usagedesc.product.h1">Hvor mange produkter der kræves ialt.</entry>
 
-  <entry key="ui.emoji.product_cloth.h1">👕</entry>
-  <entry key="ui.label.product_cloth.h1">Tøj</entry>
-  <entry key="ui.capdesc.product_cloth.h1">Kapacitet til tøj (hvor meget tøj der kan opbevares).</entry>
-  <entry key="ui.usagedesc.product_cloth.h1">Hvor meget tøj der forbruges alt i alt.</entry>
+  <entry key="ui.emoji.product_clothing.h1">👕</entry>
+  <entry key="ui.label.product_clothing.h1">Tøj</entry>
+  <entry key="ui.capdesc.product_clothing.h1">Kapacitet til tøj (hvor meget tøj der kan opbevares).</entry>
+  <entry key="ui.usagedesc.product_clothing.h1">Hvor meget tøj der forbruges alt i alt.</entry>
 
   <entry key="ui.emoji.product_medicin.h1">💉</entry>
   <entry key="ui.label.product_medicin.h1">Medicin</entry>
@@ -285,15 +285,13 @@
   <entry key="ui.capdesc.fire.h1">Hvor mange politifolk byen har plads til.</entry>
   <entry key="ui.usagedesc.fire.h1">Hvor mange politifolk byen har brug for.</entry>
   <entry key="ui.emoji.police_unit.h1">🚓</entry>
-  <entry key="ui.label.health_unit.h1">Udstyr</entry>
-  <entry key="ui.capdesc.health_unit.h1">Kapacitet til sundheds udstyr.</entry>
-  <entry key="ui.usagedesc.health_unit.h1">Hvor meget udstyrsplads, der forbruges pr. enhed.</entry>
+
 
   <entry key="ui.emoji.adults_health.h1">🏥</entry>
   <entry key="ui.citizens.adults_health.h1">Sundhedsarbejder</entry>
   <entry key="ui.capdesc.adults_health.h1">Hvor mange sundhedsarbejdere byen har plads til.</entry>
   <entry key="ui.usagedesc.adults_health.h1">Hvor mange sundhedsarbejdere byen har brug for.</entry>
-  <entry key="ui.emoji.health_unit.h1">🚑</entry>
+
 
   <entry key="ui.emoji.adults_unemployed.h1">🤷</entry>
   <entry key="ui.citizens.adults_unemployed.h1">Arbejdsløs</entry>
@@ -339,14 +337,24 @@
   <entry key="ui.label.transport_passenger.h1">Passager Transport</entry>
   <entry key="ui.capdesc.transport_passenger.h1">Kapacitet til passager transport (hvor mange passagerer der kan transporteres).</entry>
   <entry key="ui.usagedesc.transport_passenger.h1">Hvor mange passagerer der forbruges alt i alt.</entry>
-  <entry key="ui.emoji.transport_gods.h1">🚚</entry>
-  <entry key="ui.label.transport_gods.h1">Gods Transport</entry>
-  <entry key="ui.capdesc.transport_gods.h1">Kapacitet til gods transport (hvor meget gods der kan transporteres).</entry>
-  <entry key="ui.usagedesc.transport_gods.h1">Hvor meget gods der forbruges alt i alt.</entry>
+  <entry key="ui.emoji.transport_goods.h1">🚚</entry>
+  <entry key="ui.label.transport_goods.h1">Gods Transport</entry>
+  <entry key="ui.capdesc.transport_goods.h1">Kapacitet til gods transport (hvor meget gods der kan transporteres).</entry>
+  <entry key="ui.usagedesc.transport_goods.h1">Hvor meget gods der forbruges alt i alt.</entry>
   <entry key="ui.emoji.transport.h1">🚦</entry>
   <entry key="ui.label.transport.h1">Transport</entry>
   <entry key="ui.capdesc.transport.h1">Kapacitet til transport (hvor meget transport der kan leveres).</entry>
   <entry key="ui.usagedesc.transport.h1">Hvor meget transport der forbruges alt i alt.</entry>
+
+<!-- UNITS-->
+  <entry key="ui.emoji.health_unit.h1">🚑</entry>
+  <entry key="ui.label.health_unit.h1">Udstyr</entry>
+  <entry key="ui.capdesc.health_unit.h1">Kapacitet til sundheds udstyr.</entry>
+  <entry key="ui.usagedesc.health_unit.h1">Hvor meget udstyrsplads, der forbruges pr. enhed.</entry>
+
+  <entry key="ui.label.housing_unit.h1">Sengepladser</entry>
+  <entry key="ui.capdesc.housing_unit.h1">Kapacitet til sengepladser</entry>
+  <entry key="ui.usagedesc.housing_unit.h1">Plads der tages pr seng.</entry>
 
 <!--BUILDINGS-->
   <entry key="bld.admin.l1.name">Test bygning</entry>
@@ -637,8 +645,8 @@
   <entry key="rsd.useclay.l1.name">Lerudnyttelse</entry>
   <entry key="rsd.useclay.l1.desc">Giver evnen til at udvinde og bruge ler til byggeri og keramik</entry>
 
-  <entry key="rsd.stonebricks.l1.name">Stenmursten</entry>
-  <entry key="rsd.stonebricks.l1.desc">Giver mulighed for at fremstille mursten af sten til stærkere bygninger</entry>
+  <entry key="rsd.stonebrick.l1.name">Stenmursten</entry>
+  <entry key="rsd.stonebrick.l1.desc">Giver mulighed for at fremstille mursten af sten til stærkere bygninger</entry>
 
   <entry key="rsd.bronze.l1.name">Bronze</entry>
   <entry key="rsd.bronze.l1.desc">Muliggør fremstilling og brug af bronzeværktøj og -komponenter</entry>
@@ -970,8 +978,8 @@
   <entry key="res.log.desc">Kan bruges til at lave brænde</entry>
   <entry key="res.plank.name">Planke</entry>
   <entry key="res.plank.desc">Kan bruges til at lave møbler</entry>
-  <entry key="res.stonebricks.name">Stenblokke</entry>
-  <entry key="res.stonebricks.desc">Kan bruges til at lave bygninger</entry>
+  <entry key="res.stonebrick.name">Stenblokke</entry>
+  <entry key="res.stonebrick.desc">Kan bruges til at lave bygninger</entry>
   <entry key="res.carrot.name">Gulerod</entry>
   <entry key="res.carrot.desc">Kan bruges til at lave mad</entry>
   <entry key="res.sunflower.name">Solsikke</entry>
@@ -1040,8 +1048,11 @@
   <entry key="ani.duck.desc">And giver lidt kød, fjer og æg</entry>
   <entry key="ani.goat.name">Ged</entry>
   <entry key="ani.goat.desc">Ged giver lidt kød og skind</entry>
+
   <entry key="ani.turtle.name">Skildpadde</entry>
   <entry key="ani.turtle.desc">Skildpadder giver lidt kød og skildpadde skjold</entry>
+  <entry key="ani.horse.name">Hest</entry>
+  <entry key="ani.horse.desc">Heste kan bruges til transport af passager og gods tidligt i spillet.</entry>
 
 <!-- HEALTH UNITS-->
 

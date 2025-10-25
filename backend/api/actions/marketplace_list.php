@@ -51,7 +51,7 @@ try {
       $priceFactor = 1 + sin($hour / 24 * 2 * M_PI) * 0.12; // +-12% dags-svingning
 
       // vælg et subset og generer rækker
-      $sampleCount = min(6, count($baseSamples));
+      $sampleCount = min(10, count($baseSamples));
       $keys = range(0, count($baseSamples)-1);
       shuffle($keys); // shuffle er seedet af mt_srand
       for ($i = 0; $i < $sampleCount; $i++) {

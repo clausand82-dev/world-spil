@@ -25,6 +25,8 @@
     adultsWorkerCapacity=100;
     storageUnitsCapacity=500;
     footprint=100;
+    storageLiquidCap=5000;
+    storageSolidCap=5000;
     </stats>
 
     <cost>

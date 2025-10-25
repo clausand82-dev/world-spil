@@ -712,7 +712,7 @@
       <res id="res.food" amount="20"/>
     </cost>
     <yield period="1h">
-      <res id="res.stonebricks" amount="1"/>
+      <res id="res.stonebrick" amount="1"/>
       </yield>
     <require>rsd.mining.l3, bld.mine.l3</require>
     <time>1h</time>

@@ -301,31 +301,31 @@ function metrics_registry(): array {
       'stage' => ['unlock_at'=>2,'visible_at'=>2],
       'happiness' => ['enabled'=>true, 'weight_key'=>'productHappinessWeight'], // eller clothHappinessWeight, hvis du opretter den
       'popularity'=> ['enabled'=>true, 'weight_key'=>'productPopularityWeight'],
-      'subs' => ['cloth','medicin'],
+      'subs' => ['productClothing','productMedicin'],
       'demands' => [],
       'flows' => [],
     ],
 
-    'cloth' => [
-      'label' => 'Cloth',
-      'usageField' => 'useCloth',
-      'capacityField' => 'productClothCapacity',
-      'capacityStatKeys' => ['productClothCapacity','clothCapacity'],
-      'usageStatKeys' => ['clothUsage'],
+    'productClothing' => [
+      'label' => 'Clothing',
+      'usageField' => 'useProductClothing',
+      'capacityField' => 'productClothingCapacity',
+      'capacityStatKeys' => ['productClothingCapacity','clothingCapacity'],
+      'usageStatKeys' => ['productClothingUsage'],
       'sources' => ['bld'=>true,'add'=>true,'rsd'=>true,'ani'=>true,'res'=>true],
       'stage' => ['unlock_at'=>2,'visible_at'=>2],
-      'happiness' => ['enabled'=>true, 'weight_key'=>'clothHappinessWeight'], // eller clothHappinessWeight, hvis du opretter den
-      'popularity'=> ['enabled'=>true, 'weight_key'=>'clothPopularityWeight'],
+      'happiness' => ['enabled'=>true, 'weight_key'=>'clothingHappinessWeight'], // eller clothHappinessWeight, hvis du opretter den
+      'popularity'=> ['enabled'=>true, 'weight_key'=>'clothingPopularityWeight'],
       'parent' => ['product'],
       'demands' => [],
       'flows' => [],
     ],
-    'medicin' => [
+    'productMedicin' => [
       'label' => 'Medicin',
-      'usageField' => 'useMedicin',
+      'usageField' => 'useProductMedicin',
       'capacityField' => 'productMedicinCapacity',
       'capacityStatKeys' => ['productMedicinCapacity','medicinCapacity'],
-      'usageStatKeys' => ['medicinUsage'],
+      'usageStatKeys' => ['productMedicinUsage'],
       'sources' => ['bld'=>true,'add'=>true,'rsd'=>true,'ani'=>true,'res'=>true],
       'stage' => ['unlock_at'=>2,'visible_at'=>2],
       'happiness' => ['enabled'=>true, 'weight_key'=>'medicinHappinessWeight'], // eksempel – sæt din egen
@@ -607,15 +607,15 @@ function metrics_registry(): array {
       ],
     ],
 
-      'transportGods' => [
+      'transportGoods' => [
       'label' => 'Transport (Gods)',
-      'usageField' => 'useTransportGods',
-      'capacityField' => 'transportGodsCapacity',
-      'capacityStatKeys' => ['transportGodsCapacity'],
-      'usageStatKeys' => ['transportGodsUsage'],
+      'usageField' => 'useTransportGoods',
+      'capacityField' => 'transportGoodsCapacity',
+      'capacityStatKeys' => ['transportGoodsCapacity'],
+      'usageStatKeys' => ['transportGoodsUsage'],
       'sources' => ['bld'=>true,'add'=>true,'rsd'=>true,'ani'=>true,'res'=>true],
       'stage' => ['unlock_at'=>2,'visible_at'=>2],
-      'happiness' => ['enabled'=>true, 'weight_key'=>'transportGodsHappinessWeight'], // eksempel
+      'happiness' => ['enabled'=>true, 'weight_key'=>'transportGoodsHappinessWeight'], // eksempel
       'popularity'=> ['enabled'=>false],
       'parent' => ['transport'],
       'demands' => [],

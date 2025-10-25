@@ -36,7 +36,7 @@ export default function Modal({ open, onClose, title = '', size = 'medium', chil
       <div style={boxStyle} className={className} onClick={(e) => e.stopPropagation()}>
         <div style={headerStyle}>
           <div style={{ fontWeight: 700 }}>{title}</div>
-          <button type="button" onClick={onClose} aria-label="Luk" style={{ border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 18 }}>✕</button>
+          <button type="button" onClick={onClose} aria-label="Luk" style={{ color: 'var(--text)', border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 18 }}>✕</button>
         </div>
         <div style={bodyStyle}>
           {children}
