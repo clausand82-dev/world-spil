@@ -61,7 +61,7 @@ export default function InlineCapacityBar({
       style={{
         position: 'relative',
         width: '100%',
-        height: 20,
+        height: 24,
         borderRadius: 8,
         overflow: 'hidden',
         background: 'linear-gradient(90deg,#0b1220,#0f1724)',

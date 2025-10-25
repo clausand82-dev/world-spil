@@ -378,7 +378,7 @@ function metrics_registry(): array {
       'capacityStatKeys' => ['wasteOrganicCapacity'],
       'usageStatKeys' => ['wasteOrganicUsage'],
       'sources' => ['bld'=>true,'add'=>true,'rsd'=>true,'ani'=>true,'res'=>true],
-      'stage' => ['unlock_at'=>1,'visible_at'=>1],
+      'stage' => ['unlock_at'=>4,'visible_at'=>4],
       'happiness' => ['enabled'=>true, 'weight_key'=>'wasteOrganicHappinessWeight'], // eksempel
       'popularity'=> ['enabled'=>false],
       'parent' => ['waste'],

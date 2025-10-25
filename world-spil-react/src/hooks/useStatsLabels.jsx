@@ -47,12 +47,12 @@ function makeLabelNodeFactory(defs, t) {
         <img
           src={altUrl}
           alt={labelText || key}
-          style={{ width: 18, height: 18, objectFit: 'contain', verticalAlign: 'middle', marginRight: 6 }}
+          style={{ width: 18, height: 18, objectFit: 'contain', verticalAlign: 'middle', marginRight: 4 }}
         />
       );
     }
 
-    return <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>{iconNode}{labelText}</span>;
+    return <span style={{ display: '', alignItems: 'center', gap: 0 }}>{iconNode}{labelText}</span>;
   };
 }
 
@@ -66,23 +66,24 @@ export function useStatsLabels() {
 
   return useMemo(() => ({
   housing: t("ui.emoji.housing.h1") + ' ' + t("ui.label.housing.h1") || 'Housing',
-  food: t("ui.emoji.provision.h1") + ' ' + t("ui.label.provision.h1") || 'Provision',
-  water: t("ui.emoji.water.h1") + ' ' + t("ui.label.water.h1") || 'Water',
-  health: t("ui.emoji.health.h1") + ' ' + t("ui.label.health.h1") || 'Health',
-  healthDentist: t("ui.emoji.health.h1") + ' ' + t("ui.label.health_dentist.h1") || 'Dentist',
+  food: makeLabelNode("stats_food", "ui.label.provision.h1") || 'Provision',
+  water: makeLabelNode("stats_water", "ui.label.water.h1") || 'Water',
+  health: makeLabelNode("stats_health", "ui.label.health.h1") || 'Health',
+  healthDentist: makeLabelNode("stats_healthdentist", "ui.label.health_dentist.h1") || 'Dentist',
   // Aggregerede
-  heat: t("ui.emoji.heat.h1") + ' ' + t("ui.label.heat.h1") || 'Heat',
-  power: t("ui.emoji.power.h1") + ' ' + t("ui.label.power.h1") || 'Power',
+  heat: makeLabelNode("stats_heat", "ui.label.heat.h1") || 'Heat',
+  power: makeLabelNode("stats_power", "ui.label.power.h1") || 'Power',
   // Subkategorier
-  heatFossil: t("ui.emoji.heat_fossil.h1") + ' ' + t("ui.label.heat_fossil.h1") || 'Heat (Fossil)',
-  heatGreen: t("ui.emoji.heat_green.h1") + ' ' + t("ui.label.heat_green.h1") || 'Heat (Green)',
-  heatNuclear: t("ui.emoji.heat_nuclear.h1") + ' ' + t("ui.label.heat_nuclear.h1") || 'Heat (Nuclear)',
-  powerFossil: t("ui.emoji.power_fossil.h1") + ' ' + t("ui.label.power_fossil.h1") || 'Power (Fossil)',
-  powerGreen: t("ui.emoji.power_green.h1") + ' ' + t("ui.label.power_green.h1") || 'Power (Green)',
-  powerNuclear: t("ui.emoji.power_nuclear.h1") + ' ' + t("ui.label.power_nuclear.h1") || 'Power (Nuclear)',
-  cloth: t("ui.emoji.product_cloth.h1") + ' ' + t("ui.label.product_cloth.h1") || 'Cloth',
-  medicin: t("ui.emoji.product_medicin.h1") + ' ' + t("ui.label.product_medicin.h1") || 'Medicine',
-  social: t("ui.emoji.social.h1") + ' ' + t("ui.label.social.h1") || 'Social',
+  heatFossil: makeLabelNode("stats_heatfossil", "ui.label.heat_fossil.h1") || 'Heat (Fossil)',
+  heatGreen: makeLabelNode("stats_heatgreen", "ui.label.heat_green.h1") || 'Heat (Green)',
+  heatNuclear: makeLabelNode("stats_heatnuclear", "ui.label.heat_nuclear.h1") || 'Heat (Nuclear)',
+  powerFossil: makeLabelNode("stats_powerfossil", "ui.label.power_fossil.h1") || 'Power (Fossil)',
+  powerGreen: makeLabelNode("stats_powergreen", "ui.label.power_green.h1") || 'Power (Green)',
+  powerNuclear: makeLabelNode("stats_powernuclear", "ui.label.power_nuclear.h1") || 'Power (Nuclear)',
+  product: makeLabelNode("stats_product", "ui.label.product.h1") || 'Product',
+  cloth: makeLabelNode("stats_cloth", "ui.label.product_cloth.h1") || 'Cloth',
+  medicin: makeLabelNode("stats_medicin", "ui.label.product_medicin.h1") || 'Medicine',
+  social: makeLabelNode("stats_social", "ui.label.social.h1") || 'Social',
 
   waste: t("ui.emoji.waste.h1") + ' ' + t("ui.label.waste.h1") || 'Waste',
   wasteOrganic: makeLabelNode('stats_wasteorganic', 'ui.label.waste_organic.h1', 'Organic Waste'),
@@ -113,6 +114,9 @@ export function defaultLabelMap() {
   // Her hardcode vi labels + (valgfri) korte forklaringer.
   // Byt senere med i18n keys / oversætterfunktion.
   const t = useT();
+  const { data: gameData } = useGameData();
+  const defs = gameData?.defs || {};
+  const makeLabelNode = useMemo(() => makeLabelNodeFactory(defs, t), [defs, t]);
 
   const map = {
 // STAGE 1
@@ -121,36 +125,36 @@ export function defaultLabelMap() {
     'housing': { label: t("ui.emoji.housing.h1")+t("ui.label.housing.h1"), desc: t("ui.capdesc.housing.h1") },
     'housingCapacity': { label: t("ui.emoji.housing.h1")+t("ui.label.housing.h1"), desc: t("ui.capdesc.housing.h1") },
 
-    'provision_cap': { label: t("ui.emoji.provision.h1")+t("ui.label.provision.h1"), desc: t("ui.capdesc.provision.h1") },
-    'provisionCapacity': { label: t("ui.emoji.provision.h1")+t("ui.label.provision.h1"), desc: t("ui.capdesc.provision.h1") },
-    'provisionUsage': { label: t("ui.emoji.provision.h1")+t("ui.label.provision.h1"), desc: t("ui.usagedesc.provision.h1") },
+    'provision_cap': { label: makeLabelNode("stats_food")+t("ui.label.provision.h1"), desc: t("ui.capdesc.provision.h1") },
+    'provisionCapacity': { label: makeLabelNode("stats_food")+t("ui.label.provision.h1"), desc: t("ui.capdesc.provision.h1") },
+    'provisionUsage': { label: makeLabelNode("stats_food")+t("ui.label.provision.h1"), desc: t("ui.usagedesc.provision.h1") },
 
-    'heatFossilCapacity': { label: t("ui.emoji.heat.h1")+t("ui.label.heat.h1"), desc: t("ui.capdesc.heat.h1") },  
+    'heatFossilCapacity': { label: makeLabelNode("stats_heat", "ui.label.heat.h1"), desc: t("ui.capdesc.heat.h1") },
 
-    'storageSolidCap': { label: t("ui.emoji.storage_solid.h1")+t("ui.label.storage_solid.h1"), desc: t("ui.capdesc.storage_solid.h1") },
-    'storageLiquidCap': { label: t("ui.emoji.storage_liquid.h1")+t("ui.label.storage_liquid.h1"), desc: t("ui.capdesc.storage_liquid.h1") },
-    
-    'waterUsage': { label: t("ui.emoji.water.h1")+t("ui.label.water.h1"), desc: t("ui.usagedesc.water.h1") },
-    'waterCapacity': { label: t("ui.emoji.water.h1")+t("ui.label.water.h1"), desc: t("ui.capdesc.water.h1") },
+    'storageSolidCap': { label: makeLabelNode("stats_storage_solid", "ui.label.storage_solid.h1"), desc: t("ui.capdesc.storage_solid.h1") },
+    'storageLiquidCap': { label: makeLabelNode("stats_storage_liquid", "ui.label.storage_liquid.h1"), desc: t("ui.capdesc.storage_liquid.h1") },
 
-    'wasteUsage': { label: t("ui.emoji.waste.h1")+t("ui.label.waste.h1"), desc: t("ui.usagedesc.waste.h1") },
-    'wasteCapacity': { label: t("ui.emoji.waste.h1")+t("ui.label.waste.h1"), desc: t("ui.capdesc.waste.h1") },
-    'wasteOrganicUsage': { label: t("ui.emoji.waste_organic.h1")+t("ui.label.waste_organic.h1"), desc: t("ui.usagedesc.waste_organic.h1") },
-    'wasteOrganicCapacity': { label: t("ui.emoji.waste_organic.h1")+t("ui.label.waste_organic.h1"), desc: t("ui.capdesc.waste_organic.h1") },
-    'wasteOtherUsage': { label: t("ui.emoji.waste_other.h1")+t("ui.label.waste_other.h1"), desc: t("ui.usagedesc.waste_other.h1") },
-    'wasteOtherCapacity': { label: t("ui.emoji.waste_other.h1")+t("ui.label.waste_other.h1"), desc: t("ui.capdesc.waste_other.h1") },
-    'wasteMetalUsage': { label: t("ui.emoji.waste_metal.h1")+t("ui.label.waste_metal.h1"), desc: t("ui.usagedesc.waste_metal.h1") },
-    'wasteMetalCapacity': { label: t("ui.emoji.waste_metal.h1")+t("ui.label.waste_metal.h1"), desc: t("ui.capdesc.waste_metal.h1") },
-    'wastePlasticUsage': { label: t("ui.emoji.waste_plastic.h1")+t("ui.label.waste_plastic.h1"), desc: t("ui.usagedesc.waste_plastic.h1") },
-    'wastePlasticCapacity': { label: t("ui.emoji.waste_plastic.h1")+t("ui.label.waste_plastic.h1"), desc: t("ui.capdesc.waste_plastic.h1") },
-    'wasteGlassUsage': { label: t("ui.emoji.waste_glass.h1")+t("ui.label.waste_glass.h1"), desc: t("ui.usagedesc.waste_glass.h1") },
-    'wasteGlassCapacity': { label: t("ui.emoji.waste_glass.h1")+t("ui.label.waste_glass.h1"), desc: t("ui.capdesc.waste_glass.h1") },
-    'wasteElectronicUsage': { label: t("ui.emoji.waste_electronic.h1")+t("ui.label.waste_electronic.h1"), desc: t("ui.usagedesc.waste_electronic.h1") },
-    'wasteElectronicCapacity': { label: t("ui.emoji.waste_electronic.h1")+t("ui.label.waste_electronic.h1"), desc: t("ui.capdesc.waste_electronic.h1") },
-    'wasteDangerUsage': { label: t("ui.emoji.waste_danger.h1")+t("ui.label.waste_danger.h1"), desc: t("ui.usagedesc.waste_danger.h1") },
-    'wasteDangerCapacity': { label: t("ui.emoji.waste_danger.h1")+t("ui.label.waste_danger.h1"), desc: t("ui.capdesc.waste_danger.h1") },
-    'wastePaperUsage': { label: t("ui.emoji.waste_paper.h1")+t("ui.label.waste_paper.h1"), desc: t("ui.usagedesc.waste_paper.h1") },
-    'wastePaperCapacity': { label: t("ui.emoji.waste_paper.h1")+t("ui.label.waste_paper.h1"), desc: t("ui.capdesc.waste_paper.h1") },
+    'waterUsage': { label: makeLabelNode("stats_water", "ui.label.water.h1"), desc: t("ui.usagedesc.water.h1") },
+    'waterCapacity': { label: makeLabelNode("stats_water", "ui.label.water.h1"), desc: t("ui.capdesc.water.h1") },
+
+    'wasteUsage': { label: makeLabelNode("stats_waste", "ui.label.waste.h1"), desc: t("ui.usagedesc.waste.h1") },
+    'wasteCapacity': { label: makeLabelNode("stats_waste", "ui.label.waste.h1"), desc: t("ui.capdesc.waste.h1") },
+    'wasteOrganicUsage': { label: makeLabelNode("stats_wasteorganic", "ui.label.waste_organic.h1"), desc: t("ui.usagedesc.waste_organic.h1") },
+    'wasteOrganicCapacity': { label: makeLabelNode("stats_wasteorganic", "ui.label.waste_organic.h1"), desc: t("ui.capdesc.waste_organic.h1") },
+    'wasteOtherUsage': { label: makeLabelNode("stats_wasteother", "ui.label.waste_other.h1"), desc: t("ui.usagedesc.waste_other.h1") },
+    'wasteOtherCapacity': { label: makeLabelNode("stats_wasteother", "ui.label.waste_other.h1"), desc: t("ui.capdesc.waste_other.h1") },
+    'wasteMetalUsage': { label: makeLabelNode("stats_wastemetal", "ui.label.waste_metal.h1"), desc: t("ui.usagedesc.waste_metal.h1") },
+    'wasteMetalCapacity': { label: makeLabelNode("stats_wastemetal", "ui.label.waste_metal.h1"), desc: t("ui.capdesc.waste_metal.h1") },
+    'wastePlasticUsage': { label: makeLabelNode("stats_wasteplastic", "ui.label.waste_plastic.h1"), desc: t("ui.usagedesc.waste_plastic.h1") },
+    'wastePlasticCapacity': { label: makeLabelNode("stats_wasteplastic", "ui.label.waste_plastic.h1"), desc: t("ui.capdesc.waste_plastic.h1") },
+    'wasteGlassUsage': { label: makeLabelNode("stats_wasteglass", "ui.label.waste_glass.h1"), desc: t("ui.usagedesc.waste_glass.h1") },
+    'wasteGlassCapacity': { label: makeLabelNode("stats_wasteglass", "ui.label.waste_glass.h1"), desc: t("ui.capdesc.waste_glass.h1") },
+    'wasteElectronicUsage': { label: makeLabelNode("stats_wasteelectronic", "ui.label.waste_electronic.h1"), desc: t("ui.usagedesc.waste_electronic.h1") },
+    'wasteElectronicCapacity': { label: makeLabelNode("stats_wasteelectronic", "ui.label.waste_electronic.h1"), desc: t("ui.capdesc.waste_electronic.h1") },
+    'wasteDangerUsage': { label: makeLabelNode("stats_wastedanger", "ui.label.waste_danger.h1"), desc: t("ui.usagedesc.waste_danger.h1") },
+    'wasteDangerCapacity': { label: makeLabelNode("stats_wastedanger", "ui.label.waste_danger.h1"), desc: t("ui.capdesc.waste_danger.h1") },
+    'wastePaperUsage': { label: makeLabelNode("stats_wastepaper", "ui.label.waste_paper.h1"), desc: t("ui.usagedesc.waste_paper.h1") },
+    'wastePaperCapacity': { label: makeLabelNode("stats_wastepaper", "ui.label.waste_paper.h1"), desc: t("ui.capdesc.waste_paper.h1") },
 
 
 // OTHER STAGE    
