@@ -1,4 +1,3 @@
-// services/requirements.js
 import { parseBldKey, normalizePrice } from './helpers.js';
 import { applySpeedBuffsToDuration } from './calcEngine-lite.js';
 import Icon from '../components/common/Icon.jsx'; // sti efter din struktur
@@ -37,25 +36,138 @@ export function computeOwnedMap(stateSection = {}) {
 
 export function computeResearchOwned(state) {
   const owned = {};
+
+  // 1) Legacy/state.rsd - nøgler kan være 'rsd.family.l2' eller 'family.l2' eller 'rsd.family' => level som value
   const legacy = state?.rsd || {};
   for (const key of Object.keys(legacy)) {
-    const match = key.match(/^rsd\.(.+)\.l(\d+)$/);
-    if (!match) continue;
-    const [, family, level] = match;
-    const series = `rsd.${family}`;
-    owned[series] = Math.max(owned[series] || 0, Number(level));
-  }
-  const modernCompleted = state?.research?.completed;
-  if (modernCompleted) {
-    const items = modernCompleted instanceof Set ? Array.from(modernCompleted) : Object.keys(modernCompleted);
-    for (const entry of items) {
-      const match = String(entry).match(/^rsd\.(.+)\.l(\d+)$/);
-      if (!match) continue;
+    const k = String(key);
+    // direkte 'rsd.family.l2'
+    let match = k.match(/^rsd\.(.+)\.l(\d+)$/);
+    if (!match) {
+      // eller 'family.l2'
+      match = k.match(/^(.+)\.l(\d+)$/);
+    }
+    if (match) {
       const [, family, level] = match;
       const series = `rsd.${family}`;
       owned[series] = Math.max(owned[series] || 0, Number(level));
+      continue;
+    }
+    // hvis der er en nøgle 'rsd.family' og værdien er et tal -> brug det
+    const matchSeries = k.match(/^rsd\.(.+)$/);
+    if (matchSeries) {
+      const [, family] = matchSeries;
+      const val = legacy[key];
+      if (typeof val === 'number') {
+        const series = `rsd.${family}`;
+        owned[series] = Math.max(owned[series] || 0, Number(val));
+        continue;
+      }
+      // hvis værdien er truthy (fx true) så sæt level 1
+      if (val) {
+        const series = `rsd.${family}`;
+        owned[series] = Math.max(owned[series] || 0, 1);
+        continue;
+      }
+    }
+    // også understøt nøgler som 'family' -> hvis truthy så niveau 1
+    const plainMatch = k.match(/^(.+)$/);
+    if (plainMatch) {
+      const [, family] = plainMatch;
+      const val = legacy[key];
+      if (val) {
+        const series = `rsd.${family}`;
+        owned[series] = Math.max(owned[series] || 0, 1);
+      }
     }
   }
+
+  // 2) Moderne state.research / state.research.completed kan være Set, Array, Object eller map series->level
+  const researchSection = state?.research || {};
+  let modernCompleted = researchSection?.completed ?? researchSection;
+
+  if (modernCompleted) {
+    // Hvis det er et objekt der ser ud til at mappe series -> level (value numeric), håndter direkte
+    if (typeof modernCompleted === 'object' && !Array.isArray(modernCompleted) && !(modernCompleted instanceof Set)) {
+      const valuesAreNumeric = Object.values(modernCompleted).every(v => typeof v === 'number');
+      if (valuesAreNumeric) {
+        for (const [k, v] of Object.entries(modernCompleted)) {
+          const keyStr = String(k);
+          // hvis nøgle er 'rsd.family.l2' eller 'family.l2'
+          let match = keyStr.match(/^rsd\.(.+)\.l(\d+)$/) || keyStr.match(/^(.+)\.l(\d+)$/);
+          if (match) {
+            const [, family, level] = match;
+            const series = `rsd.${family}`;
+            owned[series] = Math.max(owned[series] || 0, Number(level));
+            continue;
+          }
+          // ellers hvis værdi er et tal, antag at nøgle er serien (fx 'rsd.family' eller 'family')
+          const familyMatch = keyStr.match(/^rsd\.(.+)$/) || keyStr.match(/^(.+)$/);
+          if (familyMatch) {
+            const family = familyMatch[1];
+            const series = `rsd.${family}`;
+            owned[series] = Math.max(owned[series] || 0, Number(v));
+          }
+        }
+      } else {
+        // hvis det er et plain objekt med truthy keys (fx { 'rsd.family.l1': true } eller { 'sawmill': true })
+        for (const [k, v] of Object.entries(modernCompleted)) {
+          const keyStr = String(k);
+          // 'rsd.family.l2' eller 'family.l2'
+          let match = keyStr.match(/^rsd\.(.+)\.l(\d+)$/) || keyStr.match(/^(.+)\.l(\d+)$/);
+          if (match) {
+            const [, family, level] = match;
+            const series = `rsd.${family}`;
+            owned[series] = Math.max(owned[series] || 0, Number(level));
+            continue;
+          }
+          // 'rsd.family' eller 'family' (værdi truthy => level 1)
+          const familyMatch = keyStr.match(/^rsd\.(.+)$/) || keyStr.match(/^(.+)$/);
+          if (familyMatch && v) {
+            const family = familyMatch[1];
+            const series = `rsd.${family}`;
+            owned[series] = Math.max(owned[series] || 0, 1);
+          }
+        }
+      }
+    } else if (modernCompleted instanceof Set) {
+      for (const entry of Array.from(modernCompleted)) {
+        const s = String(entry);
+        // 'rsd.family.l2' eller 'family.l2' eller 'rsd.family' eller 'family'
+        let match = s.match(/^rsd\.(.+)\.l(\d+)$/) || s.match(/^(.+)\.l(\d+)$/);
+        if (match) {
+          const [, family, level] = match;
+          const series = `rsd.${family}`;
+          owned[series] = Math.max(owned[series] || 0, Number(level));
+          continue;
+        }
+        const familyMatch = s.match(/^rsd\.(.+)$/) || s.match(/^(.+)$/);
+        if (familyMatch) {
+          const family = familyMatch[1];
+          const series = `rsd.${family}`;
+          owned[series] = Math.max(owned[series] || 0, 1);
+        }
+      }
+    } else if (Array.isArray(modernCompleted)) {
+      for (const entry of modernCompleted) {
+        const s = String(entry);
+        let match = s.match(/^rsd\.(.+)\.l(\d+)$/) || s.match(/^(.+)\.l(\d+)$/);
+        if (match) {
+          const [, family, level] = match;
+          const series = `rsd.${family}`;
+          owned[series] = Math.max(owned[series] || 0, Number(level));
+          continue;
+        }
+        const familyMatch = s.match(/^rsd\.(.+)$/) || s.match(/^(.+)$/);
+        if (familyMatch) {
+          const family = familyMatch[1];
+          const series = `rsd.${family}`;
+          owned[series] = Math.max(owned[series] || 0, 1);
+        }
+      }
+    }
+  }
+
   return owned;
 }
 
@@ -113,15 +225,19 @@ export function requirementInfo(item, state, caches = {}) {
     caches.hasResearch ||
     ((rid) => {
       const ridStr = String(rid);
+      // fuldt niveau-sjek først: 'rsd.family.l2'
       const match = ridStr.match(/^rsd\.(.+)\.l(\d+)$/);
       if (match) {
         const [, family, level] = match;
         const series = `rsd.${family}`;
         if ((ownedResearch[series] || 0) >= Number(level)) return true;
       } else {
+        // hvis der er kun 'rsd.family' eller 'rsd.family' uden level: tjek om vi har nogen level > 0
         const series = `rsd.${ridStr.replace(/^rsd\./, '')}`;
         if ((ownedResearch[series] || 0) > 0) return true;
       }
+
+      // Faldtilfælde: hvis state.research gemmer entries som keys (fx { 'rsd.family.l1': true })
       const key = ridStr.replace(/^rsd\./, '');
       return !!(state?.research?.[key] || state?.rsd?.[key] || state?.rsd?.[ridStr]);
     });
@@ -194,7 +310,7 @@ export function formatProduction(def, defs) {
     const id = String(entry.id ?? entry.res_id ?? '');
     const amount = Number(entry.amount ?? entry.qty ?? 0);
     const sign = amount > 0 ? '+' : '';
-    const emoji = 'getEmojiForId(id, defs)';
+    const emoji = getEmojiForId(id, defs) || '';
     return `${sign}${amount}${emoji}`;
   });
   const period = def?.yield_period_str;
@@ -250,6 +366,3 @@ export function getCostTokens(cost, defs, sign = '-') {
     };
   });
 }
-
-
-

@@ -259,7 +259,7 @@ function RecipeRow({ entry, defs: passedDefs, state, baseOwned, requirementCache
               </span>
             )}
           </div>
-          {def.desc ? <div className="sub">🔍 {def.desc}</div> : null}
+          {def.desc ? <div className="sub">{t("ui.emoji.info.h1")} {def.desc}</div> : null}
           <div className="sub">
             {t("ui.emoji.recipe.h1")} {t("ui.text.recipe.h1")}:&nbsp;
             {renderTokensAsNodes(inputTokens) || <em>-</em>}

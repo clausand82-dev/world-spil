@@ -97,16 +97,16 @@ export function useRequirements(item) {
     <div className="reqline">
       {Object.keys(normalizedPrice).length > 0 && (
         <>
-          {showLabels && <strong>{(item.isUpgrade || item.ownedMax > 0) ? 'Upgrade cost: ' : 'Build cost: '}</strong>}
+          {showLabels && <strong>{(item.isUpgrade || item.ownedMax > 0) ? t('ui.upgradecost.h1') : t('ui.buildcost.h1')} </strong>}
           <ResourceCost cost={price} />
         </>
       )}
 
-      {reqIds.length > 0 && (inline ? <span className="sep">|</span> : <br />)}
-      {reqIds.length > 0 && showLabels && <strong>Demands: </strong>}
+      {reqIds.length > 0 && (inline ? <span className="sep"> | </span> : <br />)}
+      {reqIds.length > 0 && showLabels && <strong>{t('ui.requirements.h1')}: </strong>}
       {reqIds.length > 0 && <DemandList req={req} />}
 
-      {footprintCost > 0 && (inline ? <span className="sep">|</span> : <br />)}
+      {footprintCost > 0 && (inline ? <span className="sep"> | </span> : <br />)}
       {footprintCost > 0 && (
         <StatRequirement icon={t('ui.emoji.footprint.h1')} value={`${footprintCost} BP`} isOk={footprintOk} />
       )}

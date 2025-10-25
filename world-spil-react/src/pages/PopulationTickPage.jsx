@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useGameData } from '../context/GameDataContext.jsx';
-import useCitizensReproductionTick from '../hooks/usecitizensReproductionTick.js';
+import useCitizensReproductionTick from '../hooks/useCitizensReproductionTick.js';
 import ReproSummaryModal from '../components/repro/ReproSummaryModal.jsx';
 
 export default function PopulationTickPage() {

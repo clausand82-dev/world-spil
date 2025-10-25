@@ -1,9 +1,69 @@
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { useT } from '../services/i18n.js';
+import { useGameData } from '../context/GameDataContext.jsx';
+import { getIconMetaForId } from '../services/requirements.js';
+
+// ...existing code...
+function makeLabelNodeFactory(defs, t) {
+  return (fullId, i18nKey, fallback) => {
+    const icon = getIconMetaForId(fullId, defs); // { iconUrl, emoji, name } eller null
+    const labelText = (t && t(i18nKey)) || fallback || '';
+    let iconNode = null;
+
+    if (icon?.iconUrl) {
+      iconNode = (
+        <img
+          src={icon.iconUrl}
+          alt={icon.name || ''}
+          style={{ width: 18, height: 18, objectFit: 'contain', verticalAlign: 'middle', marginRight: 6}}
+        />
+      );
+    } else if (icon?.emoji) {
+      iconNode = <span style={{ marginRight: 6 }}>{icon.emoji}</span>;
+    } else {
+      // fallback: byg URL til stats-ikon som ligger samme sted som res billeder
+      // find en eksisterende res.iconUrl for at udlede base-sti
+      let baseDir = null;
+      try {
+        const resDefs = defs?.res || {};
+        for (const k of Object.keys(resDefs)) {
+          const u = resDefs[k]?.iconUrl;
+          if (u && typeof u === 'string') {
+            const idx = u.lastIndexOf('/');
+            baseDir = idx >= 0 ? u.slice(0, idx + 1) : u;
+            break;
+          }
+        }
+      } catch (e) {
+        baseDir = null;
+      }
+      if (!baseDir) {
+        baseDir = (import.meta?.env?.BASE_URL || '/') + 'assets/pic/';
+      }
+      const key = String(fullId || '').replace(/^res\./, '').replace(/^stats\./, '');
+      const filename = `${key}.png`;
+      const altUrl = baseDir + filename;
+      iconNode = (
+        <img
+          src={altUrl}
+          alt={labelText || key}
+          style={{ width: 18, height: 18, objectFit: 'contain', verticalAlign: 'middle', marginRight: 6 }}
+        />
+      );
+    }
+
+    return <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>{iconNode}{labelText}</span>;
+  };
+}
 
 // BRUGES TIL HEADER HAPPINESS OG POPULARITY OG SIDEBAR
-export function useStatsLabels() { 
+export function useStatsLabels() {
   const t = useT();
+  const { data: gameData } = useGameData();
+  const defs = gameData?.defs || {};
+
+  const makeLabelNode = useMemo(() => makeLabelNodeFactory(defs, t), [defs, t]);
+
   return useMemo(() => ({
   housing: t("ui.emoji.housing.h1") + ' ' + t("ui.label.housing.h1") || 'Housing',
   food: t("ui.emoji.provision.h1") + ' ' + t("ui.label.provision.h1") || 'Provision',
@@ -25,8 +85,14 @@ export function useStatsLabels() {
   social: t("ui.emoji.social.h1") + ' ' + t("ui.label.social.h1") || 'Social',
 
   waste: t("ui.emoji.waste.h1") + ' ' + t("ui.label.waste.h1") || 'Waste',
-  wasteOrganic: t("ui.emoji.waste_organic.h1") + ' ' + t("ui.label.waste_organic.h1") || 'Organic Waste',
-  wasteOther: t("ui.emoji.waste_other.h1") + ' ' + t("ui.label.waste_other.h1") || 'Other Waste',
+  wasteOrganic: makeLabelNode('stats_wasteorganic', 'ui.label.waste_organic.h1', 'Organic Waste'),
+  wasteOther: makeLabelNode("stats_wasteother", "ui.label.waste_other.h1", "Other Waste"),
+  wasteMetal: makeLabelNode("stats_wastemetal", "ui.label.waste_metal.h1", "Metal Waste"),
+  wastePlastic: makeLabelNode("stats_wasteplastic", "ui.label.waste_plastic.h1", "Plastic Waste"),
+  wasteGlass: makeLabelNode("stats_wasteglass", "ui.label.waste_glass.h1", "Glass Waste"),
+  wasteElectronic: makeLabelNode("stats_wasteelectronic", "ui.label.waste_electronic.h1", "Electronic Waste"),
+  wasteDanger: makeLabelNode("stats_wastedanger", "ui.label.waste_danger.h1", "Dangerous Waste"),
+  wastePaper: makeLabelNode("stats_wastepaper", "ui.label.waste_paper.h1", "Paper Waste"),
 
   tax: t("ui.emoji.tax.h1") + ' ' + t("ui.label.tax.h1") || 'Tax',
   taxHealth: t("ui.emoji.tax_health.h1") + ' ' + t("ui.label.tax_health.h1") || 'Skat (sundhed)',
@@ -73,6 +139,19 @@ export function defaultLabelMap() {
     'wasteOrganicCapacity': { label: t("ui.emoji.waste_organic.h1")+t("ui.label.waste_organic.h1"), desc: t("ui.capdesc.waste_organic.h1") },
     'wasteOtherUsage': { label: t("ui.emoji.waste_other.h1")+t("ui.label.waste_other.h1"), desc: t("ui.usagedesc.waste_other.h1") },
     'wasteOtherCapacity': { label: t("ui.emoji.waste_other.h1")+t("ui.label.waste_other.h1"), desc: t("ui.capdesc.waste_other.h1") },
+    'wasteMetalUsage': { label: t("ui.emoji.waste_metal.h1")+t("ui.label.waste_metal.h1"), desc: t("ui.usagedesc.waste_metal.h1") },
+    'wasteMetalCapacity': { label: t("ui.emoji.waste_metal.h1")+t("ui.label.waste_metal.h1"), desc: t("ui.capdesc.waste_metal.h1") },
+    'wastePlasticUsage': { label: t("ui.emoji.waste_plastic.h1")+t("ui.label.waste_plastic.h1"), desc: t("ui.usagedesc.waste_plastic.h1") },
+    'wastePlasticCapacity': { label: t("ui.emoji.waste_plastic.h1")+t("ui.label.waste_plastic.h1"), desc: t("ui.capdesc.waste_plastic.h1") },
+    'wasteGlassUsage': { label: t("ui.emoji.waste_glass.h1")+t("ui.label.waste_glass.h1"), desc: t("ui.usagedesc.waste_glass.h1") },
+    'wasteGlassCapacity': { label: t("ui.emoji.waste_glass.h1")+t("ui.label.waste_glass.h1"), desc: t("ui.capdesc.waste_glass.h1") },
+    'wasteElectronicUsage': { label: t("ui.emoji.waste_electronic.h1")+t("ui.label.waste_electronic.h1"), desc: t("ui.usagedesc.waste_electronic.h1") },
+    'wasteElectronicCapacity': { label: t("ui.emoji.waste_electronic.h1")+t("ui.label.waste_electronic.h1"), desc: t("ui.capdesc.waste_electronic.h1") },
+    'wasteDangerUsage': { label: t("ui.emoji.waste_danger.h1")+t("ui.label.waste_danger.h1"), desc: t("ui.usagedesc.waste_danger.h1") },
+    'wasteDangerCapacity': { label: t("ui.emoji.waste_danger.h1")+t("ui.label.waste_danger.h1"), desc: t("ui.capdesc.waste_danger.h1") },
+    'wastePaperUsage': { label: t("ui.emoji.waste_paper.h1")+t("ui.label.waste_paper.h1"), desc: t("ui.usagedesc.waste_paper.h1") },
+    'wastePaperCapacity': { label: t("ui.emoji.waste_paper.h1")+t("ui.label.waste_paper.h1"), desc: t("ui.capdesc.waste_paper.h1") },
+
 
 // OTHER STAGE    
 

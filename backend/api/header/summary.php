@@ -178,7 +178,7 @@ try {
   // Usages (citizen-baseret)
   $USAGE_FIELDS = [
     'useHousing','useProvision','useWater',
-    'useCloth','useMedicin',
+    
     'deathHealthExpose','deathHealthWeight','deathHealthBaseline',
     'birthRate','movingIn','movingOut','usePolice','useSocial', 'useCulture', 'useCivilization', 'useReligion',
    
@@ -193,10 +193,13 @@ try {
     'useTax','useTaxHealth','useTaxCitizens',
 
     // Waste
-    'useWaste','useWasteOrganic','useWasteOther',
+    'useWaste','useWasteOrganic','useWasteOther', 'useWasteMetal','useWastePlastic','useWasteGlass','useWasteElectronic','useWasteDanger','useWastePaper',
 
     // Transport
     'useTransport','useTransportPassenger','useTransportGods',
+
+    //Products
+    'useCloth','useMedicin',
   ];
   $usages = [];
   foreach ($USAGE_FIELDS as $field) {
@@ -377,18 +380,29 @@ if (!empty($summary['capChoice']) && is_array($summary['capChoice'])) {
 
   $wasteOrg = (float)($usages['wasteOrganic']['total'] ?? 0);
   $wasteOth = (float)($usages['wasteOther']['total'] ?? 0);  
+  $wasteMet = (float)($usages['wasteMetal']['total'] ?? 0);
+  $wastePla = (float)($usages['wastePlastic']['total'] ?? 0);
+  $wasteGla = (float)($usages['wasteGlass']['total'] ?? 0);
+  $wasteEle = (float)($usages['wasteElectronic']['total'] ?? 0);
+  $wasteDng = (float)($usages['wasteDanger']['total'] ?? 0);
+  $wastePap = (float)($usages['wastePaper']['total'] ?? 0); 
 
   $taxHealth = (float)($usages['useTaxHealth']['total'] ?? 0);
   $taxCitizens = (float)($usages['useTaxCitizens']['total'] ?? 0);
   $taxOther  = (float)($usages['useTax']['total'] ?? 0);
 
+  $usages['useCloth']['total']   = (float)($usages['useCloth']['total'] ?? 0);
+  $usages['useMedicin']['total']  = (float)($usages['useMedicin']['total'] ?? 0);
+
   $usages['useHeat']['total']    = $heatF + $heatG + $heatN + $useHeatTop;
-  $usages['useWaste']['total']   = $wasteOrg + $wasteOth;
+  $usages['useWaste']['total']   = $wasteOrg + $wasteOth + $wasteMet + $wastePla + $wasteGla + $wasteEle + $wasteDng + $wastePap;
 
   $usages['usePower']['total']   = $powerF + $powerG + $powerN + $usePowerTop;
   $usages['useHealth']['total']  = $healthDen + $useHealthTop;
   $usages['useTax']['total']     = $taxHealth + $taxOther + $taxCitizens;
   $usages['useTransport']['total'] = $transportP + $transportG + $transportT;
+
+  $usages['useProduct']['total'] = $usages['useCloth']['total'] + $usages['useMedicin']['total'];
 
     // Aggreger totals for heat/power/health
   $capacities['heatCapacity']  = (float)(
@@ -422,7 +436,23 @@ if (!empty($summary['capChoice']) && is_array($summary['capChoice'])) {
     ($capacities['transportGodsCapacity']  ?? 0) +
     ($capacities['transportCapacity']         ?? 0)
   );
+ $capacities['wasteCapacity'] = (float)(
+    ($capacities['wasteOrganicCapacity']  ?? 0) +
+    ($capacities['wasteOtherCapacity']  ?? 0) +
+    ($capacities['wasteMetalCapacity']  ?? 0) +
+    ($capacities['wastePlasticCapacity']  ?? 0) +
+    ($capacities['wasteGlassCapacity']  ?? 0) +
+    ($capacities['wasteElectronicCapacity']  ?? 0) +
+    ($capacities['wasteDangerCapacity']  ?? 0) +
+    ($capacities['wastePaperCapacity']  ?? 0) +
+    ($capacities['wasteCapacity']         ?? 0)
+  );
+   $capacities['productCapacity'] = (float)(
+    ($capacities['productMedicinCapacity']  ?? 0) +
+    ($capacities['productClothCapacity']  ?? 0) +
+    ($capacities['productCapacity']         ?? 0)
 
+  );
 
   // === HAPPINESS: byg dynamisk fra registry + stage ===
   $happinessPairs = []; // key => ['used','capacity']

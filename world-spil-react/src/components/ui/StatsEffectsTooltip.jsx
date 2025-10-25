@@ -1,6 +1,6 @@
 import React from 'react';
 import { useT } from "../../services/i18n.js";
-import {defaultLabelMap} from '../../hooks/useStatsLabels.js';
+import {defaultLabelMap} from '../../hooks/useStatsLabels.jsx';
 
 /**
  * StatsEffectsTooltip

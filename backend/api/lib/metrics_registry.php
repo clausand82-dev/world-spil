@@ -36,7 +36,7 @@ declare(strict_types=1);
 function metrics_registry(): array {
   $metrics = [
 
-    // Basale
+// Basale
     'housing' => [
       'label' => 'Housing',
       'usageField' => 'useHousing',
@@ -102,6 +102,8 @@ function metrics_registry(): array {
       'demands' => [],
       'flows' => [],
     ],
+
+  // HEAT
     'heatGreen' => [
       'label' => 'Heat (Green)',
       'usageField' => 'useHeatGreen',
@@ -151,6 +153,7 @@ function metrics_registry(): array {
       'flows' => [],
     ],
 
+// Health + subs
 
     'health' => [
       'label' => 'Health',
@@ -223,7 +226,7 @@ function metrics_registry(): array {
 
     
 
-    // Power + subs
+// Power + subs
     'power' => [
       'label' => 'Power',
       'usageField' => 'usePower',
@@ -287,7 +290,22 @@ function metrics_registry(): array {
       'flows' => [],
     ],
 
-    // Produkter
+// Produkter
+    'product' => [
+      'label' => 'Product',
+      'usageField' => 'useProduct',
+      'capacityField' => 'productClothCapacity',
+      'capacityStatKeys' => ['productCapacity'],
+      'usageStatKeys' => ['productUsage'],
+      'sources' => ['bld'=>true,'add'=>true,'rsd'=>true,'ani'=>true,'res'=>true],
+      'stage' => ['unlock_at'=>2,'visible_at'=>2],
+      'happiness' => ['enabled'=>true, 'weight_key'=>'productHappinessWeight'], // eller clothHappinessWeight, hvis du opretter den
+      'popularity'=> ['enabled'=>true, 'weight_key'=>'productPopularityWeight'],
+      'subs' => ['cloth','medicin'],
+      'demands' => [],
+      'flows' => [],
+    ],
+
     'cloth' => [
       'label' => 'Cloth',
       'usageField' => 'useCloth',
@@ -298,7 +316,7 @@ function metrics_registry(): array {
       'stage' => ['unlock_at'=>2,'visible_at'=>2],
       'happiness' => ['enabled'=>true, 'weight_key'=>'clothHappinessWeight'], // eller clothHappinessWeight, hvis du opretter den
       'popularity'=> ['enabled'=>true, 'weight_key'=>'clothPopularityWeight'],
-      'subs' => [],
+      'parent' => ['product'],
       'demands' => [],
       'flows' => [],
     ],
@@ -312,11 +330,11 @@ function metrics_registry(): array {
       'stage' => ['unlock_at'=>2,'visible_at'=>2],
       'happiness' => ['enabled'=>true, 'weight_key'=>'medicinHappinessWeight'], // eksempel – sæt din egen
       'popularity'=> ['enabled'=>true, 'weight_key'=>'medicinPopularityWeight'],
-      'subs' => [],
+      'parent' => ['product'],
       'demands' => [],
       'flows' => [],
     ],
-
+// WASTE og SUBS
     'waste' => [
       'label' => 'Waste ',
       'usageField' => 'useWaste',
@@ -327,7 +345,7 @@ function metrics_registry(): array {
       'stage' => ['unlock_at'=>1,'visible_at'=>1],
       'happiness' => ['enabled'=>true, 'weight_key'=>'wasteHappinessWeight'], // eksempel
       'popularity'=> ['enabled'=>false],
-      'subs' => ['wasteOrganic','wasteOther'],
+      'subs' => ['wasteOrganic','wasteOther', 'wasteGlass', 'wasteMetal', 'wastePlastic', 'wasteElectronic', 'wasteDanger', 'wastePaper'],
       'demands' => [],
       'flows' => [
         // Eksempel på borger-flow du kan bruge senere:
@@ -371,6 +389,116 @@ function metrics_registry(): array {
       ],
     ],
 
+    'wasteGlass' => [
+      'label' => 'Waste Glass',
+      'usageField' => 'wasteGlass',
+      'capacityField' => 'wasteGlassCapacity',
+      'capacityStatKeys' => ['wasteGlassCapacity'],
+      'usageStatKeys' => ['wasteGlassUsage'],
+      'sources' => ['bld'=>true,'add'=>true,'rsd'=>true,'ani'=>true,'res'=>true],
+      'stage' => ['unlock_at'=>1,'visible_at'=>1],
+      'happiness' => ['enabled'=>true, 'weight_key'=>'wasteGlassHappinessWeight'], // eksempel
+      'popularity'=> ['enabled'=>false],
+      'parent' => ['waste'],
+      'demands' => [],
+      'flows' => [
+        // Eksempel på borger-flow du kan bruge senere:
+        // ['citizenField'=>'wastePlastic', 'unit'=>'per_hour'],
+      ],
+    ],
+
+    'wasteMetal' => [
+      'label' => 'Waste Metal',
+      'usageField' => 'wasteMetal',
+      'capacityField' => 'wasteMetalCapacity',
+      'capacityStatKeys' => ['wasteMetalCapacity'],
+      'usageStatKeys' => ['wasteMetalUsage'],
+      'sources' => ['bld'=>true,'add'=>true,'rsd'=>true,'ani'=>true,'res'=>true],
+      'stage' => ['unlock_at'=>1,'visible_at'=>1],
+      'happiness' => ['enabled'=>true, 'weight_key'=>'wasteMetalHappinessWeight'], // eksempel
+      'popularity'=> ['enabled'=>false],
+      'parent' => ['waste'],
+      'demands' => [],
+      'flows' => [
+        // Eksempel på borger-flow du kan bruge senere:
+        // ['citizenField'=>'wastePlastic', 'unit'=>'per_hour'],
+      ],
+    ],
+
+        'wastePlastic' => [
+      'label' => 'Waste Plastic',
+      'usageField' => 'wastePlastic',
+      'capacityField' => 'wastePlasticCapacity',
+      'capacityStatKeys' => ['wastePlasticCapacity'],
+      'usageStatKeys' => ['wastePlasticUsage'],
+      'sources' => ['bld'=>true,'add'=>true,'rsd'=>true,'ani'=>true,'res'=>true],
+      'stage' => ['unlock_at'=>1,'visible_at'=>1],
+      'happiness' => ['enabled'=>true, 'weight_key'=>'wastePlasticHappinessWeight'], // eksempel
+      'popularity'=> ['enabled'=>false],
+      'parent' => ['waste'],
+      'demands' => [],
+      'flows' => [
+        // Eksempel på borger-flow du kan bruge senere:
+        // ['citizenField'=>'wastePlastic', 'unit'=>'per_hour'],
+      ],
+    ],
+
+        'wasteElectronic' => [
+      'label' => 'Waste Electronic',
+      'usageField' => 'wasteElectronic',
+      'capacityField' => 'wasteElectronicCapacity',
+      'capacityStatKeys' => ['wasteElectronicCapacity'],
+      'usageStatKeys' => ['wasteElectronicUsage'],
+      'sources' => ['bld'=>true,'add'=>true,'rsd'=>true,'ani'=>true,'res'=>true],
+      'stage' => ['unlock_at'=>1,'visible_at'=>1],
+      'happiness' => ['enabled'=>true, 'weight_key'=>'wasteElectronicHappinessWeight'], // eksempel
+      'popularity'=> ['enabled'=>false],
+      'parent' => ['waste'],
+      'demands' => [],
+      'flows' => [
+        // Eksempel på borger-flow du kan bruge senere:
+        // ['citizenField'=>'wastePlastic', 'unit'=>'per_hour'],
+      ],
+    ],
+
+            'wastePaper' => [
+      'label' => 'Waste Paper',
+      'usageField' => 'wastePaper',
+      'capacityField' => 'wastePaperCapacity',
+      'capacityStatKeys' => ['wastePaperCapacity'],
+      'usageStatKeys' => ['wastePaperUsage'],
+      'sources' => ['bld'=>true,'add'=>true,'rsd'=>true,'ani'=>true,'res'=>true],
+      'stage' => ['unlock_at'=>1,'visible_at'=>1],
+      'happiness' => ['enabled'=>true, 'weight_key'=>'wastePaperHappinessWeight'], // eksempel
+      'popularity'=> ['enabled'=>false],
+      'parent' => ['waste'],
+      'demands' => [],
+      'flows' => [
+        // Eksempel på borger-flow du kan bruge senere:
+        // ['citizenField'=>'wastePlastic', 'unit'=>'per_hour'],
+      ],
+    ],
+
+            'wasteDanger' => [
+      'label' => 'Waste Danger',
+      'usageField' => 'wasteDanger',
+      'capacityField' => 'wasteDangerCapacity',
+      'capacityStatKeys' => ['wasteDangerCapacity'],
+      'usageStatKeys' => ['wasteDangerUsage'],
+      'sources' => ['bld'=>true,'add'=>true,'rsd'=>true,'ani'=>true,'res'=>true],
+      'stage' => ['unlock_at'=>1,'visible_at'=>1],
+      'happiness' => ['enabled'=>true, 'weight_key'=>'wasteDangerHappinessWeight'], // eksempel
+      'popularity'=> ['enabled'=>false],
+      'parent' => ['waste'],
+      'demands' => [],
+      'flows' => [
+        // Eksempel på borger-flow du kan bruge senere:
+        // ['citizenField'=>'wastePlastic', 'unit'=>'per_hour'],
+      ],
+    ],
+
+// SOCIAL
+
     'social' => [
       'label' => 'Social',
       'usageField' => 'useSocial',
@@ -381,7 +509,7 @@ function metrics_registry(): array {
       'stage' => ['unlock_at'=>2,'visible_at'=>2],
       'happiness' => ['enabled'=>false, 'weight_key'=>'socialHappinessWeight'], // eksempel
       'popularity'=> ['enabled'=>false],
-      'subs' => [],
+      'subs' => ['religion','culture','civilization'],
       'demands' => [],
       'flows' => [
         // Eksempel på borger-flow du kan bruge senere:
@@ -399,7 +527,7 @@ function metrics_registry(): array {
       'stage' => ['unlock_at'=>2,'visible_at'=>2],
       'happiness' => ['enabled'=>false, 'weight_key'=>'religionHappinessWeight'], // eksempel
       'popularity'=> ['enabled'=>false],
-      'subs' => [],
+      'parent' => ['social'],
       'demands' => [],
       'flows' => [
         // Eksempel på borger-flow du kan bruge senere:
@@ -417,7 +545,7 @@ function metrics_registry(): array {
       'stage' => ['unlock_at'=>2,'visible_at'=>2],
       'happiness' => ['enabled'=>false, 'weight_key'=>'cultureHappinessWeight'], // eksempel
       'popularity'=> ['enabled'=>false],
-      'subs' => [],
+      'parent' => ['social'],
       'demands' => [],
       'flows' => [
         // Eksempel på borger-flow du kan bruge senere:
@@ -435,7 +563,7 @@ function metrics_registry(): array {
       'stage' => ['unlock_at'=>2,'visible_at'=>2],
       'happiness' => ['enabled'=>false, 'weight_key'=>'civilizationHappinessWeight'], // eksempel
       'popularity'=> ['enabled'=>false],
-      'subs' => [],
+      'parent' => ['social'],
       'demands' => [],
       'flows' => [
         // Eksempel på borger-flow du kan bruge senere:

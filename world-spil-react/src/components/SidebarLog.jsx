@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useGameData } from '../context/GameDataContext.jsx';
+import { useT } from "../services/i18n.js";
+import { getEmojiForId } from "../services/requirements.js";
 //import './sidebar-log.css';
 
 // Inkluder yield_lost, så tabte linjer vises i loggen
@@ -39,6 +41,17 @@ function formatLocal(ts, assumeUtc = true) {
   return `${yyyy}-${mm}-${dd} ${hh}:${mi}:${ss}`;
 }
 
+// Ny hjælpefunktion: parse tidspunkt til millisekunder med samme logik som formatLocal
+function parseTimestampMillis(ts, assumeUtc = true) {
+  if (!ts) return 0;
+  const s = String(ts).trim();
+  const hasTZ = /[Tt]/.test(s) || /Z$|[+\-]\d{2}(:?\d{2})?$/.test(s);
+  const iso = s.replace(' ', 'T');
+  const d = hasTZ ? new Date(iso) : (assumeUtc ? new Date(iso + 'Z') : new Date(iso));
+  const t = d.getTime();
+  return Number.isFinite(t) ? t : 0;
+}
+
 function stripPrefix(id, pref) {
   if (!id) return id;
   return String(id).startsWith(pref) ? String(id).slice(pref.length) : String(id);
@@ -75,6 +88,7 @@ export default function SidebarLog({
 }) {
   const { data } = useGameData();
   const defs = data?.defs || null;
+  const t = useT();
 
   const [sinceMs, setSinceMs] = useState(initialSinceMs);
   const [items, setItems] = useState([]);
@@ -107,7 +121,20 @@ export default function SidebarLog({
 
       // filtrer de typer vi vil se i sidebaren og sorter nyeste først
       const filtered = list.filter(ev => showTypes.includes(ev.event_type));
-      filtered.sort((a, b) => (a.event_time < b.event_time ? 1 : -1));
+
+      // Beregn en millisekund‑timestamp for hver event ud fra samme UTC/local logik som visningen
+      filtered.forEach(ev => {
+        const assumeUtc = eventTimesAreUTC(ev);
+        ev._ts = parseTimestampMillis(ev.event_time, assumeUtc);
+      });
+
+      // Sortér efter parsed tid (nyeste først). Fald tilbage til strengsort hvis tider er lige.
+      filtered.sort((a, b) => {
+        if (b._ts !== a._ts) return b._ts - a._ts;
+        // fallback: bruk raw string som siste utvei
+        return b.event_time < a.event_time ? -1 : (b.event_time > a.event_time ? 1 : 0);
+      });
+
       setItems(filtered.slice(0, maxRender));
     } catch (e) {
       setErr(String(e.message || e));
@@ -133,27 +160,29 @@ export default function SidebarLog({
 
     if (ev.event_type === 'yield_paid') {
       const rows = Array.isArray(ev.payload) ? ev.payload : [];
-      const parts = rows.map(r => {
+      const parts = rows.map((r, i) => {
         const rn = resName(defs, r.res_id);
+        const emoji = getEmojiForId(r.res_id, defs) || '';
         const amtNum = Number(r.amount);
         const amt = (amtNum % 1 === 0) ? amtNum : amtNum.toFixed(2);
-        return `${amt}× ${rn}`;
+        return <span key={i}>&nbsp;{amt}× <span className="res-emoji">{emoji}</span> {rn}</span>;
       });
       const who = (scope === 'ani') ? `Dit ${name}` : name;
-      return { text: `${who} gav ${parts.join(', ')} i udbytte`, className: 'sl-yield' };
+      return { text: <>{<>💰</>} {who} gav {parts.reduce((acc, cur, idx) => acc === null ? cur : <>{acc}, {cur}</>, null)}</>, className: 'sl-yield' };
     }
-
+    
     // NY: vis hvilke ressourcer og mængder der gik tabt
     if (ev.event_type === 'yield_lost') {
       const rows = Array.isArray(ev.payload) ? ev.payload : [];
-      const parts = rows.map(r => {
+      const parts = rows.map((r, i) => {
         const rn = resName(defs, r.res_id);
+        const emoji = getEmojiForId(r.res_id, defs) || '';
         const amtNum = Number(r.amount);
         const amt = (amtNum % 1 === 0) ? amtNum : amtNum.toFixed(2);
-        return `${amt}× ${rn}`;
+        return <span key={i}>&nbsp;{amt}× <span className="res-emoji">{emoji}</span> {rn}</span>;
       });
       const who = (scope === 'ani') ? `Dit ${name}` : name;
-      return { text: `${who} tabte ${parts.join(', ')} (ingen plads)`, className: 'sl-yield-lost' };
+      return { text: <>{<>🚨</>} {who} tabte {parts.reduce((acc, cur, idx) => acc === null ? cur : <>{acc}, {cur}</>, null)} (ingen plads)</>, className: 'sl-yield-lost' };
     }
 
     if (ev.event_type === 'build_completed') {
@@ -166,7 +195,7 @@ export default function SidebarLog({
 
     if (ev.event_type === 'build_canceled') {
       const typeLabel = typeLabelFromScope(scope);
-      return { text: `Annulleret: ${typeLabel} ${name}`, className: 'sl-canceled' };
+      return { text: `${t("ui.emoji.cancel.h1")} ${t("ui.text.cancel.h1")} ${typeLabel} ${name}`, className: 'sl-canceled' };
     }
 
     // fallback
@@ -175,11 +204,11 @@ export default function SidebarLog({
 
   function typeLabelFromScope(scope) {
     switch (scope) {
-      case 'bld': return 'Bygning';
-      case 'add': return 'Addon';
-      case 'rcp': return 'Opskrift';
-      case 'rsd': return 'Research';
-      case 'ani': return 'Dyr';
+      case 'bld': return '🔨 ' + t("ui.text.building.h1");
+      case 'add': return '🧩 ' + t("ui.text.addon.h1");
+      case 'rcp': return '🧾 ' + t("ui.text.recipe.h1");
+      case 'rsd': return ' 🧪 ' + t("ui.text.research.h1");
+      case 'ani': return '🐾 ' + t("ui.text.unit.h1");
       default: return scope || 'Emne';
     }
   }

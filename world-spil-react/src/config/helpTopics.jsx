@@ -101,52 +101,53 @@ export const HELP_TOPICS = [
         id: 'stage-1',
         title: 'Stage 1',
         component: ({ defs }) => {
-          const emoji = defs?.res?.water?.emoji || '💧';
+          const emoji = (name) => defs?.res?.[name]?.emoji || '⛔';
+          const name = (name) => defs?.res?.[name]?.name || 'NN';
           return (
             <div className="help-article">
-              <h2>Stage 1 {emoji}</h2>
+              <h2>Stage 1 </h2>
               <p>I STAGE 1 er formålet at få en stille introduktion til spillet igennem diverse basale grundlæggende systemer, der dækker over ressource kendskab, bygge/opgraderer bygninger og addons, samt at forske og lave ting udfra opskrifter. En del ressourcer fra dette stadie er helt basale ressourcer, som skal benyttes igennem hele spillet.</p>
 
 <p>En anden faktorer, der stiftes kendskab med er begrebet stats. Stats er ikke ressourcer, men repræsenterer et fast flow eller en fast mængde. Alle stats har en kapacitet og et forbrug. Disse er statiske og ændres (modsat ressourcer) kun via valg, bygning eller andre aktive elementer. Kort sagt kan man sige at ressourcer er valgfrie brugbare, men stats bare er der eller bruges. Begge dele er grundlæggende ting i spillet.</p>
 
 <p>Stats kan påvirke hinanden, og ofte har et valg for at forbedre stats et sted, en konsekvens i stats et andet sted. Stats påvirker ikke ressourcer, men ressourcer kan midlertidig påvirke stats..</p>
 
-<p>Ressourcer, der introduceres i Stage 1:</p>
+<p><a data-topic-link="resources-overview">Ressourcer</a>, der introduceres i Stage 1:</p>
               <ul>
-              <li><strong>MONEY</strong> — Spillets valuta til bygninger, research og addons.</li>
-              <li><strong>WOOD</strong> — Fra skov, bruges til byggeri.</li>
-              <li><strong>STONE</strong> — Fra miner, bruges i mange bygninger/addons.</li>
-              <li><strong>WATER</strong> — Livsvigtig, bruges i opskrifter og giver stats: water.</li>
-              <li><strong>FLINTSTONE</strong> — Bruges til værktøj (nødvendigt for byggeri).</li>
-              <li><strong>ROPE</strong> — Bruges til straw, værktøj og andre basale ting.</li>
-              <li><strong>SALT</strong> — Bruges til f.eks. at fremstille LEATHER.</li>
-              <li><strong>RAWHIDE</strong> — Rå skind fra dyr; skal bearbejdes.</li>
-              <li><strong>HIDE</strong> — Bearbejdet skind til telte og tøj.</li>
-              <li><strong>LEATHER</strong> — Bruges til tøj og telte.</li>
-              <li><strong>WOOL</strong> — Bruges til tøj.</li>
-              <li><strong>MAIZE</strong> — Bruges til ANIMALFOOD.</li>
-              <li><strong>WHEAT</strong> — Bruges til WHEATFLOUR (BREAD, ANIMALFOOD, STRAW).</li>
-              <li><strong>GOATMILK</strong> — Bruges til SOUP.</li>
-              <li><strong>COWMILK</strong> — Bruges til SOUP og BREAD.</li>
-              <li><strong>RAWMEAT</strong> — Fra dyr; bruges til COOKEDMEAT og SOUP.</li>
-              <li><strong>RAWCOMMONFISH</strong> — Fanges i lake; bruges i ANIMALFOOD eller FISHSOUP.</li>
-              <li><strong>COOKEDFISH</strong> — Giver provision_cap=2.</li>
-              <li><strong>COOKEDMEAT</strong> — Giver provision_cap=1.</li>
-              <li><strong>FOOD</strong> — Generisk mad, bruges også i byggeprocesser.</li>
-              <li><strong>SOUP</strong> — Giver provision_cap=8.</li>
-              <li><strong>BONE</strong> — Kan laves til BONEMEAL til ANIMALFOOD.</li>
-              <li><strong>BONEMEAL</strong> — Bruges i ANIMALFOOD.</li>
-              <li><strong>FERTILIZER</strong> — Produceres af dyr; bruges til marker og påvirker wasteOrganic.</li>
-              <li><strong>EGG</strong> — Fra høns; bruges i opskrifter.</li>
-              <li><strong>CLOTH</strong> — Påvirker stats som heat.</li>
-              <li><strong>ANIMALFOOD</strong> — Bruges til at købe dyr.</li>
-              <li><strong>COAL</strong> — Giver heatFossil=5.</li>
-              <li><strong>BASICTOOLS</strong> — Bruges i mere komplicerede bygninger/addons.</li>
-              <li><strong>WHEATFLOUR</strong> — Bruges i brød.</li>
-              <li><strong>STRAW</strong> — Bruges til dyr.</li>
-              <li><strong>BREAD</strong> — Brød (fødevarer).</li>
-              <li><strong>FEATHER</strong> — Bruges til tøj.</li>
-              <li><strong>FIREWOOD</strong> — Bruges til bål og varme.</li>
+              <li><strong>{emoji('money')}  {name('money')}</strong> — Spillets valuta til bygninger, research og addons.</li>
+              <li><strong>{emoji('wood')} {name('wood')}</strong> — Fra skov, bruges til byggeri.</li>
+              <li><strong>{emoji('stone')} {name('stone')}</strong> — Fra miner, bruges i mange bygninger/addons.</li>
+              <li><strong>{emoji('water')} {name('water')}</strong> — Livsvigtig, bruges i opskrifter og giver stats: water.</li>
+              <li><strong>{emoji('flintstone')} {name('flintstone')}</strong> — Bruges til værktøj (nødvendigt for byggeri).</li>
+              <li><strong>{emoji('rope')} {name('rope')}</strong> — Bruges til straw, værktøj og andre basale ting.</li>
+              <li><strong>{emoji('salt')} {name('salt')}</strong> — Bruges til f.eks. at fremstille {emoji('leather')} {name('leather')}.</li>
+              <li><strong>{emoji('rawhide')} {name('rawhide')}</strong> — Rå skind fra dyr; skal bearbejdes.</li>
+              <li><strong>{emoji('hide')} {name('hide')}</strong> — Bearbejdet skind til telte og tøj.</li>
+              <li><strong>{emoji('leather')} {name('leather')}</strong> — Bruges til tøj og telte.</li>
+              <li><strong>{emoji('wool')} {name('wool')}</strong> — Bruges til tøj.</li>
+              <li><strong>{emoji('maize')} {name('maize')}</strong> — Bruges til {emoji('animalfood')} {name('animalfood')}.</li>
+              <li><strong>{emoji('wheat')} {name('wheat')}</strong> — Bruges til WHEATFLOUR (BREAD, {emoji('animalfood')} {name('animalfood')}, STRAW).</li>
+              <li><strong>{emoji('goatmilk')} {name('goatmilk')}</strong> — Bruges til {emoji('soup')} {name('soup')}.</li>
+              <li><strong>{emoji('cowmilk')} {name('cowmilk')}</strong> — Bruges til {emoji('soup')} {name('soup')} og {emoji('bread')} {name('bread')}.</li>
+              <li><strong>{emoji('rawmeat')} {name('rawmeat')}</strong> — Fra dyr; bruges til {emoji('cookedmeat')} {name('cookedmeat')} og {emoji('soup')} {name('soup')}.</li>
+              <li><strong>{emoji('rawcommonfish')} {name('rawcommonfish')}</strong> — Fanges i lake; bruges i {emoji('animalfood')} {name('animalfood')} eller {emoji('fishsoup')} {name('fishsoup')}.</li>
+              <li><strong>{emoji('cockedfish')} {name('cockedfish')}</strong> — Giver provision_cap=2.</li>
+              <li><strong>{emoji('cockedmeat')} {name('cockedmeat')}</strong> — Giver provision_cap=1.</li>
+              <li><strong>{emoji('food')} {name('food')}</strong> — Generisk mad, bruges også i byggeprocesser.</li>
+              <li><strong>{emoji('soup')} {name('soup')}</strong> — Giver provision_cap=8.</li>
+              <li><strong>{emoji('bone')} {name('bone')}</strong> — Kan laves til {emoji('bonemeal')} {name('bonemeal')} til {emoji('animalfood')} {name('animalfood')}.</li>
+              <li><strong>{emoji('bonemeal')} {name('bonemeal')}</strong> — Bruges i {emoji('animalfood')} {name('animalfood')}.</li>
+              <li><strong>{emoji('fertilizer')} {name('fertilizer')}</strong> — Produceres af dyr; bruges til marker og påvirker wasteOrganic.</li>
+              <li><strong>{emoji('egg')} {name('egg')}</strong> — Fra høns; bruges i opskrifter.</li>
+              <li><strong>{emoji('cloth')} {name('cloth')}</strong> — Påvirker stats som heat.</li>
+              <li><strong>{emoji('animalfood')} {name('animalfood')}</strong> — Bruges til at købe dyr.</li>
+              <li><strong>{emoji('coal')} {name('coal')}</strong> — Giver heatFossil=5.</li>
+              <li><strong>{emoji('basictools')} {name('basictools')}</strong> — Bruges i mere komplicerede bygninger/addons.</li>
+              <li><strong>{emoji('wheatflour')} {name('wheatflour')}</strong> — Bruges i brød.</li>
+              <li><strong>{emoji('straw')} {name('straw')}</strong> — Bruges til dyr.</li>
+              <li><strong>{emoji('bread')} {name('bread')}</strong> — Brød (fødevarer).</li>
+              <li><strong>{emoji('feather')} {name('feather')}</strong> — Bruges til tøj.</li>
+              <li><strong>{emoji('firewood')} {name('firewood')}</strong> — Bruges til bål og varme.</li>
               </ul>
 
 

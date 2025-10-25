@@ -805,7 +805,7 @@
                 <require>add.garden.l1</require>
               </addon>
 
-  <addon id="add.herbsstorage.l1_1" family="health" group="main" type="addons" lvl="1" stage="2">
+  <addon id="add.storeherbs.l1" family="health" group="main" type="addons" lvl="1" stage="2">
     <stats>footprint=-1;productMedicinCapacity=25;storageSolidCap=25</stats>
     <cost>
       <res id="res.money" amount="100"/>
@@ -834,7 +834,7 @@
     <require>rsd.sleepingbag.l1,add.tailorspot.l2</require>
   </addon>
 
-    <addon id="add.ironmolding.l1" family="mine" group="main" type="addons" lvl="1" stage="2">
+    <addon id="add.ironmoulding.l1" family="mine" group="main" type="addons" lvl="1" stage="2">
   <stats>wasteOtherUsage=2</stats>
     <cost>
       <res id="res.money" amount="1000"/>

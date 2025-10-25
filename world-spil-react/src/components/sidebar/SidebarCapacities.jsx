@@ -3,10 +3,9 @@ import { useGameData } from '../../context/GameDataContext.jsx';
 import useHeaderSummary from '../../hooks/useHeaderSummary.js';
 import InlineCapacityBar from '../header/InlineCapacityBar.jsx';
 import { makeDefsNameResolver } from '../utils/nameResolver.js';
-import { useStatsLabels } from '../../hooks/useStatsLabels.js';
+import { useStatsLabels } from '../../hooks/useStatsLabels.jsx';
 
 const fmt = (v) => Number(v || 0).toLocaleString('da-DK', { maximumFractionDigits: 2 });
-
 
 // Map sidebar-sektion -> defs-gruppe-prefix
 const SECTION_FAMILY = {
@@ -20,7 +19,7 @@ const SECTION_FAMILY = {
 function CapBreakdown({ label, list, defs, partsList }) {
   if (!list) return null;
 
-const nameResolver = useMemo(() => makeDefsNameResolver(defs), [defs]);
+  const nameResolver = useMemo(() => makeDefsNameResolver(defs), [defs]);
 
   const sections = [
     ['buildings', 'Bygninger'],
@@ -31,20 +30,17 @@ const nameResolver = useMemo(() => makeDefsNameResolver(defs), [defs]);
     ['citizens', 'Borgere'], // NY
   ];
 
-  
   const visibleSections = sections.filter(([key]) => Array.isArray(list?.[key]) && list[key].length > 0);
   if (visibleSections.length === 0) return null;
 
-  const SECTION_FAMILY = { buildings: 'bld', addon: 'add', research: 'rsd', animals: 'ani', inventory: 'res' };
-
-
+  const SECTION_FAMILY_LOCAL = { buildings: 'bld', addon: 'add', research: 'rsd', animals: 'ani', inventory: 'res' };
 
   const ItemList = ({ items, familyKey }) => {
     if (!Array.isArray(items) || items.length === 0) return null;
     return (
       <div style={{ display: 'grid', gap: 4 }}>
         {items.map((it, idx) => {
-          const fam = SECTION_FAMILY[familyKey];
+          const fam = SECTION_FAMILY_LOCAL[familyKey];
           const name = nameResolver.resolve(fam, it);
           const amount = it?.amount ?? it?.value ?? it?.val ?? (typeof it === 'number' ? it : 0);
           return (
@@ -168,8 +164,8 @@ function HoverPanel({ open, onClose, content, panelRef, locked }) {
 }
 
 export default function SidebarCapacities() {
-   const { data: header } = useHeaderSummary();
-   const { data: gameData } = useGameData();
+  const { data: header } = useHeaderSummary();
+  const { data: gameData } = useGameData();
   // hent oversatte stat-navne (emoji + label strings)
   const statLabels = useStatsLabels();
 
@@ -179,6 +175,12 @@ export default function SidebarCapacities() {
   const partsList = header?.partsList || {};
   const metaMap = header?.metricsMeta || {};
   const stageCurrent = Number(gameData?.state?.user?.currentstage ?? 0);
+
+  // Sæt ønsket rækkefølge (fallback kun hvis backend ikke allerede leverer metricsOrder)
+  const headerWithOrder = React.useMemo(() => {
+    const defaultOrder = ['housing', 'food', 'water', 'heat',];
+    return { ...(header || {}), metricsOrder: header?.metricsOrder ?? defaultOrder };
+  }, [header]);
 
   const rows = useMemo(() => {
     if (!metaMap) return [];
@@ -192,13 +194,43 @@ export default function SidebarCapacities() {
       return isUnlocked && isTop && hasAnyField;
     });
 
-    topUnlocked.sort((a, b) => {
-      const la = (a[1]?.label || a[0]).toLowerCase();
-      const lb = (b[1]?.label || b[0]).toLowerCase();
-      return la.localeCompare(lb);
-    });
+    // Mulighed 1: eksplicit liste i header (metricsOrder / metricsKeyOrder)
+    const explicitOrder = Array.isArray(headerWithOrder?.metricsOrder)
+      ? headerWithOrder.metricsOrder
+      : Array.isArray(headerWithOrder?.metricsKeyOrder)
+        ? headerWithOrder.metricsKeyOrder
+        : [];
 
-    return topUnlocked.map(([id, m]) => {
+    const sortWithFallback = (a, b) => {
+      // a/b er [id, meta]
+      const ma = a[1] || {};
+      const mb = b[1] || {};
+      const oa = Number.isFinite(Number(ma?.order)) ? Number(ma.order) : NaN;
+      const ob = Number.isFinite(Number(mb?.order)) ? Number(mb.order) : NaN;
+      if (!Number.isNaN(oa) || !Number.isNaN(ob)) {
+        if (!Number.isNaN(oa) && !Number.isNaN(ob)) return oa - ob;
+        if (!Number.isNaN(oa)) return -1;
+        return 1;
+      }
+      const la = (ma.label || a[0]).toLowerCase();
+      const lb = (mb.label || b[0]).toLowerCase();
+      return la.localeCompare(lb);
+    };
+
+    let ordered;
+    if (explicitOrder.length > 0) {
+      const idx = new Map(explicitOrder.map((k, i) => [k, i]));
+      ordered = topUnlocked.slice().sort((a, b) => {
+        const ia = idx.has(a[0]) ? idx.get(a[0]) : Number.POSITIVE_INFINITY;
+        const ib = idx.has(b[0]) ? idx.get(b[0]) : Number.POSITIVE_INFINITY;
+        if (ia !== ib) return ia - ib;
+        return sortWithFallback(a, b);
+      });
+    } else {
+      ordered = topUnlocked.slice().sort(sortWithFallback);
+    }
+
+    return ordered.map(([id, m]) => {
       const label = statLabels?.[id] || m?.label || id;
       const uKey = m?.usageField || '';
       const cKey = m?.capacityField || '';
@@ -206,7 +238,7 @@ export default function SidebarCapacities() {
       const cap = cKey ? Number(capacities[cKey] || 0) : 0;
       return { key: id, label, used, cap };
     });
-  }, [metaMap, stageCurrent, usages, capacities]);
+  }, [metaMap, stageCurrent, usages, capacities, partsList, defs, headerWithOrder, statLabels]);
 
   const [hoverKey, setHoverKey] = useState(null);
   const [hoverLocked, setHoverLocked] = useState(false);
@@ -329,7 +361,7 @@ export default function SidebarCapacities() {
     };
 
     return buildForMetric(hoverKey);
-  }, [hoverKey, metaMap, usages, capacities, partsList, defs, stageCurrent]);
+  }, [hoverKey, metaMap, usages, capacities, partsList, defs, stageCurrent, statLabels]);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -339,15 +371,15 @@ export default function SidebarCapacities() {
           onMouseEnter={() => { if (!hoverLocked) openHover(r.key); }}
           onMouseLeave={closeHoverSoon}
           onClick={() => { if (!hoverLocked) { setHoverKey(r.key); setHoverLocked(true); } }}
-           style={{ cursor: 'pointer' }}
-         >
-           <InlineCapacityBar
-             label={r.label}
-             used={r.used}
-             capacity={r.cap}
-           />
-         </div>
-       ))}
+          style={{ cursor: 'pointer' }}
+        >
+          <InlineCapacityBar
+            label={r.label}
+            used={r.used}
+            capacity={r.cap}
+          />
+        </div>
+      ))}
 
       <HoverPanel
         open={!!hoverKey && !!hoverContent}

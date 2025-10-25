@@ -35,8 +35,8 @@
   <entry key="ui.tip.builddone.h1">Du har allerede bygget</entry>
 
   <entry key="ui.notbuild.h1">Ikke bygget</entry>
-  <entry key="ui.buildcost.h1">Bygge pris</entry>
-  <entry key="ui.upgradecost.h1">Opgraderingspris</entry>
+  <entry key="ui.buildcost.h1">Bygge pris: </entry>
+  <entry key="ui.upgradecost.h1">Opgraderingspris: </entry>
   <entry key="ui.demands.h1">Krav</entry>
   <entry key="ui.footprint.h1">Byggepoint</entry>
   <entry key="ui.bar.upgrade.h1">Opgraderer</entry>
@@ -66,6 +66,7 @@
   <entry key="ui.text.demandingstage.h1">Kræver Stage</entry>
   <entry key="ui.text.recipe.h1">Opskrift</entry>
   <entry key="ui.text.demandingstage.h1">Kræver Stage</entry>
+  <entry key="ui.text.owned.h1">Ejet</entry>
 
   <entry key="ui.headers.recipe.h1">Jobs / Recipes</entry>
   <entry key="ui.headers.addons.h1">Bygnings Addons</entry>
@@ -85,6 +86,17 @@
   <entry key="ui.emoji.recipe.h1">🧾</entry>
   <entry key="ui.emoji.addon.h1">🧩</entry>
   <entry key="ui.emoji.desc.h1">🔍</entry>
+  <entry key="ui.emoji.cancel.h1">🚨</entry>
+  <entry key="ui.emoji.info.h1">🛈</entry>
+
+  <entry key="ui.text.building.h1">Bygning:</entry>
+  <entry key="ui.text.level.h1">Niveau:</entry>
+  <entry key="ui.text.upgrade.h1">Opgradering:</entry>
+  <entry key="ui.text.addon.h1">Addon:</entry>
+  <entry key="ui.text.research.h1">Forskning:</entry>
+  <entry key="ui.text.recipe.h1">Opskrift:</entry>
+  <entry key="ui.text.unit.h1">Dyr/Unit:</entry>
+  <entry key="ui.text.cancel.h1">Annuleret:</entry>
 
   <entry key="ui.emoji.capacity.h1">📦</entry>
   <entry key="ui.emoji.durability.h1">🛠️</entry>
@@ -167,7 +179,6 @@
   <entry key="ui.capdesc.water.h1">Kapacitet til vand (hvor meget vand der kan leveres).</entry>
   <entry key="ui.usagedesc.water.h1">Hvor meget vand der forbruges alt i alt.</entry>
 
-
   <entry key="ui.emoji.waste.h1">💩</entry>
   <entry key="ui.label.waste.h1">Affald</entry>
   <entry key="ui.capdesc.waste_.h1">Hvor meget affald, der kan opbevares og behandles.</entry>
@@ -180,6 +191,30 @@
   <entry key="ui.label.waste_other.h1">Affald (andet)</entry>
   <entry key="ui.capdesc.waste_other.h1">Hvor meget affald (andet) der kan opbevares og behandles.</entry>
   <entry key="ui.usagedesc.waste_other.h1">Hvor meget affald (andet) kan produceres.</entry>
+  <entry key="ui.emoji.waste_metal.h1">💩</entry>
+  <entry key="ui.label.waste_metal.h1">Affald (metal)</entry>
+  <entry key="ui.capdesc.waste_metal.h1">Hvor meget affald (metal) der kan opbevares og behandles.</entry>
+  <entry key="ui.usagedesc.waste_metal.h1">Hvor meget affald (metal) kan produceres.</entry>
+  <entry key="ui.emoji.waste_plastic.h1">💩</entry>
+  <entry key="ui.label.waste_plastic.h1">Affald (plastik)</entry>
+  <entry key="ui.capdesc.waste_plastic.h1">Hvor meget affald (plastik) der kan opbevares og behandles.</entry>
+  <entry key="ui.usagedesc.waste_plastic.h1">Hvor meget affald (plastik) kan produceres.</entry>
+  <entry key="ui.emoji.waste_glass.h1">💩</entry>
+  <entry key="ui.label.waste_glass.h1">Affald (glas)</entry>
+  <entry key="ui.capdesc.waste_glass.h1">Hvor meget affald (glas) der kan opbevares og behandles.</entry>
+  <entry key="ui.usagedesc.waste_glass.h1">Hvor meget affald (glas) kan produceres.</entry>
+  <entry key="ui.emoji.waste_electronic.h1">💩</entry>
+  <entry key="ui.label.waste_electronic.h1">Affald (elektronisk)</entry>
+  <entry key="ui.capdesc.waste_electronic.h1">Hvor meget affald (elektronisk) der kan opbevares og behandles.</entry>
+  <entry key="ui.usagedesc.waste_electronic.h1">Hvor meget affald (elektronisk) kan produceres.</entry>
+  <entry key="ui.emoji.waste_danger.h1">💩</entry>
+  <entry key="ui.label.waste_danger.h1">Affald (farligt)</entry>
+  <entry key="ui.capdesc.waste_danger.h1">Hvor meget affald (farligt) der kan opbevares og behandles.</entry>
+  <entry key="ui.usagedesc.waste_danger.h1">Hvor meget affald (farligt) kan produceres.</entry>
+  <entry key="ui.emoji.waste_paper.h1">💩</entry>
+  <entry key="ui.label.waste_paper.h1">Affald (papir)</entry>
+  <entry key="ui.capdesc.waste_paper.h1">Hvor meget affald (papir) der kan opbevares og behandles.</entry>
+  <entry key="ui.usagedesc.waste_paper.h1">Hvor meget affald (papir) kan produceres.</entry>
 
   <entry key="ui.emoji.product_cloth.h1">👕</entry>
   <entry key="ui.label.product_cloth.h1">Tøj</entry>
@@ -358,7 +393,6 @@
   <entry key="bld.monument.l1.name">Lille Sten Monument</entry>
   <entry key="bld.monument.l1.desc">Et simpelt monument til at fejre sejre</entry>
 
-
 <!--ADDONS BASECAMP-->  
   <entry key="add.choppingblock.l1.name">Økseblok</entry>
   <entry key="add.choppingblock.l1.desc">Økseblok bruges til at hugge brænde på</entry>
@@ -380,6 +414,8 @@
 
   <entry key="add.bigfireplace_stonepot.l1.name">Stengryde</entry>
   <entry key="add.bigfireplace_stonepot.l1.desc">En lille fordybning i en sten - fungerer primitivt som en slags gryde.</entry>
+  <entry key="add.bigfireplace_bronzepot.l1.name">Bronzegryde</entry>
+  <entry key="add.bigfireplace_bronzepot.l1.desc">En lille gryde lavet af bronze - mere holdbar end stengryden.</entry>
   <entry key="add.bigfireplace_mortarandpestle.l1.name">Morter og Støder</entry>
   <entry key="add.bigfireplace_mortarandpestle.l1.desc">En morter og støder til at knuse urter og andre ting.</entry>
   <entry key="add.furnace.l1.name">Smedje</entry>
@@ -402,6 +438,8 @@
   <entry key="add.barn_slaughterspot.l2.desc">Muliggør slagteri af mellem store dyr som grise, geder og får</entry>
   <entry key="add.barn_slaughterspot.l3.name">Stor Slagterbord</entry>
   <entry key="add.barn_slaughterspot.l3.desc">Muliggør slagteri af store dyr som køer og hjorte</entry>
+  <entry key="add.barn_slaughterspot.l4.name">Ekstra Stor Slagterbord</entry>
+  <entry key="add.barn_slaughterspot.l4.desc">Muliggør slagteri af skildpadder</entry>
 
   <entry key="add.barn_yard.l1.name">Lille indhegning</entry>
   <entry key="add.barn_yard.l1.desc">Lille indhegning, der øger plads til dyr</entry>
@@ -459,12 +497,18 @@
 
   <entry key="add.maizefield.l1.name">Majsmark</entry>
   <entry key="add.maizefield.l1.desc">Mark til at dyrke majs; giver majs som afgrøde.</entry>
+  <entry key="add.maizefield.l2.name">Større majsmark</entry> 
+  <entry key="add.maizefield.l2.desc">Større mark til at dyrke majs; giver mere majs som afgrøde.</entry>
 
   <entry key="add.oatfield.l1.name">Havremark</entry>
   <entry key="add.oatfield.l1.desc">Mark til at dyrke havre; øger madproduktionen.</entry>
+  <entry key="add.oatfield.l2.name">Større havremark</entry>
+  <entry key="add.oatfield.l2.desc">Større mark til at dyrke havre; øger madproduktionen yderligere.</entry>
 
   <entry key="add.wheatfield.l1.name">Hvedemark</entry>
   <entry key="add.wheatfield.l1.desc">Mark til at dyrke hvede; øger madproduktionen.</entry>
+  <entry key="add.wheatfield.l2.name">Større hvedemark</entry>
+  <entry key="add.wheatfield.l2.desc">Større mark til at dyrke hvede; øger madproduktionen yderligere.</entry>
 
   <entry key="add.wheatfield_scarecrow.l1.name">Fugleskræmsel</entry>
   <entry key="add.wheatfield_scarecrow.l1.desc">Beskytter marker mod fugle og reducerer afgrødetab.</entry>
@@ -479,23 +523,37 @@
 
   <entry key="add.hunterscabin.l1.name">Jægerhytte</entry>
   <entry key="add.hunterscabin.l1.desc">Giver mulighed for at jage dyr i området.</entry>
-  <entry key="add.brickmolding.l1.name">Murstenstøbeform</entry>
-  <entry key="add.brickmolding.l1.desc">Giver mulighed for at lave mursten.</entry>
-  <entry key="add.bronzemolding.l1.name">Bronzestøbeform</entry>
-  <entry key="add.bronzemolding.l1.desc">Giver mulighed for at lave bronzegenstande.</entry>
-  <entry key="add.ironmolding.l1.name">Jernstøbeform</entry>
-  <entry key="add.ironmolding.l1.desc">Giver mulighed for at lave jerngenstande.</entry>
+  <entry key="add.hunterscabin.l2.name">Større jægerhytte</entry>
+  <entry key="add.hunterscabin.l2.desc">Giver plads til flere folk og mere forsyning.</entry>
+  <entry key="add.brickmoulding.l1.name">Murstenstøbeform</entry>
+  <entry key="add.brickmoulding.l1.desc">Giver mulighed for at lave mursten.</entry>
+  <entry key="add.bronzemoulding.l1.name">Bronzestøbeform</entry>
+  <entry key="add.bronzemoulding.l1.desc">Giver mulighed for at lave bronzegenstande.</entry>
+  <entry key="add.ironmoulding.l1.name">Jernstøbeform</entry>
+  <entry key="add.ironmoulding.l1.desc">Giver mulighed for at lave jerngenstande.</entry>
   <entry key="add.undergroundshelter.l1.name">Underjordisk ly</entry>
   <entry key="add.undergroundshelter.l1.desc">Giver mulighed for at bygge et ly under jorden.</entry>
 
+  <entry key="add.sawmill.l1.name">Savværk</entry>
+  <entry key="add.sawmill.l1.desc">Giver mulighed for at bearbejde træ til planker og andre træprodukter.</entry>
+
+  <entry key="add.sleepingarea.l1.name">Soveområde</entry>
+  <entry key="add.sleepingarea.l1.desc">Forbedrer søvnkvaliteten for indbyggere.</entry>
+
 <!--ADDONS HEALTH-->
-
-
 
   <entry key="add.storeherbs.l1.name">Urteopbevaring</entry>
   <entry key="add.storeherbs.l1.desc">Giver mulighed for at opbevare urter sikkert.</entry>
   <entry key="add.herbsgarden.l1.name">Urtehave</entry>
   <entry key="add.herbsgarden.l1.desc">Giver mulighed for at dyrke urter.</entry>
+  <entry key="add.garden.l1.name">Have</entry>  
+  <entry key="add.garden.l1.desc">Giver mulighed for at dyrke grøntsager og blomster.</entry>
+  <entry key="add.garden_carrot.l1.name">Gulerodshave</entry>
+  <entry key="add.garden_carrot.l1.desc">Giver mulighed for at dyrke gulerødder.</entry>
+  <entry key="add.garden_sunflower.l1.name">Solsikkehave</entry>
+  <entry key="add.garden_sunflower.l1.desc">Giver mulighed for  at dyrke solsikker.</entry>
+  <entry key="add.garden_herbs.l1.name">Urtehave</entry>
+  <entry key="add.garden_herbs.l1.desc">Giver mulighed for at dyrke urter.</entry>
 
 <!--ADDONS ANDET-->
 
@@ -583,11 +641,11 @@
   <entry key="rsd.iron.l1.name">Jern</entry>
   <entry key="rsd.iron.l1.desc">Giver evnen til at udvinde og forarbejde jern</entry>
 
-  <entry key="rsd.bronzemolding.l1.name">Bronzestøbning</entry>
-  <entry key="rsd.bronzemolding.l1.desc">Giver evnen til at støbe bronzedele ved hjælp af forme</entry>
+  <entry key="rsd.bronzemoulding.l1.name">Bronzestøbning</entry>
+  <entry key="rsd.bronzemoulding.l1.desc">Giver evnen til at støbe bronzedele ved hjælp af forme</entry>
 
-  <entry key="rsd.ironmolding.l1.name">Jernstøbning</entry>
-  <entry key="rsd.ironmolding.l1.desc">Giver evnen til at støbe og forme jern til værktøj og dele</entry>
+  <entry key="rsd.ironmoulding.l1.name">Jernstøbning</entry>
+  <entry key="rsd.ironmoulding.l1.desc">Giver evnen til at støbe og forme jern til værktøj og dele</entry>
 
   <entry key="rsd.betterstorage.l2.name">Forbedret opbevaring</entry>
   <entry key="rsd.betterstorage.l2.desc">Yderligere forbedringer af opbevaringskapacitet og effektivitet</entry>
@@ -624,6 +682,67 @@
 
   <entry key="rsd.maizefield_scarecrow.l1.name">Fugleskræmsel til Majs mark</entry>
   <entry key="rsd.maizefield_scarecrow.l1.desc">Giver evnen til at beskytte majsmarker mod skadedyr og øger udbytte.</entry>
+
+  <entry key="rsd.health.l1.name">Forbedret sundhed</entry>
+  <entry key="rsd.health.l1.desc">Giver bedre sundhed og modstandsdygtighed mod sygdomme</entry>
+  <entry key="rsd.cloth.l1.name">Tekstilproduktion</entry>
+  <entry key="rsd.cloth.l1.desc">Giver evnen til at producere tekstiler og tøj</entry>
+  <entry key="rsd.bed.l1.name">Sengeproduktion</entry>
+  <entry key="rsd.bed.l1.desc">Giver evnen til at lave senge for bedre hvile</entry>
+  <entry key="rsd.betterprovision.l1.name">Forbedret forsyning</entry>
+  <entry key="rsd.betterprovision.l1.desc">Giver bedre mad- og ressourceforsyning til indbyggere</entry>
+  <entry key="rsd.bettersleepingquarters.l1.name">Forbedrede soveområder</entry>
+  <entry key="rsd.bettersleepingquarters.l1.desc">Giver bedre soveområder for øget hvilekvalitet</entry>
+  <entry key="rsd.clay.l1.name">Lerudvinding</entry>
+  <entry key="rsd.clay.l1.desc">Giver evnen til at udvinde og bruge ler til byggeri og keramik</entry>
+  <entry key="rsd.formingclay.l1.name">Lerformning</entry>
+  <entry key="rsd.formingclay.l1.desc">Giver evnen til at forme og bearbejde ler til forskellige formål</entry>
+  <entry key="rsd.stonebrick.l1.name">Stenmursten</entry>
+  <entry key="rsd.stonebrick.l1.desc">Giver mulighed for at fremstille mursten af sten til stærkere bygninger</entry>
+  <entry key="rsd.tunnelsupport.l1.name">Tunnelstøtte</entry>
+  <entry key="rsd.tunnelsupport.l1.desc">Giver evnen til at bygge sikre tunnelstøtter i miner</entry>
+  <entry key="rsd.mining.l3.name">Avanceret minedrift</entry>
+  <entry key="rsd.mining.l3.desc">Giver endnu bedre evner til minedrift og ressourceudvinding</entry>
+  <entry key="rsd.storeherb.l1.name">Urteopbevaring</entry>
+  <entry key="rsd.storeherb.l1.desc">Giver mulighed for at opbevare urter sikkert</entry>
+
+  <entry key="rsd.income.l1.name">Forsk i indkomst</entry>
+  <entry key="rsd.income.l1.desc">Giver bedre indkomst.</entry>
+  <entry key="rsd.income.l2.name">Forsk yderliger i indkomst</entry>
+  <entry key="rsd.income.l2.desc">Giver endnu bedre indkomst.</entry>
+  
+  <entry key="rsd.culture.l1.name">Kultur</entry>
+  <entry key="rsd.culture.l1.desc">Giver adgang til kulturelle bygninger og aktiviteter.</entry>
+
+  <entry key="rsd.civilization.l1.name">Civilisation</entry>
+  <entry key="rsd.civilization.l1.desc">Giver fremskridt i samfundets udvikling og nye muligheder.</entry>
+
+  <entry key="rsd.carrot.l1.name">Gulerodsavl</entry>
+  <entry key="rsd.carrot.l1.desc">Muliggør dyrkning og høst af gulerødder.</entry>
+
+  <entry key="rsd.sunflower.l1.name">Solsikkeavl</entry>
+  <entry key="rsd.sunflower.l1.desc">Muliggør dyrkning af solsikker til olie og andre produkter.</entry>
+
+  <entry key="rsd.seed.l1.name">Frøproduktion</entry>
+  <entry key="rsd.seed.l1.desc">Giver evne til at fremstille og optimere frø til genplantning.</entry>
+
+  <entry key="rsd.garden.l1.name">Havebrug</entry>
+  <entry key="rsd.garden.l1.desc">Giver mulighed for at dyrke grøntsager, urter og småafgrøder.</entry>
+
+  <entry key="rsd.fieldwork.l1.name">Markarbejde</entry>
+  <entry key="rsd.fieldwork.l1.desc">Forbedrer effektiviteten og udbyttet ved arbejde på markerne.</entry>
+
+  <entry key="rsd.barrel.l1.name">Tønde &amp; Opbevaring</entry>
+  <entry key="rsd.barrel.l1.desc">Giver evnen til at fremstille tønder og forbedre lagring af varer.</entry>
+
+  <entry key="rsd.production.l1.name">Produktionsteknik</entry>
+  <entry key="rsd.production.l1.desc">Forbedrer produktionsprocesser og øger output i fabrikker/arbejdssteder.</entry>
+
+  <entry key="rsd.sawmill.l1.name">Savværk</entry>
+  <entry key="rsd.sawmill.l1.desc">Giver evnen til at forarbejde træ til tømmer og planker.</entry>
+
+  <entry key="rsd.logging.l1.name">Skovbrug</entry>
+  <entry key="rsd.logging.l1.desc">Forbedrer træhugst, vedligeholdelse af skov og træressourceudbytte.</entry>
 
 <!--RECIPES-->
   <entry key="rcp.firewood.l1.name">Lav brænde</entry>
@@ -699,6 +818,36 @@
   <entry key="rcp.animalfoodwithbonemeal.l1.desc">Producer dyrefoder med benmel</entry>
   <entry key="rcp.animalfoodwithoutbonemeal.l1.name">Lav dyrefoder uden benmel</entry>
   <entry key="rcp.animalfoodwithoutbonemeal.l1.desc">Producer dyrefoder uden benmel</entry>
+  <entry key="rcp.clay.l1.name">Lav ler</entry>
+  <entry key="rcp.clay.l1.desc">Producer ler fra jord</entry>
+  <entry key="rcp.stonebrick.l1.name">Lav stenblokke</entry>
+  <entry key="rcp.stonebrick.l1.desc">Producer stenblokke fra sten</entry>
+  <entry key="rcp.seed.l1.name">Lav frø</entry>
+  <entry key="rcp.seed.l1.desc">Producer frø fra korn</entry>
+  <entry key="rcp.slaughterturtle.l1.name">Slagt skildpadde</entry>
+  <entry key="rcp.slaughterturtle.l1.desc">Giver kød og skildpadde skal ved slagtning</entry>
+  <entry key="rcp.medicin.l1.name">Lav simpel medicin</entry>
+  <entry key="rcp.medicin.l1.desc">Producer simpel medicin af urter</entry>
+  <entry key="rcp.medicin.l2.name">Lav avanceret medicin</entry>
+  <entry key="rcp.medicin.l2.desc">Producer avanceret medicin af urter</entry>
+  <entry key="rcp.oatmeal.l1.name">Lav havregryn</entry>
+  <entry key="rcp.oatmeal.l1.desc">Producer havregryn fra havre</entry>
+  <entry key="rcp.oatmealtofood.l1.name">Lav mad (fra havregryn)</entry>
+  <entry key="rcp.oatmealtofood.l1.desc">Producer mad fra havregryn</entry>
+  <entry key="rcp.animalfoodfromfish.l1.name">Lav dyrefoder fra fisk</entry>
+  <entry key="rcp.animalfoodfromfish.l1.desc">Producer dyrefoder fra fisk</entry>
+  <entry key="rcp.bronzebar.l1.name">Lav bronzestang</entry>
+  <entry key="rcp.bronzebar.l1.desc">Producer bronzestænger fra bronze</entry>
+  <entry key="rcp.mining.l1.name">Lav minedrift</entry>
+  <entry key="rcp.mining.l1.desc">Producer minedrift værktøj</entry>
+  <entry key="rcp.log.l1.name">Lav tømmer</entry>
+  <entry key="rcp.log.l1.desc">Producer tømmer fra træ</entry>  
+  <entry key="rcp.plank.l1.name">Lav planker</entry>
+  <entry key="rcp.plank.l1.desc">Producer planker fra tømmer</entry>
+  <entry key="rcp.chopwood.l1.name">Fæld træ</entry>
+  <entry key="rcp.chopwood.l1.desc">Fæld træ for at få træ ressourcer</entry>
+  
+
 
 <!--RESOURCES--> 
   <entry key="res.wood.name">Træ</entry>
@@ -811,8 +960,7 @@
   <entry key="res.straw.name">Halmskær</entry>
   <entry key="res.straw.desc">Kan bruges som strøelse til dyr</entry>
 
-  <entry key="res.bronzebar.name">Bronzebar</entry>
-  <entry key="res.bronzebar.desc">Kan bruges til at lave værktøj</entry>
+
   <entry key="res.log.name">Træstamme</entry>
   <entry key="res.log.desc">Kan bruges til at lave brænde</entry>
   <entry key="res.plank.name">Planke</entry>
@@ -825,33 +973,47 @@
   <entry key="res.sunflower.desc">Kan bruges til at lave olie</entry>
   <entry key="res.herbs.name">Urter</entry>
   <entry key="res.herbs.desc">Kan bruges til medicin</entry>
-  <entry key="res.iron.name">Jern</entry>
-  <entry key="res.iron.desc">Kan bruges til at lave værktøj</entry>
+
+  <entry key="res.ironore.name">Jernmalm</entry>
+  <entry key="res.ironore.desc">Kan bruges til at lave værktøj</entry>
+  <entry key="res.ironbar.name">Jernstang</entry>
+  <entry key="res.ironbar.desc">Kan bruges til at lave værktøj</entry>
+
+  <entry key="res.copperore.name">Kobbermalm</entry>
+  <entry key="res.copperore.desc">Kan bruges til at lave kobber</entry>
+  <entry key="res.copperbar.name">Kobberbar</entry>
+  <entry key="res.copperbar.desc">Kan bruges til at lave værktøj</entry>
 
   <entry key="res.clay.name">Ler</entry>
   <entry key="res.clay.desc">Kan bruges til at lave keramik</entry>
+
+  <entry key="res.crystal.name">Krystal</entry>
+  <entry key="res.crystal.desc">Kan bruges til at lave magiske genstande</entry>
+
+  <entry key="res.bronzeore.name">Bronzmalm</entry>
+  <entry key="res.bronzeore.desc">Kan bruges til at lave bronze</entry>
+  <entry key="res.bronzebar.name">Bronzebar</entry>
+  <entry key="res.bronzebar.desc">Kan bruges til at lave værktøj</entry>
+
   <entry key="res.turtle.name">Skildpadde</entry>
   <entry key="res.turtle.desc">Kan bruges til at lave skildpadde-suppe</entry>
   <entry key="res.medicin.name">Medicin</entry>
   <entry key="res.medicin.desc">Kan bruges til at helbrede enheder</entry>
-  <entry key="res.crystal.name">Krystal</entry>
-  <entry key="res.crystal.desc">Kan bruges til at lave magiske genstande</entry>
+
   <entry key="res.oat.name">Havre</entry>
   <entry key="res.oat.desc">Kan bruges til at lave havregryn</entry>
   <entry key="res.herb.name">Urter</entry>
   <entry key="res.herb.desc">Kan bruges til at lave medicin</entry>
   <entry key="res.oatmeal.name">Havregryn</entry>
   <entry key="res.oatmeal.desc">Kan laves af havre</entry>
-  <entry key="res.copperore.name">Kobbermalm</entry>
-  <entry key="res.copperore.desc">Kan bruges til at lave kobber</entry>
+
   <entry key="res.sand.name">Sand</entry>
   <entry key="res.sand.desc">Kan bruges til at lave glas</entry>
   <entry key="res.cookedmeat.name">Kogt kød</entry>
   <entry key="res.cookedmeat.desc">Kan laves af rå kød</entry>
   <entry key="res.cookedfish.name">Kogt fisk</entry>
   <entry key="res.cookedfish.desc">Kan laves af rå fisk</entry>
-  <entry key="res.bronze.name">Bronze</entry>
-  <entry key="res.bronze.desc">Kan bruges til at lave værktøj</entry>
+
   <entry key="res.turtleshell.name">Skildpadde-skal</entry>
   <entry key="res.turtleshell.desc">Kan bruges til at lave beskyttelse</entry>
   <entry key="res.turtleoil.name">Skildpadde-olie</entry>
@@ -873,14 +1035,16 @@
   <entry key="ani.duck.desc">And giver lidt kød, fjer og æg</entry>
   <entry key="ani.goat.name">Ged</entry>
   <entry key="ani.goat.desc">Ged giver lidt kød og skind</entry>
+  <entry key="ani.turtle.name">Skildpadde</entry>
+  <entry key="ani.turtle.desc">Skildpadder giver lidt kød og skildpadde skjold</entry>
 
 <!-- HEALTH UNITS-->
 
-  <entry key="ani.healthbed_001.name">Simpel syge sengeplads</entry>
-  <entry key="ani.healthbed_001.desc">Meget primitiv syge senge plads</entry>
+<entry key="ani.healthbed_001.name">Simpel syge sengeplads</entry>
+<entry key="ani.healthbed_001.desc">Meget primitiv syge senge plads</entry>
 
 <entry key="ani.bed_001.name">Simpel  sengeplads</entry>
-  <entry key="ani.bed_001.desc">Meget primitiv senge plads</entry>
+<entry key="ani.bed_001.desc">Meget primitiv senge plads</entry>
 
 
 </language>

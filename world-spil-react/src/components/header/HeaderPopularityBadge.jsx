@@ -2,7 +2,7 @@ import React, { useMemo, useState, useRef, useEffect } from 'react';
 import useHeaderSummary from '../../hooks/useHeaderSummary.js';
 import HoverCard from '../ui/HoverCard.jsx';
 import { useGameData } from '../../context/GameDataContext.jsx';
-import {useStatsLabels, popularityEmojiFromScore} from '../../hooks/useStatsLabels.js';
+import {useStatsLabels, popularityEmojiFromScore} from '../../hooks/useStatsLabels.jsx';
 
 // Simpel farvekodning/emoji som i happiness
 

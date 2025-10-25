@@ -79,7 +79,7 @@ function AddonRow({ entry, state, baseOwned, requirementCaches }) {
             </span>
           )}
         </div>
-        {def.desc ? <div className="sub">{t("ui.emoji.desc.h1")} {def.desc}</div> : null}
+        {def.desc ? <div className="sub">{t("ui.emoji.info.h1")} {def.desc}</div> : null}
         <RequirementSummary
           price={def.cost || {}}
           reqString={requirement.reqString}

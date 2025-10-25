@@ -333,7 +333,7 @@
     </cost>
     <time>20m</time>
     <buffs applies_to="all">
-      <res id="res.bronze" type="mult" amount="10" mode="yield"/> <!-- 10% more bronze from all -->
+      <res id="res.bronzeore" type="mult" amount="10" mode="yield"/> <!-- 10% more bronze from all -->
     </buffs>
     <require>rsd.stonebricks.l1</require>
   </research>
@@ -495,7 +495,7 @@
   <research id="rsd.fieldwork.l1" family="farm" type="storage" lvl="1" stage="2">
     <cost>
       <res id="res.money" amount="1000"/>
-      <res id="res.oats" amount="10"/>
+      <res id="res.oat" amount="10"/>
       <res id="res.maize" amount="10"/>
       <res id="res.wheat" amount="10"/>
     </cost>
@@ -532,7 +532,7 @@
     <require>rsd.mining.l3, bld.mine.l3</require>
   </research>
 
-  <research id="rsd.bronzemolding.l1" family="mine" type="storage" lvl="1" stage="2">
+  <research id="rsd.bronzemoulding.l1" family="mine" type="storage" lvl="1" stage="2">
     <cost>
       <res id="res.money" amount="250"/>
       <res id="res.food" amount="10"/>
@@ -571,7 +571,7 @@
       <res id="res.rope" amount="25"/>
     </cost>
     <time>10m</time>
-    <require>rsd.logging.l1, bld.sawmill.l1</require>
+    <require>rsd.production.l1</require>
   </research>
 
   <research id="rsd.logging.l1" family="forest" type="production" lvl="1" stage="2">
@@ -627,12 +627,12 @@
     <time>1h</time>
     <require>rsd.bronze.l1</require>
   </research>
-  <research id="rsd.ironmolding.l1" family="mine" type="storage" lvl="1" stage="2">
+  <research id="rsd.ironmoulding.l1" family="mine" type="storage" lvl="1" stage="2">
     <cost>
       <res id="res.money" amount="100"/>
     </cost>
     <time>1h</time>
-    <require>rsd.bronzemolding.l1</require>
+    <require>rsd.bronzemoulding.l1</require>
   </research>
 
 <!-- STORAGE-->

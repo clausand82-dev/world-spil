@@ -3,7 +3,7 @@ import useHeaderSummary from '../../hooks/useHeaderSummary.js';
 import HoverCard from '../ui/HoverCard.jsx';
 import { fmt } from '../../services/helpers.js';
 import { useGameData } from '../../context/GameDataContext.jsx';
-import {useStatsLabels, happinessEmojiFromScore} from '../../hooks/useStatsLabels.js';
+import {useStatsLabels, happinessEmojiFromScore} from '../../hooks/useStatsLabels.jsx';
 
 /*function emojiFromScore(score01) {
   if (score01 >= 0.90) return '😊';
@@ -40,7 +40,7 @@ const GROUPS = {
   power: ['powerGreen', 'powerNuclear', 'powerFossil'],
   health: ['healthDentist'],
   tax: ['taxHealth', 'taxCitizens'],
-  waste: ['wasteOrganic', 'wasteOther'],
+  waste: ['wasteOrganic', 'wasteOther', 'wasteMetal','wastePlastic','wasteGlass','wasteElectronic','wasteDanger','wastePaper'],
 };
 
 // Mapping af nøgle → usage/capacity keys fra summary (FALLBACK når impacts mangler)

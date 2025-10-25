@@ -75,7 +75,7 @@ function ResearchRow({ entry, state, baseOwned, requirementCaches }) {
             </span>
           )}
         </div>
-        {def.desc ? <div className="sub">{t("ui.emoji.recipe.h1")} {def.desc}</div> : null}
+        {def.desc ? <div className="sub">{t("ui.emoji.info.h1")} {def.desc}</div> : null}
         <RequirementSummary
           price={def.cost || {}}
           reqString={requirement.reqString}
@@ -87,7 +87,10 @@ function ResearchRow({ entry, state, baseOwned, requirementCaches }) {
         />
       </div>
       <div className="right">
-        {(requirement.allOk && stageOk) ? (
+        {/* NY LOGIK: hvis allerede ejet, vis Ejet-badge først */}
+        {actionItem.owned ? (
+          <span className="badge owned" title={t("ui.text.research.completed.h1") || 'Fuldført'}>✓ {t("ui.text.owned.h1") || 'Ejet'}</span>
+        ) : (requirement.allOk && stageOk) ? (
           <>
             <ActionButton item={actionItem} allOk={true} />
             <BuildProgress bldId={fullId} />
