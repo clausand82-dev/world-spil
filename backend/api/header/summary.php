@@ -478,18 +478,22 @@ if (!empty($summary['capChoice']) && is_array($summary['capChoice'])) {
   // === HAPPINESS: byg dynamisk fra registry + stage ===
   $happinessPairs = []; // key => ['used','capacity']
   foreach ($happinessWeights as $wKey => $_w) {
-    $base = preg_replace('/HappinessWeight$/', '', (string)$wKey);
-    if (!isset($registry[$base])) continue;
-    $m = $registry[$base];
-    $unlockAt = (int)($m['stage']['unlock_at'] ?? 1);
-    if ($userStage < $unlockAt) continue;
+  $base = preg_replace('/HappinessWeight$/', '', (string)$wKey);
+  if (!isset($registry[$base])) continue;
+  $m = $registry[$base];
 
-    $uKey = $m['usageField']     ?? null;
-    $cKey = $m['capacityField']  ?? null;
-    $used = $uKey ? (float)($usages[$uKey]['total'] ?? 0) : 0.0;
-    $cap  = $cKey ? (float)($capacities[$cKey]      ?? 0) : 0.0;
-    $happinessPairs[$base] = ['used'=>$used, 'capacity'=>$cap];
-  }
+  // NYT: hvis registry signalerer at happiness er disabled for denne metric -> skip
+  if (isset($m['happiness']['enabled']) && !$m['happiness']['enabled']) continue;
+
+  $unlockAt = (int)($m['stage']['unlock_at'] ?? 1);
+  if ($userStage < $unlockAt) continue;
+
+  $uKey = $m['usageField']     ?? null;
+  $cKey = $m['capacityField']  ?? null;
+  $used = $uKey ? (float)($usages[$uKey]['total'] ?? 0) : 0.0;
+  $cap  = $cKey ? (float)($capacities[$cKey]      ?? 0) : 0.0;
+  $happinessPairs[$base] = ['used'=>$used, 'capacity'=>$cap];
+}
   $happinessData = happiness_calc_all($happinessPairs, $happinessWeights);
 
   // === POPULARITY: identisk struktur ===
@@ -609,7 +613,7 @@ if (!empty($summary['capChoice']) && is_array($summary['capChoice'])) {
     'metricsMeta'  => (function() use ($registry, $userStage) {
       $out = [];
       foreach ($registry as $id => $m) {
-        $out[$id] = [
+        $out[$id] = $out[$id] = [
           'label'      => (string)($m['label'] ?? $id),
           'parent'     => (string)($m['parent'] ?? ''),
           'subs'       => array_values($m['subs'] ?? []),
@@ -618,10 +622,19 @@ if (!empty($summary['capChoice']) && is_array($summary['capChoice'])) {
             'visible_at' => (int)($m['stage']['visible_at'] ?? 1),
             'locked'     => $userStage < (int)($m['stage']['unlock_at'] ?? 1),
           ],
+          // --- NYT: eksponer happines/popularity flags fra registry så frontend kan se dem ---
+          'happiness'  => [
+            'enabled'   => !empty($m['happiness']['enabled']),
+            'weight_key'=> isset($m['happiness']['weight_key']) ? (string)$m['happiness']['weight_key'] : '',
+          ],
+          'popularity' => [
+            'enabled'   => !empty($m['popularity']['enabled']),
+            'weight_key'=> isset($m['popularity']['weight_key']) ? (string)$m['popularity']['weight_key'] : '',
+          ],
           'usageField'    => (string)($m['usageField'] ?? ''),
           'capacityField' => (string)($m['capacityField'] ?? ''),
         ];
-      }
+}
       return $out;
     })(),
     'stage'        => ['current' => $userStage],

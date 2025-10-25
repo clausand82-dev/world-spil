@@ -24,6 +24,15 @@ export default function HeaderHappinessBadge() {
 
   const LABELS = useStatsLabels();
 
+  const isEnabledForHappiness = (key) => {
+  const meta = metaMap?.[key] || {};
+  // Hvis backend ikke sender feltet, fallback til true
+  if (meta?.happiness && typeof meta.happiness.enabled === 'boolean') {
+    return Boolean(meta.happiness.enabled);
+  }
+  return true;
+};
+
   // Backend-provided happiness summary + registry metadata
   const h = effective?.happiness ?? { impacts: {}, weightTotal: 0, impactTotal: 0, happiness: 0 };
   const usages = effective?.usages ?? {};
@@ -112,7 +121,11 @@ export default function HeaderHappinessBadge() {
       }
 
       // Hide trivial empty rows unless it was an impact (backend wanted it shown)
-      if (!fromImpact && used <= 0 && cap <= 0) return null;
+      if (!fromImpact) {
+        if (!isVisibleByStage(key) || !isUnlockedByStage(key)) return null;
+      }
+      // NYT: tjek registered happiness enabled
+      if (!isEnabledForHappiness(key)) return null;
 
       const impact = (typeof imp?.impact === 'number') ? Number(imp.impact) : (weight * score || 0);
 

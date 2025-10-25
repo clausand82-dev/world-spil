@@ -216,6 +216,11 @@
   <entry key="ui.capdesc.waste_paper.h1">Hvor meget affald (papir) der kan opbevares og behandles.</entry>
   <entry key="ui.usagedesc.waste_paper.h1">Hvor meget affald (papir) kan produceres.</entry>
 
+  <entry key="ui.emoji.product.h1">🍎</entry>
+  <entry key="ui.label.product.h1">Produkter</entry>
+  <entry key="ui.capdesc.product.h1">Kapacitet til produkter (hvormange produkter der kan opbevares).</entry>
+  <entry key="ui.usagedesc.product.h1">Hvor mange produkter der kræves ialt.</entry>
+
   <entry key="ui.emoji.product_cloth.h1">👕</entry>
   <entry key="ui.label.product_cloth.h1">Tøj</entry>
   <entry key="ui.capdesc.product_cloth.h1">Kapacitet til tøj (hvor meget tøj der kan opbevares).</entry>

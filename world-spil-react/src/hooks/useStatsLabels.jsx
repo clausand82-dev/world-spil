@@ -81,8 +81,8 @@ export function useStatsLabels() {
   powerGreen: makeLabelNode("stats_powergreen", "ui.label.power_green.h1") || 'Power (Green)',
   powerNuclear: makeLabelNode("stats_powernuclear", "ui.label.power_nuclear.h1") || 'Power (Nuclear)',
   product: makeLabelNode("stats_product", "ui.label.product.h1") || 'Product',
-  cloth: makeLabelNode("stats_cloth", "ui.label.product_cloth.h1") || 'Cloth',
-  medicin: makeLabelNode("stats_medicin", "ui.label.product_medicin.h1") || 'Medicine',
+  cloth: makeLabelNode("stats_productcloth", "ui.label.product_cloth.h1") || 'Cloth',
+  medicin: makeLabelNode("stats_productmedicin", "ui.label.product_medicin.h1") || 'Medicine',
   social: makeLabelNode("stats_social", "ui.label.social.h1") || 'Social',
 
   waste: makeLabelNode("stats_waste", "ui.label.waste.h1") || 'Waste',
@@ -101,10 +101,11 @@ export function useStatsLabels() {
   police: makeLabelNode("stats_police", "ui.label.police.h1") || 'Police',
 
   // NYE / TILFØJTE
-  religion: t("ui.emoji.religion.h1") + ' ' + t("ui.label.religion.h1") || 'Religion',
-  culture: t("ui.emoji.culture.h1") + ' ' + t("ui.label.culture.h1") || 'Culture',
-  civilization: t("ui.emoji.civilization.h1") + ' ' + t("ui.label.civilization.h1") || 'Civilization',
-  transport: t("ui.emoji.transport.h1") + ' ' + t("ui.label.transport.h1") || 'Transport',
+  religion: makeLabelNode("stats_religion", "ui.label.religion.h1") || 'Religion',
+  culture: makeLabelNode("stats_culture", "ui.label.culture.h1") || 'Culture',
+  civilization: makeLabelNode("stats_civilization", "ui.label.civilization.h1") || 'Civilization',
+
+  transport: makeLabelNode("stats_transport", "ui.label.transport.h1") || 'Transport',
 
   }), [t]);
 }

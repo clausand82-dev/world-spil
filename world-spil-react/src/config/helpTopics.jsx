@@ -149,10 +149,22 @@ export const HELP_TOPICS = [
               <li><strong>{emoji('feather')} {name('feather')}</strong> — Bruges til tøj.</li>
               <li><strong>{emoji('firewood')} {name('firewood')}</strong> — Bruges til bål og varme.</li>
               </ul>
-
-
               
-              <p>Se også <a data-topic-link="resources-overview">Ressourcer Generelt</a>.</p>
+footprint, animal_cap, provision_cap, housing, heatFossilCapacity, waterCapacity, storageLiquidCapacity, storageSolidCapacity, wasteOtherCapacity, wasteOrganicCapacity
+
+              <p>Stage 1 introducerer også følgende <a data-topic-link="stats-overview">stats</a>:</p>
+              <ul>
+              <li><strong>Byggepoint</strong> — Mange af bygninger og addons kræver en vis mængde plads for at kan bygge. Byggepoint er afgørende for, om du har plads nok eller ej til at bygge et mere.</li> 
+              <li><strong>Staldplads</strong> — Dyr fylder forskelligt i stalden, og staldpladsen bestemmer, hvor mange dyr du kan have.</li>
+              <li><strong>Housing</strong> — Dine borger fylder ikke lige meget; nogle fylder mere og nogle fylder mindre. Housing styre om du har plads nok eller ej.</li>
+              <li><strong>Forsyning</strong> — Forsyning repræsenterer den mængde mad du har i flow til dine borgere. Housing kan sagtens være større end hvad du kan forsyne med mad. Og forsyning kan være større end housing, men konsekvenser afgøres allerede ved laveste fællesnævner.</li>
+              <li><strong>Vand</strong> — Borger og dyr skal have vand. Stats: vand, repræsenterer dit flow af vand. Sørg for du altid kan leverer mere vand end der kræves.</li>
+              <li><strong>Varme (Fossil)</strong> — Dine borgere vil gerne have varme. Her i starten kan brænde og bålet bidrage til at give dig varme. Der er forskellige slags varme og dette her er fossil varm, der forurener mere.</li>
+              <li><strong>Plads (flydende ressourcer)</strong> — Dette udgør din kapacitet til at opbevare flydende ressourcer som vand, mælk og suppe. Løber du tør for plads modtager du ikke mere produktion, før der er plads igen.</li>
+              <li><strong>Plads (faste ressourcer)</strong> — Dette udgør din kapacitet til at opbevare faste ressourcer som træ, sten og mad. Løber du tør for plads modtager du ikke mere produktion, før der er plads igen.</li>
+              <li><strong>Affald (organisk)</strong> — Mængde organisk affald produceret af borgere og processer.</li>
+              <li><strong>Affald (andet)</strong> — Mængde blandet affald produceret af borgere og processer.</li>
+              </ul>
             </div>
           );
         },searchText: 'ressource vand water forbrug',
@@ -164,23 +176,50 @@ export const HELP_TOPICS = [
     id: 'stats',
     title: 'Stats',
     children: [
-      // dynamisk render som string (kan få defs/t via HelpOverlay)
+      // dynamisk JSX-komponent (foretrukket i .jsx filer)
       topic({
         id: 'stats-overview',
         title: 'Stats Generelt',
-        render: ({ defs, t }) => {
-          const emoji = defs?.res?.water?.emoji || (t?.('ui.emoji.water') ?? '💧');
-          return `<h2>Stats</h2>
-          <img src="${helpStats}" alt="Stats panel" class="help-image help-right" />
-          <p>Stats er en vigtig del af spillet og skaber dynamik og dybde. Stats påvirker hvordan ens borgere trives, og hvordan ens by udvikler sig. Stats kan komme fra bygninger, addons, research, ressourcer, dyr og units.</p>
-          <p>Stats er en lang række ting, som ens borger kræver, skaber eller på anden måde bruger/er afhængige af. I punkterne ude til højre, kan de læse mere om de specifikke stats.</p>
-          <p>Nogle stats er synlige, andre fungerer bagved og skaber dynamikken. De fleste er dog synlige. Et stats kan komme fra bygninger, ressourcer eller andre elementer i spillet, sågar kan de midlertidig komme fra ressourcer, dyr eller unit som man har. Slagter eller sælger man et dyr, der giver nogle midlertidig stats, så forsvinder de når dyret er væk; ligeledes med ressourcer. Bruges en ressource der giver stats, forsvinder bonusen.</p>
-          <p>Eksempelvis giver vand (💧) i ens inventory bonus i <a data-topic-link="stats-water">stats vand</a>, som er den mængde vand ens borgere kræver for at være glade osv - se borger for yderligere info.</p>
-          <p>De forskellige borger grupper (se borger info) har forskellige krav til forskellgie stats for at være tilfredse (hvilket blandt andet påvirker happiness og popularity). Ved bygninger, addons og research kan man se hvilke stats de forbruger af eller giver til. Oplysninger kan ses i hover i nederst højre hjørne, når man har musen over bygninger, addon eller research. Det samme gælder dyr og øvrige units. Ressourcer kan man ikke se hvad de giver af bonus, men man kan ofte gætte sig til det (hint: water spiller ind på water stats.</p>
-          <p>Stats består ofte af hvad borger grupper forbruger pr. den borger, samt hvad man maks har.</p>
-          <p>Jo højere stage, jo flere stats skal man forholde sig til. Eneste stats i stage 1 er dyrplads og byggepoint. Disse forsætter med at være vigtige.</p>
-          <p>De forskellige oplåste og relevante stats kan se i panelet "Stats" ude til højre.</p>
-          `;
+        component: ({ defs, t }) => {
+          const emoji = (name) => defs?.res?.[name]?.emoji || '⛔';
+          const name = (name) => defs?.res?.[name]?.name || 'NN';
+          return (
+            <div className="help-article">
+              <h2>Stats</h2>
+              <img src={helpStats} alt="Stats panel" className="help-image help-right" />
+              <p>
+                Stats er en vigtig del af spillet og skaber dynamik og dybde. Stats påvirker hvordan ens borgere trives,
+                og hvordan ens by udvikler sig. Stats kan komme fra bygninger, addons, research, ressourcer, dyr og units.
+              </p>
+              <p>
+                Stats er en lang række ting, som ens borger kræver, skaber eller på anden måde bruger/er afhængige af. I
+                punkterne ude til højre, kan de læse mere om de specifikke stats.
+              </p>
+              <p>
+                Nogle stats er synlige, andre fungerer bagved og skaber dynamikken. De fleste er dog synlige. Et stats kan
+                komme fra bygninger, ressourcer eller andre elementer i spillet, sågar kan de midlertidig komme fra ressourcer,
+                dyr eller unit som man har. Slagter eller sælger man et dyr, der giver nogle midlertidig stats, så forsvinder de
+                når dyret er væk; ligeledes med ressourcer. Bruges en ressource der giver stats, forsvinder bonusen.
+              </p>
+              <p>
+                Eksempelvis giver vand {emoji('firewood')} i ens inventory bonus i <a data-topic-link="stats-water">stats vand</a>,
+                som er den mængde vand ens borgere kræver for at være glade osv - se borger for yderligere info.
+              </p>
+              <p>
+                De forskellige borger grupper (se borger info) har forskellige krav til forskellige stats for at være tilfredse
+                (hvilket blandt andet påvirker happiness og popularity). Ved bygninger, addons og research kan man se hvilke stats
+                de forbruger af eller giver til. Oplysninger kan ses i hover i nederst højre hjørne, når man har musen over
+                bygninger, addon eller research. Det samme gælder dyr og øvrige units. Ressourcer kan man ikke se hvad de giver
+                af bonus, men man kan ofte gætte sig til det (hint: water spiller ind på water stats).
+              </p>
+              <p>Stats består ofte af hvad borger grupper forbruger pr. den borger, samt hvad man maks har.</p>
+              <p>
+                Jo højere stage, jo flere stats skal man forholde sig til. Eneste stats i stage 1 er dyrplads og byggepoint.
+                Disse fortsætter med at være vigtige.
+              </p>
+              <p>De forskellige oplåste og relevante stats kan se i panelet "Stats" ude til højre.</p>
+            </div>
+          );
         },
         searchText: 'stats ',
       }),
