@@ -33,8 +33,8 @@ function YieldResourceInner({ resId, data, defs }) {
   return (
     <>
       <div className="item collapsible-item" onClick={() => setIsExpanded(!isExpanded)}>
-        <div className="icon" style={{ fontSize: '2em' }}>
-          <Icon def={emojiDef} alt={resDef.name} size={24} />
+        <div className="icon" style={{ fontSize: '1em' }}>
+          <Icon def={emojiDef} alt={resDef.name} size={36} />
         </div>
         <div className="grow"><div className="title">{resDef.name || bareId}</div></div>
         <div className="right">
@@ -52,7 +52,7 @@ function YieldResourceInner({ resId, data, defs }) {
             return (
               <div className="yield-source-item" key={`${source.name ?? 'src'}_${index}`} >
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-                  <Icon src={source.icon} alt={source.name} size="sm" />
+                  <Icon src={source.icon} alt={source.name} size={36} />
                   <span>{source.name} {qty > 1 ? `(x${qty})` : ''}</span>
                 </span>
                 <span>+{H.fmt(perHour)} / time</span>

@@ -4,12 +4,9 @@ import { fmt, normalizePrice } from '../../services/helpers.js';
 import Icon from '../common/Icon.jsx';
 
 /*
-  ResourceCost.base.jsx (updated)
-  - Each resource is an independent tile (icon + name + need).
-  - No ✓ / ✕ displayed any more — the color of the amount indicates ok (green) or missing (red).
-  - A big "+" separator is placed between tiles when rendered inline.
-  - Tiles wrap per-item (flex-wrap) so each tile drops to the next row individually if there isn't room.
-  - Icon fallback: both iconUrl and value are passed to Icon so default.png will be used as fallback.
+  ResourceCost.base.jsx
+  - Uses CSS classes (rc-inline, rc-tile, rc-icon, rc-name, rc-need, rc-sep-plus, rc-sep-arrow)
+  - Keeps logic unchanged; visual appearance moved to requirement-layout.css
 */
 
 function getHave(state, id) {
@@ -24,12 +21,12 @@ function getHave(state, id) {
   return liquid + solid;
 }
 
-function CostItem({ id, needAmount = 0 }) {
+function CostItem({ id, needAmount = 0, isExtra = false }) {
   const { data } = useGameData();
   const defs = data?.defs || {};
   const state = data?.state || {};
   let def = null;
-  let displayName = id;
+  let displayName = id || '';
 
   if (!id) return null;
 
@@ -44,86 +41,87 @@ function CostItem({ id, needAmount = 0 }) {
   }
 
   const need = Number(needAmount || 0);
-  const have = getHave(state, id);
+  let have = 0;
+  try {
+    if (String(id).startsWith('ani.')) {
+      have = data?.state?.ani?.[id]?.quantity ?? 0;
+    } else {
+      const key = String(id).replace(/^res\./, '');
+      have = Number(data?.state?.inv?.solid?.[key] || 0) + Number(data?.state?.inv?.liquid?.[key] || 0);
+    }
+  } catch (e) {
+    have = 0;
+  }
   const ok = have >= need;
-  const color = ok ? '#0a0' : '#c33';
+  const statusClass = ok ? 'price-ok' : 'price-bad';
 
   const iconUrl = def?.iconUrl || undefined;
   const value = def?.iconFilename || def?.emoji || undefined;
-  const title = `${displayName}: behov ${fmt(need)}`;
+  const title = `${displayName}: behov ${fmt(need)}${!isExtra ? ` (lager: ${fmt(have)})` : ''}`;
 
   return (
-    <div
-      className="rc-tile"
-      title={title}
-      style={{
-        display: 'grid',
-        gridTemplateColumns: '36px 1fr',
-        gridTemplateRows: 'auto auto',
-        gap: '4px 8px',
-        alignItems: 'center',
-        padding: '6px 8px',
-        borderRadius: 6,
-        minWidth: 130,
-        background: 'transparent',
-      }}
-    >
-      <div style={{ gridRow: '1 / span 2', display: 'grid', placeItems: 'center' }}>
+    <div className={`rc-tile ${isExtra ? 'rc-extra' : ''} ${statusClass}`} title={title}>
+      <div className="rc-icon">
         <Icon iconUrl={iconUrl} value={value || 'default.png'} size={32} alt={displayName} />
       </div>
 
-      <div style={{
-        gridColumn: '2 / 3',
-        gridRow: '1 / 2',
-        fontWeight: 700,
-        lineHeight: 1.05,
-        overflow: 'hidden',
-        textOverflow: 'ellipsis',
-        whiteSpace: 'nowrap',
-      }}>
-        <span style={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis' }}>{displayName}</span>
+      <div className="rc-name" title={displayName}>
+        <span>{displayName}</span>
       </div>
 
-      <div style={{ gridColumn: '2 / 3', gridRow: '2 / 3', fontSize: 13, color }}>
-        <span style={{ fontVariantNumeric: 'tabular-nums', fontWeight: 700 }}>{fmt(need)}</span>
+      <div className="rc-need">
+        <span>{fmt(need)}</span>
       </div>
     </div>
   );
 }
 
-export default function ResourceCost({ cost = {}, transform } = {}) {
-  const items = Object.values(normalizePrice(cost || {}));
+export default function ResourceCost({ cost = {}, extra = null, transform } = {}) {
+  const baseItems = Object.values(normalizePrice(cost || {}));
+  const extraItemsRaw = extra ? Object.values(normalizePrice(extra || {})) : [];
+
   const costItems = transform
-    ? items.map(it => {
+    ? baseItems.map(it => {
         const id = (it.id || '').startsWith('res.') || (it.id || '').startsWith('ani.')
           ? it.id
           : (it.id in (window?.data?.defs?.res || {}) ? `res.${it.id}` : it.id);
         const amt = transform(id, it.amount);
         return { ...it, id, amount: amt };
       })
-    : items;
+    : baseItems;
 
-  if (!costItems.length) return null;
+  const extraItems = transform
+    ? extraItemsRaw.map(it => {
+        const id = (it.id || '').startsWith('res.') || (it.id || '').startsWith('ani.')
+          ? it.id
+          : (it.id in (window?.data?.defs?.res || {}) ? `res.${it.id}` : it.id);
+        const amt = transform(id, it.amount);
+        return { ...it, id, amount: amt };
+      })
+    : extraItemsRaw;
+
+  if (!costItems.length && !extraItems.length) return null;
 
   return (
-    <div
-      className="rc-inline"
-      style={{
-        display: 'flex',
-        gap: 12,
-        alignItems: 'center',
-        flexWrap: 'wrap',
-        width: '100%',
-      }}
-    >
+    <div className="rc-inline" aria-hidden={false}>
       {costItems.map((item, i) => (
-        <React.Fragment key={`${item.id}-${i}`}>
-          <CostItem id={item.id} needAmount={item.amount} />
-          {i < costItems.length - 1 && (
-            <div style={{ fontSize: 20, fontWeight: 800, color: 'rgba(255,255,255,0.6)', marginLeft: -2, marginRight: -2 }}>+</div>
-          )}
+        <React.Fragment key={`cost-${item.id}-${i}`}>
+          <CostItem id={item.id} needAmount={item.amount} isExtra={false} />
+          {i < costItems.length - 1 && <div className="rc-sep-plus">+</div>}
         </React.Fragment>
       ))}
+
+      {extraItems.length > 0 && (
+        <>
+          <div className="rc-sep-arrow">→</div>
+          {extraItems.map((item, i) => (
+            <React.Fragment key={`extra-${item.id}-${i}`}>
+              <CostItem id={item.id} needAmount={item.amount} isExtra={true} />
+              {i < extraItems.length - 1 && <div className="rc-sep-plus">+</div>}
+            </React.Fragment>
+          ))}
+        </>
+      )}
     </div>
   );
 }

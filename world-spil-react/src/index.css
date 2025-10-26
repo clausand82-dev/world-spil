@@ -565,3 +565,168 @@ body{padding-bottom:72px} /* plads til quickbar */
   .item .right { min-width: 112px; }
   .item .right .btn, .build-progress { width: 88px; min-width: 88px; }
 }
+
+/* Global styles for requirement / resource / yield / progress layout
+   Put this file in src/styles/ and import it from your global entry (e.g. src/main.jsx or src/index.jsx):
+     import './styles/requirement-layout.css';
+   Adjust the :root variables below to exactly match BuildingPage typography if you want.
+*/
+
+/* --- Theme / typography variables (override these with BuildingPage values) --- */
+:root{
+  --ws-font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  --ws-font-size-base: 13px;
+  --ws-font-size-sm: 12px;
+  --ws-font-size-md: 14px;
+  --ws-font-size-lg: 16px;
+  --ws-line-height: 1.2;
+  --ws-gap-sm: 6px;
+  --ws-gap-md: 8px;
+  --ws-gap-lg: 12px;
+  --ws-accent: #2c7be5;
+  --ws-good: #0a0;
+  --ws-bad: #c33;
+  --ws-muted: rgba(255,255,255,0.12);
+  --ws-panel-border: rgba(255,255,255,0.06);
+}
+
+/* --- Requirement summary base --- */
+.requirement-summary {
+  font-family: var(--ws-font-family);
+  font-size: var(--ws-font-size-base);
+  line-height: var(--ws-line-height);
+  color: #e6eef8;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Grid for main four columns (resources | req | time | footprint) */
+.requirement-summary__grid {
+  display: grid;
+  grid-template-columns: 7fr 2fr 1fr 1fr;
+  gap: var(--ws-gap-lg);
+  align-items: stretch;
+  width: 100%;
+}
+
+/* column wrappers */
+.requirement-summary__col { box-sizing: border-box; padding: 0; }
+.requirement-summary__col--resources { padding-right: 12px; }
+.requirement-summary__col--req { padding-left: 12px; border-left: 1px solid var(--ws-panel-border); }
+.requirement-summary__col--time { padding-left: 12px; border-left: 1px solid var(--ws-panel-border); display:flex; flex-direction:column; align-items:center; gap:8px; }
+.requirement-summary__col--fp { padding-left: 12px; border-left: 1px solid var(--ws-panel-border); display:flex; flex-direction:column; align-items:center; gap:8px; }
+
+/* --- Resource Cost inline tiles --- */
+/* Changed to flexbox so separators (+ / →) remain inline and tiles wrap per-item cleanly */
+.rc-inline {
+  display: flex;
+  gap: var(--ws-gap-md);
+  align-items: flex-start;
+  flex-wrap: wrap;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Each tile: ensure uniform height so separators center correctly */
+.rc-tile {
+  display: grid;
+  grid-template-columns: 40px 1fr;
+  grid-template-rows: auto auto;
+  gap: 4px 8px;
+  align-items: center;
+  padding: 6px 8px;
+  border-radius: 8px;
+  min-width: 120px;
+  min-height: 64px; /* ensure consistent vertical size so + aligns nicely */
+  box-sizing: border-box;
+  background: transparent;
+}
+
+/* Icon / name / need classes */
+.rc-tile .rc-icon { display: grid; place-items: center; grid-row: 1 / span 2; }
+.rc-tile .rc-name { font-weight: 700; font-size: var(--ws-font-size-md); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rc-tile .rc-need { font-variant-numeric: tabular-nums; font-weight: 700; font-size: var(--ws-font-size-sm); }
+
+/* Separator elements: display inline-flex and vertically center within the same flow */
+.rc-sep-plus, .rc-sep-arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ws-muted);
+  margin: 0 6px;
+  height: 64px; /* match tile min-height so centered vertically */
+  box-sizing: border-box;
+}
+
+/* extra (yield) style minor tweak) */
+.rc-extra { opacity: 0.98; }
+
+/* --- Demand tokens (requirements) --- */
+.demand-list { display: flex; flex-direction: column; gap: var(--ws-gap-md); }
+.demand-token {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  text-decoration: none;
+}
+.demand-token .dt-icon { width: 20px; height: 20px; display:inline-grid; place-items:center; }
+.demand-token .dt-label { font-weight: 600; font-size: var(--ws-font-size-base); }
+
+/* ok / bad color classes preserved */
+.price-ok .dt-label, .price-ok .rc-need { color: var(--ws-good); }
+.price-bad .dt-label, .price-bad .rc-need { color: var(--ws-bad); }
+
+/* --- Right column: button + progress (stacked) --- */
+.item-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+  min-width: 140px;
+  box-sizing: border-box;
+  padding-left: 8px;
+}
+
+/* unify button sizes */
+.item-right .btn, .item-right .badge, .item-right .owned {
+  width: 104px;
+  height: 36px;
+  min-width: 104px;
+  padding: 6px 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  box-sizing: border-box;
+}
+
+/* button label container to avoid width jump */
+.item-right .btn .label { width: 100%; text-align: center; display:inline-block; overflow:hidden; text-overflow:ellipsis; }
+
+/* --- Build progress placeholder --- */
+.build-progress {
+  width: 120px;
+  min-width: 120px;
+  height: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+.build-progress.inactive { visibility: hidden; opacity: 0; }
+.build-progress.active { visibility: visible; opacity: 1; transition: opacity 120ms ease; }
+
+/* inner bar + label if needed (ProgressBar component) */
+.build-progress .label { font-size: var(--ws-font-size-sm); margin-top: 6px; min-height: 16px; }
+
+/* responsive fallback */
+@media (max-width: 720px) {
+  .requirement-summary__grid { grid-template-columns: 1fr; }
+  .item-right { min-width: 96px; }
+  .item-right .btn, .item-right .badge { width: 88px; min-width: 88px; height: 32px; }
+}

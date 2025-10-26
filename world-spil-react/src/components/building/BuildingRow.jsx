@@ -13,22 +13,18 @@ import RequirementSummary from './RequirementSummary.jsx';
 
 /*
   BuildingRow.jsx
-  - Uses RequirementSummary (which renders ResourceCost / DemandList with icons)
-  - Keeps hover content (RequirementPanel) unchanged
-  - Keeps memoization to avoid unnecessary rerenders
+  - Uses .item and .item-right classes; left content unchanged.
+  - RequirementSummary provides the consistent layout; BuildProgress and ActionButton keep their placeholder behavior.
 */
 
 function BuildingRowInner({ bld, state, defs, requirementCaches }) {
-  // prefer def included on bld object
   const def = bld?.def || (defs?.bld ? (defs.bld[(bld.id || '').replace(/^bld\./, '')] || null) : null);
 
   const { allOk, Component: ReqLine } = useReqAgg(bld);
 
-  // translations for tooltip labels if available
   const { data } = useGameData();
   const translations = data?.i18n?.current ?? {};
 
-  // memoize hover content so it's stable across parent renders
   const hoverContent = useMemo(() => (
     <div style={{ minWidth: 300 }}>
       <StatsEffectsTooltip def={def || bld} translations={translations} />
@@ -41,7 +37,6 @@ function BuildingRowInner({ bld, state, defs, requirementCaches }) {
     </div>
   ), [def, bld, translations, defs, state, requirementCaches]);
 
-  // memoize image element for this row
   const imgKey = String(bld.id || '').replace(/^bld\./, '').replace(/\.l\d+$/i, '');
   const image = useMemo(() => (
     <GameImage
@@ -55,12 +50,10 @@ function BuildingRowInner({ bld, state, defs, requirementCaches }) {
     />
   ), [imgKey]);
 
-  // Use RequirementSummary for inline summary so icons/layout match other pages
-  // Provide props for price/req/duration/footprint when available
   const price = bld.price || bld.cost || def?.cost || {};
   const reqString = bld.req || bld.require || def?.require || def?.requirements || '';
   const durationVal = Number(bld.duration_s ?? bld.build_time_s ?? def?.duration_s ?? def?.build_time_s ?? 0) || null;
-  const durationBase = durationVal; // building list normally shows buffed base; tooltips show more detail
+  const durationBase = durationVal;
   const footprint = Number(def?.stats?.footprint ?? 0);
 
   const row = useMemo(() => (
@@ -74,7 +67,6 @@ function BuildingRowInner({ bld, state, defs, requirementCaches }) {
         <div className="sub" style={{ marginTop: '6px', display: 'flex', alignItems: 'flex-start', gap: '12px', flexWrap: 'wrap' }}>
           <LevelStatus isOwned={bld.owned} isUpgrade={bld.isUpgrade} ownedMax={bld.ownedMax} stageLocked={bld.stageLocked} stageReq={bld.stageReq} />
           <span> • </span>
-          {/* RequirementSummary renders ResourceCost (icons/two-row layout) and DemandList */}
           <RequirementSummary
             price={price}
             reqString={reqString}
@@ -85,7 +77,8 @@ function BuildingRowInner({ bld, state, defs, requirementCaches }) {
           />
         </div>
       </div>
-      <div className="right">
+
+      <div className="item-right">
         <ActionButton item={bld} allOk={allOk} />
         <BuildProgress bldId={bld.id} />
       </div>

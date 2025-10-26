@@ -4,10 +4,9 @@ import * as H from '../../services/helpers.js';
 import Icon from '../common/Icon.jsx';
 
 /*
-  DemandList.jsx (small tokens used for requirements)
-  - DemandToken passes both iconUrl and value to Icon to ensure fallback to default.png.
-  - Token layout: small icon + label (inline).
-  - Functionality unchanged (links and ok-checks preserved).
+  DemandList.jsx
+  - Uses external CSS classes (demand-list, demand-token, dt-icon, dt-label)
+  - Keeps link/ok logic intact; visual styling moved to CSS
 */
 
 function computeOwnedMaxBySeriesFromState(state, stateKey = 'bld') {
@@ -58,44 +57,37 @@ export function DemandToken({ reqId, compact = true }) {
     }
   }
 
-  // determine type icon (rsd/bld/add) - try to get a relevant iconUrl if defs expose it, fallback to default
   const defaultIcon = '/assets/icons/default.png';
   let typeIconUrl = defaultIcon;
   try {
     const prefix = String(reqId || '').slice(0, 3);
     if (prefix === 'rsd') {
       const key = reqId.replace(/^rsd\./, '').split('.')[0];
-      typeIconUrl = '/assets/icons/symbol_research.png' || defaultIcon;
+      typeIconUrl = defs?.rsd?.[key]?.iconUrl || defaultIcon;
     } else if (prefix === 'bld') {
       const key = reqId.replace(/^bld\./, '').split('.')[0];
-      typeIconUrl = '/assets/icons/symbol_building.png' || defaultIcon;
+      typeIconUrl = defs?.bld?.[key]?.iconUrl || defaultIcon;
     } else if (prefix === 'add') {
       const key = reqId.replace(/^add\./, '').split('.')[0];
-      typeIconUrl = '/assets/icons/symbol_addon.png' || defaultIcon;
+      typeIconUrl = defs?.add?.[key]?.iconUrl || defaultIcon;
     }
   } catch (e) {
     typeIconUrl = defaultIcon;
   }
 
-  const color = ok ? '#0a0' : '#c33';
+  const colorClass = ok ? 'price-ok' : 'price-bad';
 
   return (
     <a
       href={href}
       title={tip}
-      className={ok ? 'price-ok demand-token' : 'price-bad demand-token'}
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 8,
-        padding: '4px 6px',
-        textDecoration: 'none',
-        borderRadius: 6,
-        minWidth: compact ? 120 : 160,
-      }}
+      className={`demand-token ${colorClass}`}
+      aria-disabled={false}
     >
-      <Icon iconUrl={typeIconUrl} value={'default.png'} size={20} />
-      <span style={{ fontWeight: 600, color }}>{label}</span>
+      <span className="dt-icon">
+        <Icon iconUrl={typeIconUrl} value={'default.png'} size={20} />
+      </span>
+      <span className="dt-label">{label}</span>
     </a>
   );
 }
@@ -109,7 +101,7 @@ export default function DemandList({ req }) {
   if (!reqIds.length) return null;
 
   return (
-    <div className="demand-list" style={{ display: 'flex', gap: 8, flexDirection: 'column', alignItems: 'flex-start' }}>
+    <div className="demand-list" aria-hidden={false}>
       {reqIds.map((id, i) => <DemandToken key={`${id}-${i}`} reqId={id} compact={true} />)}
     </div>
   );

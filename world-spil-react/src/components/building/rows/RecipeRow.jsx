@@ -268,6 +268,7 @@ function RecipeRow({ entry, defs: passedDefs, state, baseOwned, requirementCache
           </div>
           <RequirementSummary
             price={def.cost || {}}
+            //yieldPrice={def.yield || {}} hvis jeg vil have yield med på res listen, er det den her linje
             reqString={requirement.reqString}
             duration={durationValue}
             durationBase={durationBase}
