@@ -24,7 +24,6 @@ export default function RequirementPanel({
 }) {
   const t = useT();
   const { data } = useGameData(); // fallback source of truth
-  // use provided state prop if present, otherwise fallback to global game state
   const gameState = state || data?.state || {};
 
   const activeBuffs = requirementCaches?.activeBuffs ?? useMemo(() => collectActiveBuffs(defs), [defs]);
@@ -122,11 +121,12 @@ export default function RequirementPanel({
   const footprint = useMemo(() => {
     const baseFP = Number(def?.stats?.footprint ?? def?.footprint ?? 0);
     const buffedFP = baseFP;
-    const totalFP = Number(gameState?.cap?.footprint?.total ?? 0);
-    const usedFP = Number(gameState?.cap?.footprint?.used ?? 0);
-    const ok = (usedFP + baseFP) <= totalFP;
+    const totalFP = Number(data?.cap?.footprint?.total ?? 0);
+    const usedFP = Number(data?.cap?.footprint?.used ?? 0);
+    // Apply sign semantics:
+    const ok = (baseFP >= 0) ? true : ((usedFP + Math.abs(baseFP)) <= totalFP);
     return { base: baseFP, buffed: buffedFP, ok, totalFP, usedFP };
-  }, [def, gameState]);
+  }, [def, data]);
 
   const duration = useMemo(() => {
     const baseS = Number(def?.duration_s ?? def?.time ?? 0);
@@ -296,17 +296,17 @@ export default function RequirementPanel({
                   if (r.id.startsWith('bld.')) {
                     const key = r.id.replace(/^bld\./, '');
                     const d = defs?.bld?.[key] ?? defs?.bld?.[key.replace(/\.l\d+$/, '')];
-                    iconUrl = d?.iconUrl;
+                    iconUrl = '/assets/icons/symbol_building.png';
                     value = d?.iconFilename || d?.emoji || undefined;
                   } else if (r.id.startsWith('add.')) {
                     const key = r.id.replace(/^add\./, '');
                     const d = defs?.add?.[key] ?? defs?.add?.[key.replace(/\.l\d+$/, '')];
-                    iconUrl = d?.iconUrl;
+                    iconUrl = '/assets/icons/symbol_addon.png';
                     value = d?.iconFilename || d?.emoji || undefined;
                   } else if (r.id.startsWith('rsd.') || r.id.startsWith('research.')) {
                     const key = r.id.replace(/^rsd\.|^research\./, '');
                     const d = defs?.rsd?.[key] ?? defs?.rsd?.[key.replace(/\.l\d+$/, '')];
-                    iconUrl = d?.iconUrl;
+                    iconUrl = '/assets/icons/symbol_research.png';
                     value = d?.iconFilename || d?.emoji || undefined;
                   }
                 } catch (e) {

@@ -636,8 +636,8 @@ body{padding-bottom:72px} /* plads til quickbar */
   align-items: center;
   padding: 6px 8px;
   border-radius: 8px;
-  min-width: 120px;
-  min-height: 64px; /* ensure consistent vertical size so + aligns nicely */
+  min-width: 80px;
+  min-height: 24px; /* ensure consistent vertical size so + aligns nicely */
   box-sizing: border-box;
   background: transparent;
 }
@@ -656,7 +656,7 @@ body{padding-bottom:72px} /* plads til quickbar */
   font-weight: 700;
   color: var(--ws-muted);
   margin: 0 6px;
-  height: 64px; /* match tile min-height so centered vertically */
+  height: 40px; /* match tile min-height so centered vertically */
   box-sizing: border-box;
 }
 
