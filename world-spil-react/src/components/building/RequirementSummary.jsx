@@ -10,6 +10,7 @@ import Icon from '../common/Icon.jsx';
   RequirementSummary.jsx (refactored to use CSS classes)
   - Uses requirement-summary, requirement-summary__grid and column class wrappers
   - Passes yieldPrice into ResourceCost via extra prop (ResourceCost handles inline placement)
+  - footprintOk prop now used to color status text (green/red)
 */
 
 export default function RequirementSummary({ price = {}, yieldPrice = null, reqString = '', duration = null, durationBase = null, durationText = null, footprint = 0, footprintOk = true }) {
@@ -18,8 +19,7 @@ export default function RequirementSummary({ price = {}, yieldPrice = null, reqS
   const resolvedDuration = durationText || (duration != null ? prettyTime(duration) : null);
   const hasDurationBuff = duration != null && durationBase != null && Math.round(duration) !== Math.round(durationBase);
 
-  const footprintIconUrl = '/assets/icons/symbol_footprint.png';
-  const timeIconUrl = '/assets/icons/symbol_time.png';
+  const defaultIconUrl = '/assets/icons/default.png';
 
   return (
     <div className="requirement-summary">
@@ -44,7 +44,7 @@ export default function RequirementSummary({ price = {}, yieldPrice = null, reqS
 
         {/* COLUMN 3: Time */}
         <div className="requirement-summary__col requirement-summary__col--time">
-          <Icon iconUrl={timeIconUrl} value={'default.png'} size={44} />
+          <Icon iconUrl={defaultIconUrl} value={'default.png'} size={44} />
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontWeight: 700 }}>{resolvedDuration || '-'}</div>
             <div style={{ fontSize: 12, opacity: 0.85 }}>{hasDurationBuff ? `Normal: ${prettyTime(durationBase ?? 0)}` : (durationBase ? prettyTime(durationBase) : '-')}</div>
@@ -53,10 +53,20 @@ export default function RequirementSummary({ price = {}, yieldPrice = null, reqS
 
         {/* COLUMN 4: Footprint / Buildpoints */}
         <div className="requirement-summary__col requirement-summary__col--fp">
-          <Icon iconUrl={footprintIconUrl} value={'default.png'} size={44} />
+          <Icon iconUrl={defaultIconUrl} value={'default.png'} size={44} />
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontWeight: 700 }}>{footprint > 0 ? `+${footprint} BP` : `${footprint} BP`}</div>
-            <div style={{ fontSize: 12, opacity: 0.85 }}>{footprintOk ? 'OK' : 'Mangler'}</div>
+            <div
+              style={{
+                fontSize: 12,
+                opacity: 0.95,
+                color: footprintOk ? 'var(--ws-good, #0a0)' : 'var(--ws-bad, #c33)',
+                fontWeight: 700,
+                marginTop: 4,
+              }}
+            >
+              {footprintOk ? 'OK' : 'Mangler'}
+            </div>
           </div>
         </div>
       </div>
