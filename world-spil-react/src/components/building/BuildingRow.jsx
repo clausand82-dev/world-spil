@@ -10,11 +10,13 @@ import DockHoverCard from '../ui/DockHoverCard.jsx';
 import StatsEffectsTooltip from '../ui/StatsEffectsTooltip.jsx';
 import RequirementPanel from '../requirements/RequirementPanel.jsx';
 import RequirementSummary from './RequirementSummary.jsx';
+import { requirementInfo, collectActiveBuffs } from '../../services/requirements.js'; // <-- added
 
 /*
   BuildingRow.jsx
   - Uses .item and .item-right classes; left content unchanged.
   - RequirementSummary provides the consistent layout; BuildProgress and ActionButton keep their placeholder behavior.
+  - Small change: compute requirementInfo to get buffed duration (duration.final_s) and pass that as duration prop.
 */
 
 function BuildingRowInner({ bld, state, defs, requirementCaches }) {
@@ -56,6 +58,29 @@ function BuildingRowInner({ bld, state, defs, requirementCaches }) {
   const durationBase = durationVal;
   const footprint = Number(def?.stats?.footprint ?? 0);
 
+  // --- NEW: compute requirement info to get buffed duration (duration.final_s) if buffs apply ---
+  const reqInfo = useMemo(() => {
+    try {
+      const id = bld.id || def?.id || '';
+      const caches = { activeBuffs: collectActiveBuffs(defs) };
+      return requirementInfo(
+        {
+          id: id,
+          price: price || {},
+          req: reqString || '',
+          duration_s: durationVal || 0,
+        },
+        data?.state,
+        caches
+      );
+    } catch (e) {
+      // if something fails, fall back to null — we'll use durationBase then
+      console.warn('reqInfo compute failed', e);
+      return null;
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bld.id, def?.id, price, reqString, durationVal, data?.state, defs]);
+
   const row = useMemo(() => (
     <div className="item" data-bld-id={bld.id}>
       <div className="icon">{image}</div>
@@ -70,8 +95,8 @@ function BuildingRowInner({ bld, state, defs, requirementCaches }) {
           <RequirementSummary
             price={price}
             reqString={reqString}
-            duration={durationVal}
-            durationBase={durationBase}
+            duration={reqInfo?.duration?.final_s ?? durationVal}   /* buffed duration if available */
+            durationBase={durationBase}                            /* original base duration */
             footprint={footprint}
             footprintOk
           />
@@ -83,7 +108,7 @@ function BuildingRowInner({ bld, state, defs, requirementCaches }) {
         <BuildProgress bldId={bld.id} />
       </div>
     </div>
-  ), [bld, image, allOk, price, reqString, durationVal, durationBase, footprint]);
+  ), [bld, image, allOk, price, reqString, reqInfo, durationVal, durationBase, footprint]);
 
   return (
     <DockHoverCard content={hoverContent} style={{ display: 'block', width: '100%' }}>

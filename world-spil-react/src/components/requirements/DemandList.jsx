@@ -63,13 +63,13 @@ export function DemandToken({ reqId, compact = true }) {
     const prefix = String(reqId || '').slice(0, 3);
     if (prefix === 'rsd') {
       const key = reqId.replace(/^rsd\./, '').split('.')[0];
-      typeIconUrl = defs?.rsd?.[key]?.iconUrl || defaultIcon;
+      typeIconUrl = '/assets/icons/symbol_research.png' || defaultIcon;
     } else if (prefix === 'bld') {
       const key = reqId.replace(/^bld\./, '').split('.')[0];
-      typeIconUrl = defs?.bld?.[key]?.iconUrl || defaultIcon;
+      typeIconUrl = '/assets/icons/symbol_building.png' || defaultIcon;
     } else if (prefix === 'add') {
       const key = reqId.replace(/^add\./, '').split('.')[0];
-      typeIconUrl = defs?.add?.[key]?.iconUrl || defaultIcon;
+      typeIconUrl = '/assets/icons/symbol_addon.png' || defaultIcon;
     }
   } catch (e) {
     typeIconUrl = defaultIcon;

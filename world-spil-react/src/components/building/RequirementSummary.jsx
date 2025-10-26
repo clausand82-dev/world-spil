@@ -18,7 +18,8 @@ export default function RequirementSummary({ price = {}, yieldPrice = null, reqS
   const resolvedDuration = durationText || (duration != null ? prettyTime(duration) : null);
   const hasDurationBuff = duration != null && durationBase != null && Math.round(duration) !== Math.round(durationBase);
 
-  const defaultIconUrl = '/assets/icons/default.png';
+  const footprintIconUrl = '/assets/icons/symbol_footprint.png';
+  const timeIconUrl = '/assets/icons/symbol_time.png';
 
   return (
     <div className="requirement-summary">
@@ -43,7 +44,7 @@ export default function RequirementSummary({ price = {}, yieldPrice = null, reqS
 
         {/* COLUMN 3: Time */}
         <div className="requirement-summary__col requirement-summary__col--time">
-          <Icon iconUrl={defaultIconUrl} value={'default.png'} size={44} />
+          <Icon iconUrl={timeIconUrl} value={'default.png'} size={44} />
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontWeight: 700 }}>{resolvedDuration || '-'}</div>
             <div style={{ fontSize: 12, opacity: 0.85 }}>{hasDurationBuff ? `Normal: ${prettyTime(durationBase ?? 0)}` : (durationBase ? prettyTime(durationBase) : '-')}</div>
@@ -52,7 +53,7 @@ export default function RequirementSummary({ price = {}, yieldPrice = null, reqS
 
         {/* COLUMN 4: Footprint / Buildpoints */}
         <div className="requirement-summary__col requirement-summary__col--fp">
-          <Icon iconUrl={defaultIconUrl} value={'default.png'} size={44} />
+          <Icon iconUrl={footprintIconUrl} value={'default.png'} size={44} />
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontWeight: 700 }}>{footprint > 0 ? `+${footprint} BP` : `${footprint} BP`}</div>
             <div style={{ fontSize: 12, opacity: 0.85 }}>{footprintOk ? 'OK' : 'Mangler'}</div>
