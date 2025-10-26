@@ -7,12 +7,12 @@ declare(strict_types=1);
 header('Content-Type: application/json');
 
 try {
-    // attempt to include shared helpers (if they exist)
+    // include the shared stats helper if present
     if (is_file(__DIR__ . '/lib/stats.php')) {
         require_once __DIR__ . '/lib/stats.php';
-    } else {
-        // try parent lib path (if layout different)
-        if (is_file(__DIR__ . '/lib/stats.php')) require_once __DIR__ . '/lib/stats.php';
+    } elseif (is_file(__DIR__ . '/../api/lib/stats.php')) {
+        // alternative path if repo layout differs
+        require_once __DIR__ . '/../api/lib/stats.php';
     }
 
     // resolve user id safely
@@ -47,6 +47,8 @@ try {
     if (function_exists('compute_user_stats')) {
       try {
         $stats = compute_user_stats($db, $userId, null, null);
+        // expose raw stats for debug as well
+        $mods['_debug_stats'] = $stats;
         if (is_array($stats)) {
           $h = isset($stats['happiness']) ? (float)$stats['happiness'] : null;
           $p = isset($stats['popularity']) ? (float)$stats['popularity'] : null;
@@ -65,7 +67,10 @@ try {
         }
       } catch (Throwable $e) {
         // keep defaults
+        $mods['_error'] = $e->getMessage();
       }
+    } else {
+      $mods['_note'] = 'compute_user_stats not defined';
     }
 
     echo json_encode(['ok' => true, 'data' => ['statsModifiers' => $mods]], JSON_THROW_ON_ERROR);
