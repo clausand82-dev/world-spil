@@ -8,6 +8,23 @@ import { normalizePrice, parseBldKey, prettyTime, computeOwnedMaxBySeries, hasRe
 import { applySpeedBuffsToDuration } from '../../services/calcEngine-lite.js';
 import { useT } from "../../services/i18n.js";
 
+// helper: get image src for an icon-like value (filename or URL)
+function looksLikeUrlOrFile(s) {
+  if (!s || typeof s !== 'string') return false;
+  return s.startsWith('/') || /^https?:\/\//i.test(s) || /\.(png|jpe?g|gif|svg|webp)$/i.test(s);
+}
+
+function resolveIconSrc(candidate, { baseIconPath = '/assets/icons/', fallback = '/assets/icons/default.png' } = {}) {
+  if (!candidate) return fallback;
+  const str = String(candidate).trim();
+  if (!str) return fallback;
+  if (str.startsWith('/') || /^https?:\/\//i.test(str)) return str;
+  // treat as filename (e.g. "straw.png")
+  if (/\.(png|jpe?g|gif|svg|webp)$/i.test(str)) return baseIconPath + str;
+  // anything else -> fallback
+  return fallback;
+}
+
 function inferAction(item) {
   const id = String(item?.id || '');
   if (id.startsWith('rsd.')) return 'produce';

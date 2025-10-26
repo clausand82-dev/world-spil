@@ -3,70 +3,85 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 const GameDataContext = createContext(null);
 
-function isFileLikeEmoji(v) {
+// Helper: check if string looks like a URL or image filename
+function isFileLike(v) {
   if (!v) return false;
   const s = String(v).trim();
-  return /\.(png|jpe?g|gif|svg|webp)$/i.test(s) || /^https?:\/\//i.test(s) || s.startsWith('/');
+  return s !== '' && (s.startsWith('/') || /^https?:\/\//i.test(s) || /\.(png|jpe?g|gif|svg|webp)$/i.test(s));
 }
 
-// Normalize defs so emoji file‑navne bliver omdannet til image elements / iconUrl
+/*
+  Normalization: assume <emoji> tag ALWAYS contains a filename (e.g. "straw.png").
+  We convert that filename into an iconUrl string (baseIconPath + filename) or keep absolute URL.
+  We no longer try to support unicode emoji; all icons are files.
+  We still create a non-enumerable `icon` getter so existing components that access def.icon
+  continue to get a rendered <img> element (but the data object itself remains serializable).
+*/
 export function normalizeDefsForIcons(defs, { baseIconPath = '/assets/icons/' } = {}) {
   if (!defs) return defs;
 
-  const makeSafeBucket = (bucket) => {
-    if (!bucket) return {};
+  const makeSafeBucket = (bucket = {}) => {
     const out = {};
     Object.entries(bucket).forEach(([key, d]) => {
       if (!d) return;
-      const nd = { ...d };
+      const nd = { ...d }; // shallow copy
+
+      // TAKE ONLY FILE-NAME FROM d.emoji: treat it as filename or path
       const raw = (d.emoji || '').toString().trim();
 
-      if (nd.iconUrl) {
-        const src = nd.iconUrl;
-        const el = React.createElement('img', {
-          src,
-          alt: nd.name || key,
-          style: { width: '1em', height: '1em', objectFit: 'contain', verticalAlign: '-0.15em' },
-          className: 'res-icon-inline'
-        });
-        nd.emoji = el;
-        nd.emojiText = `<img src="${src}" alt="${(nd.name || key).replace(/"/g, '&quot;')}" style="width:1em;height:1em;vertical-align:-0.15em;object-fit:contain;display:inline-block" />`;
-        out[key] = nd;
-        return;
-      }
-
-      if (!raw) {
-        nd.emoji = '';
-        nd.emojiText = '';
-        out[key] = nd;
-        return;
-      }
-
-      if (isFileLikeEmoji(raw)) {
+      if (raw && isFileLike(raw)) {
+        // raw could be 'foo.png', '/assets/icons/foo.png' or 'https://.../foo.png'
         const src = raw.startsWith('/') || /^https?:\/\//i.test(raw) ? raw : (baseIconPath + raw);
         nd.iconUrl = src;
-        const el = React.createElement('img', {
-          src,
-          alt: nd.name || key,
-          style: { width: '1em', height: '1em', objectFit: 'contain', verticalAlign: '-0.15em' },
-          className: 'res-icon-inline'
-        });
-        nd.emoji = el;
-        nd.emojiText = `<img src="${src}" alt="${(nd.name || key).replace(/"/g, '&quot;')}" style="width:1em;height:1em;vertical-align:-0.15em;object-fit:contain;display:inline-block" />`;
-        out[key] = nd;
+        nd.iconFilename = raw;
       } else {
-        nd.emoji = raw;
-        nd.emojiText = raw;
-        out[key] = nd;
+        // No valid file-like emoji found -> leave iconUrl undefined; components should use fallback
+        nd.iconUrl = undefined;
+        nd.iconFilename = raw || '';
       }
+
+      // Provide a non-enumerable getter `icon` for backwards compatibility.
+      // The getter returns a React <img> element using iconUrl or a fallback image.
+      if (d && React.isValidElement(d.icon)) {
+        // preserve existing React elements if upstream already provided one
+        nd.icon = d.icon;
+      } else {
+        try {
+          Object.defineProperty(nd, 'icon', {
+            enumerable: false, // don't serialize or enumerate
+            configurable: true,
+            get: function () {
+              try {
+                const src = this.iconUrl;
+                const finalSrc = src || (baseIconPath + 'default.png');
+                return React.createElement('img', {
+                  src: finalSrc,
+                  alt: this.name || key,
+                  style: { width: '1em', height: '1em', objectFit: 'contain', verticalAlign: '-0.15em' },
+                  className: 'res-icon-inline'
+                });
+              } catch (e) {
+                // fallback to empty string to avoid crashes
+                return '';
+              }
+            }
+          });
+        } catch (e) {
+          // If defineProperty fails, assign a string (defensive)
+          nd.icon = nd.iconUrl || (baseIconPath + 'default.png');
+        }
+      }
+
+      out[key] = nd;
     });
     return out;
   };
 
   const newDefs = { ...defs };
-  newDefs.res = makeSafeBucket(defs.res);
-  newDefs.ani = makeSafeBucket(defs.ani);
-  // other buckets unchanged to avoid surprising mutations
+  // Normalize buckets that commonly hold resource/animal icons.
+  newDefs.res = makeSafeBucket(defs.res || {});
+  newDefs.ani = makeSafeBucket(defs.ani || {});
+  // Keep other buckets unchanged (bld/add) to minimize work; you can normalize them on demand.
   return newDefs;
 }
 
@@ -94,7 +109,6 @@ export function GameDataProvider({ children }) {
     return () => { active = false; };
   }, []);
 
-  // Hoveddata via React Query
   const {
     data,
     error,
@@ -103,28 +117,22 @@ export function GameDataProvider({ children }) {
   } = useQuery({
     queryKey: ['alldata'],
     queryFn: fetchAllData,
-    // ResourceAutoRefresh (ekstern) styrer polling hvis nødvendigt
   });
 
-  // BroadcastChannel + localStorage fallback: lyt til opdateringer fra andre faner
   useEffect(() => {
-    // setup broadcast channel if available
     try {
       const bc = new BroadcastChannel('ws-game-data');
       broadcastRef.current = bc;
       bc.onmessage = (ev) => {
         try {
           const msg = ev.data || {};
-          if (msg.source === tabIdRef.current) return; // ignore our own messages
+          if (msg.source === tabIdRef.current) return;
           if (msg.type === 'alldata-updated') {
             const incomingTs = Number(msg.ts || 0);
             const lastLocal = Number(data?.meta?.lastUpdated || 0);
             if (incomingTs <= lastLocal) return;
-            // debounce refetch to avoid storms
             if (incomingDebounceRef.current) clearTimeout(incomingDebounceRef.current);
-            incomingDebounceRef.current = setTimeout(() => {
-              refetch();
-            }, 200);
+            incomingDebounceRef.current = setTimeout(() => { refetch(); }, 250);
           }
         } catch (e) { /* ignore */ }
       };
@@ -132,7 +140,6 @@ export function GameDataProvider({ children }) {
       broadcastRef.current = null;
     }
 
-    // storage fallback (other tabs may write to this key)
     const onStorage = (ev) => {
       try {
         if (ev.key !== '__ws_data_update') return;
@@ -143,9 +150,7 @@ export function GameDataProvider({ children }) {
           const lastLocal = Number(data?.meta?.lastUpdated || 0);
           if (incomingTs <= lastLocal) return;
           if (incomingDebounceRef.current) clearTimeout(incomingDebounceRef.current);
-          incomingDebounceRef.current = setTimeout(() => {
-            refetch();
-          }, 200);
+          incomingDebounceRef.current = setTimeout(() => { refetch(); }, 250);
         }
       } catch (e) { /* ignore */ }
     };
@@ -156,10 +161,8 @@ export function GameDataProvider({ children }) {
       window.removeEventListener('storage', onStorage);
       if (incomingDebounceRef.current) clearTimeout(incomingDebounceRef.current);
     };
-    // NOTE: we purposely don't include data in deps to avoid repeated rebind; refetch is stable from react-query
-  }, [refetch]);
+  }, [refetch, data]);
 
-  // Helper: broadcast an update to other tabs
   const broadcastUpdate = useCallback((ts = Date.now()) => {
     const payload = { type: 'alldata-updated', ts, source: tabIdRef.current };
     try {
@@ -170,7 +173,6 @@ export function GameDataProvider({ children }) {
     }
   }, []);
 
-  // Optimistiske delta-opdateringer (samme behavior som før, men via setQueryData)
   const applyLockedCostsDelta = useCallback((lockedList = [], sign = -1) => {
     if (!Array.isArray(lockedList) || lockedList.length === 0) return;
     queryClient.setQueryData(['alldata'], (prev) => {
@@ -228,7 +230,7 @@ export function GameDataProvider({ children }) {
         if (!amt) continue;
         const key = String(rid).replace(/^res\./, '');
         if (key in next.state.inv.solid) next.state.inv.solid[key] = (next.state.inv.solid[key] || 0) + amt;
-        else if (key in next.state.inv.liquid) next.state.inv.liquid[key] = (next.state.inv.liquid || 0) + amt;
+        else if (key in next.state.inv.liquid) next.state.inv.liquid[key] = (next.state.inv.liquid[key] || 0) + amt;
         else next.state.inv.solid[key] = (next.state.inv.solid[key] || 0) + amt;
       }
       return next;
@@ -236,12 +238,24 @@ export function GameDataProvider({ children }) {
     broadcastUpdate();
   }, [queryClient, broadcastUpdate]);
 
-  // Wrapped refreshData that uses react-query refetch and broadcasts update afterward.
+  const removeActiveBuild = useCallback((jobId) => {
+    queryClient.setQueryData(['alldata'], (prev) => {
+      if (!prev) return prev;
+      const next = { ...prev, state: { ...(prev.state || {}) } };
+      const active = { ...(next.state?.activeBuilds || {}) };
+      if (active && jobId in active) {
+        delete active[jobId];
+        next.state = { ...next.state, activeBuilds: active, meta: { ...(next.meta || {}), lastUpdated: Date.now() } };
+        return next;
+      }
+      return prev;
+    });
+    broadcastUpdate();
+  }, [queryClient, broadcastUpdate]);
+
   const refreshData = useCallback(async (...args) => {
-    // call react-query refetch
     try {
       const res = await refetch(...args);
-      // react-query's refetch returns an object with data; update meta timestamp in cache
       const ts = Date.now();
       queryClient.setQueryData(['alldata'], (prev) => {
         if (!prev) return prev;
@@ -254,7 +268,6 @@ export function GameDataProvider({ children }) {
     }
   }, [refetch, queryClient, broadcastUpdate]);
 
-  // ensureFreshData helper: kan kaldes før kritiske mutationer
   const ensureFreshData = useCallback(async (ttlMs = 5000) => {
     const last = Number(data?.meta?.lastUpdated || 0);
     if (Date.now() - last > ttlMs) {
@@ -263,7 +276,6 @@ export function GameDataProvider({ children }) {
     return data;
   }, [data, refreshData]);
 
-  // Expose context value
   const value = useMemo(() => ({
     isLoading,
     data,
@@ -273,7 +285,9 @@ export function GameDataProvider({ children }) {
     ensureFreshData,
     applyLockedCostsDelta,
     applyResourceDeltaMap,
-  }), [isLoading, data, artManifest, error, refreshData, ensureFreshData, applyLockedCostsDelta, applyResourceDeltaMap]);
+    removeActiveBuild,
+    normalizeDefsForIcons,
+  }), [isLoading, data, artManifest, error, refreshData, ensureFreshData, applyLockedCostsDelta, applyResourceDeltaMap, removeActiveBuild]);
 
   return (
     <GameDataContext.Provider value={value}>
@@ -284,7 +298,6 @@ export function GameDataProvider({ children }) {
 
 export const useGameData = () => useContext(GameDataContext);
 
-// --- fetchAllData: sørg for at sætte meta.lastUpdated og window.data som før ---
 async function fetchAllData() {
   const dataUrl = `/world-spil/backend/api/alldata.php?ts=${Date.now()}`;
   const res = await fetch(dataUrl, { cache: 'no-store' });
@@ -296,17 +309,13 @@ async function fetchAllData() {
     if (json?.data?.defs) {
       const normalized = normalizeDefsForIcons(json.data.defs, { baseIconPath: '/assets/icons/' });
       json.data.defs = normalized;
-      try { window.data = json.data; } catch (e) { /* ignore */ }
-      try {
-        const sampleKey = Object.keys(normalized.res || {})[0];
-        console.debug('[fetchAllData] normalized.defs.sample:', sampleKey, normalized.res?.[sampleKey]);
-      } catch (e) { /* ignore */ }
+      try { if (!window.data) window.data = json.data; } catch (e) { /* ignore */ }
     }
   } catch (e) {
+    // eslint-disable-next-line no-console
     console.warn('normalizeDefsForIcons failed', e);
   }
 
-  // sæt meta (lastUpdated) så context kan vurdere friskhed
   try {
     json.data.meta = { ...(json.data.meta || {}), lastUpdated: Date.now() };
   } catch (e) { /* ignore */ }

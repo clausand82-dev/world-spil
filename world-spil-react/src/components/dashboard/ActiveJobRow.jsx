@@ -3,6 +3,7 @@ import { useGameData } from '../../context/GameDataContext.jsx';
 import * as H from '../../services/helpers.js';
 import ProgressBar from '../ui/ProgressBar.jsx';
 import useCancelJob from '../../hooks/useCancelJob.js';
+import Icon from '../ui/Icon.jsx';
 
 function parsePercent(startTs, endTs, now) {
   if (!startTs || !endTs || endTs <= startTs) return 0;
@@ -39,7 +40,9 @@ export default function ActiveJobRow({ jobId, job = {}, currentTime = Date.now()
 
   return (
     <div className="item">
-      <div className="icon">{def.icon || '⏱️'}</div>
+      <div className="icon">
+        <Icon def={def} alt={def.name} size="md" />
+      </div>
       <div className="grow" style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
         <div className="title"><a href={linkHref} className="link">{def.name}</a></div>
         <div style={{ marginTop: 8 }}>
