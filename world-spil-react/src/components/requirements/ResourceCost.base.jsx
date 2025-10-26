@@ -43,7 +43,7 @@ function CostItem({ id, needAmount = 0 }) {
 
   // Grid layout with icon in left column spanning two rows
   return (
-    <span title={title} style={{ display: 'inline-block', minWidth: 200, marginBottom: 6 }}>
+    <span title={title} style={{ display: 'inline-block', minWidth: 100, marginBottom: 6 }}>
       <div style={{
         display: 'grid',
         gridTemplateColumns: '36px 1fr',
