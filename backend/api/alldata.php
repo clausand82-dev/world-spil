@@ -443,19 +443,36 @@ if (WS_RUN_MODE === 'run') {
           }
 
 // Lige før I returnerer payload, efter stateMin er kendt og apply_passive_yields_for_user er kaldt:
-// collect active buffs from defs (existing) + stat-based buffs (new)
 if (!function_exists('collect_active_buffs')) require_once __DIR__ . '/actions/buffs.php';
 
 // existing buffs from defs
+// collect active buffs from defs
 $activeBuffs = collect_active_buffs($defs, ['bld'=>$owned_bld,'add'=>$owned_add,'rsd'=>$owned_rsd,'ani'=>$owned_ani], time());
 
+// Read stat-buffs cache (written by header/summary.php) — lightweight, no network
+$statBuffs = [];
+try {
+  $cacheFile = __DIR__ . '/../../data/cache/stat_buffs_' . intval($state['user']['userId'] ?? $_SESSION['uid'] ?? 0) . '.json';
+  if ($cacheFile && is_file($cacheFile)) {
+    $raw = @file_get_contents($cacheFile);
+    if ($raw) {
+      $j = json_decode($raw, true);
+      if (!empty($j['buffs']) && is_array($j['buffs'])) {
+        $statBuffs = $j['buffs'];
+      }
+      // Optionally check freshness: if ($j['ts'] < time()-60) then ignore
+    }
+  }
+} catch (Throwable $e) {
+  // ignore — cache er blot en optimering
+}
 
 // Merge stat buffs into activeBuffs so downstream code sees them
 if (!empty($statBuffs) && is_array($statBuffs)) {
   $activeBuffs = array_merge($activeBuffs, $statBuffs);
 }
 
-// (optional) expose activeBuffs in alldata response for frontend convenience:
+// expose activeBuffs in alldata response for frontend convenience:
 $data['activeBuffs'] = $activeBuffs;
 
 $yields_preview = []; // pr. entitet, efter buffs, for én fuld periode

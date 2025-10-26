@@ -580,6 +580,23 @@ if (!empty($summary['capChoice']) && is_array($summary['capChoice'])) {
     return $val;
   }
 
+// Eksporter stat-buffs til hurtig cache så alldata.php kan læse dem uden ekstra beregning/HTTP
+try {
+  require_once __DIR__ . '/../actions/stat_buffs.php'; // sørg for filen findes
+  $statBuffs = collect_stat_buffs_from_summary($summary);
+
+  // cache-dir (skal være skrivbar af webprocessen)
+  $cacheDir = __DIR__ . '/../../data/cache';
+  if (!is_dir($cacheDir)) @mkdir($cacheDir, 0755, true);
+  $cacheFile = $cacheDir . '/stat_buffs_' . intval($uid) . '.json';
+  $payload = ['ts' => time(), 'buffs' => $statBuffs];
+  @file_put_contents($cacheFile, json_encode($payload, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES));
+} catch (Throwable $e) {
+  // ikke fatal — cache er blot en optimering
+  // evt. log hvis du har log-funktion
+}
+
+
   // Afrund udgående numeric felter (valgfrit)
   $ROUND_DECIMALS = 2;
   $capacities = round_numeric_recursive($capacities, $ROUND_DECIMALS);
