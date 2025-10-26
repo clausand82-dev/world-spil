@@ -7,7 +7,7 @@ declare(strict_types=1);
 header('Content-Type: application/json');
 
 try {
-    // include the shared stats helper if present
+    // include the shared stats helper if present (use the expected lib path)
     if (is_file(__DIR__ . '/lib/stats.php')) {
         require_once __DIR__ . '/lib/stats.php';
     } elseif (is_file(__DIR__ . '/../api/lib/stats.php')) {
@@ -18,7 +18,8 @@ try {
     // resolve user id safely
     $userId = 0;
     if (function_exists('auth_get_user_id_if_any')) {
-        $userId = (int)auth_require_user_id();
+        // FIX: call the same function we checked for (was calling auth_require_user_id() erroneously)
+        $userId = (int)auth_get_user_id_if_any();
     } else {
         try {
             if (session_status() !== PHP_SESSION_ACTIVE) @session_start();

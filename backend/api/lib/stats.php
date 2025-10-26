@@ -71,7 +71,8 @@ if (!function_exists('compute_user_stats')) {
 
       // 4) fallback heuristics (very conservative)
       $out['meta']['fallback'] = true;
-      $caps = is_array($state && isset($state['cap']) ? $state['cap'] : null) ? $state['cap'] : ($state['cap'] ?? []);
+      // FIX: korrekt tjek for $state og $state['cap']
+      $caps = is_array($state) && isset($state['cap']) ? $state['cap'] : ($state['cap'] ?? []);
       $usage = $state['usage'] ?? [];
       $proxyH = null;
 
