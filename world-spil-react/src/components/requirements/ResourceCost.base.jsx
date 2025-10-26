@@ -4,17 +4,30 @@ import { fmt, normalizePrice } from '../../services/helpers.js';
 import Icon from '../common/Icon.jsx';
 
 /*
-  ResourceCost.base.jsx
-  - Pure/basic rendering of a price object (no buffing)
-  - New layout: icon occupies two rows:
-      [ ICON ]  [ NAME (bold) ]
-      [ ICON ]  [ HAVE / NEED (colored) ]
+  ResourceCost.base.jsx (updated)
+  - Each resource is an independent tile (icon + name + need).
+  - No ✓ / ✕ displayed any more — the color of the amount indicates ok (green) or missing (red).
+  - A big "+" separator is placed between tiles when rendered inline.
+  - Tiles wrap per-item (flex-wrap) so each tile drops to the next row individually if there isn't room.
+  - Icon fallback: both iconUrl and value are passed to Icon so default.png will be used as fallback.
 */
+
+function getHave(state, id) {
+  if (!state) return 0;
+  if (!id) return 0;
+  if (String(id).startsWith('ani.')) {
+    return state?.ani?.[id]?.quantity ?? 0;
+  }
+  const key = String(id).replace(/^res\./, '');
+  const liquid = Number(state?.inv?.liquid?.[key] || 0);
+  const solid = Number(state?.inv?.solid?.[key] || 0);
+  return liquid + solid;
+}
 
 function CostItem({ id, needAmount = 0 }) {
   const { data } = useGameData();
   const defs = data?.defs || {};
-  let haveAmount = 0;
+  const state = data?.state || {};
   let def = null;
   let displayName = id;
 
@@ -23,54 +36,62 @@ function CostItem({ id, needAmount = 0 }) {
   if (id.startsWith('ani.')) {
     const key = id.replace(/^ani\./, '');
     def = defs.ani?.[key] ?? { emoji: '🐾', name: key };
-    haveAmount = data?.state?.ani?.[id]?.quantity ?? 0;
     displayName = def?.name || key;
   } else {
     const key = id.replace(/^res\./, '');
     def = defs.res?.[key] ?? { emoji: '❓', name: key };
-    haveAmount = data?.state?.inv?.solid?.[key] ?? data?.state?.inv?.liquid?.[key] ?? 0;
     displayName = def?.name || key;
   }
 
-  const ok = Number(haveAmount || 0) >= Number(needAmount || 0);
+  const need = Number(needAmount || 0);
+  const have = getHave(state, id);
+  const ok = have >= need;
   const color = ok ? '#0a0' : '#c33';
 
-  // Resolve icon candidate: prefer def.iconUrl, then def.iconFilename, then def.emoji
   const iconUrl = def?.iconUrl || undefined;
   const value = def?.iconFilename || def?.emoji || undefined;
+  const title = `${displayName}: behov ${fmt(need)}`;
 
-  const title = `${def?.name || displayName}: ${fmt(haveAmount)} / ${fmt(needAmount)}`;
-
-  // Grid layout with icon in left column spanning two rows
   return (
-    <span title={title} style={{ display: 'inline-block', minWidth: 100, marginBottom: 6 }}>
-      <div style={{
+    <div
+      className="rc-tile"
+      title={title}
+      style={{
         display: 'grid',
         gridTemplateColumns: '36px 1fr',
         gridTemplateRows: 'auto auto',
-        gap: '2px 8px',
-        alignItems: 'center'
-      }}>
-        <div style={{ gridRow: '1 / span 2', display: 'grid', placeItems: 'center' }}>
-          <Icon iconUrl={iconUrl} value={value} size={28} alt={displayName} />
-        </div>
-
-        <div style={{ gridColumn: '2 / 3', gridRow: '1 / 2', fontWeight: 700, lineHeight: 1.1 }}>
-          {displayName}
-        </div>
-
-        <div style={{ gridColumn: '2 / 3', gridRow: '2 / 3', fontSize: 13, color }}>
-          <span style={{ fontVariantNumeric: 'tabular-nums', fontWeight: 700 }}>{fmt(haveAmount)}</span>
-          <span className="sub" style={{ marginLeft: 8 }}>/ {fmt(needAmount)}</span>
-          <span style={{ marginLeft: 10, opacity: 0.85 }}>{ok ? '✓' : '✕'}</span>
-        </div>
+        gap: '4px 8px',
+        alignItems: 'center',
+        padding: '6px 8px',
+        borderRadius: 6,
+        minWidth: 130,
+        background: 'transparent',
+      }}
+    >
+      <div style={{ gridRow: '1 / span 2', display: 'grid', placeItems: 'center' }}>
+        <Icon iconUrl={iconUrl} value={value || 'default.png'} size={32} alt={displayName} />
       </div>
-    </span>
+
+      <div style={{
+        gridColumn: '2 / 3',
+        gridRow: '1 / 2',
+        fontWeight: 700,
+        lineHeight: 1.05,
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap',
+      }}>
+        <span style={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis' }}>{displayName}</span>
+      </div>
+
+      <div style={{ gridColumn: '2 / 3', gridRow: '2 / 3', fontSize: 13, color }}>
+        <span style={{ fontVariantNumeric: 'tabular-nums', fontWeight: 700 }}>{fmt(need)}</span>
+      </div>
+    </div>
   );
 }
 
 export default function ResourceCost({ cost = {}, transform } = {}) {
-  // transform?: (id:string, base:number) => number
   const items = Object.values(normalizePrice(cost || {}));
   const costItems = transform
     ? items.map(it => {
@@ -85,13 +106,24 @@ export default function ResourceCost({ cost = {}, transform } = {}) {
   if (!costItems.length) return null;
 
   return (
-    <>
+    <div
+      className="rc-inline"
+      style={{
+        display: 'flex',
+        gap: 12,
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        width: '100%',
+      }}
+    >
       {costItems.map((item, i) => (
         <React.Fragment key={`${item.id}-${i}`}>
-          {i > 0 && <div style={{ height: 6 }} />}
           <CostItem id={item.id} needAmount={item.amount} />
+          {i < costItems.length - 1 && (
+            <div style={{ fontSize: 20, fontWeight: 800, color: 'rgba(255,255,255,0.6)', marginLeft: -2, marginRight: -2 }}>+</div>
+          )}
         </React.Fragment>
       ))}
-    </>
+    </div>
   );
 }

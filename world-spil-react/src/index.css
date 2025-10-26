@@ -456,5 +456,112 @@ body{padding-bottom:72px} /* plads til quickbar */
 .mp-item.span-2{grid-column:span 2}
 .mp-item.span-3{grid-column:span 3}
 
+/* Stable action/progress layout
+   - Knappen placeres over progressbar (column)
+   - Ensartet knapstørrelse (.right .btn)
+   - Fast afstand mellem knap og progressbar
+   - Progress holder altid plads (visibility hidden når inactive)
+*/
 
+/* Højre kolonne: knap over progress */
+.item .right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end; /* knap til højre */
+  gap: 10px;             /* afstand mellem knap og progress */
+  min-width: 140px;      /* reserver horisontal plads, juster efter behov */
+  box-sizing: border-box;
+  padding-left: 8px;
+}
 
+/* Ensartet knapstørrelse (applies to primary/ghost/owned badges) */
+.item .right .btn,
+.item .right .badge,
+.item .right .owned,
+.item .right .ghost {
+  width: 104px;        /* fast knapbredde, gør knapper samme størrelse */
+  height: 36px;        /* fast højde for visuel konsistens */
+  min-width: 104px;
+  padding: 6px 12px;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  border-radius: 8px;
+}
+
+/* Hvis du bruger forskellige varianter, sørg for de arver samme dims */
+.item .right .btn.primary { /* existing style unaffected, just fixed size */ }
+.item .right .btn.ghost  { opacity: 0.95; }
+
+/* Label indeni knap - sørg for at tekst ikke skubber layout med dynamisk bredde */
+.item .right .btn .label {
+  display: inline-block;
+  width: 100%;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Progress placeholder: altid tilstede for at undgå layoutflyt */
+.build-progress {
+  width: 120px;        /* passe til knappens bredde (kan øges lidt) */
+  min-width: 120px;
+  height: 40px;        /* reserver højde til bar + label */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  position: relative;
+}
+
+/* Inaktiv: behold plads men skjul indhold (ingen reflow) */
+.build-progress.inactive {
+  visibility: hidden;
+  opacity: 0;
+}
+
+/* Aktiv: synlig */
+.build-progress.active {
+  visibility: visible;
+  opacity: 1;
+  transition: opacity 120ms ease;
+}
+
+/* Indre progress-bar layout (tilpas hvis du bruger ProgressBar komponent) */
+.build-progress .bar {
+  width: calc(100% - 16px);
+  height: 8px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.build-progress .bar .fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg,#4ea1ff,#3dbd7a);
+  transition: width 300ms linear;
+}
+
+/* Label under progress (hold samme højde så den ikke ændrer layout) */
+.build-progress .label {
+  font-size: 12px;
+  color: #ddd;
+  margin-top: 6px;
+  min-height: 16px; /* samme reserved højde */
+}
+
+/* Hvis du har en "Owned" badge, sørg for den centreres: */
+.item .right .owned {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Small responsiveness: hvis skærmen bliver meget smal, lad min-width falde tilbage */
+@media (max-width: 700px) {
+  .item .right { min-width: 112px; }
+  .item .right .btn, .build-progress { width: 88px; min-width: 88px; }
+}
