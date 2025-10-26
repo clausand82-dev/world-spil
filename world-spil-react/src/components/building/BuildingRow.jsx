@@ -10,25 +10,22 @@ import DockHoverCard from '../ui/DockHoverCard.jsx';
 import StatsEffectsTooltip from '../ui/StatsEffectsTooltip.jsx';
 import RequirementPanel from '../requirements/RequirementPanel.jsx';
 import RequirementSummary from './RequirementSummary.jsx';
-import { requirementInfo, collectActiveBuffs } from '../../services/requirements.js';
+import { requirementInfo, collectActiveBuffs } from '../../services/requirements.js'; // <-- added
 
 /*
   BuildingRow.jsx
-  - Uses global game state (useGameData().data.state) as authoritative source for checks
-    (reqInfo, footprintOk, etc.). This avoids mismatches when a parent passes a different
-    `state` prop (which caused the "OK / Mangler" UI to be wrong on BuildingPage).
-  - Logic otherwise unchanged.
+  - Uses .item and .item-right classes; left content unchanged.
+  - RequirementSummary provides the consistent layout; BuildProgress and ActionButton keep their placeholder behavior.
+  - Small change: compute requirementInfo to get buffed duration (duration.final_s) and pass that as duration prop.
+  - New: compute footprintOk (based on state.cap) and pass boolean to RequirementSummary so UI shows correct OK/Mangler.
 */
 
-function BuildingRowInner({ bld, state: propState, defs, requirementCaches }) {
+function BuildingRowInner({ bld, state, defs, requirementCaches }) {
   const def = bld?.def || (defs?.bld ? (defs.bld[(bld.id || '').replace(/^bld\./, '')] || null) : null);
 
-  const { allOk } = useReqAgg(bld);
+  const { allOk, Component: ReqLine } = useReqAgg(bld);
 
   const { data } = useGameData();
-  // authoritative game state: prefer global game state from context; fallback to prop if provided
-  const gameState = data?.state || propState || {};
-
   const translations = data?.i18n?.current ?? {};
 
   const hoverContent = useMemo(() => (
@@ -38,10 +35,10 @@ function BuildingRowInner({ bld, state: propState, defs, requirementCaches }) {
       {bld.isMax ? (
         <div style={{ padding: 8, fontWeight: 600 }}>{'Bygningen kan ikke opgraderes mere'}</div>
       ) : (
-        <RequirementPanel def={def || bld} defs={defs} state={gameState} requirementCaches={requirementCaches} isMax={bld.isMax} />
+        <RequirementPanel def={def || bld} defs={defs} state={state} requirementCaches={requirementCaches} isMax={bld.isMax} />
       )}
     </div>
-  ), [def, bld, translations, defs, gameState, requirementCaches]);
+  ), [def, bld, translations, defs, state, requirementCaches]);
 
   const imgKey = String(bld.id || '').replace(/^bld\./, '').replace(/\.l\d+$/i, '');
   const image = useMemo(() => (
@@ -62,41 +59,42 @@ function BuildingRowInner({ bld, state: propState, defs, requirementCaches }) {
   const durationBase = durationVal;
   const footprint = Number(def?.stats?.footprint ?? def?.footprint ?? 0);
 
-  // compute requirement info using authoritative gameState (so buffs are applied correctly)
+  // --- NEW: compute requirement info to get buffed duration (duration.final_s) if buffs apply ---
   const reqInfo = useMemo(() => {
     try {
       const id = bld.id || def?.id || '';
       const caches = { activeBuffs: collectActiveBuffs(defs) };
       return requirementInfo(
         {
-          id,
+          id: id,
           price: price || {},
           req: reqString || '',
           duration_s: durationVal || 0,
         },
-        gameState,
+        data?.state,
         caches
       );
     } catch (e) {
+      // if something fails, fall back to null — we'll use durationBase then
       console.warn('reqInfo compute failed', e);
       return null;
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bld.id, def?.id, price, reqString, durationVal, gameState, defs]);
+  }, [bld.id, def?.id, price, reqString, durationVal, data?.state, defs]);
 
-  // footprint check now uses gameState (global) instead of propState — prevents mismatch
+  // --- NEW: compute footprint availability (based on state.cap.footprint.used / total) ---
   const footprintOk = useMemo(() => {
     try {
-      const totalFP = Number(gameState?.cap?.footprint?.total ?? 0);
-      const usedFP = Number(gameState?.cap?.footprint?.used ?? 0);
+      const totalFP = Number(data?.cap?.footprint?.total ?? 0);
+      const usedFP = Number(data?.cap?.footprint?.used ?? 0);
+      // if totalFP is 0 treat as OK (or you can treat as false depending on game logic)
       if (Number.isNaN(totalFP) || Number.isNaN(usedFP)) return true;
       return (usedFP + footprint) <= totalFP;
     } catch (e) {
       return true;
     }
-  }, [gameState?.cap?.footprint?.total, gameState?.cap?.footprint?.used, footprint]);
+  }, [data?.cap?.footprint?.total, data?.cap?.footprint?.used, footprint]);
 
-  // Render row
   const row = useMemo(() => (
     <div className="item" data-bld-id={bld.id}>
       <div className="icon">{image}</div>
@@ -111,11 +109,10 @@ function BuildingRowInner({ bld, state: propState, defs, requirementCaches }) {
           <RequirementSummary
             price={price}
             reqString={reqString}
-            duration={reqInfo?.duration?.final_s ?? durationVal}
-            durationBase={durationBase}
+            duration={reqInfo?.duration?.final_s ?? durationVal}   /* buffed duration if available */
+            durationBase={durationBase}                            /* original base duration */
             footprint={footprint}
             footprintOk={footprintOk}
-            yieldPrice={def?.yield || null}
           />
         </div>
       </div>
