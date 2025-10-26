@@ -1,5 +1,8 @@
 import React, { useEffect, useState, useRef } from 'react';
-// Fjernet: QueryClientProvider + queryClient imports
+import { QueryClientProvider } from '@tanstack/react-query';
+import { queryClient } from './queryClient';
+import { AppProvider } from './context/AppProvider.jsx';
+
 import { useGameData } from './context/GameDataContext.jsx';
 import { useRouter } from './services/useRouter.jsx';
 
@@ -26,12 +29,10 @@ import HelpOverlay from './pages/HelpOverlay.jsx';
 import ManagementPageDynamic from './pages/ManagementPageDynamic.jsx';
 import { HELP_TOPICS } from './config/helpTopics.jsx';
 
-function App() {
+function AppInner() {
   const { isLoading, data, error } = useGameData();
   const { page, param } = useRouter();
   const [showHelp, setShowHelp] = useState(false);
-
-  // Husk sidste ikke-help-hash så vi kan gå tilbage ved luk
   const lastNonHelpHashRef = useRef('#/map');
 
   useEffect(() => {
@@ -46,10 +47,8 @@ function App() {
     return () => window.removeEventListener('hashchange', capture);
   }, []);
 
-  // Redirect-regler:
   useEffect(() => {
     if (!data) return;
-
     const user = data?.state?.user || {};
     const coordsMissing = (user?.x == null) || (user?.y == null);
     const seenMapOnce = (() => {
@@ -133,4 +132,12 @@ function App() {
   );
 }
 
-export default App;
+export default function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AppProvider>
+        <AppInner />
+      </AppProvider>
+    </QueryClientProvider>
+  );
+}

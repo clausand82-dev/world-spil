@@ -3,12 +3,13 @@ import * as H from '../../services/helpers.js';
 import { useGameData } from '../../context/GameDataContext.jsx';
 import { applyYieldBuffsToAmount } from '../../services/yieldBuffs.js';
 
+// Samler aktive buffs fra defs + state (ubegrænset input)
 function collectActiveBuffs(defs, state) {
   const out = [];
   const push = (arr) => Array.isArray(arr) && arr.forEach((b) => out.push(b));
-  for (const bucket of ['bld','add','rsd']) {
+  for (const bucket of ['bld', 'add', 'rsd']) {
     const bag = defs?.[bucket] || {};
-    for (const [key, def] of Object.entries(bag)) {
+    for (const [key, def] of Object.entries(bag || {})) {
       const ctxId = `${bucket}.${key}`;
       const owned =
         bucket === 'bld' ? !!state?.bld?.[`bld.${key}`] :
@@ -21,7 +22,7 @@ function collectActiveBuffs(defs, state) {
   return out;
 }
 
-function YieldResource({ resId, data, defs }) {
+function YieldResourceInner({ resId, data, defs }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const bareId = resId.replace(/^res\./, '');
   const resDef = defs.res?.[bareId];
@@ -43,9 +44,10 @@ function YieldResource({ resId, data, defs }) {
         <div className="collapsible-content expanded">
           {data.sources.map((source, index) => {
             const qty = source.quantity ?? 1;
-            const perHour = (source.amount / source.period_s) * 3600 * qty;
+            const period = Number(source.period_s) || 0;
+            const perHour = period > 0 ? (source.amount / period) * 3600 * qty : 0;
             return (
-              <div className="yield-source-item" key={index} >
+              <div className="yield-source-item" key={`${source.name ?? 'src'}_${index}`} >
                 <span>{source.icon} {source.name} {qty > 1 ? `(x${qty})` : ''}</span>
                 <span>+{H.fmt(perHour)} / time</span>
               </div>
@@ -56,8 +58,12 @@ function YieldResource({ resId, data, defs }) {
     </>
   );
 }
+// memoize så items uden ændringer ikke rerender
+const YieldResource = React.memo(YieldResourceInner);
 
-export default function PassivYieldsList() {
+export default function PassiveYieldList({ now }) {
+  // now er valgfri - DashboardPage sender currentTime for sync med progress-tick
+  const currentTime = now ?? Date.now();
   const { data } = useGameData();
 
   const aggregatedYields = useMemo(() => {
@@ -78,14 +84,14 @@ export default function PassivYieldsList() {
     const ctxFor = (type, key) =>
       (type === 'bld' ? 'bld.' : type === 'add' ? 'add.' : type === 'rsd' ? 'rsd.' : 'ani.') + key;
 
-    // buildings / addons / animals (buffet)
-    const process = (items, groupDefs, type) => {
+    // process helper: items => {id:data}
+    const process = (items = {}, groupDefs = {}, type) => {
       for (const [id, itemData] of Object.entries(items || {})) {
         const key = id.replace(new RegExp(`^${type}\\.`), '');
-        const def = groupDefs[key];
+        const def = groupDefs?.[key];
         if (!def?.yield || !(def.yield_period_s > 0)) continue;
 
-        const qty = itemData.quantity || 1; // ani kan være >1
+        const qty = Number(itemData.quantity || 1); // ani kan være >1
         const ctxId = ctxFor(type, key);
 
         for (const y of def.yield) {
@@ -93,16 +99,20 @@ export default function PassivYieldsList() {
           const resId = String(y.id ?? y.res_id ?? '');
           if (!resId) continue;
 
+          // Defensive: sørg for period > 0
+          const period_s = Number(def.yield_period_s) || 0;
+          if (period_s <= 0) continue;
+
           // Buff pr. cyklus -> omregn til pr. time, anvend buff, tilbage til pr. cyklus for visning
-          const basePerHour = baseAmt * (3600 / def.yield_period_s);
+          const basePerHour = baseAmt * (3600 / period_s);
           const buffedPerHour = applyYieldBuffsToAmount(basePerHour, resId.startsWith('res.') ? resId : `res.${resId}`, { appliesToCtx: ctxId, activeBuffs });
-          const buffedPerCycle = buffedPerHour * (def.yield_period_s / 3600);
+          const buffedPerCycle = buffedPerHour * (period_s / 3600);
 
           pushSource(resId, buffedPerHour * qty, {
             name: def.name,
             icon: def.emoji || def.icon || '🏠',
             amount: buffedPerCycle,        // behold dit eksisterende render: amount/period_s*3600
-            period_s: def.yield_period_s,
+            period_s: period_s,
             quantity: qty,
           });
         }
@@ -126,7 +136,7 @@ export default function PassivYieldsList() {
     };
     const label = (k) => ({forest:'Basebonus (Skov)', mining:'Basebonus (Mine)', field:'Basebonus (Mark)', water:'Basebonus (Vand)'}[k] || 'Basebonus');
 
-    for (const [key, lst] of Object.entries(rules)) {
+    for (const [key, lst] of Object.entries(rules || {})) {
       const amt = bonuses[key] || 0;
       if (amt <= 0) continue;
       for (const rid of (lst || [])) {
@@ -143,10 +153,12 @@ export default function PassivYieldsList() {
     }
 
     return aggregated;
-  }, [data]);
+    // kun genberegn når defs eller state ændrer sig (eller når now ændrer hvis du vil bruge tid i logikken)
+  }, [data?.defs, data?.state, currentTime]);
 
   const defs = data?.defs || {};
-  const sortedYields = Object.entries(aggregatedYields).sort((a, b) => a[0].localeCompare(b[0]));
+  // Sortér efter total (descending) så de mest relevante vises øverst
+  const sortedYields = Object.entries(aggregatedYields).sort((a, b) => (b[1].total || 0) - (a[1].total || 0));
 
   return sortedYields.map(([resId, yieldData]) => (
     <YieldResource key={resId} resId={resId} data={yieldData} defs={defs} />

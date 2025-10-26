@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useMemo, useState, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 const GameDataContext = createContext(null);
@@ -18,22 +18,17 @@ export function normalizeDefsForIcons(defs, { baseIconPath = '/assets/icons/' } 
     const out = {};
     Object.entries(bucket).forEach(([key, d]) => {
       if (!d) return;
-      // copy the original def into a new object so we don't mutate frozen objects
       const nd = { ...d };
-
       const raw = (d.emoji || '').toString().trim();
 
-      // prefer existing iconUrl if present
       if (nd.iconUrl) {
         const src = nd.iconUrl;
-        // create React element but DON'T try to mutate it
         const el = React.createElement('img', {
           src,
           alt: nd.name || key,
           style: { width: '1em', height: '1em', objectFit: 'contain', verticalAlign: '-0.15em' },
           className: 'res-icon-inline'
         });
-        // keep element and a separate string/html representation
         nd.emoji = el;
         nd.emojiText = `<img src="${src}" alt="${(nd.name || key).replace(/"/g, '&quot;')}" style="width:1em;height:1em;vertical-align:-0.15em;object-fit:contain;display:inline-block" />`;
         out[key] = nd;
@@ -56,12 +51,10 @@ export function normalizeDefsForIcons(defs, { baseIconPath = '/assets/icons/' } 
           style: { width: '1em', height: '1em', objectFit: 'contain', verticalAlign: '-0.15em' },
           className: 'res-icon-inline'
         });
-        // DON'T set el.toString (non-extensible)
         nd.emoji = el;
         nd.emojiText = `<img src="${src}" alt="${(nd.name || key).replace(/"/g, '&quot;')}" style="width:1em;height:1em;vertical-align:-0.15em;object-fit:contain;display:inline-block" />`;
         out[key] = nd;
       } else {
-        // unicode emoji
         nd.emoji = raw;
         nd.emojiText = raw;
         out[key] = nd;
@@ -70,21 +63,20 @@ export function normalizeDefsForIcons(defs, { baseIconPath = '/assets/icons/' } 
     return out;
   };
 
-  // build new defs object with safe copies
   const newDefs = { ...defs };
   newDefs.res = makeSafeBucket(defs.res);
   newDefs.ani = makeSafeBucket(defs.ani);
-  // copy other buckets untouched (or add them similarly if you need)
-  // e.g. newDefs.bld = makeSafeBucket(defs.bld);
-
+  // other buckets unchanged to avoid surprising mutations
   return newDefs;
 }
 
 export function GameDataProvider({ children }) {
   const queryClient = useQueryClient();
 
-  // Art manifest beholdes som separat state (som før)
   const [artManifest, setArtManifest] = useState(() => new Set());
+  const broadcastRef = useRef(null);
+  const tabIdRef = useRef(Math.random().toString(36).slice(2));
+  const incomingDebounceRef = useRef(null);
 
   useEffect(() => {
     let active = true;
@@ -96,7 +88,7 @@ export function GameDataProvider({ children }) {
           if (active && Array.isArray(arr)) setArtManifest(new Set(arr));
         }
       } catch {
-        // valgfrit: log
+        // ignore
       }
     })();
     return () => { active = false; };
@@ -111,8 +103,72 @@ export function GameDataProvider({ children }) {
   } = useQuery({
     queryKey: ['alldata'],
     queryFn: fetchAllData,
-    // Vi lader ResourceAutoRefresh styre polling-frekvens, så ingen fast refetchInterval her
+    // ResourceAutoRefresh (ekstern) styrer polling hvis nødvendigt
   });
+
+  // BroadcastChannel + localStorage fallback: lyt til opdateringer fra andre faner
+  useEffect(() => {
+    // setup broadcast channel if available
+    try {
+      const bc = new BroadcastChannel('ws-game-data');
+      broadcastRef.current = bc;
+      bc.onmessage = (ev) => {
+        try {
+          const msg = ev.data || {};
+          if (msg.source === tabIdRef.current) return; // ignore our own messages
+          if (msg.type === 'alldata-updated') {
+            const incomingTs = Number(msg.ts || 0);
+            const lastLocal = Number(data?.meta?.lastUpdated || 0);
+            if (incomingTs <= lastLocal) return;
+            // debounce refetch to avoid storms
+            if (incomingDebounceRef.current) clearTimeout(incomingDebounceRef.current);
+            incomingDebounceRef.current = setTimeout(() => {
+              refetch();
+            }, 200);
+          }
+        } catch (e) { /* ignore */ }
+      };
+    } catch (e) {
+      broadcastRef.current = null;
+    }
+
+    // storage fallback (other tabs may write to this key)
+    const onStorage = (ev) => {
+      try {
+        if (ev.key !== '__ws_data_update') return;
+        const msg = ev.newValue ? JSON.parse(ev.newValue) : null;
+        if (!msg || msg.source === tabIdRef.current) return;
+        if (msg.type === 'alldata-updated') {
+          const incomingTs = Number(msg.ts || 0);
+          const lastLocal = Number(data?.meta?.lastUpdated || 0);
+          if (incomingTs <= lastLocal) return;
+          if (incomingDebounceRef.current) clearTimeout(incomingDebounceRef.current);
+          incomingDebounceRef.current = setTimeout(() => {
+            refetch();
+          }, 200);
+        }
+      } catch (e) { /* ignore */ }
+    };
+    window.addEventListener('storage', onStorage);
+
+    return () => {
+      try { if (broadcastRef.current) broadcastRef.current.close(); } catch {}
+      window.removeEventListener('storage', onStorage);
+      if (incomingDebounceRef.current) clearTimeout(incomingDebounceRef.current);
+    };
+    // NOTE: we purposely don't include data in deps to avoid repeated rebind; refetch is stable from react-query
+  }, [refetch]);
+
+  // Helper: broadcast an update to other tabs
+  const broadcastUpdate = useCallback((ts = Date.now()) => {
+    const payload = { type: 'alldata-updated', ts, source: tabIdRef.current };
+    try {
+      if (broadcastRef.current) broadcastRef.current.postMessage(payload);
+      else localStorage.setItem('__ws_data_update', JSON.stringify(payload));
+    } catch (e) {
+      // ignore
+    }
+  }, []);
 
   // Optimistiske delta-opdateringer (samme behavior som før, men via setQueryData)
   const applyLockedCostsDelta = useCallback((lockedList = [], sign = -1) => {
@@ -130,6 +186,7 @@ export function GameDataProvider({ children }) {
           },
           ani: { ...(prev.state?.ani || {}) },
         },
+        meta: { ...(prev.meta || {}), lastUpdated: Date.now() },
       };
       for (const row of lockedList) {
         const rid = String(row?.res_id || '');
@@ -147,7 +204,8 @@ export function GameDataProvider({ children }) {
       }
       return next;
     });
-  }, [queryClient]);
+    broadcastUpdate();
+  }, [queryClient, broadcastUpdate]);
 
   const applyResourceDeltaMap = useCallback((resources = {}) => {
     if (!resources || typeof resources !== 'object') return;
@@ -163,34 +221,59 @@ export function GameDataProvider({ children }) {
             liquid: { ...(prev.state?.inv?.liquid || {}) },
           },
         },
+        meta: { ...(prev.meta || {}), lastUpdated: Date.now() },
       };
       for (const [rid, delta] of Object.entries(resources)) {
         const amt = Number(delta || 0);
         if (!amt) continue;
         const key = String(rid).replace(/^res\./, '');
         if (key in next.state.inv.solid) next.state.inv.solid[key] = (next.state.inv.solid[key] || 0) + amt;
-        else if (key in next.state.inv.liquid) next.state.inv.liquid[key] = (next.state.inv.liquid[key] || 0) + amt;
+        else if (key in next.state.inv.liquid) next.state.inv.liquid[key] = (next.state.inv.liquid || 0) + amt;
         else next.state.inv.solid[key] = (next.state.inv.solid[key] || 0) + amt;
       }
       return next;
     });
-  }, [queryClient]);
+    broadcastUpdate();
+  }, [queryClient, broadcastUpdate]);
 
-  async function refreshData() {
-    console.debug('refreshData: start');
-    await doActualFetch();
-    console.debug('refreshData: end');
-  }
+  // Wrapped refreshData that uses react-query refetch and broadcasts update afterward.
+  const refreshData = useCallback(async (...args) => {
+    // call react-query refetch
+    try {
+      const res = await refetch(...args);
+      // react-query's refetch returns an object with data; update meta timestamp in cache
+      const ts = Date.now();
+      queryClient.setQueryData(['alldata'], (prev) => {
+        if (!prev) return prev;
+        return { ...prev, meta: { ...(prev.meta || {}), lastUpdated: ts } };
+      });
+      broadcastUpdate(ts);
+      return res;
+    } catch (e) {
+      throw e;
+    }
+  }, [refetch, queryClient, broadcastUpdate]);
 
+  // ensureFreshData helper: kan kaldes før kritiske mutationer
+  const ensureFreshData = useCallback(async (ttlMs = 5000) => {
+    const last = Number(data?.meta?.lastUpdated || 0);
+    if (Date.now() - last > ttlMs) {
+      await refreshData();
+    }
+    return data;
+  }, [data, refreshData]);
+
+  // Expose context value
   const value = useMemo(() => ({
     isLoading,
     data,
     artManifest,
     error,
-    refreshData: refetch,
+    refreshData,
+    ensureFreshData,
     applyLockedCostsDelta,
     applyResourceDeltaMap,
-  }), [isLoading, data, artManifest, error, refetch, applyLockedCostsDelta, applyResourceDeltaMap]);
+  }), [isLoading, data, artManifest, error, refreshData, ensureFreshData, applyLockedCostsDelta, applyResourceDeltaMap]);
 
   return (
     <GameDataContext.Provider value={value}>
@@ -201,27 +284,20 @@ export function GameDataProvider({ children }) {
 
 export const useGameData = () => useContext(GameDataContext);
 
+// --- fetchAllData: sørg for at sætte meta.lastUpdated og window.data som før ---
 async function fetchAllData() {
-  // Bevar dit eksisterende endpoint
   const dataUrl = `/world-spil/backend/api/alldata.php?ts=${Date.now()}`;
   const res = await fetch(dataUrl, { cache: 'no-store' });
   if (!res.ok) throw new Error(`API error: ${res.status}`);
   const json = await res.json();
   if (!json?.ok) throw new Error(json?.error?.message || 'API data error');
 
-  // --- NY: Normalize defs og skriv resultatet eksplicit tilbage + sæt global window.data for kompatibilitet ---
   try {
     if (json?.data?.defs) {
-      // sikre at normalizeDefsForIcons returnerer/ændrer defs
       const normalized = normalizeDefsForIcons(json.data.defs, { baseIconPath: '/assets/icons/' });
-      // skriv eksplicit tilbage (for at være sikker på at det er samme objekt brugt fremadrettet)
       json.data.defs = normalized;
-      // Sæt global window.data fordi en del kode læser window.data.defs direkte
-      try { window.data = json.data; } catch (e) { /* ignore if not allowed */ }
-
-      // Log et par ting til konsollen så vi kan debugge hurtigt i browseren
+      try { window.data = json.data; } catch (e) { /* ignore */ }
       try {
-        // vælg en konkret res-id som du har (fx 'straw' eller en du kender)
         const sampleKey = Object.keys(normalized.res || {})[0];
         console.debug('[fetchAllData] normalized.defs.sample:', sampleKey, normalized.res?.[sampleKey]);
       } catch (e) { /* ignore */ }
@@ -229,6 +305,11 @@ async function fetchAllData() {
   } catch (e) {
     console.warn('normalizeDefsForIcons failed', e);
   }
+
+  // sæt meta (lastUpdated) så context kan vurdere friskhed
+  try {
+    json.data.meta = { ...(json.data.meta || {}), lastUpdated: Date.now() };
+  } catch (e) { /* ignore */ }
 
   return json.data;
 }
