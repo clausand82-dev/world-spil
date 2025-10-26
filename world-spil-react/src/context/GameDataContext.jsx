@@ -232,3 +232,17 @@ async function fetchAllData() {
 
   return json.data;
 }
+
+// efter du har sat json.data eller window.data:
+try {
+  const respMods = await fetch('/world-spil/backend/api/stats_modifiers.php', { cache: 'no-store', credentials: 'same-origin' });
+  if (respMods.ok) {
+    const j = await respMods.json();
+    if (j?.ok && j.data?.statsModifiers) {
+      json.data.statsModifiers = j.data.statsModifiers;
+      try { window.data = json.data; } catch (e) {}
+    }
+  }
+} catch (e) {
+  // ignore - fallback to no modifiers
+}

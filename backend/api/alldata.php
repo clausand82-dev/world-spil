@@ -745,6 +745,51 @@ foreach ($state['ani'] as $id => $val) {
         ];
         if (!empty($_GET['debug']) && $capWarns) $state['__cap_warnings']=$capWarns;
 
+// --- Inject statsModifiers into response (optional, convenient) ---
+if (!function_exists('compute_user_stats')) {
+  if (is_file(__DIR__ . '/lib/stats.php')) require_once __DIR__ . '/lib/stats.php';
+}
+$uidForStats = intval($state['user']['userId'] ?? $_SESSION['uid'] ?? 0);
+
+// prepare db if available
+$dbForStats = null;
+if (function_exists('db')) {
+  try { $dbForStats = db(); } catch (Throwable $e) { $dbForStats = null; }
+}
+
+$mods = [
+  'global' => ['yield_mult' => 1.0, 'speed_mult' => 1.0, 'cost_mult' => 1.0],
+  'per_resource' => new stdClass(),
+  'per_action' => new stdClass(),
+];
+
+if (function_exists('compute_user_stats')) {
+  try {
+    $stats = compute_user_stats($dbForStats, $uidForStats, $defs ?? null, $state ?? null);
+    if (is_array($stats)) {
+      $h = isset($stats['happiness']) ? (float)$stats['happiness'] : null;
+      $p = isset($stats['popularity']) ? (float)$stats['popularity'] : null;
+
+      if ($h !== null) {
+        if ($h < 40.0) $mods['global']['yield_mult'] = 0.5;
+        elseif ($h < 60.0) $mods['global']['yield_mult'] = 0.85;
+        else $mods['global']['yield_mult'] = 1.0;
+      }
+      if ($p !== null) {
+        if ($p < 40.0) $mods['global']['speed_mult'] = 0.6;
+        elseif ($p < 60.0) $mods['global']['speed_mult'] = 0.9;
+        else $mods['global']['speed_mult'] = 1.0;
+      }
+    }
+  } catch (Throwable $e) {
+    // ignore - keep defaults
+  }
+}
+
+// expose in response data (so frontend gets it with same alldata call)
+$data['statsModifiers'] = $mods;
+
+
         /* 7) Output */
         $out = [
   'defs' => $defs,

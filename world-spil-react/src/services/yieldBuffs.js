@@ -72,5 +72,16 @@ export function applyYieldBuffsToAmount(baseAmount, resId, { appliesToCtx = 'all
   }
   result *= mul;
 
+try {
+  const statsMods = (typeof window !== 'undefined' && window.data && window.data.statsModifiers && window.data.statsModifiers.global)
+    ? window.data.statsModifiers.global
+    : null;
+  const sm = statsMods && typeof statsMods.yield_mult === 'number' ? Number(statsMods.yield_mult) : 1;
+  result = result * sm;
+} catch (e) {
+  // ignore
+}
+return result < 0 ? 0 : result;
+
   return result < 0 ? 0 : result;
 }
