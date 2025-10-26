@@ -1,7 +1,6 @@
 // src/component/requirement/Requirements.jsx
 import React from 'react';
 import { useGameData } from '../../context/GameDataContext.jsx';
-import ResourceCost from './ResourceCost.jsx';
 import DemandList from './DemandList.jsx';
 import StatRequirement from './StatRequirement.jsx';
 import { normalizePrice, parseBldKey, prettyTime, computeOwnedMaxBySeries, hasResearch } from '../../services/helpers.js';
@@ -110,12 +109,54 @@ export function useRequirements(item) {
   const durationLabel = displayDurationS != null ? prettyTime(displayDurationS) : null;
   const durationTitle = hasDurationBuff ? `Normal: ${prettyTime(baseDurationS ?? 0)}` : undefined;
 
+  // Build a memoized array of price display items with resolved iconSrc and label
+  const priceItems = React.useMemo(() => {
+    const items = [];
+    for (const costItem of Object.values(normalizedPrice)) {
+      const id = String(costItem.id || '');
+      let kind = 'res';
+      let key = id;
+      if (id.startsWith('ani.')) {
+        kind = 'ani';
+        key = id.replace(/^ani\./, '');
+      } else {
+        key = id.replace(/^res\./, '');
+      }
+
+      // try defs first for iconUrl/name fallback
+      const defFromDefs = data?.defs?.[kind]?.[key] || {};
+      // defs may contain iconUrl from normalization; otherwise construct filename fallback
+      const candidate = defFromDefs.iconUrl || defFromDefs.iconFilename || `${key}.png`;
+      const iconSrc = resolveIconSrc(candidate);
+
+      const displayName = defFromDefs?.name || key;
+      const amount = Number(costItem.amount || 0);
+
+      items.push({ id, key, kind, iconSrc, displayName, amount });
+    }
+    return items;
+  }, [normalizedPrice, data?.defs]);
+
   const RequirementsComponent = ({ showLabels = true, inline = true }) => (
     <div className="reqline">
-      {Object.keys(normalizedPrice).length > 0 && (
+      {priceItems.length > 0 && (
         <>
           {showLabels && <strong>{(item.isUpgrade || item.ownedMax > 0) ? t('ui.upgradecost.h1') : t('ui.buildcost.h1')} </strong>}
-          <ResourceCost cost={price} />
+          <span className="price-list" style={{ display: 'inline-flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+            {priceItems.map(pi => (
+              <span key={pi.id} className="req-item" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                <img
+                  src={pi.iconSrc}
+                  alt={pi.displayName}
+                  width={18}
+                  height={18}
+                  style={{ width: 18, height: 18, objectFit: 'contain', verticalAlign: '-0.15em' }}
+                  onError={(e) => { e.currentTarget.src = '/assets/icons/default.png'; }}
+                />
+                <span className="req-label">{pi.amount} × {pi.displayName}</span>
+              </span>
+            ))}
+          </span>
         </>
       )}
 

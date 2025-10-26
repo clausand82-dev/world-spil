@@ -1,9 +1,9 @@
+/* Entire file - GameDataContext with normalization for res/ani/bld/add/rsd and lazy non-enumerable icon getter */
 import React, { createContext, useContext, useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 const GameDataContext = createContext(null);
 
-// Helper: check if string looks like a URL or image filename
 function isFileLike(v) {
   if (!v) return false;
   const s = String(v).trim();
@@ -11,11 +11,8 @@ function isFileLike(v) {
 }
 
 /*
-  Normalization: assume <emoji> tag ALWAYS contains a filename (e.g. "straw.png").
-  We convert that filename into an iconUrl string (baseIconPath + filename) or keep absolute URL.
-  We no longer try to support unicode emoji; all icons are files.
-  We still create a non-enumerable `icon` getter so existing components that access def.icon
-  continue to get a rendered <img> element (but the data object itself remains serializable).
+  Normalization: assume <emoji> tag contains a filename (png). Convert to iconUrl/iconFilename.
+  Create non-enumerable `icon` getter for backwards compatibility (returns <img> or emoji string).
 */
 export function normalizeDefsForIcons(defs, { baseIconPath = '/assets/icons/' } = {}) {
   if (!defs) return defs;
@@ -24,31 +21,28 @@ export function normalizeDefsForIcons(defs, { baseIconPath = '/assets/icons/' } 
     const out = {};
     Object.entries(bucket).forEach(([key, d]) => {
       if (!d) return;
-      const nd = { ...d }; // shallow copy
-
-      // TAKE ONLY FILE-NAME FROM d.emoji: treat it as filename or path
+      const nd = { ...d };
       const raw = (d.emoji || '').toString().trim();
 
       if (raw && isFileLike(raw)) {
-        // raw could be 'foo.png', '/assets/icons/foo.png' or 'https://.../foo.png'
         const src = raw.startsWith('/') || /^https?:\/\//i.test(raw) ? raw : (baseIconPath + raw);
         nd.iconUrl = src;
         nd.iconFilename = raw;
+      } else if (nd.iconUrl) {
+        nd.iconUrl = String(nd.iconUrl);
+        nd.iconFilename = nd.iconUrl.split('/').pop();
       } else {
-        // No valid file-like emoji found -> leave iconUrl undefined; components should use fallback
         nd.iconUrl = undefined;
         nd.iconFilename = raw || '';
       }
 
-      // Provide a non-enumerable getter `icon` for backwards compatibility.
-      // The getter returns a React <img> element using iconUrl or a fallback image.
+      // preserve if upstream provided a React element
       if (d && React.isValidElement(d.icon)) {
-        // preserve existing React elements if upstream already provided one
         nd.icon = d.icon;
       } else {
         try {
           Object.defineProperty(nd, 'icon', {
-            enumerable: false, // don't serialize or enumerate
+            enumerable: false,
             configurable: true,
             get: function () {
               try {
@@ -61,13 +55,11 @@ export function normalizeDefsForIcons(defs, { baseIconPath = '/assets/icons/' } 
                   className: 'res-icon-inline'
                 });
               } catch (e) {
-                // fallback to empty string to avoid crashes
                 return '';
               }
             }
           });
         } catch (e) {
-          // If defineProperty fails, assign a string (defensive)
           nd.icon = nd.iconUrl || (baseIconPath + 'default.png');
         }
       }
@@ -78,16 +70,19 @@ export function normalizeDefsForIcons(defs, { baseIconPath = '/assets/icons/' } 
   };
 
   const newDefs = { ...defs };
-  // Normalize buckets that commonly hold resource/animal icons.
+  // Normalize common buckets that contain icons
   newDefs.res = makeSafeBucket(defs.res || {});
   newDefs.ani = makeSafeBucket(defs.ani || {});
-  // Keep other buckets unchanged (bld/add) to minimize work; you can normalize them on demand.
+  newDefs.bld = makeSafeBucket(defs.bld || {});
+  newDefs.add = makeSafeBucket(defs.add || {});
+  newDefs.rsd = makeSafeBucket(defs.rsd || {});
+  // leave other buckets untouched
+
   return newDefs;
 }
 
 export function GameDataProvider({ children }) {
   const queryClient = useQueryClient();
-
   const [artManifest, setArtManifest] = useState(() => new Set());
   const broadcastRef = useRef(null);
   const tabIdRef = useRef(Math.random().toString(36).slice(2));
@@ -109,12 +104,7 @@ export function GameDataProvider({ children }) {
     return () => { active = false; };
   }, []);
 
-  const {
-    data,
-    error,
-    isLoading,
-    refetch,
-  } = useQuery({
+  const { data, error, isLoading, refetch } = useQuery({
     queryKey: ['alldata'],
     queryFn: fetchAllData,
   });
