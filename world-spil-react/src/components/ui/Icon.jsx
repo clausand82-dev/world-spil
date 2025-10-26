@@ -1,6 +1,12 @@
-/* Central PNG-only Icon component to use across lists and detail rows */
 import React from 'react';
 
+/*
+  Central PNG-only Icon component (common/Icon.jsx)
+  - def: object (may contain def.icon (React element), def.iconUrl, def.iconFilename, def.emoji)
+  - src: override string (URL or filename)
+  - size: number (px) or string token
+  - fallback: path to fallback PNG
+*/
 function resolveIconSrc(candidate, { baseIconPath = '/assets/icons/', fallback = '/assets/icons/default.png' } = {}) {
   if (!candidate) return fallback;
   const str = String(candidate).trim();
@@ -12,9 +18,12 @@ function resolveIconSrc(candidate, { baseIconPath = '/assets/icons/', fallback =
 
 export default function Icon({ def, src, alt = '', size = 18, className = '', fallback = '/assets/icons/default.png' }) {
   try {
+    // Backwards compat: if def.icon is a React element, render it directly
     if (def && def.icon && React.isValidElement(def.icon)) {
       return <span className={`icon-inline ${className}`} aria-hidden>{def.icon}</span>;
     }
+
+    // Candidate priority: src prop -> def.iconUrl -> def.iconFilename -> def.emoji
     let candidate = src || (def && (def.iconUrl || def.iconFilename || def.emoji));
     const finalSrc = resolveIconSrc(candidate, { fallback });
 

@@ -9,6 +9,14 @@ import { useRequirements as useReqAgg } from '../requirements/Requirements.jsx';
 import DockHoverCard from '../ui/DockHoverCard.jsx';
 import StatsEffectsTooltip from '../ui/StatsEffectsTooltip.jsx';
 import RequirementPanel from '../requirements/RequirementPanel.jsx';
+import RequirementSummary from './RequirementSummary.jsx';
+
+/*
+  BuildingRow.jsx
+  - Uses RequirementSummary (which renders ResourceCost / DemandList with icons)
+  - Keeps hover content (RequirementPanel) unchanged
+  - Keeps memoization to avoid unnecessary rerenders
+*/
 
 function BuildingRowInner({ bld, state, defs, requirementCaches }) {
   // prefer def included on bld object
@@ -47,16 +55,34 @@ function BuildingRowInner({ bld, state, defs, requirementCaches }) {
     />
   ), [imgKey]);
 
+  // Use RequirementSummary for inline summary so icons/layout match other pages
+  // Provide props for price/req/duration/footprint when available
+  const price = bld.price || bld.cost || def?.cost || {};
+  const reqString = bld.req || bld.require || def?.require || def?.requirements || '';
+  const durationVal = Number(bld.duration_s ?? bld.build_time_s ?? def?.duration_s ?? def?.build_time_s ?? 0) || null;
+  const durationBase = durationVal; // building list normally shows buffed base; tooltips show more detail
+  const footprint = Number(def?.stats?.footprint ?? 0);
+
   const row = useMemo(() => (
     <div className="item" data-bld-id={bld.id}>
       <div className="icon">{image}</div>
       <div>
-        <div className="title"><a href={`#/building/${bld.displayLinkId}`} className="link">{bld.displayName}</a></div>
+        <div className="title">
+          <a href={`#/building/${bld.displayLinkId}`} className="link">{bld.displayName}</a>
+        </div>
         {bld.displayDesc ? <div className="sub">🛈 {bld.displayDesc}</div> : null}
-        <div className="sub" style={{ marginTop: '4px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+        <div className="sub" style={{ marginTop: '6px', display: 'flex', alignItems: 'flex-start', gap: '12px', flexWrap: 'wrap' }}>
           <LevelStatus isOwned={bld.owned} isUpgrade={bld.isUpgrade} ownedMax={bld.ownedMax} stageLocked={bld.stageLocked} stageReq={bld.stageReq} />
           <span> • </span>
-          {!bld.isMax ? <ReqLine showLabels={true} inline={true} /> : null}
+          {/* RequirementSummary renders ResourceCost (icons/two-row layout) and DemandList */}
+          <RequirementSummary
+            price={price}
+            reqString={reqString}
+            duration={durationVal}
+            durationBase={durationBase}
+            footprint={footprint}
+            footprintOk
+          />
         </div>
       </div>
       <div className="right">
@@ -64,7 +90,7 @@ function BuildingRowInner({ bld, state, defs, requirementCaches }) {
         <BuildProgress bldId={bld.id} />
       </div>
     </div>
-  ), [bld, image, allOk, ReqLine]);
+  ), [bld, image, allOk, price, reqString, durationVal, durationBase, footprint]);
 
   return (
     <DockHoverCard content={hoverContent} style={{ display: 'block', width: '100%' }}>
