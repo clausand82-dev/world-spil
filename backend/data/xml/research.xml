@@ -258,7 +258,7 @@
     <require>rsd.tools.l3, bld.basecamp.l3</require>
   </research>
 
-  <research id="rsd.bed.l1" family="basecamp" type="comfort" lvl="1" stage="2">
+  <research id="rsd.bed.l1" family="tent" type="comfort" lvl="1" stage="2">
     <cost>
       <res id="res.money" amount="100"/>
       <res id="res.cloth" amount="10"/>
@@ -279,7 +279,7 @@
     <require>rsd.tools.l3,bld.basecamp.l3</require>
   </research>
 
-  <research id="rsd.bettersleepingquarters.l1" family="basecamp" type="ability" lvl="1" stage="1">
+  <research id="rsd.bettersleepingquarters.l1" family="tent" type="ability" lvl="1" stage="1">
     <cost>
       <res id="res.money" amount="500"/>
       <res id="res.cookedmeat" amount="10"/>

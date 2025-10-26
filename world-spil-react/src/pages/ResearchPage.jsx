@@ -2,7 +2,8 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useGameData } from '../context/GameDataContext.jsx';
 import { useT } from '../services/i18n.js';
 import ResearchRow from '../components/building/rows/ResearchRow.jsx';
-import { computeResearchOwned } from '../services/requirements.js';
+import ResearchTab from '../components/building/tabs/ResearchTab.jsx';
+import { computeResearchOwned, computeOwnedMap, collectActiveBuffs } from '../services/requirements.js';
 
 // Hjælpere til parse og stage
 function parseStageMin(s) {
@@ -28,6 +29,16 @@ export default function ResearchPage() {
   const researchDefs = defs.rsd || {};
   const state = data.state || {};
   const userStage = Number(state.user?.currentstage || 0);
+
+  // --- Compute ownership & active buffs so requirementInfo can resolve buffed vs base durations ---
+  const ownedBuildings = useMemo(() => computeOwnedMap(state.bld || {}), [state.bld]);
+  const ownedAddons = useMemo(() => computeOwnedMap(state.add || {}), [state.add]);
+  const ownedResearch = useMemo(() => computeResearchOwned(state), [state]);
+  const activeBuffs = useMemo(() => collectActiveBuffs(defs), [defs]);
+
+  const requirementCaches = useMemo(() => ({
+    ownedBuildings, ownedAddons, ownedResearch, activeBuffs,
+  }), [ownedBuildings, ownedAddons, ownedResearch, activeBuffs]);
 
   // Byg families (ingen stage-filter her; vi viser stage-locked korrekt via ResearchRow)
   const families = useMemo(() => {
@@ -75,10 +86,14 @@ export default function ResearchPage() {
 
   // Vis/skjul owned (bevares i localStorage)
   const [showOwned, setShowOwned] = useState(() => {
-    const v = localStorage.getItem('research.showOwned');
-    return v === null ? true : v === '1';
+    try {
+      const v = localStorage.getItem('research.showOwned');
+      return v === null ? true : v === '1';
+    } catch (e) {
+      return true;
+    }
   });
-  useEffect(() => { localStorage.setItem('research.showOwned', showOwned ? '1' : '0'); }, [showOwned]);
+  useEffect(() => { try { localStorage.setItem('research.showOwned', showOwned ? '1' : '0'); } catch (e) {} }, [showOwned]);
 
   // Udvælg de entries, der skal vises for en bestemt tab/family
   function getVisibleForFamily(familyKey, showOwnedOverride) {
@@ -188,7 +203,6 @@ export default function ResearchPage() {
   const didScrollForCurrentRef = useRef(false);
 
   function getFocusFromHash() {
-    // Primært: kig efter query i hash (fx #/research?focus=...)
     const h = window.location.hash || '';
     const idx = h.indexOf('?');
     if (idx !== -1) {
@@ -197,8 +211,6 @@ export default function ResearchPage() {
         return qs.get('focus') || '';
       } catch { /* ignore malformed */ }
     }
-
-    // Fallback: kig i location.search (fx /research?focus=...)
     try {
       const qs2 = new URLSearchParams(window.location.search || '');
       return qs2.get('focus') || '';
@@ -231,7 +243,6 @@ export default function ResearchPage() {
     if (!el) return false;
     try { el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' }); }
     catch { el.scrollIntoView(); }
-    // Bevar eksisterende klasse til highlight
     el.classList.add('focus-highlight');
     const onEnd = () => { el.classList.remove('focus-highlight'); el.removeEventListener('animationend', onEnd); };
     el.addEventListener('animationend', onEnd, { once: true });
@@ -240,7 +251,7 @@ export default function ResearchPage() {
 
   function tryScrollOnce(focusId) {
     if (!focusId) return false;
-    if (didScrollForCurrentRef.current) return false; // kun én gang pr. aktivt fokus
+    if (didScrollForCurrentRef.current) return false;
     const el = findElement(focusId);
     if (el) {
       requestAnimationFrame(() => {
@@ -255,7 +266,6 @@ export default function ResearchPage() {
     return false;
   }
 
-  // Lyt på hash-change – reaktiver hvis fokus-id har ændret sig
   useEffect(() => {
     function onHash() {
       const focus = getFocusFromHash();
@@ -270,7 +280,6 @@ export default function ResearchPage() {
         setTimeout(() => tryScrollOnce(focus), 500);
       }
 
-      // Sæt korrekt tab for fokus
       for (const fam of Object.keys(families)) {
         const arr = families[fam] || [];
         if (arr.some((e) => e.fullId === focus || e.id === focus)) {
@@ -280,12 +289,11 @@ export default function ResearchPage() {
       }
     }
 
-    onHash(); // initial
+    onHash();
     window.addEventListener('hashchange', onHash);
     return () => window.removeEventListener('hashchange', onHash);
   }, [families]);
 
-  // Når tab skifter og vi har pending fokus (og ikke scrollet endnu), prøv igen
   useEffect(() => {
     const focus = pendingFocusRef.current;
     if (!focus || didScrollForCurrentRef.current) return;
@@ -308,8 +316,7 @@ export default function ResearchPage() {
               role="button"
               aria-selected={f === activeFamily}
               onClick={() => setActiveFamily(f)}
-              className={`tab ${activeFamily === t ? 'active' : ''}`}
-              // className={f === activeFamily ? 'btn active' : 'btn'}
+              className={`tab ${activeFamily === f ? 'active' : ''}`}
             >
               {f === ALL_KEY ? 'Alle' : f}
               <span style={{ opacity: 0.7, marginLeft: 6 }}>
@@ -330,24 +337,49 @@ export default function ResearchPage() {
         </div>
 
         <div className="tab-content">
-          {(!visibleFamilyEntries || visibleFamilyEntries.length === 0) ? (
-            <div className="sub">Ingen research i denne kategori.</div>
+          {activeFamily === ALL_KEY ? (
+            (!familyKeys || familyKeys.length === 0) ? (
+              <div className="sub">Ingen research.</div>
+            ) : (
+              familyKeys.map((fam) => (
+                <section key={fam} className="panel section" style={{ marginBottom: 12 }}>
+                  <div className="section-head">{fam}</div>
+                  <div className="section-body">
+                    {(families[fam] || []).length === 0 ? (
+                      <div className="sub">Ingen</div>
+                    ) : (
+                      (families[fam] || []).map((entry) => {
+                        const fullId = entry.fullId;
+                        const base = getSeriesBase(fullId);
+                        const baseOwned = baseOwnedFor(base);
+                        return (
+                          <div key={fullId} data-fullid={fullId} style={{ marginBottom: 8 }}>
+                            <ResearchRow
+                              entry={{
+                                ...entry,
+                                ownedLevel: Number(researchOwnedMap[getSeriesBase(entry.fullId)] || 0),
+                              }}
+                              state={state}
+                              baseOwned={baseOwned}
+                              requirementCaches={requirementCaches}
+                            />
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </section>
+              ))
+            )
           ) : (
-            visibleFamilyEntries.map((entry) => {
-              const base = getSeriesBase(entry.fullId);
-              const baseOwned = baseOwnedFor(base);
-              // VIGTIGT: ResearchRow får både ownedLevel via entry og baseOwned prop
-              return (
-                <div key={entry.fullId} data-fullid={entry.fullId} style={{ marginBottom: 8 }}>
-                  <ResearchRow
-                    entry={entry}
-                    state={state}
-                    baseOwned={baseOwned}
-                    requirementCaches={{}}
-                  />
-                </div>
-              );
-            })
+            <ResearchTab
+              family={activeFamily}
+              defs={defs}
+              state={state}
+              stage={userStage}
+              baseOwned={false}
+              requirementCaches={requirementCaches}
+            />
           )}
         </div>
       </div>
