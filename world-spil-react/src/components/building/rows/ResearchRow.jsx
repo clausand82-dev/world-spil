@@ -9,6 +9,18 @@ import { useT } from "../../../services/i18n.js";
 import { useGameData } from '../../../context/GameDataContext.jsx';
 import RequirementPanel from '../../../components/requirements/RequirementPanel.jsx';
 
+/*
+  ResearchRow
+
+  - Matcher systemet som addon/recipe/building rows:
+    * Vi RENDERER ActionButton + BuildProgress for research-items (når item ikke er 'owned').
+    * ActionButton internt håndterer 'active' (Cancel) via useActiveBuildFlag og lokal optimisme,
+      så ResearchRow behøver ikke importere activeBuildsStore.js direkte.
+    * Requirement-beregninger og RequirementPanel er uændrede.
+  - Fordel: samme adfærd som addon/recipe — efter et start-kald vil ActionButton/ActiveBuilds sørge
+    for at vise Cancel + progress, og UI vil ikke flippe til "Need more" selvom ressourcer blev trukket.
+*/
+
 function ResearchRow({ entry, state, baseOwned, requirementCaches }) {
   const { def, fullId, stageReq, stageOk, ownedLevel, displayLevel, isMax } = entry;
   const t = useT();
@@ -46,7 +58,6 @@ function ResearchRow({ entry, state, baseOwned, requirementCaches }) {
   const hasBuff = durationValue != null && durationBase != null && Math.round(durationValue) !== Math.round(durationBase);
   const durationText = hasBuff ? null : (def.time_str || def.duration_text || null);
 
-  // Hover: show StatsEffectsTooltip + RequirementPanel (or max-text if isMax)
   const hoverContent = (
     <div style={{ minWidth: 300 }}>
       <StatsEffectsTooltip def={def} translations={translations} />
@@ -59,59 +70,59 @@ function ResearchRow({ entry, state, baseOwned, requirementCaches }) {
     </div>
   );
 
-  const row = (
-    <div className="item" data-research-row={fullId}>
-      <div className="icon">{t("ui.emoji.research.h1")}</div>
-      <div className="grow">
-        <div className="title">
-          {def.name || fullId}
-          {!stageOk && (
-            <span
-              className="badge stage-locked price-bad"
-              title={`${t("ui.text.demandingstage.h1")} ${stageReq}`}
-              style={{ marginLeft: 8 }}
-            >
-              {t("ui.text.stagelocked.h1")}
-            </span>
-          )}
-        </div>
-        {def.desc ? <div className="sub">{t("ui.emoji.info.h1")} {def.desc}</div> : null}
-        <RequirementSummary
-          price={def.cost || {}}
-          reqString={requirement.reqString}
-          duration={durationValue}
-          durationBase={durationBase}
-          durationText={durationText}
-          footprint={0}
-          footprintOk
-        />
-      </div>
-      <div className="right">
-        {/* NY LOGIK: hvis allerede ejet, vis Ejet-badge først */}
-        {actionItem.owned ? (
-          <span className="badge owned" title={t("ui.text.research.completed.h1") || 'Fuldført'}>✓ {t("ui.text.owned.h1") || 'Ejet'}</span>
-        ) : (requirement.allOk && stageOk) ? (
-          <>
-            <ActionButton item={actionItem} allOk={true} />
-            <BuildProgress bldId={fullId} />
-          </>
-        ) : (
-          <button
-            className="btn"
-            disabled
-            title={requirement.reqString || t("ui.btn.needmore.h1")}
-          >
-            {t("ui.btn.needmore.h1")}
-          </button>
-        )}
-      </div>
-    </div>
-  );
+  // allOk: hvad vi sender til ActionButton (samme contract som andre rækker)
+  const allOk = Boolean(requirement.allOk && stageOk);
 
-  // Docked hover nederst højre – fylder hele rækken
   return (
     <DockHoverCard content={hoverContent} style={{ display: 'block', width: '100%' }}>
-      {row}
+      <div className="item" data-research-row={fullId}>
+        <div className="icon">{t("ui.emoji.research.h1")}</div>
+
+        <div className="grow">
+          <div className="title">
+            {def.name || fullId}
+            {!stageOk && (
+              <span
+                className="badge stage-locked price-bad"
+                title={`${t("ui.text.demandingstage.h1")} ${stageReq}`}
+                style={{ marginLeft: 8 }}
+              >
+                {t("ui.text.stagelocked.h1")}
+              </span>
+            )}
+          </div>
+
+          {def.desc ? <div className="sub">{t("ui.emoji.info.h1")} {def.desc}</div> : null}
+
+          <RequirementSummary
+            price={def.cost || {}}
+            reqString={requirement.reqString}
+            duration={durationValue}
+            durationBase={durationBase}
+            durationText={durationText}
+            footprint={0}
+            footprintOk
+          />
+        </div>
+
+        <div className="right">
+          {/* Prioritering: owned badge først (som før) */}
+          {actionItem.owned ? (
+            <span className="badge owned" title={t("ui.text.research.completed.h1") || 'Fuldført'}>✓ {t("ui.text.owned.h1") || 'Ejet'}</span>
+          ) : (
+            /*
+              Her følger samme rendering som addon/recipe/building rows:
+              - ActionButton får allOk (så den internt kan vise Cancel, stage-locked, owned, osv.)
+              - BuildProgress vises ved siden af (den er en placeholder når ikke-aktiv, så layout er stabilt)
+              Dette sikrer Cancel-knap og konsistent adfærd uden at importere activeBuildsStore direkte.
+            */
+            <>
+              <ActionButton item={actionItem} allOk={allOk} />
+              <BuildProgress bldId={fullId} />
+            </>
+          )}
+        </div>
+      </div>
     </DockHoverCard>
   );
 }

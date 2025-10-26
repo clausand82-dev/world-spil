@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useGameData } from '../context/GameDataContext.jsx';
 import { useT } from '../services/i18n.js';
 import ResearchRow from '../components/building/rows/ResearchRow.jsx';
-import ResearchTab from '../components/building/tabs/ResearchTab.jsx';
 import { computeResearchOwned, computeOwnedMap, collectActiveBuffs } from '../services/requirements.js';
 
 // Hjælpere til parse og stage
@@ -30,22 +29,36 @@ export default function ResearchPage() {
   const state = data.state || {};
   const userStage = Number(state.user?.currentstage || 0);
 
-  // --- Compute ownership & active buffs so requirementInfo can resolve buffed vs base durations ---
+  // Brug samme ejerskabs-udledning som andre steder (kritisk for korrekt "owned")
+  const researchOwnedMap = useMemo(() => computeResearchOwned(state), [state]);
+
+  // Vis/skjul owned (bevares i localStorage)
+  const [showOwned, setShowOwned] = useState(() => {
+    const v = (() => {
+      try { return localStorage.getItem('research.showOwned'); } catch (e) { return null; }
+    })();
+    return v === null ? true : v === '1';
+  });
+  useEffect(() => { try { localStorage.setItem('research.showOwned', showOwned ? '1' : '0'); } catch (e) {} }, [showOwned]);
+
+  // --- Beregn caches (som BuildingDetailPage bruger) for at få korrekt base vs buffed duration ---
   const ownedBuildings = useMemo(() => computeOwnedMap(state.bld || {}), [state.bld]);
   const ownedAddons = useMemo(() => computeOwnedMap(state.add || {}), [state.add]);
-  const ownedResearch = useMemo(() => computeResearchOwned(state), [state]);
   const activeBuffs = useMemo(() => collectActiveBuffs(defs), [defs]);
 
   const requirementCaches = useMemo(() => ({
-    ownedBuildings, ownedAddons, ownedResearch, activeBuffs,
-  }), [ownedBuildings, ownedAddons, ownedResearch, activeBuffs]);
+    ownedBuildings,
+    ownedAddons,
+    ownedResearch: researchOwnedMap,
+    activeBuffs,
+  }), [ownedBuildings, ownedAddons, researchOwnedMap, activeBuffs]);
 
   // Byg families (ingen stage-filter her; vi viser stage-locked korrekt via ResearchRow)
   const families = useMemo(() => {
     const map = {};
     for (const [key, def] of Object.entries(researchDefs)) {
       const famRaw = def.family || 'misc';
-      const fams = String(famRaw).split(',').map((s) => s.trim()).filter(Boolean);
+      const fams = String(famRaw).split(',').map(s => s.trim()).filter(Boolean);
       if (fams.length === 0) fams.push('misc');
 
       const id = key; // kan være med/uden "rsd."
@@ -59,45 +72,26 @@ export default function ResearchPage() {
       };
 
       for (const fam of fams) {
-        if (!map[fam]) map[fam] = [];
+        map[fam] = map[fam] || [];
         map[fam].push(entry);
       }
     }
 
-    // sortér natural: level først
     for (const k of Object.keys(map)) {
-      map[k].sort(
-        (a, b) =>
-          (a.displayLevel || 0) - (b.displayLevel || 0) ||
-          a.fullId.localeCompare(b.fullId)
+      map[k].sort((a, b) =>
+        (a.displayLevel || 0) - (b.displayLevel || 0) ||
+        a.fullId.localeCompare(b.fullId)
       );
     }
     return map;
   }, [researchDefs]);
 
   const familyKeys = Object.keys(families).sort();
-  const ALL_KEY = 'all';
-  const allFamilyKeys = [ALL_KEY, ...familyKeys];
-  const [activeFamily, setActiveFamily] = useState(allFamilyKeys[0] || ALL_KEY);
-
-  // Brug samme ejerskabs-udledning som andre steder (kritisk for korrekt "owned")
-  const researchOwnedMap = useMemo(() => computeResearchOwned(state), [state]);
-  const baseOwnedFor = (seriesBase) => Number(researchOwnedMap[seriesBase] || 0);
-
-  // Vis/skjul owned (bevares i localStorage)
-  const [showOwned, setShowOwned] = useState(() => {
-    try {
-      const v = localStorage.getItem('research.showOwned');
-      return v === null ? true : v === '1';
-    } catch (e) {
-      return true;
-    }
-  });
-  useEffect(() => { try { localStorage.setItem('research.showOwned', showOwned ? '1' : '0'); } catch (e) {} }, [showOwned]);
+  const [activeFamily, setActiveFamily] = useState(familyKeys[0] || 'misc');
 
   // Udvælg de entries, der skal vises for en bestemt tab/family
   function getVisibleForFamily(familyKey, showOwnedOverride) {
-    const arr = familyKey === ALL_KEY ? Object.values(families).flat() : (families[familyKey] || []);
+    const arr = familyKey === 'all' ? Object.values(families).flat() : (families[familyKey] || []);
     if (!arr.length) return [];
 
     // group by series base -> map(level -> entry)
@@ -114,10 +108,9 @@ export default function ResearchPage() {
       const levels = Array.from(lvlMap.keys()).sort((a, b) => a - b);
       if (!levels.length) continue;
 
-      const ownedLevel = baseOwnedFor(base);
+      const ownedLevel = Number(researchOwnedMap[base] || 0);
       const maxLevel = levels[levels.length - 1] || 0;
 
-      // current: hvis ejet → højeste ejet; ellers → lvl1 (eller laveste)
       let currentLevel = ownedLevel > 0 ? ownedLevel : (levels.includes(1) ? 1 : levels[0]);
       if (!levels.includes(currentLevel)) currentLevel = levels[levels.length - 1];
       const currentEntry = lvlMap.get(currentLevel);
@@ -127,8 +120,8 @@ export default function ResearchPage() {
       const currentAnnotated = {
         ...currentEntry,
         seriesBase: base,
-        ownedLevel,               // VIGTIGT: ResearchRow forventer dette
-        baseOwned: ownedLevel,    // ekstra felt for god ordens skyld
+        ownedLevel,
+        baseOwned: ownedLevel,
         isOwned: ownedLevel > 0 && currentLevel <= ownedLevel,
         isMaxOwned: ownedLevel > 0 && ownedLevel >= maxLevel,
         role: 'current',
@@ -136,12 +129,10 @@ export default function ResearchPage() {
         stageOk: userStage >= curStageReq,
       };
 
-      // Ingen ejet: vis current kun hvis stage-krav opfyldt
       if (ownedLevel > 0 || userStage >= curStageReq) {
         out.push(currentAnnotated);
       }
 
-      // next: næste level, hvis findes
       if (ownedLevel < maxLevel) {
         const nextLevel = levels.find((l) => l > currentLevel) || null;
         if (nextLevel) {
@@ -150,7 +141,7 @@ export default function ResearchPage() {
           out.push({
             ...nextEntry,
             seriesBase: base,
-            ownedLevel,             // VIGTIGT: så Row kan sammenligne displayLevel vs ownedLevel
+            ownedLevel,
             baseOwned: ownedLevel,
             isOwned: false,
             isMaxOwned: false,
@@ -162,11 +153,9 @@ export default function ResearchPage() {
       }
     }
 
-    // Vis/skjul owned (skjul kun “current owned” rækker når slået fra)
     const localShowOwned = typeof showOwnedOverride === 'boolean' ? showOwnedOverride : showOwned;
     const filtered = localShowOwned ? out : out.filter(e => !(e.role === 'current' && (e.ownedLevel || 0) > 0));
 
-    // Stabil sortering
     filtered.sort((a, b) => {
       const an = (a.def?.name || a.seriesBase || a.fullId).toString();
       const bn = (b.def?.name || b.seriesBase || b.fullId).toString();
@@ -182,20 +171,20 @@ export default function ResearchPage() {
 
   // Indhold for aktiv tab
   const visibleFamilyEntries = useMemo(() => {
-    return getVisibleForFamily(activeFamily, showOwned);
+    return getVisibleForFamily(activeFamily, undefined);
   }, [families, state?.research, userStage, activeFamily, showOwned]);
 
   // Tællere pr. tab: X/Y = udenOwned/medOwned
   const familyCounts = useMemo(() => {
     const map = {};
-    const allKeys = [ALL_KEY, ...Object.keys(families).sort()];
+    const allKeys = ['all', ...Object.keys(families).sort()];
     for (const k of allKeys) {
-      const visibleWith = getVisibleForFamily(k, true).length;     // med owned
-      const visibleWithout = getVisibleForFamily(k, false).length; // uden owned
+      const visibleWith = getVisibleForFamily(k, true).length;
+      const visibleWithout = getVisibleForFamily(k, false).length;
       map[k] = { visibleWith, visibleWithout };
     }
     return map;
-  }, [families, state?.research, userStage]);
+  }, [families, state?.research, userStage, showOwned]);
 
   // ---------- Scroll fokus (én gang pr. valgt fokus-id; reaktiver ved nyt fokus) ----------
   const pendingFocusRef = useRef(null);
@@ -289,7 +278,7 @@ export default function ResearchPage() {
       }
     }
 
-    onHash();
+    onHash(); // initial
     window.addEventListener('hashchange', onHash);
     return () => window.removeEventListener('hashchange', onHash);
   }, [families]);
@@ -310,7 +299,7 @@ export default function ResearchPage() {
       <div className="section-body">
 
         <div className="tabs-bar" role="tablist" style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
-          {[ALL_KEY, ...familyKeys].map((f) => (
+          {['all', ...familyKeys].map((f) => (
             <button
               key={f}
               role="button"
@@ -318,7 +307,7 @@ export default function ResearchPage() {
               onClick={() => setActiveFamily(f)}
               className={`tab ${activeFamily === f ? 'active' : ''}`}
             >
-              {f === ALL_KEY ? 'Alle' : f}
+              {f === 'all' ? 'Alle' : f}
               <span style={{ opacity: 0.7, marginLeft: 6 }}>
                 {familyCounts[f]?.visibleWithout ?? 0}/{familyCounts[f]?.visibleWith ?? 0}
               </span>
@@ -337,49 +326,64 @@ export default function ResearchPage() {
         </div>
 
         <div className="tab-content">
-          {activeFamily === ALL_KEY ? (
+          {activeFamily === 'all' ? (
             (!familyKeys || familyKeys.length === 0) ? (
               <div className="sub">Ingen research.</div>
             ) : (
-              familyKeys.map((fam) => (
-                <section key={fam} className="panel section" style={{ marginBottom: 12 }}>
-                  <div className="section-head">{fam}</div>
-                  <div className="section-body">
-                    {(families[fam] || []).length === 0 ? (
-                      <div className="sub">Ingen</div>
-                    ) : (
-                      (families[fam] || []).map((entry) => {
-                        const fullId = entry.fullId;
-                        const base = getSeriesBase(fullId);
-                        const baseOwned = baseOwnedFor(base);
-                        return (
-                          <div key={fullId} data-fullid={fullId} style={{ marginBottom: 8 }}>
-                            <ResearchRow
-                              entry={{
-                                ...entry,
-                                ownedLevel: Number(researchOwnedMap[getSeriesBase(entry.fullId)] || 0),
-                              }}
-                              state={state}
-                              baseOwned={baseOwned}
-                              requirementCaches={requirementCaches}
-                            />
-                          </div>
-                        );
-                      })
-                    )}
-                  </div>
-                </section>
-              ))
+              familyKeys.map((fam) => {
+                const visibleForThisFam = getVisibleForFamily(fam, showOwned);
+                return (
+                  <section key={fam} className="panel section" style={{ marginBottom: 12 }}>
+                    <div className="section-head">{fam}</div>
+                    <div className="section-body">
+                      {(!visibleForThisFam || visibleForThisFam.length === 0) ? (
+                        <div className="sub">Ingen</div>
+                      ) : (
+                        visibleForThisFam.map((entry) => {
+                          const base = getSeriesBase(entry.fullId);
+                          const baseOwned = Number(researchOwnedMap[base] || 0);
+                          return (
+                            <div key={entry.fullId} data-fullid={entry.fullId} style={{ marginBottom: 8 }}>
+                              <ResearchRow
+                                entry={entry}
+                                state={state}
+                                baseOwned={baseOwned}
+                                requirementCaches={requirementCaches}
+                              />
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+                  </section>
+                );
+              })
             )
           ) : (
-            <ResearchTab
-              family={activeFamily}
-              defs={defs}
-              state={state}
-              stage={userStage}
-              baseOwned={false}
-              requirementCaches={requirementCaches}
-            />
+            // Per-family view: reuse same layout as before, but pass requirementCaches so durations compute the same
+            <section className="panel section">
+              <div className="section-head">🔬 {activeFamily}</div>
+              <div className="section-body">
+                {visibleFamilyEntries.length === 0 ? (
+                  <div className="sub">Ingen research i denne kategori.</div>
+                ) : (
+                  visibleFamilyEntries.map((entry) => {
+                    const base = getSeriesBase(entry.fullId);
+                    const baseOwned = Number(researchOwnedMap[base] || 0);
+                    return (
+                      <div key={entry.fullId} data-fullid={entry.fullId} style={{ marginBottom: 8 }}>
+                        <ResearchRow
+                          entry={entry}
+                          state={state}
+                          baseOwned={baseOwned}
+                          requirementCaches={requirementCaches}
+                        />
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </section>
           )}
         </div>
       </div>
