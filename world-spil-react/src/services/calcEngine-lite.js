@@ -55,16 +55,5 @@ export function applySpeedBuffsToDuration(baseS, action, { appliesToCtx, activeB
 
   // cap (max 80% hurtigere) + clamp
   mult = Math.max(0.2, mult); // max 80% hurtigere - NORMAL CAP
-
-try {
-  const statsMods = (typeof window !== 'undefined' && window.data && window.data.statsModifiers && window.data.statsModifiers.global)
-    ? window.data.statsModifiers.global
-    : null;
-  const sm = statsMods && typeof statsMods.speed_mult === 'number' ? Number(statsMods.speed_mult) : 1;
-  mult = mult * sm;
-} catch (e) {}
-// then return Math.max(0, baseS * mult);
-
-
   return Math.max(0, baseS * mult);
 }

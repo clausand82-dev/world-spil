@@ -36,14 +36,12 @@ function resScopeMatches(scope, resId) {
 
 export function applyYieldBuffsToAmount(baseAmount, resId, { appliesToCtx = 'all', activeBuffs = [] } = {}) {
   let result = Number(baseAmount || 0);
-  // Hvis result ikke er tal, returner baseAmount — men undlad at returnere blot fordi activeBuffs er tom,
-  // så statsModifiers stadig kan anvendes.
-  if (!Number.isFinite(result)) return baseAmount;
+  if (!Number.isFinite(result) || !activeBuffs?.length) return baseAmount;
 
   const rid = normResId(resId);
 
   // adds/subt (respekter scope + applies_to)
-  for (const b of activeBuffs || []) {
+  for (const b of activeBuffs) {
     if ((b?.kind || '') !== 'res') continue;
     const mode = b?.mode || 'both';
     if (mode !== 'yield' && mode !== 'both') continue;
@@ -60,7 +58,7 @@ export function applyYieldBuffsToAmount(baseAmount, resId, { appliesToCtx = 'all
 
   // mult (respekter scope + applies_to)
   let mul = 1;
-  for (const b of activeBuffs || []) {
+  for (const b of activeBuffs) {
     if ((b?.kind || '') !== 'res') continue;
     const mode = b?.mode || 'both';
     if (mode !== 'yield' && mode !== 'both') continue;
@@ -73,17 +71,6 @@ export function applyYieldBuffsToAmount(baseAmount, resId, { appliesToCtx = 'all
     mul *= (1 + pct / 100);
   }
   result *= mul;
-
-  // --- Stats modifiers: anvend selv hvis der ingen activeBuffs er ---
-  try {
-    const statsMods = (typeof window !== 'undefined' && window.data && window.data.statsModifiers && window.data.statsModifiers.global)
-      ? window.data.statsModifiers.global
-      : null;
-    const sm = statsMods && typeof statsMods.yield_mult === 'number' ? Number(statsMods.yield_mult) : 1;
-    result = result * sm;
-  } catch (e) {
-    // ignore
-  }
 
   return result < 0 ? 0 : result;
 }
