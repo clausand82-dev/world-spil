@@ -1,6 +1,93 @@
 <?php
 declare(strict_types=1);
 
+
+/**
+ * Robust loader for stat_buffs-cache (samme sti som summary skriver til).
+ * Returnerer array med buffs (tom array hvis ingen).
+ */
+if (!function_exists('load_stat_buffs_for_uid')) {
+  function load_stat_buffs_for_uid(int $uid): array {
+    if ($uid <= 0) return [];
+    // Prøv root_backend() hvis tilgængelig
+    if (function_exists('root_backend')) {
+      $cacheDir = rtrim(root_backend(), '/\\') . '/data/cache';
+    } else {
+      // fallback relativt
+      $cand = realpath(__DIR__ . '/../../');
+      $cacheDir = ($cand !== false) ? rtrim($cand, '/\\') . '/data/cache' : (__DIR__ . '/../../data/cache');
+    }
+    $file = rtrim($cacheDir, '/\\') . '/stat_buffs_' . intval($uid) . '.json';
+    if (!is_file($file) || !is_readable($file)) return [];
+    $raw = @file_get_contents($file);
+    if ($raw === false) return [];
+    $j = @json_decode($raw, true);
+    if (!is_array($j) || empty($j['buffs']) || !is_array($j['buffs'])) return [];
+    return $j['buffs'];
+  }
+}
+
+/**
+ * Udvidet collect_active_buffs:
+ * - eksisterende behaviour (indsamling fra defs)
+ * - finder implicit $uid fra $state eller session ($_SESSION['uid'])
+ * - loader stat_buffs for uid og merger dem (dedupe via source_id)
+ */
+if (!function_exists('collect_active_buffs')) {
+  function collect_active_buffs(array $defs, array $state = [], ?int $now = null): array {
+    if ($now === null) $now = time();
+    $out = [];
+    foreach (['bld','add','rsd'] as $bucket) {
+      if (empty($defs[$bucket])) continue;
+      foreach ($defs[$bucket] as $id => $def) {
+        $buffList = $def['buffs'] ?? null;
+        if (!is_array($buffList)) continue;
+        foreach ($buffList as $b) {
+          if (!is_buff_in_window($b, $now)) continue;
+          $src = $b['source_id'] ?? (is_string($id) ? ($bucket . '.' . $id) : null);
+          if (!is_source_owned($src, $state)) continue;
+          $out[] = $b;
+        }
+      }
+    }
+
+    // --- NY: læs stat-buffs fra cache og merge dem ---
+    try {
+      // find uid - foretræk $state['user']['userId'] hvis tilgængelig, ellers session
+      $uid = 0;
+      if (!empty($state['user']['userId'])) $uid = intval($state['user']['userId']);
+      if ($uid <= 0 && session_status() === PHP_SESSION_ACTIVE && !empty($_SESSION['uid'])) $uid = intval($_SESSION['uid']);
+      if ($uid <= 0 && function_exists('auth_get_user_id_if_any')) {
+        // fallback: hvis auth helper findes
+        $maybe = auth_require_user_id();
+        if ($maybe) $uid = intval($maybe);
+      }
+
+      if ($uid > 0) {
+        $statBuffs = load_stat_buffs_for_uid($uid);
+        if (!empty($statBuffs) && is_array($statBuffs)) {
+          // dedupe: undgå at tilføje samme source_id flere gange
+          $existing_sources = array_filter(array_map(function($b){ return is_array($b) ? ($b['source_id'] ?? '') : ''; }, $out));
+          foreach ($statBuffs as $sb) {
+            if (!is_array($sb)) continue;
+            // valider tidsvindue også for stat-buffs
+            if (!is_buff_in_window($sb, $now)) continue;
+            $sid = (string)($sb['source_id'] ?? '');
+            if ($sid !== '' && in_array($sid, $existing_sources, true)) continue;
+            $out[] = $sb;
+            if ($sid !== '') $existing_sources[] = $sid;
+          }
+        }
+      }
+    } catch (Throwable $e) {
+      // ikke kritisk - lad eksisterende buffs fortsætte; undgå at kaste fejl tilbage
+    }
+
+    return $out;
+  }
+}
+
+
 /**
  * Buff helpers og anvendelse til cost, speed og yield.
  */
@@ -93,7 +180,7 @@ function is_source_owned(?string $source_id, array $state): bool {
 }
 
 /* ------------ indsamling af aktive buffs ------------ */
-function collect_active_buffs(array $defs, array $state = [], ?int $now = null): array {
+/*function collect_active_buffs(array $defs, array $state = [], ?int $now = null): array {
   if ($now === null) $now = time();
   $out = [];
   foreach (['bld','add','rsd'] as $bucket) {
@@ -110,7 +197,7 @@ function collect_active_buffs(array $defs, array $state = [], ?int $now = null):
     }
   }
   return $out;
-}
+}*/
 
 /* ------------ COST/SPEED/YIELD som før, men med res_scope_matches ovenfor ------------ */
 function apply_cost_buffs(array $baseCost, string $ctx_id, array $buffs): array {

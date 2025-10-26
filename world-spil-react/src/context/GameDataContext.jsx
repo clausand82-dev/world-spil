@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useEffect, useMemo, useState, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { mergeServerBuffs } from '../services/buffs';
+import { collectActiveBuffs } from '../services/requirements'; // eksisterende funktion
 
 const GameDataContext = createContext(null);
 
@@ -216,6 +218,30 @@ async function fetchAllData() {
       const normalized = normalizeDefsForIcons(json.data.defs, { baseIconPath: '/assets/icons/' });
       // skriv eksplicit tilbage (for at være sikker på at det er samme objekt brugt fremadrettet)
       json.data.defs = normalized;
+
+      // Merge server-provided buffs with client-side computed buffs so frontend does not overwrite them.
+      try {
+        const serverBuffs = Array.isArray(json.data.activeBuffs) ? json.data.activeBuffs : (json.data.activeBuffs ? [json.data.activeBuffs] : []);
+        const clientBuffs = (typeof collectActiveBuffs === 'function') ? collectActiveBuffs(normalized) : [];
+        const merged = (typeof mergeServerBuffs === 'function')
+          ? mergeServerBuffs(serverBuffs, clientBuffs)
+          : (() => {
+              const out = Array.isArray(clientBuffs) ? clientBuffs.slice() : [];
+              const existing = new Set(out.map(b => (b && b.source_id) ? String(b.source_id) : Symbol()));
+              for (const sb of (Array.isArray(serverBuffs) ? serverBuffs : [])) {
+                if (!sb || typeof sb !== 'object') continue;
+                const sid = sb.source_id ? String(sb.source_id) : null;
+                if (sid && existing.has(sid)) continue;
+                out.push(sb);
+                if (sid) existing.add(sid);
+              }
+              return out;
+            })();
+        json.data.activeBuffs = merged;
+      } catch (e) {
+        console.warn('Failed to merge server/client buffs', e);
+      }
+
       // Sæt global window.data fordi en del kode læser window.data.defs direkte
       try { window.data = json.data; } catch (e) { /* ignore if not allowed */ }
 

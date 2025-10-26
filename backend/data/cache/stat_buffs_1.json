@@ -1,1 +1,1 @@
-{"ts":1761471519,"buffs":[]}
+{"ts":1761473722,"buffs":[{"kind":"res","scope":"all","mode":"yield","op":"mult","amount":-50,"applies_to":"all","source_id":"stat:happiness"},{"kind":"speed","actions":["build","research","upgrade"],"op":"mult","amount":-50,"applies_to":"all","source_id":"stat:popularity"}]}
