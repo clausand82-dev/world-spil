@@ -582,20 +582,36 @@ if (!empty($summary['capChoice']) && is_array($summary['capChoice'])) {
 
 // Eksporter stat-buffs til hurtig cache så alldata.php kan læse dem uden ekstra beregning/HTTP
 try {
-  require_once __DIR__ . '/../actions/stat_buffs.php'; // sørg for filen findes
+  require_once __DIR__ . '/../actions/stat_buffs.php';
   $statBuffs = collect_stat_buffs_from_summary($summary);
 
-  // cache-dir (skal være skrivbar af webprocessen)
-  $cacheDir = __DIR__ . '/../../data/cache';
-  if (!is_dir($cacheDir)) @mkdir($cacheDir, 0755, true);
+  // cache-dir (forsøg repo-cache først, ellers fallback til system tmp)
+  $repoCacheDir = __DIR__ . '/../../data/cache';
+  $cacheDir = $repoCacheDir;
+  if (!is_dir($cacheDir) || !is_writable($cacheDir)) {
+    $tmp = sys_get_temp_dir();
+    $cacheDir = $tmp . '/world_spil_cache';
+    if (!is_dir($cacheDir)) @mkdir($cacheDir, 0755, true);
+  }
+
   $cacheFile = $cacheDir . '/stat_buffs_' . intval($uid) . '.json';
   $payload = ['ts' => time(), 'buffs' => $statBuffs];
-  @file_put_contents($cacheFile, json_encode($payload, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES));
-} catch (Throwable $e) {
-  // ikke fatal — cache er blot en optimering
-  // evt. log hvis du har log-funktion
-}
+  $written = @file_put_contents($cacheFile, json_encode($payload, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES));
 
+  if ($written === false) {
+    error_log("SUMMARY: Failed to write stat_buffs cache for uid={$uid} to {$cacheFile}");
+  } else {
+    error_log("SUMMARY: Wrote stat_buffs cache for uid={$uid} ({$written} bytes) to {$cacheFile}");
+  }
+
+  // debug-exponering for browser-test
+  if (!empty($_GET['debug_stat'])) {
+    $summary['__stat_buffs'] = $statBuffs;
+    $summary['__stat_cache_file'] = $cacheFile;
+  }
+} catch (Throwable $e) {
+  error_log('SUMMARY: Exception writing stat_buffs cache: ' . $e->getMessage());
+}
 
   // Afrund udgående numeric felter (valgfrit)
   $ROUND_DECIMALS = 2;

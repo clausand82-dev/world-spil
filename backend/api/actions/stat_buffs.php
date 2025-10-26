@@ -3,39 +3,54 @@ declare(strict_types=1);
 
 /**
  * Generate stat-driven buffs from a summary payload.
- * Returns an array of buff objects compatible with actions/buffs.php.
- *
- * Rules implemented (same som tidligere):
- *  - if happiness <= 50: all resource yields halved (amount = -50)
- *  - if happiness >= 75: all resource yields doubled (amount = 100)
- *  - if popularity <= 25: build/research/upgrade times increased by 50% (speed amount = -50)
- *
- * Extend this file to add more rules later.
+ * - Robust extraction (nested shapes)
+ * - Normalize 0..1 -> 0..100
+ * - Returns array of buff objects compatible with existing buffs format
  */
+
+function _extract_numeric_from_mixed($val): ?float {
+  if ($val === null) return null;
+  if (is_numeric($val)) return (float)$val;
+  if (!is_array($val)) return null;
+  $candidates = ['effective','total','value','happiness','popularity','score'];
+  foreach ($candidates as $k) {
+    if (isset($val[$k]) && is_numeric($val[$k])) return (float)$val[$k];
+  }
+  foreach ($val as $child) {
+    if (is_numeric($child)) return (float)$child;
+    if (is_array($child)) {
+      foreach (['effective','total','value','happiness','popularity','score'] as $k) {
+        if (isset($child[$k]) && is_numeric($child[$k])) return (float)$child[$k];
+      }
+    }
+  }
+  return null;
+}
+
+function _normalize_pct(?float $v): ?float {
+  if ($v === null) return null;
+  if ($v > 0 && $v <= 1.0) return $v * 100.0;
+  return $v;
+}
 
 function collect_stat_buffs_from_summary(array $summary): array {
   $out = [];
 
-  $extract_numeric = function($val) {
-    if ($val === null) return null;
-    if (is_array($val)) {
-      if (isset($val['effective'])) return (float)$val['effective'];
-      if (isset($val['total'])) return (float)$val['total'];
-      if (isset($val['value'])) return (float)$val['value'];
-      return null;
-    }
-    if (is_numeric($val)) return (float)$val;
-    return null;
-  };
+  $h_raw = $summary['happiness'] ?? null;
+  $p_raw = $summary['popularity'] ?? null;
 
-  $happiness = null;
-  if (isset($summary['happiness'])) $happiness = $extract_numeric($summary['happiness']);
-  $popularity = null;
-  if (isset($summary['popularity'])) $popularity = $extract_numeric($summary['popularity']);
+  $h = _extract_numeric_from_mixed($h_raw);
+  $p = _extract_numeric_from_mixed($p_raw);
+
+  $h = _normalize_pct($h);
+  $p = _normalize_pct($p);
+
+  // Debug-log (fjern senere hvis det bliver for støjende)
+  error_log(sprintf('STAT_BUFFS: extracted happiness=%s popularity=%s', var_export($h, true), var_export($p, true)));
 
   // Happiness rules
-  if (is_numeric($happiness)) {
-    if ($happiness <= 50.0) {
+  if (is_numeric($h)) {
+    if ($h <= 50.0) {
       $out[] = [
         'kind' => 'res',
         'scope' => 'all',
@@ -45,7 +60,8 @@ function collect_stat_buffs_from_summary(array $summary): array {
         'applies_to' => 'all',
         'source_id' => 'stat:happiness',
       ];
-    } elseif ($happiness >= 75.0) {
+      error_log('STAT_BUFFS: applied rule -> happiness <= 50 -> halved yields');
+    } elseif ($h >= 75.0) {
       $out[] = [
         'kind' => 'res',
         'scope' => 'all',
@@ -55,12 +71,13 @@ function collect_stat_buffs_from_summary(array $summary): array {
         'applies_to' => 'all',
         'source_id' => 'stat:happiness',
       ];
+      error_log('STAT_BUFFS: applied rule -> happiness >= 75 -> double yields');
     }
   }
 
   // Popularity rules
-  if (is_numeric($popularity)) {
-    if ($popularity <= 25.0) {
+  if (is_numeric($p)) {
+    if ($p <= 25.0) {
       $out[] = [
         'kind' => 'speed',
         'actions' => ['build','research','upgrade'],
@@ -69,8 +86,10 @@ function collect_stat_buffs_from_summary(array $summary): array {
         'applies_to' => 'all',
         'source_id' => 'stat:popularity',
       ];
+      error_log('STAT_BUFFS: applied rule -> popularity <= 25 -> +50% duration');
     }
   }
 
+  error_log(sprintf('STAT_BUFFS: produced %d buff(s)', count($out)));
   return $out;
 }

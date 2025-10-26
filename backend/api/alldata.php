@@ -450,30 +450,57 @@ if (!function_exists('collect_active_buffs')) require_once __DIR__ . '/actions/b
 $activeBuffs = collect_active_buffs($defs, ['bld'=>$owned_bld,'add'=>$owned_add,'rsd'=>$owned_rsd,'ani'=>$owned_ani], time());
 
 // Read stat-buffs cache (written by header/summary.php) — lightweight, no network
+// --- læs stat-buffs cache (letvægt) og expose debug info ---
 $statBuffs = [];
+$statDebug = ['cacheFile'=>'','exists'=>false,'read'=>false,'json_error'=>'','ts'=>null,'buffs_count'=>0,'cacheDirChecked'=>[]];
 try {
-  $cacheFile = __DIR__ . '/../../data/cache/stat_buffs_' . intval($state['user']['userId'] ?? $_SESSION['uid'] ?? 0) . '.json';
+  $uidForCache = intval($state['user']['userId'] ?? $_SESSION['uid'] ?? 0);
+
+  // Mulige cache-placeringer (repo først, så tmp fallback)
+  $repoCacheDir = __DIR__ . '/../../data/cache';
+  $tmpCacheDir  = sys_get_temp_dir() . '/world_spil_cache';
+  $candidates = [$repoCacheDir, $tmpCacheDir];
+
+  $cacheFile = '';
+  foreach ($candidates as $dir) {
+    $statDebug['cacheDirChecked'][] = $dir;
+    if (!is_dir($dir)) {
+      @mkdir($dir, 0755, true);
+    }
+    $f = rtrim($dir, '/\\') . '/stat_buffs_' . $uidForCache . '.json';
+    if (is_file($f)) { $cacheFile = $f; break; }
+  }
+
+  $statDebug['cacheFile'] = $cacheFile;
   if ($cacheFile && is_file($cacheFile)) {
+    $statDebug['exists'] = true;
     $raw = @file_get_contents($cacheFile);
-    if ($raw) {
+    if ($raw !== false) {
+      $statDebug['read'] = true;
       $j = json_decode($raw, true);
-      if (!empty($j['buffs']) && is_array($j['buffs'])) {
-        $statBuffs = $j['buffs'];
+      if ($j === null) {
+        $statDebug['json_error'] = json_last_error_msg();
+      } else {
+        $statDebug['ts'] = $j['ts'] ?? null;
+        if (!empty($j['buffs']) && is_array($j['buffs'])) {
+          $statBuffs = $j['buffs'];
+          $statDebug['buffs_count'] = count($statBuffs);
+        }
       }
-      // Optionally check freshness: if ($j['ts'] < time()-60) then ignore
     }
   }
 } catch (Throwable $e) {
-  // ignore — cache er blot en optimering
+  $statDebug['exception'] = $e->getMessage();
 }
 
-// Merge stat buffs into activeBuffs so downstream code sees them
+// Merge stat buffs into activeBuffs
 if (!empty($statBuffs) && is_array($statBuffs)) {
   $activeBuffs = array_merge($activeBuffs, $statBuffs);
 }
 
-// expose activeBuffs in alldata response for frontend convenience:
+// Expose activeBuffs and stat debug in response
 $data['activeBuffs'] = $activeBuffs;
+$data['__stat_debug'] = $statDebug;
 
 $yields_preview = []; // pr. entitet, efter buffs, for én fuld periode
 foreach (['bld','add','rsd','ani'] as $bucket) {
