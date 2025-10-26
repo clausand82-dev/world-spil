@@ -105,5 +105,19 @@ function collect_stat_buffs_from_summary(array $summary): array {
     }
   }
 
+    /*if (is_numeric($p)) {
+    if ($p <= 25.0) {
+      $out[] = [
+        'kind' => 'res',
+        'scope' => 'res.money',
+        'op' => 'mult',
+        'mode' => 'yield',
+        'amount' => 5000,
+        'applies_to' => 'all',
+        'source_id' => 'stat:popularity',
+      ];
+    }
+  }*/
+
   return $out;
 }

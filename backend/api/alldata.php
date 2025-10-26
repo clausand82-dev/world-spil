@@ -443,64 +443,20 @@ if (WS_RUN_MODE === 'run') {
           }
 
 // Lige før I returnerer payload, efter stateMin er kendt og apply_passive_yields_for_user er kaldt:
+// collect active buffs from defs (existing) + stat-based buffs (new)
 if (!function_exists('collect_active_buffs')) require_once __DIR__ . '/actions/buffs.php';
 
 // existing buffs from defs
-// collect active buffs from defs
 $activeBuffs = collect_active_buffs($defs, ['bld'=>$owned_bld,'add'=>$owned_add,'rsd'=>$owned_rsd,'ani'=>$owned_ani], time());
 
-// Read stat-buffs cache (written by header/summary.php) — lightweight, no network
-// --- læs stat-buffs cache (letvægt) og expose debug info ---
-$statBuffs = [];
-$statDebug = ['cacheFile'=>'','exists'=>false,'read'=>false,'json_error'=>'','ts'=>null,'buffs_count'=>0,'cacheDirChecked'=>[]];
-try {
-  $uidForCache = intval($state['user']['userId'] ?? $_SESSION['uid'] ?? 0);
 
-  // Mulige cache-placeringer (repo først, så tmp fallback)
-  $repoCacheDir = root_backend() . '/data/cache';
-  $tmpCacheDir  = sys_get_temp_dir() . '/world_spil_cache';
-  $candidates = [$repoCacheDir, $tmpCacheDir];
-
-  $cacheFile = '';
-  foreach ($candidates as $dir) {
-    $statDebug['cacheDirChecked'][] = $dir;
-    if (!is_dir($dir)) {
-      @mkdir($dir, 0755, true);
-    }
-    $f = rtrim($dir, '/\\') . '/stat_buffs_' . $uidForCache . '.json';
-    if (is_file($f)) { $cacheFile = $f; break; }
-  }
-
-  $statDebug['cacheFile'] = $cacheFile;
-  if ($cacheFile && is_file($cacheFile)) {
-    $statDebug['exists'] = true;
-    $raw = @file_get_contents($cacheFile);
-    if ($raw !== false) {
-      $statDebug['read'] = true;
-      $j = json_decode($raw, true);
-      if ($j === null) {
-        $statDebug['json_error'] = json_last_error_msg();
-      } else {
-        $statDebug['ts'] = $j['ts'] ?? null;
-        if (!empty($j['buffs']) && is_array($j['buffs'])) {
-          $statBuffs = $j['buffs'];
-          $statDebug['buffs_count'] = count($statBuffs);
-        }
-      }
-    }
-  }
-} catch (Throwable $e) {
-  $statDebug['exception'] = $e->getMessage();
-}
-
-// Merge stat buffs into activeBuffs
+// Merge stat buffs into activeBuffs so downstream code sees them
 if (!empty($statBuffs) && is_array($statBuffs)) {
   $activeBuffs = array_merge($activeBuffs, $statBuffs);
 }
 
-// Expose activeBuffs and stat debug in response
+// (optional) expose activeBuffs in alldata response for frontend convenience:
 $data['activeBuffs'] = $activeBuffs;
-$data['__stat_debug'] = $statDebug;
 
 $yields_preview = []; // pr. entitet, efter buffs, for én fuld periode
 foreach (['bld','add','rsd','ani'] as $bucket) {
@@ -789,45 +745,30 @@ foreach ($state['ani'] as $id => $val) {
         ];
         if (!empty($_GET['debug']) && $capWarns) $state['__cap_warnings']=$capWarns;
 
-
-
-
         /* 7) Output */
-        // --- BUILD OUTPUT (inkluder active buffs + debug) ---
-$out = [
+        $out = [
   'defs' => $defs,
   'state' => $state,
   'lang' => $langMap,
   'config' => $cfg,
   'activeBuffs' => $activeBuffs,
 ];
+        if ($debug) $out['__debug'] = ['xml_scan' => $debugXml ?? []];
 
-// Hvis vi har debug-info fra cache-reads, inkluder dem (gør det synligt i response)
-if (!empty($statDebug) && is_array($statDebug)) {
-  $out['__stat_debug'] = $statDebug;
-}
-if (!empty($forceStatDebug) && is_array($forceStatDebug)) {
-  $out['__stat_debug_force'] = $forceStatDebug;
-}
-if (!empty($debugXml)) {
-  $out['__debug']['xml_scan'] = $debugXml;
-}
+        // ETag / cache helpers: send 304 if client already has same payload
+        // Bemærk: Content-Type sættes tidligere når WS_RUN_MODE === 'run'
+        header('Cache-Control: no-cache');
+        $etag = '"' . md5(json_encode($out['state']['inv'] ?? []) . json_encode($out['state']['user'] ?? [])) . '"';
+        // send 304 hvis If-None-Match matcher
+        $ifNone = $_SERVER['HTTP_IF_NONE_MATCH'] ?? '';
+        if ($ifNone === $etag) {
+            http_response_code(304);
+            exit;
+        }
+        // ellers offentliggør etag header så klient kan cache/validerer næste gang
+        header('ETag: ' . $etag);
 
-// ETag / cache helpers: send 304 hvis klient allerede har samme payload
-header('Cache-Control: no-cache');
-// Inkluder aktive buffs i etag så cache validerer også når buffs ændres
-$etagPayload = json_encode($out['state']['inv'] ?? []) . json_encode($out['state']['user'] ?? []) . json_encode($out['activeBuffs'] ?? []);
-$etag = '"' . md5($etagPayload) . '"';
-// send 304 hvis If-None-Match matcher
-$ifNone = $_SERVER['HTTP_IF_NONE_MATCH'] ?? '';
-if ($ifNone === $etag) {
-    http_response_code(304);
-    exit;
-}
-// ellers offentliggør etag header så klient kan cache/validerer næste gang
-header('ETag: ' . $etag);
-
-jout(true, $out);
+        jout(true, $out);
 
         
 

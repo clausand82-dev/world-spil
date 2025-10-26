@@ -180,7 +180,7 @@
       <res id="res.money" amount="75"/>
     </cost>
     <time>10m</time>
-    <require>add.barn.l1,rsd.animalhusbandry.l1</require>
+    <require>add.barn.l1,rsd.animalhusbandry.l1</require>    
   </research>
 
   <research id="rsd.maizefield_scarecrow.l1" family="farm" type="agri" lvl="2" stage="2">
@@ -201,7 +201,7 @@
     </cost>
     <time>1h</time>
     <require>rsd.farming.l1,add.wheatfield.l1</require>
-    <buffs applies_to="add.wheatfield.l1">
+    <buffs applies_to="all">
       <res id="res.straw" type="add" amount="2" mode="yield"/> <!--2  more of straw on all-->
     </buffs>
   </research>
