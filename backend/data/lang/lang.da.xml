@@ -78,6 +78,7 @@
   <entry key="ui.labels.duration">Tid:</entry>
   <entry key="ui.labels.products">Produkter (per start)</entry>
   <entry key="ui.labels.formula">Opskrift</entry>
+  <entry key="ui.labels.yields">Producerer (pr/t):</entry>
 
   <entry key="ui.emoji.buildcost.h1">🔨</entry>
   <entry key="ui.emoji.demands.h1">📜</entry>

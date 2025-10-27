@@ -97,6 +97,49 @@ export default function RequirementPanel({
     return out;
   }, [def, defs, activeBuffs, show.resources]);
 
+  // --- NYT: yieldsEntries (produktion / yield) - normaliseret til samme form som costEntries
+  const yieldsEntries = useMemo(() => {
+    if (!def || !show.resources) return [];
+    const maybeObj = def.yields || def.produces || def.produce || def.output || def.outputs || def.yield || null;
+    if (!maybeObj) return [];
+
+    const list = [];
+    if (Array.isArray(maybeObj)) {
+      maybeObj.forEach((it, idx) => {
+        if (!it) return;
+        if (typeof it === 'string') {
+          const id = it.startsWith('res.') ? it : `res.${it.replace(/^res\./, '')}`;
+          list.push({ id, amount: 1, _idx: idx });
+        } else if (typeof it === 'object') {
+          const key = String(it.id || it.res || it.resource || it.resId || '').trim();
+          if (!key) return;
+          const id = key.startsWith('res.') ? key : `res.${key.replace(/^res\./, '')}`;
+          const amount = Number(it.amount || it.qty || it.count || 0) || 0;
+          list.push({ id, amount, _idx: idx });
+        }
+      });
+    } else if (typeof maybeObj === 'object') {
+      Object.entries(maybeObj).forEach(([k, v], idx) => {
+        const id = String(k).startsWith('res.') ? String(k) : `res.${String(k).replace(/^res\./, '')}`;
+        const amount = Number(v || 0);
+        list.push({ id, amount, _idx: idx });
+      });
+    } else if (typeof maybeObj === 'string') {
+      const id = maybeObj.startsWith('res.') ? maybeObj : `res.${maybeObj.replace(/^res\./, '')}`;
+      list.push({ id, amount: 1, _idx: 0 });
+    }
+
+    // enrich with name/icon similarly to costEntries
+    return list.map((it) => {
+      const raw = String(it.id || '');
+      const resKey = raw.replace(/^res\./, '');
+      const resDef = defs?.res?.[resKey];
+      const name = resDef?.name || resKey;
+      const icon = resDef ? (resDef.iconUrl ? { iconUrl: resDef.iconUrl } : { emoji: resDef.emoji }) : null;
+      return { id: it.id, amount: Number(it.amount || 0), name, icon, _idx: it._idx };
+    });
+  }, [def, defs, show.resources]);
+
   const getHave = (resId) => {
     if (!gameState) return 0;
     const key = String(resId).replace(/^res\./, '');
@@ -244,98 +287,184 @@ export default function RequirementPanel({
           <div style={{ borderTop: '1px solid rgba(0,0,0,0.08)', paddingTop: 0, display: 'grid', gap: 4, fontSize: 12 }} />
           <div style={{ fontWeight: 700, marginBottom: 6 }}>{t('ui.labels.resources', 'Ressourcekrav')}</div>
           {costEntries.length ? (
-            <div className="rc-inline">
+            <div
+              className="rc-inline"
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+                gap: 8,
+                alignItems: 'start',
+              }}
+            >
               {costEntries.map((e, idx) => {
                 const st = resourceStatus[e.id] || resourceStatus[e.effRid] || { ok: true };
                 const ok = !!st.ok;
                 const key = `res::${e._idx}::${(e.effRid || e.id)}`;
+                // Single icon spanning two rows, right column shows name (row1) and amount (row2)
+                const IconNode = e.icon?.iconUrl
+                  ? <Icon iconUrl={e.icon.iconUrl} size={24} />
+                  : <Icon value={e.icon?.emoji || undefined} size={24} />;
+
                 return (
-                  <React.Fragment key={key}>
-                    <div className={`${ok ? 'price-ok' : 'price-bad'}`}>
-                      <div className="rc-tile">
-                        <div className="rc-icon">
-                          {e.icon?.iconUrl ? <Icon iconUrl={e.icon.iconUrl} size={28} /> : <Icon value={e.icon?.emoji || undefined} size={28} />}
+                  <div key={key} style={{ padding: 0}}>
+                    <div className={`${ok ? 'price-ok' : 'price-bad'}`} style={{ width: '100%' }}>
+                      <div
+                        className="rc-tile"
+                        style={{
+                          display: 'grid',
+                          gridTemplateColumns: '48px 1fr',
+                          gridTemplateRows: 'auto auto',
+                          gap: 0,
+                          alignItems: 'center',
+                          textAlign: 'left',
+                          padding: 0,
+                          minHeight: 34,
+                        }}
+                      >
+                        <div style={{ gridRow: '1 / span 2', gridColumn: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          {IconNode}
                         </div>
-                        <div className="rc-name" style={{ fontWeight: 600 }}>{e.name}</div>
-                        <div className="rc-need" style={{ fontSize: 12 }}>
+
+                        <div className="rc-name" style={{ gridRow: 1, gridColumn: 2, fontWeight: 600, fontSize: 12 , overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {e.name}
+                        </div>
+
+                        <div className="rc-need" style={{ gridRow: 2, gridColumn: 2, fontSize: 12 }}>
                           <span style={{ fontVariantNumeric: 'tabular-nums', fontWeight: 700 }}>{Hhelpers.fmt(e.buffedAmt)}</span>
                         </div>
                       </div>
                     </div>
-                    {/* plus between items - handled by CSS variant if necessary */}
-                  </React.Fragment>
+                  </div>
                 );
               })}
             </div>
           ) : (
             <div className="sub">{t('ui.text.none.h1', 'Ingen')}</div>
           )}
+
+          {/* --- Yield / Produktion (samme layout som resourcekrav) --- */}
+          {yieldsEntries.length ? (
+            <div style={{ marginTop: 8 }}>
+              <div style={{ fontWeight: 700, marginBottom: 6 }}>{t('ui.labels.yields', 'Yield / Produktion')}</div>
+              <div
+                className="rc-inline"
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+                  gap: 8,
+                  alignItems: 'start',
+                }}
+              >
+                {yieldsEntries.map((e) => {
+                  const key = `yield::${e._idx}::${e.id}`;
+                  const IconNode = e.icon?.iconUrl ? <Icon iconUrl={e.icon.iconUrl} size={24} /> : <Icon value={e.icon?.emoji || undefined} size={24} />;
+                  return (
+                    <div key={key} style={{ padding: 0 }}>
+                      <div style={{ width: '100%' }}>
+                        <div
+                          className="rc-tile"
+                          style={{
+                            display: 'grid',
+                            gridTemplateColumns: '48px 1fr',
+                            gridTemplateRows: 'auto auto',
+                            gap: 0,
+                            alignItems: 'center',
+                            textAlign: 'left',
+                            padding: 0,
+                            minHeight: 34,
+                          }}
+                        >
+                          <div style={{ gridRow: '1 / span 2', gridColumn: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            {IconNode}
+                          </div>
+
+                          <div className="rc-name" style={{ gridRow: 1, gridColumn: 2, fontWeight: 600, fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {e.name}
+                          </div>
+
+                          <div className="rc-need" style={{ gridRow: 2, gridColumn: 2, fontSize: 12 }}>
+                            <span style={{ fontVariantNumeric: 'tabular-nums', fontWeight: 700 }}>{Hhelpers.fmt(e.amount)}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ) : null}
         </div>
       )}
 
-      {show.requirements && (
+      {show.requirements && requirementEntries.length > 0 && (
         <div style={{ marginBottom: 8 }}>
           <div style={{ fontWeight: 700, marginBottom: 6 }}>{t('ui.labels.requirements', 'Øvrige krav')}</div>
 
-          {requirementEntries.length ? (
-            <div className="demand-list" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'flex-start' }}>
-              {requirementEntries.map((r) => {
-                // Build link when applicable: bld/add -> building detail, rsd -> research focus
-                let maybeLink = null;
-                if (r.id && (r.id.startsWith('bld.') || r.id.startsWith('add.'))) {
-                  maybeLink = `#/building/${r.id}`;
-                } else if (r.id && (r.id.startsWith('rsd.') || r.id.startsWith('research.'))) {
-                  const rid = r.id.startsWith('rsd.') ? r.id : r.id.replace(/^research\./, '');
-                  maybeLink = `#/research?focus=${rid}`;
+          <div
+            className="demand-list-inline"
+            style={{
+              display: 'flex',
+              gap: 10,
+              alignItems: 'center',
+              whiteSpace: 'nowrap',
+              overflowX: 'auto',
+              padding: '4px 0'
+            }}
+          >
+            {requirementEntries.map((r) => {
+              // same link logic, kept compact
+              let maybeLink = null;
+              if (r.id && (r.id.startsWith('bld.') || r.id.startsWith('add.'))) maybeLink = `#/building/${r.id}`;
+              else if (r.id && (r.id.startsWith('rsd.') || r.id.startsWith('research.'))) {
+                const rid = r.id.startsWith('rsd.') ? r.id : r.id.replace(/^research\./, '');
+                maybeLink = `#/research?focus=${rid}`;
+              }
+
+              // compact icon lookup
+              let iconUrl = undefined;
+              let value = undefined;
+              try {
+                if (r.id.startsWith('bld.')) {
+                  const key = r.id.replace(/^bld\./, '');
+                  const d = defs?.bld?.[key] ?? defs?.bld?.[key.replace(/\.l\d+$/, '')];
+                  iconUrl = '/assets/icons/symbol_building.png'; value = d?.iconFilename || d?.emoji;
+                } else if (r.id.startsWith('add.')) {
+                  const key = r.id.replace(/^add\./, '');
+                  const d = defs?.add?.[key] ?? defs?.add?.[key.replace(/\.l\d+$/, '')];
+                  iconUrl = '/assets/icons/symbol_addon.png'; value = d?.iconFilename || d?.emoji;
+                } else if (r.id.startsWith('rsd.') || r.id.startsWith('research.')) {
+                  const key = r.id.replace(/^rsd\.|^research\./, '');
+                  const d = defs?.rsd?.[key] ?? defs?.rsd?.[key.replace(/\.l\d+$/, '')];
+                  iconUrl = '/assets/icons/symbol_research.png'; value = d?.iconFilename || d?.emoji;
                 }
+              } catch (e) { /* ignore */ }
 
-                // try to get icon info for this requirement (if defs expose it)
-                let iconUrl = undefined;
-                let value = undefined;
-                try {
-                  if (r.id.startsWith('bld.')) {
-                    const key = r.id.replace(/^bld\./, '');
-                    const d = defs?.bld?.[key] ?? defs?.bld?.[key.replace(/\.l\d+$/, '')];
-                    iconUrl = '/assets/icons/symbol_building.png';
-                    value = d?.iconFilename || d?.emoji || undefined;
-                  } else if (r.id.startsWith('add.')) {
-                    const key = r.id.replace(/^add\./, '');
-                    const d = defs?.add?.[key] ?? defs?.add?.[key.replace(/\.l\d+$/, '')];
-                    iconUrl = '/assets/icons/symbol_addon.png';
-                    value = d?.iconFilename || d?.emoji || undefined;
-                  } else if (r.id.startsWith('rsd.') || r.id.startsWith('research.')) {
-                    const key = r.id.replace(/^rsd\.|^research\./, '');
-                    const d = defs?.rsd?.[key] ?? defs?.rsd?.[key.replace(/\.l\d+$/, '')];
-                    iconUrl = '/assets/icons/symbol_research.png';
-                    value = d?.iconFilename || d?.emoji || undefined;
-                  }
-                } catch (e) {
-                  iconUrl = undefined;
-                  value = undefined;
-                }
-
-                const colorClass = r.ok ? 'price-ok' : 'price-bad';
-                const token = (
-                  <div key={`req-token-${r._idx}`} className={`demand-token ${colorClass}`}>
-                    <span className="dt-icon"><Icon iconUrl={iconUrl || '/assets/icons/default.png'} value={value} size={22} alt={r.name} /></span>
-                    <span className="dt-label">{r.name}</span>
-                  </div>
-                );
-
-                return maybeLink ? (
-                  <a key={r.id} href={maybeLink} className="demand-token-link" title={r.name}>
-                    {token}
-                  </a>
-                ) : (
-                  <span key={r.id} title={r.name}>
-                    {token}
+              const colorClass = r.ok ? 'price-ok' : 'price-bad';
+              const tokenNode = (
+                <div
+                  key={`req-token-${r._idx}`}
+                  className={`demand-token ${colorClass}`}
+                  style={{ display: 'inline-flex', gap: 8, alignItems: 'center', padding: '4px 8px', borderRadius: 6 }}
+                  title={r.name}
+                >
+                  <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Icon iconUrl={iconUrl || '/assets/icons/default.png'} value={value} size={18} alt={r.name} />
                   </span>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="sub">{t('ui.text.none.h1', 'Ingen')}</div>
-          )}
+                  <span style={{ fontSize: 13, lineHeight: 1 }}>{r.name}</span>
+                </div>
+              );
+
+              return maybeLink ? (
+                <a key={r.id} href={maybeLink} className="demand-token-link" style={{ textDecoration: 'none' }}>
+                  {tokenNode}
+                </a>
+              ) : (
+                <span key={r.id}>
+                  {tokenNode}
+                </span>
+              );
+            })}
+          </div>
         </div>
       )}
 
@@ -343,16 +472,23 @@ export default function RequirementPanel({
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
           <div>
             <div style={{ fontWeight: 700 }}>{t('ui.labels.footprint', 'Footprint')}</div>
-            <div className="sub" style={{ color: footprint.ok ? '#0a0' : '#c33' }}>
-              {footprint.base} {footprint.ok ? <span style={{ color: '#0a0' }}>✓</span> : <span style={{ color: '#c33' }}>✕</span>}
-            </div>
-            <div style={{ fontSize: 12, color: '#666' }}>({Hhelpers.fmt(footprint.usedFP || 0)} / {Hhelpers.fmt(footprint.totalFP || 0)})</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
+              <Icon iconUrl={'/assets/icons/symbol_footprint.png'} size={20} alt="footprint" />
+              <div className="sub" style={{ color: footprint.ok ? '#0a0' : '#c33', fontWeight: 700 }}>
+                {Hhelpers.fmt(footprint.base)}
+                {footprint.ok ? <span style={{ color: '#0a0', marginLeft: 8 }}>✓</span> : <span style={{ color: '#c33', marginLeft: 8 }}>✕</span>}
+              </div>
+            </div>            
           </div>
+
           <div>
             <div style={{ fontWeight: 700 }}>{t('ui.labels.duration', 'Byggetid')}</div>
-            <div className="sub">
-              {formatDurationFull(duration.base)}
-              {duration.base !== duration.buffed ? ` → ${formatDurationFull(duration.buffed)}` : ''}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
+              <Icon iconUrl={'/assets/icons/symbol_time.png'} size={20} alt="time" />
+              <div className="sub" style={{ fontWeight: 700 }}>
+                {formatDurationFull(duration.base)}
+                {duration.base !== duration.buffed ? <span style={{ marginLeft: 8 }}>→ {formatDurationFull(duration.buffed)}</span> : null}
+              </div>
             </div>
           </div>
         </div>

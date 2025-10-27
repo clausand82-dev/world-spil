@@ -9,7 +9,7 @@ try {
   $from   = isset($_GET['from']) ? (string)$_GET['from'] : '';
   $to     = isset($_GET['to'])   ? (string)$_GET['to']   : '';
   $type   = isset($_GET['type']) ? (string)$_GET['type'] : '';
-  $limit  = min(500, max(1, (int)($_GET['limit']  ?? 200)));
+  $limit  = min(500, max(1, (int)($_GET['limit']  ?? 500)));
   $offset = max(0, (int)($_GET['offset'] ?? 0));
 
   $sql = "

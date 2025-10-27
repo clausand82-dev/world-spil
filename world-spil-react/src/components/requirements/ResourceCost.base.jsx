@@ -62,7 +62,7 @@ function CostItem({ id, needAmount = 0, isExtra = false }) {
   return (
     <div className={`rc-tile ${isExtra ? 'rc-extra' : ''} ${statusClass}`} title={title}>
       <div className="rc-icon">
-        <Icon iconUrl={iconUrl} value={value || 'default.png'} size={32} alt={displayName} />
+        <Icon iconUrl={iconUrl} value={value || 'default.png'} size={24} alt={displayName} /> {/* Størrelse på ikoner */}
       </div>
 
       <div className="rc-name" title={displayName}>
@@ -117,7 +117,7 @@ export default function ResourceCost({ cost = {}, extra = null, transform } = {}
           {extraItems.map((item, i) => (
             <React.Fragment key={`extra-${item.id}-${i}`}>
               <CostItem id={item.id} needAmount={item.amount} isExtra={true} />
-              {i < extraItems.length - 1 && <div className="rc-sep-plus">+</div>}
+              {i < extraItems.length - 1 && <div className="rc-sep-plus">→</div>}
             </React.Fragment>
           ))}
         </>

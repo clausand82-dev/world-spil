@@ -630,14 +630,14 @@ body{padding-bottom:72px} /* plads til quickbar */
 /* Each tile: ensure uniform height so separators center correctly */
 .rc-tile {
   display: grid;
-  grid-template-columns: 40px 1fr;
+  grid-template-columns: 24px 1fr;
   grid-template-rows: auto auto;
   gap: 4px 8px;
   align-items: center;
   padding: 6px 8px;
   border-radius: 8px;
   min-width: 80px;
-  min-height: 24px; /* ensure consistent vertical size so + aligns nicely */
+  min-height: 40px; /* ensure consistent vertical size so + aligns nicely */
   box-sizing: border-box;
   background: transparent;
 }
