@@ -243,6 +243,50 @@ export function GameDataProvider({ children }) {
     broadcastUpdate();
   }, [queryClient, broadcastUpdate]);
 
+  // --- NYT: updateState(patch) - merge en lille patch ind i query cache uden at overskrive alt ---
+  const deepMergeObj = useCallback((target, patch) => {
+    if (!patch || typeof patch !== 'object') return target;
+    if (!target || typeof target !== 'object') {
+      return Array.isArray(patch) ? patch.slice() : { ...patch };
+    }
+    const out = Array.isArray(target) ? target.slice() : { ...target };
+    for (const key of Object.keys(patch)) {
+      const pv = patch[key];
+      const tv = out[key];
+      if (
+        pv &&
+        typeof pv === 'object' &&
+        !Array.isArray(pv) &&
+        tv &&
+        typeof tv === 'object' &&
+        !Array.isArray(tv)
+      ) {
+        out[key] = deepMergeObj(tv, pv);
+      } else {
+        out[key] = pv;
+      }
+    }
+    return out;
+  }, []);
+
+  const updateState = useCallback((patch) => {
+    if (!patch || typeof patch !== 'object') return;
+    try {
+      queryClient.setQueryData(['alldata'], (prev) => {
+        if (!prev) return prev;
+        const merged = deepMergeObj(prev, patch);
+        // ensure lastUpdated changes so listeners can react
+        merged.meta = { ...(merged.meta || {}), lastUpdated: Date.now() };
+        return merged;
+      });
+      broadcastUpdate();
+    } catch (e) {
+      // defensive: if merge fails, fall back to a full refresh (caller can choose)
+      console.warn('updateState failed', e);
+    }
+  }, [queryClient, deepMergeObj, broadcastUpdate]);
+  // --- /NYT ---
+
   const refreshData = useCallback(async (...args) => {
     try {
       const res = await refetch(...args);
@@ -277,7 +321,9 @@ export function GameDataProvider({ children }) {
     applyResourceDeltaMap,
     removeActiveBuild,
     normalizeDefsForIcons,
-  }), [isLoading, data, artManifest, error, refreshData, ensureFreshData, applyLockedCostsDelta, applyResourceDeltaMap, removeActiveBuild]);
+    // eksporter updateState så komponenter kan anvende kompakte patches
+    updateState,
+  }), [isLoading, data, artManifest, error, refreshData, ensureFreshData, applyLockedCostsDelta, applyResourceDeltaMap, removeActiveBuild, normalizeDefsForIcons, updateState]);
 
   return (
     <GameDataContext.Provider value={value}>

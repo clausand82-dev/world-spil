@@ -5,7 +5,7 @@ import { addMarketRefreshListener, removeMarketRefreshListener, triggerMarketRef
 import Icon from '../ui/Icon.jsx';
 
 /*
-  MarketTab — kun ændring: brug ui/Icon.jsx til at vise resource-ikoner.
+  MarketTab — kun ændring: brug updateState fra GameDataContext hvis backend returnerer delta.
   ALT andet er uændret så købsflow (BuyModal + onBuy) forbliver præcis som før.
 */
 
@@ -33,7 +33,7 @@ export default function MarketTab() {
     .market-toolbar { display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin:10px 0 18px 0; }
   `;
 
-  const { data: gameData, refetch } = useGameData();
+  const { data: gameData, refetch, updateState } = useGameData();
   const userId = gameData?.state?.user?.userId ?? gameData?.state?.user?.user_id ?? 0;
   const money = Number((gameData?.state?.inv?.solid?.money ?? gameData?.state?.inv?.liquid?.money ?? 0));
 
@@ -518,17 +518,42 @@ export default function MarketTab() {
               return;
             }
 
-            // success
+            // success: hvis backend returnerede en kompakt delta, brug den til at patch'e global state
+            const delta = json?.data?.delta ?? null;
+
+            if (delta) {
+              try {
+                // Opdater global game state i GameDataContext (patch)
+                // NOTE: updateState expects the patch to be shaped like { state: { ... } } (we return that from backend)
+                updateState(delta);
+              } catch (e) {
+                console.warn('updateState failed', e);
+                try { await refetch?.(); } catch (e) { /* ignore */ }
+              }
+
+              // Anvend evt. market delta (opdater rækker lokalt)
+              // Offer info may sit under delta.state.market.offer or delta.market.offer depending on backend shape
+              const offer = (delta.state && delta.state.market && delta.state.market.offer) || (delta.market && delta.market.offer) || null;
+              if (offer && offer.id !== undefined) {
+                const offerId = offer.id;
+                const offerAmount = Number(offer.amount || 0);
+                setLocalRows(prev => prev.map(r => (String(r.id) === String(offerId) ? { ...r, amount: offerAmount } : r)).filter(r => Number(r.amount) > 0));
+                setGlobalRows(prev => prev.map(r => (String(r.id) === String(offerId) ? { ...r, amount: offerAmount } : r)).filter(r => Number(r.amount) > 0));
+              }
+
+              // notify resten af app'en — send delta (whole object) with event
+              try { triggerMarketRefresh({ type: 'market_buy', delta }); } catch (e) { /* ignore */ }
+            } else {
+              // fallback: original adfærd (fuld refetch)
+              try { await refetch?.(); } catch (e) { console.warn('refetch failed', e); }
+              await fetchLocal();
+              await fetchGlobal();
+              try { triggerMarketRefresh(); } catch (e) { /* ignore */ }
+            }
+
             setBuyOpen(false);
             setBuyOffer(null);
             setBuyError(null);
-            // sørg for at opdatere global game-data først
-            try { await refetch?.(); } catch (e) { console.warn('refetch failed', e); }
-            // opdater markeds-lister
-            await fetchLocal();
-            await fetchGlobal();
-            // notify resten af app'en om at noget ændrede sig (fx Header/Inventory kan lytte)
-            try { triggerMarketRefresh(); } catch (e) { /* ignore */ }
 
             setSuccessMessage('Købet er gennemført.');
             setSuccessOpen(true);

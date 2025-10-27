@@ -1,13 +1,24 @@
-const EVT = 'market:refresh';
+// Market events helper: lyttere kan modtage et valgfrit payload (fx delta)
+// Replace or create this file at src/events/marketEvents.js
 
-export function triggerMarketRefresh() {
-  try { window.dispatchEvent(new CustomEvent(EVT)); } catch {}
-}
+const listeners = new Set();
 
 export function addMarketRefreshListener(fn) {
-  try { window.addEventListener(EVT, fn); } catch {}
+  if (typeof fn !== 'function') return;
+  listeners.add(fn);
+}
+export function removeMarketRefreshListener(fn) {
+  listeners.delete(fn);
 }
 
-export function removeMarketRefreshListener(fn) {
-  try { window.removeEventListener(EVT, fn); } catch {}
+// triggerMarketRefresh kan nu sende en valgfri payload (fx { type:'market_buy', delta: {...} })
+// Lyttere bestemmer selv om de anvender payload. Vi kalder dem synkront (som før).
+export function triggerMarketRefresh(payload = null) {
+  for (const fn of Array.from(listeners)) {
+    try {
+      try { fn(payload); } catch (inner) { console.warn('marketRefresh listener failed', inner); }
+    } catch (e) {
+      console.warn('marketEvents trigger failed', e);
+    }
+  }
 }

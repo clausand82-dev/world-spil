@@ -8,7 +8,8 @@ import { triggerMarketRefresh } from '../../events/marketEvents.js';
 const GLOBAL_MIN_STAGE = 2; // same as before
 
 export default function ResourceTradeController({ onChanged }) {
-  const { data: gameData, refreshData } = useGameData();
+  // NOTE: we now destructure updateState in addition to refreshData
+  const { data: gameData, refreshData, updateState } = useGameData();
   const stage = Number(gameData?.state?.user?.currentstage ?? 0);
   const inv = gameData?.state?.inv || { solid: {}, liquid: {} };
 
@@ -62,7 +63,7 @@ export default function ResourceTradeController({ onChanged }) {
     setLoadingUnit(true);
     try {
       const resp = await fetch(`/world-spil/backend/api/resource_price.php?res_id=${encodeURIComponent(rId)}&context=local`, { credentials: 'include' });
-      const json = await resp.json();
+      const json = await resp.json().catch(() => null);
       if (json && json.ok && json.data?.price !== undefined) {
         setUnitBackend(Number(json.data.price));
       } else {
@@ -77,43 +78,80 @@ export default function ResourceTradeController({ onChanged }) {
 
   // Local accepted handler (sends res_id + amount only)
   const onLocalAccepted = async ({ qty }) => {
-  try {
-    const r = await fetch('/world-spil/backend/api/actions/market_local_sell.php', {
-      method: 'POST', credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ res_id: resId, amount: qty })
-    }).then(r => r.json());
-    if (!r?.ok) throw new Error(r?.error?.message || 'Fejl');
+    try {
+      const r = await fetch('/world-spil/backend/api/actions/market_local_sell.php', {
+        method: 'POST', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ res_id: resId, amount: qty })
+      }).then(r => r.json().catch(() => null));
 
-    triggerMarketRefresh();       // tell MarketTab to reload lists
-    await refreshData?.();        // refresh resources/money
-    onChanged?.();
-    closeAll();
-  } catch (e) {
-    alert(e.message || 'Salg fejlede');
-    closeAll();
-  }
-};
+      if (!r?.ok) {
+        throw new Error(r?.error?.message || 'Fejl ved lokalt salg');
+      }
+
+      // Hvis backend returnerer en kompakt delta -> patch global state uden fuld refetch
+      const delta = r?.data?.delta ?? null;
+      if (delta) {
+        try {
+          // updateState forventer samme form som vores cache (fx { state: { ... } } eller delta direkte)
+          updateState(delta);
+        } catch (e) {
+          console.warn('ResourceTradeController: updateState failed for local sell, falling back to refresh', e);
+          try { await refreshData?.(); } catch (e2) { /* ignore */ }
+        }
+        // notify resten af app'en om ændringen og send delta så lyttere kan applicere uden refetch
+        try { triggerMarketRefresh({ type: 'local_sell', delta }); } catch (e) { /* ignore */ }
+      } else {
+        // fallback: refresh whole data
+        try { await refreshData?.(); } catch (e) { /* ignore */ }
+        try { triggerMarketRefresh(); } catch (e) { /* ignore */ }
+      }
+
+      onChanged?.();
+      closeAll();
+    } catch (e) {
+      // Bevar tidligere UX: simpel alert ved fejl
+      alert(e.message || 'Salg fejlede');
+      closeAll();
+    }
+  };
 
   // Global listing submit (posts res_id, amount, price)
   const onGlobalSubmit = async ({ qty, price }) => {
-  try {
-    const r = await fetch('/world-spil/backend/api/actions/marketplace_create.php', {
-      method: 'POST', credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ res_id: resId, amount: qty, price })
-    }).then(r => r.json());
-    if (!r?.ok) throw new Error(r?.error?.message || 'Fejl');
+    try {
+      const r = await fetch('/world-spil/backend/api/actions/marketplace_create.php', {
+        method: 'POST', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ res_id: resId, amount: qty, price })
+      }).then(r => r.json().catch(() => null));
 
-    triggerMarketRefresh();
-    await refreshData?.();
-    onChanged?.();
-    closeAll();
-  } catch (e) {
-    alert(e.message || 'Sæt til salg fejlede');
-    closeAll();
-  }
-};
+      if (!r?.ok) {
+        throw new Error(r?.error?.message || 'Fejl ved globalt opslag');
+      }
+
+      // Hvis backend returnerer delta, patch cache
+      const delta = r?.data?.delta ?? null;
+      if (delta) {
+        try {
+          updateState(delta);
+        } catch (e) {
+          console.warn('ResourceTradeController: updateState failed for global listing, falling back to refresh', e);
+          try { await refreshData?.(); } catch (e2) { /* ignore */ }
+        }
+        try { triggerMarketRefresh({ type: 'global_listing', delta }); } catch (e) { /* ignore */ }
+      } else {
+        // fallback til fuld refresh
+        try { await refreshData?.(); } catch (e) { /* ignore */ }
+        try { triggerMarketRefresh(); } catch (e) { /* ignore */ }
+      }
+
+      onChanged?.();
+      closeAll();
+    } catch (e) {
+      alert(e.message || 'Sæt til salg fejlede');
+      closeAll();
+    }
+  };
 
   return (
     <>

@@ -10,18 +10,27 @@ header('Content-Type: application/json; charset=utf-8');
 /**
  * marketplace_buy.php
  *
- * Handles BOTH:
- * - Global marketplace purchases (rows in DB table marketplace)
- * - Local marketplace purchases (synthetic rows with id like 'local:0' that do NOT exist in DB)
+ * Supports:
+ *  - Global marketplace purchases (rows in DB table marketplace)
+ *  - Local purchases (synthetic session-based local rows)
  *
- * For local purchases:
- * - We accept body.id like 'local:idx' + body.res_id (e.g. 'res.wood') + body.price + body.amount
- * - We do NOT read/modify marketplace table
- * - We ONLY: check storage capacity, check buyer funds, deduct money, and credit resource to buyer's inventory
- *
- * For global purchases:
- * - We keep existing behavior: lock listing row, check funds, transfer money to seller, credit buyer, update/sell listing
+ * Important: backend returns compact delta in data.delta.state (with inv / market keys).
+ * We build the delta as associative arrays and then convert empty arrays to stdClass
+ * so JSON encodes {} for empty buckets without mixing arrays/objects during construction.
  */
+
+function convertEmptyArraysToObjects($v) {
+  if (is_array($v)) {
+    if (count($v) === 0) {
+      return (object)[];
+    }
+    foreach ($v as $k => $sub) {
+      $v[$k] = convertEmptyArraysToObjects($sub);
+    }
+    return $v;
+  }
+  return $v;
+}
 
 try {
   $pdo = db();
@@ -35,11 +44,10 @@ try {
   }
   $buyerId = (int)$buyerId;
 
-  // Read input from JSON body or fallback to POST/GET
+  // Read input
   $raw = file_get_contents('php://input') ?: '';
   $body = json_decode($raw, true);
   if (!is_array($body)) $body = [];
-
   $getIn = function(string $key, $default = null) use ($body) {
     if (array_key_exists($key, $body)) return $body[$key];
     if (isset($_POST[$key])) return $_POST[$key];
@@ -49,14 +57,14 @@ try {
 
   $idStr   = (string)($getIn('id', $getIn('listingId', '')) ?? '');
   $amount  = (float)($getIn('amount', 0) ?? 0);
-  $scope   = strtolower((string)($getIn('scope', '') ?? '')); // optional hint from client
+  $scope   = strtolower((string)($getIn('scope', '') ?? ''));
 
-  // Detect local vs global listing
+  // Local vs global
   $isLocal = ($scope === 'local') || (str_starts_with($idStr, 'local:'));
   if ($isLocal) {
-    // Lokal køb: læs listing fra session (skal være initialiseret af marketplace_list.php)
+    // LOCAL purchase (session-based listings)
     if (session_status() !== PHP_SESSION_ACTIVE) session_start();
-    $hourKey = date('YmdH'); // samme key som marketplace_list.php bruger
+    $hourKey = date('YmdH');
 
     if (empty($_SESSION['market_local'][$hourKey]['rows']) || !is_array($_SESSION['market_local'][$hourKey]['rows'])) {
       http_response_code(400);
@@ -88,16 +96,15 @@ try {
       exit;
     }
 
-    // bestem pris (foretræk listing.price, ellers payload)
+    // determine price
     $pricePayload = $getIn('price', null);
     $usePrice = isset($listing['price']) ? (float)$listing['price'] : (is_numeric($pricePayload) ? (float)$pricePayload : 0.0);
     $resId = (string)($listing['res_id'] ?? $getIn('res_id', ''));
     $total = $usePrice * $amount;
 
-    // Begin DB-transaction for penge + inventory-opdatering (kapacitetscheck osv.)
     $pdo->beginTransaction();
 
-    // capacity check helpers must eksistere
+    // require yield helpers
     if (!function_exists('load_all_defs') || !function_exists('yield__build_min_state') || !function_exists('yield__read_user_caps') || !function_exists('yield__compute_bucket_usage')) {
       $pdo->rollBack();
       http_response_code(500);
@@ -119,7 +126,7 @@ try {
     $needSpace = $amount * $unitSpace;
     $bucket = $isLiquid ? 'liquid' : 'solid';
 
-    // Lock buyer inventory rows to stabilize snapshot and prevent race
+    // Lock buyer inventory
     $pdo->prepare("SELECT res_id FROM inventory WHERE user_id = ? FOR UPDATE")->execute([$buyerId]);
 
     $state = yield__build_min_state($pdo, $buyerId);
@@ -144,7 +151,7 @@ try {
       exit;
     }
 
-    // Check and deduct buyer funds if total > 0
+    // Check and deduct buyer funds
     if ($total > 0) {
       $selMoney = $pdo->prepare("SELECT amount FROM inventory WHERE user_id = ? AND res_id = 'res.money' FOR UPDATE");
       $selMoney->execute([$buyerId]);
@@ -157,6 +164,11 @@ try {
       }
       $updMoney = $pdo->prepare("UPDATE inventory SET amount = amount - ? WHERE user_id = ? AND res_id = 'res.money'");
       $updMoney->execute([$total, $buyerId]);
+      $newBuyerMoney = $haveMoney - $total;
+    } else {
+      $selMoney = $pdo->prepare("SELECT amount FROM inventory WHERE user_id = ? AND res_id = 'res.money' FOR UPDATE");
+      $selMoney->execute([$buyerId]);
+      $newBuyerMoney = (float)($selMoney->fetchColumn() ?? 0.0);
     }
 
     // Credit buyer resource — upsert
@@ -169,7 +181,12 @@ try {
 
     $pdo->commit();
 
-    // Reducer mængden i session-listen EFTER succesfuld commit
+    // Read back amounts for delta
+    $selNewRes = $pdo->prepare("SELECT amount FROM inventory WHERE user_id = ? AND res_id = ?");
+    $selNewRes->execute([$buyerId, $resId]);
+    $newBuyerAmount = (float)($selNewRes->fetchColumn() ?? 0.0);
+
+    // Reduce session list
     $remaining = $available - $amount;
     if ($remaining > 0) {
       $rows[$foundIndex]['amount'] = $remaining;
@@ -177,15 +194,40 @@ try {
       array_splice($rows, $foundIndex, 1);
     }
 
+    // Build delta: associative arrays only
+    $plainKey = preg_replace('/^res\./', '', $resId);
+    $deltaState = [
+      'inv' => [
+        'solid' => [],
+        'liquid' => []
+      ],
+      'market' => [
+        'offer' => [
+          'id' => $idStr,
+          'amount' => $remaining
+        ]
+      ]
+    ];
+
+    $deltaState['inv']['solid']['money'] = $newBuyerMoney;
+    if ($bucket === 'liquid') {
+      $deltaState['inv']['liquid'][$plainKey] = $newBuyerAmount;
+    } else {
+      $deltaState['inv']['solid'][$plainKey] = $newBuyerAmount;
+    }
+
+    // ensure empty arrays are encoded as {} in JSON (convert only empty arrays to objects)
+    $deltaState = convertEmptyArraysToObjects($deltaState);
+
     echo json_encode(['ok'=>true,'data'=>[
-      'scope'=>'local','id'=>$idStr,'bought'=>$amount,'paid'=>$total,'res_id'=>$resId,'remaining'=>$remaining
+      'scope'=>'local','id'=>$idStr,'bought'=>$amount,'paid'=>$total,'res_id'=>$resId,'remaining'=>$remaining,
+      'delta' => ['state' => $deltaState]
     ]], JSON_UNESCAPED_UNICODE);
     exit;
   }
 
-  // === GLOBAL marketplace purchase (existing behavior) ===
+  // === GLOBAL purchase ===
 
-  // Validate input for global: numeric id and amount
   $id = (int)$idStr;
   if ($id <= 0 || $amount <= 0) {
     http_response_code(400);
@@ -195,7 +237,7 @@ try {
 
   $pdo->beginTransaction();
 
-  // 1) Lock listing row
+  // Lock listing
   $st = $pdo->prepare("SELECT * FROM marketplace WHERE id = ? FOR UPDATE");
   $st->execute([$id]);
   $m = $st->fetch(PDO::FETCH_ASSOC);
@@ -232,7 +274,7 @@ try {
   $price = (float)$m['price'];
   $total = $price * $amount;
 
-  // 2) Storage capacity check BEFORE charging money
+  // capacity check
   if (!function_exists('load_all_defs') || !function_exists('yield__build_min_state') || !function_exists('yield__read_user_caps') || !function_exists('yield__compute_bucket_usage')) {
     $pdo->rollBack();
     http_response_code(500);
@@ -245,7 +287,6 @@ try {
   $plainKey = preg_replace('/^res\./','', $resId);
   $resDef = $defsRes[$plainKey] ?? $defsRes[$resId] ?? ($defsRes["res.$plainKey"] ?? null);
 
-  // Determine unitSpace and bucket
   $unit = strtolower((string)($resDef['unit'] ?? $resDef['stats']['unit'] ?? ''));
   $isLiquid = ($unit === 'l');
   $unitSpace = 0.0;
@@ -255,12 +296,11 @@ try {
   $needSpace = $amount * $unitSpace;
   $bucket = $isLiquid ? 'liquid' : 'solid';
 
-  // Lock buyer inventory rows to stabilize snapshot and prevent race
   $pdo->prepare("SELECT res_id FROM inventory WHERE user_id = ? FOR UPDATE")->execute([$buyerId]);
 
   $state = yield__build_min_state($pdo, $buyerId);
-  $caps  = yield__read_user_caps($pdo, $buyerId, $defs, $state);   // ['solid'=>..., 'liquid'=>...]
-  $usage = yield__compute_bucket_usage($pdo, $buyerId, $defs);     // ['solid'=>..., 'liquid'=>...]
+  $caps  = yield__read_user_caps($pdo, $buyerId, $defs, $state);
+  $usage = yield__compute_bucket_usage($pdo, $buyerId, $defs);
 
   if (!array_key_exists($bucket, $caps) || !array_key_exists($bucket, $usage)) {
     $pdo->rollBack();
@@ -292,8 +332,7 @@ try {
     exit;
   }
 
-  // 3) Check and deduct buyer funds
-  // Lock/peek buyer money row
+  // buyer money
   $selMoney = $pdo->prepare("SELECT amount FROM inventory WHERE user_id = ? AND res_id = 'res.money' FOR UPDATE");
   $selMoney->execute([$buyerId]);
   $haveMoney = (float)($selMoney->fetchColumn() ?? 0.0);
@@ -304,11 +343,9 @@ try {
     exit;
   }
 
-  // Deduct buyer money (UPDATE is safe after row lock)
   $updMoney = $pdo->prepare("UPDATE inventory SET amount = amount - ? WHERE user_id = ? AND res_id = 'res.money'");
   $updMoney->execute([$total, $buyerId]);
 
-  // Credit seller money (upsert)
   $insSellerMoney = $pdo->prepare("
     INSERT INTO inventory (user_id, res_id, amount)
     VALUES (?, 'res.money', ?)
@@ -316,7 +353,7 @@ try {
   ");
   $insSellerMoney->execute([$sellerId, $total]);
 
-  // 4) Credit buyer resource — upsert
+  // credit buyer resource
   $insBuyerRes = $pdo->prepare("
     INSERT INTO inventory (user_id, res_id, amount)
     VALUES (?, ?, ?)
@@ -324,7 +361,16 @@ try {
   ");
   $insBuyerRes->execute([$buyerId, $resId, $amount]);
 
-  // 5) Reduce listing amount / finalize
+  // read new amounts for delta
+  $selNewRes = $pdo->prepare("SELECT amount FROM inventory WHERE user_id = ? AND res_id = ?");
+  $selNewRes->execute([$buyerId, $resId]);
+  $newBuyerAmount = (float)($selNewRes->fetchColumn() ?? 0.0);
+
+  $selNewMoney = $pdo->prepare("SELECT amount FROM inventory WHERE user_id = ? AND res_id = 'res.money'");
+  $selNewMoney->execute([$buyerId]);
+  $newBuyerMoney = (float)($selNewMoney->fetchColumn() ?? 0.0);
+
+  // finalize listing
   $left = $available - $amount;
   if ($left > 0) {
     $pdo->prepare("UPDATE marketplace SET amount = ? WHERE id = ?")->execute([$left, $id]);
@@ -333,6 +379,32 @@ try {
   }
 
   $pdo->commit();
+
+  // Build delta with associative arrays
+  $plainKey = preg_replace('/^res\./', '', $resId);
+  $deltaState = [
+    'inv' => [
+      'solid' => [],
+      'liquid' => []
+    ],
+    'market' => [
+      'offer' => [
+        'id' => $id,
+        'amount' => $left
+      ]
+    ]
+  ];
+
+  $deltaState['inv']['solid']['money'] = $newBuyerMoney;
+  if ($bucket === 'liquid') {
+    $deltaState['inv']['liquid'][$plainKey] = $newBuyerAmount;
+  } else {
+    $deltaState['inv']['solid'][$plainKey] = $newBuyerAmount;
+  }
+
+  // convert empty arrays -> objects for JSON only
+  $deltaState = convertEmptyArraysToObjects($deltaState);
+
   echo json_encode(['ok'=>true,'data'=>[
     'scope'      => 'global',
     'id'         => $id,
@@ -341,7 +413,8 @@ try {
     'paid'       => $total,
     'res_id'     => $resId,
     'bucket'     => $bucket,
-    'unit_space' => $unitSpace
+    'unit_space' => $unitSpace,
+    'delta'      => ['state' => $deltaState]
   ]], JSON_UNESCAPED_UNICODE);
   exit;
 

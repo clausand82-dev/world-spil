@@ -9,14 +9,25 @@ import CapHoverContent from '../../components/ui/CapHoverContent.jsx';
 import ResourceCapacityModal from './ResourceCapacityModal.jsx';
 
 export default function InventoryPage() {
-  const { data, isLoading, error, refetch } = useGameData();
+  const { data, isLoading, error, refetch, updateState } = useGameData();
   // fallback tick for callers where refetch isn't present
   const [, setTick] = useState(0);
 
   // Re-fetch when market signals change, and when window regains focus / becomes visible
   useEffect(() => {
-    const refresh = async () => {
+    const refresh = async (payload = null) => {
       try {
+        // Hvis event kom med en delta fra markedet, patch global state i stedet for at refetche hele payload
+        if (payload && payload.type === 'market_buy' && payload.delta) {
+          try {
+            updateState(payload.delta);
+            return;
+          } catch (e) {
+            console.warn('InventoryTab apply payload failed', e);
+            // fallback til refetch
+          }
+        }
+
         if (document.visibilityState !== 'visible') return;
         if (typeof refetch === 'function') {
           await refetch();
@@ -41,13 +52,13 @@ export default function InventoryPage() {
       document.removeEventListener('visibilitychange', onVisibility);
       removeMarketRefreshListener(refresh);
     };
-  }, [refetch]);
+  }, [refetch, updateState]);
 
   if (isLoading) return <div className="sub">Indlæser beholdning...</div>;
   if (error) return <div className="sub">Fejl: Kunne ikke hente data.</div>;
 
-  const { defs, state } = data;
-  const { cap = {}, inv = {} } = state;
+  const { defs, state } = data || {};
+  const { cap = {}, inv = {} } = state || {};
 
   const liquidCap = cap.liquid || cap.storageLiquidCap || {};
   const solidCap = cap.solid || cap.storageSolidCap || {};
@@ -97,7 +108,7 @@ export default function InventoryPage() {
           </span>
         </div>
         <div className="section-body">
-          <ResourceList items={inv?.liquid} defs={defs.res} />
+          <ResourceList items={inv?.liquid} defs={defs?.res} />
         </div>
       </section>
 
@@ -127,7 +138,7 @@ export default function InventoryPage() {
           </span>
         </div>
         <div className="section-body">
-          <ResourceList items={inv?.solid} defs={defs.res} />
+          <ResourceList items={inv?.solid} defs={defs?.res} />
         </div>
       </section>
 
@@ -158,7 +169,7 @@ export default function InventoryPage() {
         onClose={closeModal}
         title="Flydende ressourcer – fordeling"
         items={inv?.liquid}
-        resDefs={defs.res || {}}
+        resDefs={defs?.res || {}}
         totalCapacity={Number(liquidCap.total || 0)}
       />
 
@@ -167,7 +178,7 @@ export default function InventoryPage() {
         onClose={closeModal}
         title="Faste ressourcer – fordeling"
         items={inv?.solid}
-        resDefs={defs.res || {}}
+        resDefs={defs?.res || {}}
         totalCapacity={Number(solidCap.total || 0)}
       />
     </>
