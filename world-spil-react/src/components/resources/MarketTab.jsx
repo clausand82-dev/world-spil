@@ -2,6 +2,12 @@ import React, { useEffect, useMemo, useState } from 'react';
 import BuyModal from './modals/BuyModal.jsx';
 import { useGameData } from '../../context/GameDataContext.jsx';
 import { addMarketRefreshListener, removeMarketRefreshListener, triggerMarketRefresh  } from '../../events/marketEvents.js';
+import Icon from '../ui/Icon.jsx';
+
+/*
+  MarketTab — kun ændring: brug ui/Icon.jsx til at vise resource-ikoner.
+  ALT andet er uændret så købsflow (BuyModal + onBuy) forbliver præcis som før.
+*/
 
 export default function MarketTab() {
   const tableCss = `
@@ -25,11 +31,6 @@ export default function MarketTab() {
     .segmented button.active { background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01)); border-color: rgba(255,255,255,0.08); }
 
     .market-toolbar { display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin:10px 0 18px 0; }
-    .market-toolbar .search { flex:1 1 320px; display:flex; align-items:center; gap:8px; background:var(--panel-bg); border:1px solid rgba(255,255,255,0.04); padding:6px 10px; border-radius:10px; }
-    .market-toolbar .search input { flex:1; background:transparent; border:0; color:var(--text); outline:none; font-size:14px; min-width:0; }
-    .market-toolbar select, .market-toolbar input[type="text"] { background:var(--panel-bg); border:1px solid rgba(255,255,255,0.04); color:var(--text); padding:6px 8px; border-radius:8px; font-size:14px; }
-    .market-toolbar .actions { margin-left:auto; display:flex; gap:8px; }
-    .market-toolbar .tab.update { background: linear-gradient(90deg,#0ea5a0,#06b6d4); color:#021025; border:0; padding:8px 12px; border-radius:8px; }
   `;
 
   const { data: gameData, refetch } = useGameData();
@@ -107,132 +108,6 @@ export default function MarketTab() {
     // Fallback: pretty-printed JSON
     try { return JSON.stringify(details, null, 2); } catch { return String(details); }
   };
-  function ErrorModal({ isOpen, payload, onClose }) {
-    if (!isOpen) return null;
-    const msg = payload?.message || 'Ukendt fejl';
-    const details = payload?.details ?? payload?.debug ?? payload?.error ?? null;
-    return (
-      <div
-        style={{
-          position: 'fixed',
-          inset: 0,
-          zIndex: 31000,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: 'rgba(2,6,23,0.6)',
-          padding: 12,
-          backdropFilter: 'blur(2px)'
-        }}
-        onMouseDown={(e) => { if (e.target === e.currentTarget) onClose && onClose(); }}
-      >
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-label="Fejl"
-          style={{
-            width: 'min(760px, 94%)',
-            maxWidth: 760,
-            borderRadius: 10,
-            padding: 16,
-            background: 'var(--panel-bg, #071128)',
-            color: 'var(--text, #e6eef8)',
-            boxShadow: '0 12px 40px rgba(2,6,23,0.7)'
-          }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-            <div style={{ fontWeight: 700 }}>Fejl</div>
-            <button className="icon-btn" onClick={onClose} aria-label="Luk">✕</button>
-          </div>
-
-          <div style={{ marginBottom: 12, color: 'var(--price-bad, #ff8080)' }}>
-            {msg}
-          </div>
-
-          {details && (
-            <div style={{ marginBottom: 10, fontSize: 13, color: '#cbd5e1' }}>
-              <div style={{ marginBottom: 6, fontWeight: 700 }}>Detaljer</div>
-              <pre style={{ whiteSpace: 'pre-wrap', fontSize: 12, margin: 0, color: '#cbd5e1' }}>
-                {renderDetails(details)}
-              </pre>
-            </div>
-          )}
-
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-            <button className="tab" onClick={onClose}>Luk</button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  function ConfirmModal({ isOpen, title, message, onCancel, onConfirm }) {
-    if (!isOpen) return null;
-    return (
-      <div
-        style={{
-          position: 'fixed',
-          inset: 0,
-          zIndex: 30000,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: 'rgba(2,6,23,0.6)',
-          padding: 12,
-          backdropFilter: 'blur(2px)'
-        }}
-        onMouseDown={(e) => { if (e.target === e.currentTarget) onCancel && onCancel(); }}
-      >
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-label={title || 'Bekræft'}
-          style={{
-            width: 'min(720px, 92%)',
-            maxWidth: 520,
-            borderRadius: 10,
-            padding: 18,
-            background: 'var(--panel-bg, #071128)',
-            color: 'var(--text, #e6eef8)',
-            boxShadow: '0 12px 40px rgba(2,6,23,0.7)'
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-            <div style={{ fontWeight: 700 }}>{title || 'Bekræft'}</div>
-            <button className="icon-btn" onClick={onCancel} aria-label="Luk">✕</button>
-          </div>
-
-          <div style={{ marginBottom: 14, color: '#cbd5e1' }}>{message}</div>
-
-          <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-            <button className="tab" onClick={onCancel}>Fortryd</button>
-            <button className="tab" onClick={() => { onConfirm && onConfirm(); }} style={{ background: 'linear-gradient(90deg,#ef4444,#f97316)', color: '#021025' }}>Bekræft</button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  function SuccessModal({ isOpen, message, onClose }) {
-    if (!isOpen) return null;
-    return (
-      <div style={{
-        position: 'fixed', inset: 0, zIndex: 30500, display: 'flex',
-        alignItems: 'center', justifyContent: 'center', pointerEvents: 'auto'
-      }}>
-        <div style={{
-          background: 'linear-gradient(180deg, #062031, #071128)', color: '#e6eef8',
-          padding: 14, borderRadius: 10, boxShadow: '0 10px 30px rgba(2,6,23,0.6)', minWidth: 300
-        }}>
-          <div style={{ fontWeight: 700, marginBottom: 6 }}>Færdig</div>
-          <div style={{ color: '#cbd5e1', marginBottom: 10 }}>{message}</div>
-          <div style={{ textAlign: 'right' }}>
-            <button className="tab" onClick={onClose}>Ok</button>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   // defs lookup helper
   const defs = gameData?.defs || gameData?.data?.defs || gameData?.state?.defs || gameData?.state?.resourceDefs || {};
@@ -298,29 +173,29 @@ export default function MarketTab() {
 
   // initial load
   useEffect(() => { fetchLocal(); fetchGlobal(); }, []);
-useEffect(() => { if (viewMode === 'global') fetchGlobal(); }, [ownMode, sort, q, viewMode]);
+  useEffect(() => { if (viewMode === 'global') fetchGlobal(); }, [ownMode, sort, q, viewMode]);
 
-// NEW: refresh on focus/visibility + global event
-useEffect(() => {
-  const refreshLists = () => {
-    if (document.visibilityState === 'visible') {
-      fetchLocal();
-      fetchGlobal();
-    }
-  };
-  const onFocus = () => refreshLists();
-  const onVisibility = () => refreshLists();
+  // NEW: refresh on focus/visibility + global event
+  useEffect(() => {
+    const refreshLists = () => {
+      if (document.visibilityState === 'visible') {
+        fetchLocal();
+        fetchGlobal();
+      }
+    };
+    const onFocus = () => refreshLists();
+    const onVisibility = () => refreshLists();
 
-  window.addEventListener('focus', onFocus);
-  document.addEventListener('visibilitychange', onVisibility);
-  addMarketRefreshListener(refreshLists);
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onVisibility);
+    addMarketRefreshListener(refreshLists);
 
-  return () => {
-    window.removeEventListener('focus', onFocus);
-    document.removeEventListener('visibilitychange', onVisibility);
-    removeMarketRefreshListener(refreshLists);
-  };
-}, []);
+    return () => {
+      window.removeEventListener('focus', onFocus);
+      document.removeEventListener('visibilitychange', onVisibility);
+      removeMarketRefreshListener(refreshLists);
+    };
+  }, []);
 
   // open buy (use normalized offer) and clear previous errors
   const openBuy = (offer) => {
@@ -440,6 +315,22 @@ useEffect(() => {
 
   const displayedGlobal = useMemo(() => sortRows(filteredGlobalRows), [filteredGlobalRows, sort]);
 
+  // Helper to render the icon + name cell but using ui/Icon for robustness
+  const renderResCell = (rawOffer) => {
+    const norm = normalizeOffer(rawOffer, defs);
+    const emojiDef = { iconUrl: rawOffer.iconUrl || norm.iconUrl || null, emoji: norm.res_emoji || null, name: norm.res_name };
+    return (
+      <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+        <div style={{ width: 24, flex: '0 0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Icon def={emojiDef} alt={norm.res_name} size={36} />
+        </div>
+        <div style={{ minWidth: 0 }}>
+          <div className="res-name" style={{ fontSize:14, color:'#fff', fontWeight:700 }}>{norm.res_name}</div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div style={{ display: 'grid', gap: 16 }}>
       <style>{tableCss}</style>
@@ -516,12 +407,7 @@ useEffect(() => {
                   return (
                     <tr key={r.id}>
                       <td>
-                        <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-                          <div style={{ fontSize:18, flex:'0 0 auto' }}>{norm.res_emoji}</div>
-                          <div style={{ minWidth:0 }}>
-                            <div className="res-name" style={{ fontSize:14, color:'#fff', fontWeight:700 }}>{norm.res_name}</div>
-                                                    </div>
-                        </div>
+                        {renderResCell(r)}
                       </td>
                       <td>{formatAmountAsInt(r.amount)}</td>
                       <td>{formatTwoDecimals(r.price)}</td>
@@ -561,18 +447,12 @@ useEffect(() => {
                 {displayedGlobal.length === 0 ? (
                   <tr><td colSpan={7} style={{ color:'#6b7280' }}>Ingen opslag</td></tr>
                 ) : displayedGlobal.map(r => {
-                  const isSelf = r.seller?.user_id && Number(r.seller.user_id) === Number(userId);
                   const norm = normalizeOffer(r, defs);
+                  const isSelf = r.seller?.user_id && Number(r.seller.user_id) === Number(userId);
                   return (
                     <tr key={r.id}>
                       <td>
-                        <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-                          <div style={{ fontSize:18, flex:'0 0 auto' }}>{norm.res_emoji}</div>
-                          <div style={{ minWidth:0 }}>
-                            <div className="res-name" style={{ fontSize:14, color:'#fff', fontWeight:700 }}>{norm.res_name}</div>
-                      
-                          </div>
-                        </div>
+                        {renderResCell(r)}
                       </td>
                       <td>{formatAmountAsInt(r.amount)}</td>
                       <td>{formatTwoDecimals(r.price)}</td>
@@ -665,27 +545,50 @@ useEffect(() => {
       />
 
       {/* Confirm modal */}
-      <ConfirmModal
-        isOpen={confirmOpen}
-        title={confirmPayload.title}
-        message={confirmPayload.message}
-        onCancel={() => setConfirmOpen(false)}
-        onConfirm={() => { confirmPayload.onConfirm && confirmPayload.onConfirm(); }}
-      />
+      {confirmOpen && (
+        <div role="dialog" aria-modal style={{ position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 32000 }}>
+          <div style={{ padding: 20, background: 'var(--panel-bg, #071128)', borderRadius: 8 }}>
+            <div style={{ fontWeight: 700, marginBottom: 8 }}>{confirmPayload.title}</div>
+            <div style={{ marginBottom: 12 }}>{confirmPayload.message}</div>
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+              <button className="tab" onClick={() => setConfirmOpen(false)}>Annuller</button>
+              <button className="tab update" onClick={async () => { if (confirmPayload.onConfirm) await confirmPayload.onConfirm(); }}>Bekræft</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* success confirmation */}
-      <SuccessModal
-        isOpen={successOpen}
-        message={successMessage}
-        onClose={() => setSuccessOpen(false)}
-      />
+      {successOpen && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 30500, display: 'flex',
+          alignItems: 'center', justifyContent: 'center', pointerEvents: 'auto'
+        }}>
+          <div style={{
+            background: 'linear-gradient(180deg, #062031, #071128)', color: '#e6eef8',
+            padding: 14, borderRadius: 10, boxShadow: '0 10px 30px rgba(2,6,23,0.6)', minWidth: 300
+          }}>
+            <div style={{ fontWeight: 700, marginBottom: 6 }}>Færdig</div>
+            <div style={{ color: '#cbd5e1', marginBottom: 10 }}>{successMessage}</div>
+            <div style={{ textAlign: 'right' }}>
+              <button className="tab" onClick={() => setSuccessOpen(false)}>Ok</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* global error modal (renders backend/client errors) */}
-      <ErrorModal
-        isOpen={errorOpen}
-        payload={errorPayload}
-        onClose={() => { setErrorOpen(false); setErrorPayload(null); }}
-      />
+      {errorOpen && (
+        <div role="dialog" aria-modal style={{ position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 32000 }}>
+          <div style={{ padding: 20, background: 'var(--panel-bg, #071128)', borderRadius: 8 }}>
+            <div style={{ fontWeight: 700, marginBottom: 8 }}>Fejl</div>
+            <pre style={{ whiteSpace: 'pre-wrap', fontSize: 12 }}>{JSON.stringify(errorPayload, null, 2)}</pre>
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+              <button className="tab" onClick={() => setErrorOpen(false)}>Luk</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

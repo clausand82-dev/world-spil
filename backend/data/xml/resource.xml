@@ -342,6 +342,12 @@
     <emoji>ironore.png</emoji>
   </resource>
 
+  <resource id="res.ironbar" family="basic" type="minning" lvl="1" stage="1">
+    <unit>pcs</unit>
+    <unitSpace>0.7</unitSpace>
+    <emoji>ironbar.png</emoji>
+  </resource>
+
     <resource id="res.bronzeore" family="basic" type="minning" lvl="1" stage="1">
     <unit>pcs</unit>
     <unitSpace>0.7</unitSpace>
