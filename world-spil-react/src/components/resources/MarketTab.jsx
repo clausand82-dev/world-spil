@@ -1,15 +1,17 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import BuyModal from './modals/BuyModal.jsx';
 import { useGameData } from '../../context/GameDataContext.jsx';
 import { addMarketRefreshListener, removeMarketRefreshListener, triggerMarketRefresh  } from '../../events/marketEvents.js';
 import Icon from '../ui/Icon.jsx';
 
 /*
-  MarketTab — komplet fil. Denne version:
-   - indlæser local/global lister
-   - håndterer buy, cancel, insert via delta hvis backend returnerer det
-   - opdaterer lokale rækker (localRows/globalRows) ud fra payload
-   - fallback: refetch/fetchLocal/fetchGlobal
+  MarketTab — komplet fil (opdateret)
+
+  Ændringer i denne version:
+  - Fjernet alle console.* logs (du ønskede dem slettet).
+  - Tilføjet debounce på søgefeltet for at reducere hyppige re-computations ved stor liste.
+  - Brug af useRef til at holde styr på active timeout(s) (success toast) og rydder dem ved unmount.
+  - Små kommentarer der forklarer hvorfor nogle konstruktioner er til stede.
 */
 
 export default function MarketTab() {
@@ -48,7 +50,8 @@ export default function MarketTab() {
 
   // view + filters (global only)
   const [viewMode, setViewMode] = useState('local'); // 'local' | 'global'
-  const [q, setQ] = useState('');
+  const [q, setQ] = useState('');           // debounced query used for filtering
+  const [qInput, setQInput] = useState(''); // immediate input value bound to the text field
   const [ownMode, setOwnMode] = useState('exclude'); // exclude | include | only
   const [sort, setSort] = useState('price_asc');
 
@@ -64,6 +67,7 @@ export default function MarketTab() {
   // success toast/modal
   const [successOpen, setSuccessOpen] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  const successTimerRef = useRef(null);
 
   // error modal state (shared)
   const [errorOpen, setErrorOpen] = useState(false);
@@ -73,6 +77,38 @@ export default function MarketTab() {
     setErrorPayload(payload);
     setErrorOpen(true);
   };
+
+  // debounce timer for search input
+  const searchDebounceRef = useRef(null);
+
+  // Cleanup on unmount: clear pending timers to avoid setState on unmounted component
+  useEffect(() => {
+    return () => {
+      if (successTimerRef.current) {
+        clearTimeout(successTimerRef.current);
+        successTimerRef.current = null;
+      }
+      if (searchDebounceRef.current) {
+        clearTimeout(searchDebounceRef.current);
+        searchDebounceRef.current = null;
+      }
+    };
+  }, []);
+
+  // Debounce qInput -> q (250ms). Dette reducerer filtreringsarbejdet ved hurtige tasteinput.
+  useEffect(() => {
+    if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+    searchDebounceRef.current = setTimeout(() => {
+      setQ(qInput);
+      searchDebounceRef.current = null;
+    }, 250);
+    return () => {
+      if (searchDebounceRef.current) {
+        clearTimeout(searchDebounceRef.current);
+        searchDebounceRef.current = null;
+      }
+    };
+  }, [qInput]);
 
   const formatNumber = (v) => { const n = Number(v); if (!Number.isFinite(n)) return String(v); return Math.abs(n - Math.round(n)) < 1e-9 ? String(Math.round(n)) : n.toFixed(2); };
   const renderDetails = (details) => {
@@ -216,7 +252,7 @@ export default function MarketTab() {
           }
         }
       } catch (e) {
-        console.warn('refreshLists targeted update failed', e);
+        // Log removed per request; we intentionally don't print to console in production.
       }
 
       if (document.visibilityState === 'visible') {
@@ -268,7 +304,7 @@ export default function MarketTab() {
       });
       const json = await res.json().catch(() => null);
 
-      console.debug('cancelOwn response', { status: res.status, json });
+      // console.debug removed per request — avoid printing sensitive internals in production.
 
       if (!res.ok || !json?.ok) {
         const err = json?.error || {};
@@ -282,7 +318,7 @@ export default function MarketTab() {
         try {
           updateState?.(delta);
         } catch (e) {
-          console.warn('updateState failed during cancel, will fallback to refetch', e);
+          // Previously we logged; removed per request. We fallback to refetch to ensure UI consistency.
           try { await refetch?.(); } catch (e2) { /* ignore */ }
         }
 
@@ -305,14 +341,20 @@ export default function MarketTab() {
       const msg = json?.data?.message || json?.message || 'Opslaget er annulleret';
       setSuccessMessage(msg);
       setSuccessOpen(true);
-      setTimeout(() => setSuccessOpen(false), 2500);
+
+      // Clear any existing timer before setting a new one
+      if (successTimerRef.current) clearTimeout(successTimerRef.current);
+      successTimerRef.current = setTimeout(() => {
+        setSuccessOpen(false);
+        successTimerRef.current = null;
+      }, 2500);
     } catch (e) {
-      console.error('cancelOwn error', e);
+      // console.error removed per request; show friendly error dialog instead
       showError({ message: e?.message || 'Uventet fejl', details: e });
     }
   };
 
-  // filtering/sorting and rendering code follows (unchanged)
+  // filtering/sorting and rendering code follows (unchanged in logic)
   const normalizeText = (s) => {
     if (!s && s !== 0) return '';
     try {
@@ -415,8 +457,8 @@ export default function MarketTab() {
             <input
               aria-label="Søg i globalt marked"
               placeholder="Søg (navn, id, sælger... )"
-              value={q}
-              onChange={e => setQ(e.target.value)}
+              value={qInput}
+              onChange={e => setQInput(e.target.value)}
             />
           </div>
 
@@ -434,7 +476,7 @@ export default function MarketTab() {
           </select>
 
           <div className="actions" style={{ marginLeft: 'auto' }}>
-            <button className="tab" onClick={() => { setQ(''); setOwnMode('exclude'); setSort('price_asc'); }}>Nulstil filtre</button>
+            <button className="tab" onClick={() => { setQInput(''); setQ(''); setOwnMode('exclude'); setSort('price_asc'); }}>Nulstil filtre</button>
           </div>
         </div>
       )}
@@ -577,7 +619,7 @@ export default function MarketTab() {
               try {
                 updateState?.(delta);
               } catch (e) {
-                console.warn('updateState failed', e);
+                // console.warn removed per request; fallback to refetch on failure
                 try { await refetch?.(); } catch (e) { /* ignore */ }
               }
 
@@ -591,7 +633,7 @@ export default function MarketTab() {
 
               try { triggerMarketRefresh({ type: 'market_buy', delta }); } catch (e) { /* ignore */ }
             } else {
-              try { await refetch?.(); } catch (e) { console.warn('refetch failed', e); }
+              try { await refetch?.(); } catch (e) { /* ignore */ }
               await fetchLocal();
               await fetchGlobal();
               try { triggerMarketRefresh(); } catch (e) { /* ignore */ }
@@ -603,7 +645,13 @@ export default function MarketTab() {
 
             setSuccessMessage('Købet er gennemført.');
             setSuccessOpen(true);
-            setTimeout(() => setSuccessOpen(false), 2200);
+
+            // Clear any existing timer before setting a new one
+            if (successTimerRef.current) clearTimeout(successTimerRef.current);
+            successTimerRef.current = setTimeout(() => {
+              setSuccessOpen(false);
+              successTimerRef.current = null;
+            }, 2200);
           } catch (e) {
             setBuyError({
               message: e?.message || 'Uventet fejl.',

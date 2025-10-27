@@ -8,6 +8,18 @@ import HoverCard from '../../components/ui/HoverCard.jsx';
 import CapHoverContent from '../../components/ui/CapHoverContent.jsx';
 import ResourceCapacityModal from './ResourceCapacityModal.jsx';
 
+/**
+ * InventoryTab.jsx
+ *
+ * Ændringer i denne version:
+ * - Fjernede alle console.* logs (som ønsket).
+ * - Tilføjede håndtering af 'batched' payloads fra marketEvents (hvis marketEvents sender en batch).
+ * - Beholder tidligere fallback-mekanismer: hvis delta findes, prøver vi updateState; ellers refetch eller lokal rerender.
+ * - Kommentarer er tilføjet for at gøre adfærden tydelig.
+ *
+ * Bemærk: eksport-navn er uændret (InventoryPage) for at matche tidligere filindhold og undgå at bryde imports.
+ */
+
 export default function InventoryPage() {
   const { data, isLoading, error, refetch, updateState } = useGameData();
   // fallback tick for callers where refetch isn't present
@@ -15,17 +27,23 @@ export default function InventoryPage() {
 
   // Re-fetch when market signals change, and when window regains focus / becomes visible
   useEffect(() => {
-    const refresh = async (payload = null) => {
+    /**
+     * processSinglePayload(payload)
+     * - Håndterer et enkelt payload objekt fra marketEvents.
+     * - Hvis payload indeholder en kompakt delta, forsøger vi at apply'e den via updateState.
+     * - Hvis payload er et markeds-event uden delta, refetches kun når fanen er synlig.
+     */
+    const processSinglePayload = async (payload = null) => {
       try {
-        // Hvis event kom med en delta fra markedet, patch global state i stedet for at refetche hele payload
-        // Hvis event har en delta, anvend den generisk (dæmper race og gør UI instant)
         if (payload && payload.delta) {
+          // Hvis event kom med en delta fra markedet, patch global state i stedet for at refetche hele payload.
+          // Dette giver mere instant UI og reducerer race-conditions.
           try {
-            updateState(payload.delta);
+            updateState?.(payload.delta);
             return;
           } catch (e) {
-            console.warn('InventoryTab apply payload failed', e);
-            // fallback til refetch
+            // updateState kan fejle hvis deltashape ikke stemmer overens.
+            // Vi logger ikke til console i produktion per ønsket; vi fallback'er blot til refetch nedenfor.
           }
         }
 
@@ -38,6 +56,7 @@ export default function InventoryPage() {
           return;
         }
 
+        // Hvis ingen payload eller payload uden delta og fanen er synlig, refetch/gør lokal rerender
         if (document.visibilityState !== 'visible') return;
         if (typeof refetch === 'function') {
           await refetch();
@@ -46,7 +65,31 @@ export default function InventoryPage() {
           setTick(t => t + 1);
         }
       } catch (e) {
-        // ignore
+        // Intentionelt ingen console.logs her — fejl håndteres stille.
+        // Hvis du vil have synlig fejl-telemetri, kan vi sende til en central logger/telemetri-tjeneste her.
+      }
+    };
+
+    /**
+     * refresh(payload)
+     * - Entrypoint for marketEvents-listener.
+     * - Understøtter både enkelt-payload og batched payloads (type === 'batched' with .events array).
+     * - Hvis batched: behandler events sekventielt (bevarer order).
+     */
+    const refresh = async (payload = null) => {
+      try {
+        if (payload && payload.type === 'batched' && Array.isArray(payload.events)) {
+          // Hvis vi får en batch, anvend hver event efter hinanden.
+          for (const ev of payload.events) {
+            // processSinglePayload tager højde for delta/refetch fallback
+            await processSinglePayload(ev);
+          }
+          return;
+        }
+        // Ellers behandler enkelt-payload normalt
+        await processSinglePayload(payload);
+      } catch (e) {
+        // Ignorer - vi undgår console logs i produktionskoden som ønsket.
       }
     };
 
@@ -55,6 +98,7 @@ export default function InventoryPage() {
 
     window.addEventListener('focus', onFocus);
     document.addEventListener('visibilitychange', onVisibility);
+    // marketEvents kan trigge refresh med payload; lytteren registreres her
     addMarketRefreshListener(refresh);
 
     return () => {

@@ -7,6 +7,17 @@ import { triggerMarketRefresh } from '../../events/marketEvents.js';
 
 const GLOBAL_MIN_STAGE = 2; // same as before
 
+/**
+ * ResourceTradeController
+ *
+ * Ændringer i denne version:
+ * - Alle console.* kald er fjernet (per dit ønske).
+ * - Kommentarer er tilføjet for at gøre flowet tydeligt.
+ * - Funktionalitet er bevaret: forsøger at patch'e deltastate via updateState, og fallback'er til refreshData.
+ *
+ * Bemærk: UX-fejlmeddelelser (alert) er uændrede – du ønskede udelukkende at få log-elementerne fjernet.
+ */
+
 export default function ResourceTradeController({ onChanged }) {
   // NOTE: we now destructure updateState in addition to refreshData
   const { data: gameData, refreshData, updateState } = useGameData();
@@ -94,9 +105,9 @@ export default function ResourceTradeController({ onChanged }) {
       if (delta) {
         try {
           // updateState forventer samme form som vores cache (fx { state: { ... } } eller delta direkte)
-          updateState(delta);
+          updateState?.(delta);
         } catch (e) {
-          console.warn('ResourceTradeController: updateState failed for local sell, falling back to refresh', e);
+          // Fjernet console.warn per ønske. Fallback: refresher data hvis updateState fejler.
           try { await refreshData?.(); } catch (e2) { /* ignore */ }
         }
         // notify resten af app'en om ændringen og send delta så lyttere kan applicere uden refetch
@@ -110,7 +121,7 @@ export default function ResourceTradeController({ onChanged }) {
       onChanged?.();
       closeAll();
     } catch (e) {
-      // Bevar tidligere UX: simpel alert ved fejl
+      // Bevar tidligere UX: simpel alert ved fejl (bevidst ikke ændret)
       alert(e.message || 'Salg fejlede');
       closeAll();
     }
@@ -133,9 +144,9 @@ export default function ResourceTradeController({ onChanged }) {
       const delta = r?.data?.delta ?? null;
       if (delta) {
         try {
-          updateState(delta);
+          updateState?.(delta);
         } catch (e) {
-          console.warn('ResourceTradeController: updateState failed for global listing, falling back to refresh', e);
+          // Fjernet console.warn per ønske. Fallback: refresher data hvis updateState fejler.
           try { await refreshData?.(); } catch (e2) { /* ignore */ }
         }
         try { triggerMarketRefresh({ type: 'global_listing', delta }); } catch (e) { /* ignore */ }
@@ -148,6 +159,7 @@ export default function ResourceTradeController({ onChanged }) {
       onChanged?.();
       closeAll();
     } catch (e) {
+      // Bevar tidligere UX: simpel alert ved fejl (bevidst ikke ændret)
       alert(e.message || 'Sæt til salg fejlede');
       closeAll();
     }
