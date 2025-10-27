@@ -96,6 +96,27 @@ LIMIT :limit OFFSET :offset
   $stmt->execute();
   $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+  // --- ETag / conditional response support (tilføj efter fetchAll) ---
+$rawForEtag = json_encode($rows); // eller vælg en mindre nøgle (fx kun timestamps) for billigere hashing
+$etag = '"' . md5($rawForEtag) . '"';
+
+// Accept både client-sent etag med eller uden quotes:
+$ifNone = $_SERVER['HTTP_IF_NONE_MATCH'] ?? '';
+if ($ifNone !== '') {
+  // normaliser: sørg for match med/uden quotes
+  if ($ifNone === $etag || trim($ifNone, '"') === trim($etag, '"')) {
+    // Ingen ændringer siden klientens version -> 304 uden body
+    http_response_code(304);
+    exit;
+  }
+}
+
+// send etag til klienten så næste request kan revalidere
+header('ETag: ' . $etag);
+// valgfrit: kontrolleret caching-politik
+header('Cache-Control: private, max-age=0, must-revalidate');
+// --- end ETag support ---
+
   // Parse payload_json og eksponér som array
   foreach ($rows as &$r) {
     $raw = $r['payload_json'] ?? '{}';

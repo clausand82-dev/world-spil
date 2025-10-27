@@ -7,76 +7,73 @@ import { getEmojiForId } from "../services/requirements.js";
 // Inkluder yield_lost, så tabte linjer vises i loggen
 const DEFAULT_SHOW_TYPES = ['yield_paid', 'yield_lost', 'build_completed', 'build_canceled'];
 
-function z(n) { return n < 10 ? '0' + n : '' + n; }
+/* ----------------------------- helper utils ----------------------------- */
+function z(n) { return (n < 10 ? '0' : '') + n; }
 
 function utcNowMinus(ms) {
   const d = new Date(Date.now() - ms);
-  const yyyy = d.getUTCFullYear();
-  const mm   = z(d.getUTCMonth() + 1);
-  const dd   = z(d.getUTCDate());
-  const hh   = z(d.getUTCHours());
-  const mi   = z(d.getUTCMinutes());
-  const ss   = z(d.getUTCSeconds());
-  return `${yyyy}-${mm}-${dd} ${hh}:${mi}:${ss}`;
+  return d.toISOString().replace(/\.\d+Z$/, 'Z');
 }
+
+function pad2(n) { return (n < 10 ? '0' : '') + n; }
 
 function formatLocal(ts, assumeUtc = true) {
-  // Robust parsing:
-  // - If ts already contains timezone info (Z or +HH[:MM]/-HH[:MM]) or 'T' use it as-is.
-  // - If not and assumeUtc=true, append 'Z' to treat it as UTC.
-  // - Otherwise treat as local time.
   if (!ts) return '';
-  let s = String(ts).trim();
-  // If already ISO-like or contains explicit timezone offset -> use directly
-  const hasTZ = /[Tt]/.test(s) || /Z$|[+\-]\d{2}(:?\d{2})?$/.test(s);
-  const iso = s.replace(' ', 'T');
-  const d = hasTZ ? new Date(iso) : (assumeUtc ? new Date(iso + 'Z') : new Date(iso));
-
-  const yyyy = d.getFullYear();
-  const mm   = z(d.getMonth() + 1);
-  const dd   = z(d.getDate());
-  const hh   = z(d.getHours());
-  const mi   = z(d.getMinutes());
-  const ss   = z(d.getSeconds());
-  return `${yyyy}-${mm}-${dd} ${hh}:${mi}:${ss}`;
+  try {
+    const d = assumeUtc ? new Date(ts + 'Z') : new Date(ts);
+    return `${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
+  } catch (e) {
+    return ts;
+  }
 }
 
-// Ny hjælpefunktion: parse tidspunkt til millisekunder med samme logik som formatLocal
+// parse tidspunkt til millisekunder med samme logik som formatLocal
 function parseTimestampMillis(ts, assumeUtc = true) {
   if (!ts) return 0;
-  const s = String(ts).trim();
-  const hasTZ = /[Tt]/.test(s) || /Z$|[+\-]\d{2}(:?\d{2})?$/.test(s);
-  const iso = s.replace(' ', 'T');
-  const d = hasTZ ? new Date(iso) : (assumeUtc ? new Date(iso + 'Z') : new Date(iso));
-  const t = d.getTime();
-  return Number.isFinite(t) ? t : 0;
+  try {
+    return (assumeUtc ? new Date(ts + 'Z') : new Date(ts)).getTime();
+  } catch (e) {
+    return 0;
+  }
 }
 
 function stripPrefix(id, pref) {
   if (!id) return id;
-  return String(id).startsWith(pref) ? String(id).slice(pref.length) : String(id);
+  const p = pref + '.';
+  return id.startsWith(p) ? id.slice(p.length) : id;
 }
 
 function getSubjectName(defs, scope, key) {
-  if (!defs) return `${scope}.${key}`;
-  const bucket = ({ bld: 'bld', add: 'add', rcp: 'rcp', rsd: 'rsd', ani: 'ani' })[scope];
-  if (!bucket || !defs[bucket]) return `${scope}.${key}`;
-  const obj = defs[bucket][key];
-  return (obj && (obj.display_name || obj.name || obj.title)) || `${scope}.${key}`;
+  if (!defs || !scope || !key) return key || '';
+  const s = scope === 'res' ? (defs.res || {}) : (defs[scope] || {});
+  const k = stripPrefix(key, scope);
+  return (s[k] && (s[k].name || s[k].label)) || key;
 }
 
 function resName(defs, resId) {
-  const id = stripPrefix(resId, 'res.');
-  if (!defs || !defs.res || !defs.res[id]) return resId;
-  return defs.res[id].name || defs.res[id].display_name || resId;
+  if (!resId) return '';
+  const key = String(resId).replace(/^res\./, '');
+  return (defs?.res?.[key]?.name) || key;
 }
 
-function isUpgrade(mode) {
-  if (!mode) return false;
-  const m = String(mode).toLowerCase();
-  return m.includes('upg') || m === 'upgrade' || m === 'opgrade' || m === 'opgradering';
+function getEmojiForIdSafe(id, defs) {
+  try {
+    return getEmojiForId(id, defs) || '';
+  } catch (e) {
+    return '';
+  }
 }
 
+/* ----------------------------- SidebarLog ----------------------------- */
+/*
+  Improvements implemented:
+  - Incremental fetch: we keep the timestamp of the newest event and request only newer events.
+  - Conditional request support using ETag (If-None-Match / 304) if server supports it.
+  - Adaptive polling/backoff: if no new events we slowly back off up to a max interval.
+  - Pause polling while the tab is hidden (document.visibilityState) to avoid unnecessary work.
+  - Fixed layout so the log list scrolls internally (prevents losing the scroll bar).
+    The component uses a column flex layout and makes the ul.sl-list a flex:1 scroll container.
+*/
 export default function SidebarLog({
   endpoint = '/world-spil/backend/api/user_log.php',
   initialSinceMs = 24 * 3600 * 1000,
@@ -94,65 +91,67 @@ export default function SidebarLog({
   const [items, setItems] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [err, setErr] = useState(null);
+
+  // Refs for incremental/fetch control
   const timerRef = useRef(null);
+  const runningRef = useRef(false);
+  const lastTsRef = useRef(null);      // ISO string or millis of latest event we've seen
+  const etagRef = useRef(null);        // optional ETag from server
+  const adaptiveRef = useRef({ current: pollMs, base: pollMs, max: 5 * 60 * 1000 }); // base and max backoff
 
-  const options = useMemo(() => ([
-    { label: '1t',  value: 1 * 3600 * 1000 },
-    { label: '6t',  value: 6 * 3600 * 1000 },
-    { label: '24t', value: 24 * 3600 * 1000 },
-    { label: '7d',  value: 7 * 24 * 3600 * 1000 },
-    { label: '30d', value: 30 * 24 * 3600 * 1000 },
-  ]), []);
-
-  async function fetchLog() {
-    setIsLoading(true);
-    setErr(null);
-    try {
-      const from = utcNowMinus(sinceMs);
-      const params = new URLSearchParams();
-      params.set('from', from);
-      params.set('limit', String(limit));
-      const url = `${endpoint}?${params.toString()}`;
-
-      const resp = await fetch(url, { credentials: 'include' });
-      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-      const json = await resp.json();
-      const list = Array.isArray(json.items) ? json.items : [];
-
-      // filtrer de typer vi vil se i sidebaren og sorter nyeste først
-      const filtered = list.filter(ev => showTypes.includes(ev.event_type));
-
-      // Beregn en millisekund‑timestamp for hver event ud fra samme UTC/local logik som visningen
-      filtered.forEach(ev => {
-        const assumeUtc = eventTimesAreUTC(ev);
-        ev._ts = parseTimestampMillis(ev.event_time, assumeUtc);
-      });
-
-      // Sortér efter parsed tid (nyeste først). Fald tilbage til strengsort hvis tider er lige.
-      filtered.sort((a, b) => {
-        if (b._ts !== a._ts) return b._ts - a._ts;
-        // fallback: bruk raw string som siste utvei
-        return b.event_time < a.event_time ? -1 : (b.event_time > a.event_time ? 1 : 0);
-      });
-
-      setItems(filtered.slice(0, maxRender));
-    } catch (e) {
-      setErr(String(e.message || e));
-    } finally {
-      setIsLoading(false);
+  // Compute initial 'from' if we have no lastTs: use sinceMs window
+  function computeFromParam() {
+    if (lastTsRef.current) {
+      const v = lastTsRef.current;
+      if (typeof v === 'number') {
+        return new Date(v).toISOString().replace(/\.\d+Z$/, 'Z');
+      }
+      return v;
     }
+    return utcNowMinus(sinceMs);
   }
 
-  useEffect(() => {
-    // initial fetch + polling
-    fetchLog();
-    if (pollMs > 0) {
-      timerRef.current = setInterval(fetchLog, pollMs);
-      return () => clearInterval(timerRef.current);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sinceMs, endpoint, pollMs, limit, maxRender, JSON.stringify(showTypes)]);
+  // parse/normalize incoming list, compute newest timestamp
+  function normalizeIncoming(list) {
+    const out = Array.isArray(list) ? list.map(ev => {
+      const assumeUtc = eventTimesAreUTC(ev);
+      ev._ts = parseTimestampMillis(ev.event_time, assumeUtc);
+      return ev;
+    }) : [];
+    out.sort((a, b) => (b._ts || 0) - (a._ts || 0));
+    return out;
+  }
 
+  // Merge newEvents into items state (keeping newest first, and limit)
+  function mergeItems(newEvents) {
+    if (!Array.isArray(newEvents) || newEvents.length === 0) return false;
+    const existing = [...items];
+    const map = new Map();
+    for (const ev of existing) {
+      map.set(ev.id ?? `${ev.event_type}#${ev._ts}`, ev);
+    }
+    let added = 0;
+    for (const ev of newEvents) {
+      const key = ev.id ?? `${ev.event_type}#${ev._ts}`;
+      if (!map.has(key)) {
+        map.set(key, ev);
+        added++;
+      }
+    }
+    if (added === 0) return false;
+    const merged = Array.from(map.values()).sort((a, b) => (b._ts || 0) - (a._ts || 0)).slice(0, maxRender);
+    setItems(merged);
+    return true;
+  }
+
+  // decide whether an event's time is UTC or local (keeps legacy behaviour)
+  function eventTimesAreUTC(ev) {
+    if (!ev) return timesAreUTC;
+    if (ev.event_type && ev.event_type.startsWith('build')) return false;
+    return timesAreUTC;
+  }
+
+  // Format a line for display (kept compatible with original function)
   function formatLine(ev) {
     const scope = ev.subject_scope;
     const key = (ev.subject_key || '').split('.').slice(1).join('.') || ev.subject_key;
@@ -162,7 +161,7 @@ export default function SidebarLog({
       const rows = Array.isArray(ev.payload) ? ev.payload : [];
       const parts = rows.map((r, i) => {
         const rn = resName(defs, r.res_id);
-        const emoji = getEmojiForId(r.res_id, defs) || '';
+        const emoji = getEmojiForIdSafe(r.res_id, defs) || '';
         const amtNum = Number(r.amount);
         const amt = (amtNum % 1 === 0) ? amtNum : amtNum.toFixed(2);
         return <span key={i}>&nbsp;{amt}× <span className="res-emoji">{emoji}</span> {rn}</span>;
@@ -170,13 +169,12 @@ export default function SidebarLog({
       const who = (scope === 'ani') ? `Dit ${name}` : name;
       return { text: <>{<>💰</>} {who} gav {parts.reduce((acc, cur, idx) => acc === null ? cur : <>{acc}, {cur}</>, null)}</>, className: 'sl-yield' };
     }
-    
-    // NY: vis hvilke ressourcer og mængder der gik tabt
+
     if (ev.event_type === 'yield_lost') {
       const rows = Array.isArray(ev.payload) ? ev.payload : [];
       const parts = rows.map((r, i) => {
         const rn = resName(defs, r.res_id);
-        const emoji = getEmojiForId(r.res_id, defs) || '';
+        const emoji = getEmojiForIdSafe(r.res_id, defs) || '';
         const amtNum = Number(r.amount);
         const amt = (amtNum % 1 === 0) ? amtNum : amtNum.toFixed(2);
         return <span key={i}>&nbsp;{amt}× <span className="res-emoji">{emoji}</span> {rn}</span>;
@@ -186,7 +184,7 @@ export default function SidebarLog({
     }
 
     if (ev.event_type === 'build_completed') {
-      if (isUpgrade(ev.mode)) {
+      if ((ev.mode || '').toLowerCase().includes('upgrade') || ev.mode === 'upgrade') {
         return { text: `Opgradering af ${name} færdig`, className: 'sl-completed' };
       }
       const typeLabel = typeLabelFromScope(scope);
@@ -213,39 +211,153 @@ export default function SidebarLog({
     }
   }
 
-  // beslutter om et event's tid skal tolkes som UTC eller lokal tid
-  function eventTimesAreUTC(ev) {
-    // default fra prop
-    if (!ev) return timesAreUTC;
-    // treat build events as local timestamps (undo the +1h issue)
-    if (ev.event_type && ev.event_type.startsWith('build')) return false;
-    // ellers brug komponentens indstilling
-    return timesAreUTC;
+  // The core fetch function: incremental, conditional (ETag), and safe
+  async function fetchLogOnce() {
+    if (runningRef.current) return;
+    runningRef.current = true;
+    setIsLoading(true);
+    setErr(null);
+
+    try {
+      const params = new URLSearchParams();
+      const fromParam = computeFromParam();
+      params.set('from', fromParam);
+      params.set('limit', String(limit));
+      const url = `${endpoint}?${params.toString()}`;
+
+      const headers = {};
+      if (etagRef.current) headers['If-None-Match'] = etagRef.current;
+
+      const resp = await fetch(url, { credentials: 'include', headers });
+      if (resp.status === 304) {
+        adaptiveRef.current.current = Math.min(adaptiveRef.current.current * 1.5, adaptiveRef.current.max);
+        return;
+      }
+
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+
+      const respEtag = resp.headers.get('ETag') || resp.headers.get('etag') || null;
+      if (respEtag) etagRef.current = respEtag;
+
+      const json = await resp.json();
+      const list = Array.isArray(json.items) ? json.items : [];
+
+      const normalized = normalizeIncoming(list);
+
+      if (normalized.length > 0) {
+        const newestMs = normalized[0]._ts || Date.now();
+        lastTsRef.current = new Date(newestMs).toISOString().replace(/\.\d+Z$/, 'Z');
+
+        mergeItems(normalized);
+
+        adaptiveRef.current.current = adaptiveRef.current.base;
+      } else {
+        adaptiveRef.current.current = Math.min(adaptiveRef.current.current * 1.5, adaptiveRef.current.max);
+      }
+    } catch (e) {
+      setErr(String(e?.message || e));
+      adaptiveRef.current.current = Math.min(adaptiveRef.current.current * 2, adaptiveRef.current.max);
+    } finally {
+      setIsLoading(false);
+      runningRef.current = false;
+    }
   }
 
+  // Scheduling loop: uses adaptiveRef.current.current as delay and respects page visibility
+  useEffect(() => {
+    let cancelled = false;
+
+    async function scheduleLoop() {
+      if (cancelled) return;
+      if (typeof document !== 'undefined' && document.visibilityState === 'hidden') {
+        timerRef.current = setTimeout(scheduleLoop, 1000);
+        return;
+      }
+
+      await fetchLogOnce();
+
+      if (cancelled) return;
+      const next = Math.max(1000, Math.floor(adaptiveRef.current.current));
+      timerRef.current = setTimeout(scheduleLoop, next);
+    }
+
+    if (!lastTsRef.current && items.length > 0) {
+      lastTsRef.current = new Date(items[0]._ts || Date.now()).toISOString().replace(/\.\d+Z$/, 'Z');
+    }
+
+    scheduleLoop();
+
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        adaptiveRef.current.current = adaptiveRef.current.base;
+        fetchLogOnce();
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+
+    return () => {
+      cancelled = true;
+      if (timerRef.current) clearTimeout(timerRef.current);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
+  }, [endpoint, limit, JSON.stringify(showTypes), sinceMs]);
+
+  // Initial fetch triggered on mount and when sinceMs changes (keeps previous items if any)
+  useEffect(() => {
+    lastTsRef.current = null;
+    etagRef.current = null;
+    adaptiveRef.current.current = adaptiveRef.current.base;
+    fetchLogOnce();
+  }, [sinceMs, endpoint]);
+
+  // UI render
+  // NOTE: key layout fix: we make the component a column flex container and the .sl-list a flex:1 scroll container.
+  // This ensures the scrollbar is internal to the log panel and not lost due to parent layout changes.
+  const containerStyle = {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 8,
+    height: '100%', /* allow parent to size it; parent .section-body should set a height */
+  };
+  const headerStyle = { display: 'flex', gap: 8, alignItems: 'center' };
+  const listStyle = {
+    listStyle: 'none',
+    margin: 0,
+    padding: 0,
+    overflowY: 'auto',
+    flex: 1,
+    minHeight: 60,
+  };
+
   return (
-    <div className="sidebar-log">
-      <div className="sl-header">
+    <div className="sidebar-log" style={containerStyle}>
+      <div className="sl-header" style={headerStyle}>
         <div className="sl-title">Aktivitet</div>
         <select
           value={String(sinceMs)}
           onChange={(e) => setSinceMs(parseInt(e.target.value, 10))}
         >
-          {options.map(o => (
+          {useMemo(() => ([
+            { label: '1t',  value: 1 * 3600 * 1000 },
+            { label: '6t',  value: 6 * 3600 * 1000 },
+            { label: '24t', value: 24 * 3600 * 1000 },
+            { label: '7d',  value: 7 * 24 * 3600 * 1000 },
+            { label: '30d', value: 30 * 24 * 3600 * 1000 },
+          ]), []).map(o => (
             <option key={o.value} value={o.value}>{o.label}</option>
           ))}
         </select>
-        <button onClick={fetchLog}>Opdatér</button>
+        <button onClick={() => { lastTsRef.current = null; etagRef.current = null; fetchLogOnce(); }}>Opdatér</button>
       </div>
 
       {err && <div className="sl-error">Fejl: {err}</div>}
       {isLoading && <div className="sl-loading">Henter...</div>}
 
-      <ul className="sl-list">
+      <ul className="sl-list" style={listStyle}>
         {items.map((ev, idx) => {
           const { text, className } = formatLine(ev);
           return (
-            <li className="sl-item" key={idx}>
+            <li className="sl-item" key={ev.id ?? `${ev.event_type}#${ev._ts}#${idx}`}>
               <span className="sl-time">{formatLocal(ev.event_time, eventTimesAreUTC(ev))}:</span>
               <span className={`sl-body ${className}`}>{text}</span>
             </li>

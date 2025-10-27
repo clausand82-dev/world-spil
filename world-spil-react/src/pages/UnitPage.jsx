@@ -9,6 +9,7 @@ import StatsEffectsTooltip from '../components/ui/StatsEffectsTooltip.jsx';
 import { UNIT_GROUPS } from '../config/unitGroups.js';
 import { applyCostBuffsToAmount } from '../services/calcEngine-lite.js';
 import { collectActiveBuffs } from '../services/requirements.js';
+import Icon from '../components/ui/Icon.jsx';
 
 /**
  * UnitPage – dynamisk på baggrund af UNIT_GROUPS:
@@ -98,7 +99,7 @@ function PurchaseRow({ def, defs, aniId, toBuy, setQty, availableCap, perItemSta
 
   return (
     <div className="item" {...rest}>
-      <div className="icon">{def.emoji || (isAnimal ? '🐄' : '🏷️')}</div>
+      <div className="icon"><InlineIcon def={def} size={32} fallback={isAnimal ? '🐄' : '🏷️'} /></div>
       <div className="grow">
         <div className="title">{def.name}</div>
         <div className="sub">
@@ -160,7 +161,7 @@ function renderCostInline(costLike, defs) {
     const emojiStr = (typeof def.emoji === 'string' && def.emoji.trim()) ? def.emoji.trim() : (def.emojiChar || '');
     if (url && !/^\/|https?:\/\//i.test(url)) url = `/assets/icons/${url}`;
     if (url) {
-      return `<img src="${escape(url)}" alt="${escape(def.name || key)}" style="width:1em;height:1em;vertical-align:-0.15em;object-fit:contain;display:inline-block;margin:0 6px" />`;
+      return `<img src="${escape(url)}" alt="${escape(def.name || key)}" style="width:2em;height:1em;vertical-align:-0.15em;object-fit:contain;display:inline-block;margin:0 6px" />`;
     }
     if (emojiStr) return escape(emojiStr);
     return '';
@@ -259,8 +260,8 @@ function YieldBlock({ def, defs, H }) {
                 <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
                   {/* Icon (visuelt større; optager cirka to rækker) */}
                   <div style={{ width: '2.4em', minWidth: '2.4em', height: '2.4em', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <div className="icon" style={{ fontSize: '2em', lineHeight: 1 }}>
-                      {emojiForId(y.id, defs)}
+                    <div className="icon" style={{ lineHeight: 1 }}>
+                      <InlineIcon def={defs?.res?.[String(y.id).replace(/^res\./,'')] || { emoji: '📦' } } size={40} />
                     </div>
                   </div>
 
@@ -311,7 +312,7 @@ function PriceBlock({ def, defs, H, activeBuffs, qty = 1 }) {
             return (
               <div key={it.id} style={{ padding: '6px 0', display: 'flex', gap: 12, alignItems: 'center' }}>
                 <div style={{ width: '2.4em', minWidth: '2.4em', height: '2.4em', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <div className="icon" style={{ fontSize: '2em', lineHeight: 1 }}>{emojiForId(it.id, defs)}</div>
+                  <div className="icon" style={{ lineHeight: 1 }}><InlineIcon def={resDef || { emoji: '📦' }} size={40} /></div>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
                   <div style={{ fontSize: 13, fontWeight: 600 }}>{name}</div>
@@ -324,6 +325,20 @@ function PriceBlock({ def, defs, H, activeBuffs, qty = 1 }) {
       </div>
     </div>
   );
+}
+
+// Small wrapper: reuse central Icon component for image cases,
+// otherwise render emoji string/fallback. Keeps UnitPage small.
+function InlineIcon({ def, size = 32, fallback = '📦' }) {
+  // prefer explicit image sources (iconUrl/iconFilename/icon) or emoji-object
+  const hasImg = Boolean(def && (def.iconUrl || def.iconFilename || (def.emoji && typeof def.emoji === 'object') || def.icon));
+  if (hasImg) {
+    // Icon accepts number or string; pass numeric px size for predictable layout
+    return <Icon def={def} size={typeof size === 'number' ? size : parseInt(size, 10) || 32} fallback="/assets/icons/default.png" />;
+  }
+  const emojiStr = (def && typeof def.emoji === 'string') ? def.emoji : (def && def.emojiChar) || null;
+  if (emojiStr) return <span style={{ fontSize: typeof size === 'number' ? size : undefined }}>{emojiStr}</span>;
+  return <span>{fallback}</span>;
 }
 
 export default function UnitPage({ embedFamily = null, embed = false }) {
@@ -757,7 +772,7 @@ export default function UnitPage({ embedFamily = null, embed = false }) {
             return (
               <DockHoverCard key={aniId} content={hoverContent}>
                 <div className="item">
-                  <div className="icon" style={{ fontSize: '2em' }}>{def.emoji || (isAnimal ? '🐄' : '🏷️')}</div>
+                  <div className="icon" style={{ fontSize: '2em' }}><InlineIcon def={def} size={32} fallback={isAnimal ? '🐄' : '🏷️'} /></div>
                   <div>
                     <div className="title">
                       {def.name} (x{H.fmt(qty)})
@@ -801,7 +816,7 @@ export default function UnitPage({ embedFamily = null, embed = false }) {
             return (
               <DockHoverCard key={key} content={hoverContent}>
                 <div className="item">
-                  <div className="icon" style={{ fontSize: '2em' }}>{def.emoji || (isAnimal ? '🐄' : '🏷️')}</div>
+                  <div className="icon" style={{ fontSize: '2em' }}><InlineIcon def={def} size={32} fallback={isAnimal ? '🐄' : '🏷️'} /></div>
                   <div className="grow">
                     <div className="title">{def.name}</div>
                     <div className="sub">

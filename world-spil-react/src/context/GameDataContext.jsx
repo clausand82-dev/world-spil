@@ -1,4 +1,18 @@
-/* Entire file - GameDataContext with normalization for res/ani/bld/add/rsd and lazy non-enumerable icon getter */
+/* Entire file - GameDataContext with normalization for res/ani/bld/add/rsd and lazy non-enumerable icon getter
+ *
+ * Revisions in this version:
+ * - Ensures that any cached alldata body loaded from localStorage (used when server returns 304)
+ *   is normalized with normalizeDefsForIcons before being returned to the app.
+ * - Deduce baseIconPath dynamically to handle apps hosted under a subpath (e.g. /world-spil).
+ * - Keeps ETag/If-None-Match conditional fetch logic and localStorage cache.
+ *
+ * After replacing this file:
+ * - Clear the cache keys in DevTools console:
+ *     localStorage.removeItem('ws:alldata:etag');
+ *     localStorage.removeItem('ws:alldata:body');
+ * - Then reload the page.
+ */
+
 import React, { createContext, useContext, useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
@@ -10,12 +24,30 @@ function isFileLike(v) {
   return s !== '' && (s.startsWith('/') || /^https?:\/\//i.test(s) || /\.(png|jpe?g|gif|svg|webp)$/i.test(s));
 }
 
+/**
+ * deduceBaseIconPath()
+ * - Tries to guess the correct base path for assets from window.location.pathname.
+ * - If the app runs under '/world-spil/...' this will return '/world-spil/assets/icons/'.
+ */
+function deduceBaseIconPath() {
+  try {
+    if (typeof window === 'undefined' || !window.location || !window.location.pathname) return '/assets/icons/';
+    const segments = window.location.pathname.split('/').filter(Boolean);
+    const prefix = segments.length > 0 ? `/${segments[0]}` : '';
+    return `${prefix}/assets/icons/`;
+  } catch (e) {
+    return '/assets/icons/';
+  }
+}
+
 /*
   Normalization: assume <emoji> tag contains a filename (png). Convert to iconUrl/iconFilename.
   Create non-enumerable `icon` getter for backwards compatibility (returns <img> or emoji string).
 */
-export function normalizeDefsForIcons(defs, { baseIconPath = '/assets/icons/' } = {}) {
+export function normalizeDefsForIcons(defs, { baseIconPath = null } = {}) {
   if (!defs) return defs;
+
+  if (!baseIconPath) baseIconPath = deduceBaseIconPath();
 
   const makeSafeBucket = (bucket = {}) => {
     const out = {};
@@ -24,14 +56,24 @@ export function normalizeDefsForIcons(defs, { baseIconPath = '/assets/icons/' } 
       const nd = { ...d };
       const raw = (d.emoji || '').toString().trim();
 
+      // If raw looks like a filename/path or there is already an iconUrl, produce absolute iconUrl
       if (raw && isFileLike(raw)) {
-        const src = raw.startsWith('/') || /^https?:\/\//i.test(raw) ? raw : (baseIconPath + raw);
+        let src = raw;
+        // If raw is relative (no leading slash, no http), prefix with baseIconPath
+        if (!src.startsWith('/') && !/^https?:\/\//i.test(src)) {
+          src = (baseIconPath.endsWith('/') ? baseIconPath : `${baseIconPath}/`) + src;
+        }
         nd.iconUrl = src;
         nd.iconFilename = raw;
       } else if (nd.iconUrl) {
+        // ensure iconUrl is a string and absolute (if not absolute, prefix)
         nd.iconUrl = String(nd.iconUrl);
+        if (!nd.iconUrl.startsWith('/') && !/^https?:\/\//i.test(nd.iconUrl)) {
+          nd.iconUrl = (baseIconPath.endsWith('/') ? baseIconPath : `${baseIconPath}/`) + nd.iconUrl;
+        }
         nd.iconFilename = nd.iconUrl.split('/').pop();
       } else {
+        // no file-like emoji and no iconUrl -> keep raw in iconFilename for reference
         nd.iconUrl = undefined;
         nd.iconFilename = raw || '';
       }
@@ -47,7 +89,7 @@ export function normalizeDefsForIcons(defs, { baseIconPath = '/assets/icons/' } 
             get: function () {
               try {
                 const src = this.iconUrl;
-                const finalSrc = src || (baseIconPath + 'default.png');
+                const finalSrc = src || (baseIconPath.endsWith('/') ? baseIconPath : `${baseIconPath}/`) + 'default.png';
                 return React.createElement('img', {
                   src: finalSrc,
                   alt: this.name || key,
@@ -60,7 +102,7 @@ export function normalizeDefsForIcons(defs, { baseIconPath = '/assets/icons/' } 
             }
           });
         } catch (e) {
-          nd.icon = nd.iconUrl || (baseIconPath + 'default.png');
+          nd.icon = nd.iconUrl || (baseIconPath.endsWith('/') ? baseIconPath : `${baseIconPath}/`) + 'default.png';
         }
       }
 
@@ -213,7 +255,7 @@ export function GameDataProvider({ children }) {
             liquid: { ...(prev.state?.inv?.liquid || {}) },
           },
         },
-        meta: { ...(prev.meta || {}), lastUpdated: Date.now() },
+      meta: { ...(prev.meta || {}), lastUpdated: Date.now() },
       };
       for (const [rid, delta] of Object.entries(resources)) {
         const amt = Number(delta || 0);
@@ -282,7 +324,7 @@ export function GameDataProvider({ children }) {
       broadcastUpdate();
     } catch (e) {
       // defensive: if merge fails, fall back to a full refresh (caller can choose)
-      console.warn('updateState failed', e);
+      // removed console.warn per cleanup request
     }
   }, [queryClient, deepMergeObj, broadcastUpdate]);
   // --- /NYT ---
@@ -334,27 +376,157 @@ export function GameDataProvider({ children }) {
 
 export const useGameData = () => useContext(GameDataContext);
 
+/**
+ * fetchAllData
+ *
+ * Reworked to:
+ * - Use If-None-Match header with ETag stored in localStorage to avoid re-downloading full payload when unchanged.
+ * - Store parsed data.data in localStorage for reuse when server responds 304.
+ * - IMPORTANT: Normalize defs (normalizeDefsForIcons) on any cached body before returning.
+ *
+ * LocalStorage keys used:
+ * - ws:alldata:etag  => stored ETag string (including quotes if server includes them)
+ * - ws:alldata:body  => JSON.stringify(data) where `data` is json.data from the server response
+ *
+ * Important: the server must emit ETag header and honor If-None-Match -> return 304 Not Modified.
+ */
 async function fetchAllData() {
-  const dataUrl = `/world-spil/backend/api/alldata.php?ts=${Date.now()}`;
-  const res = await fetch(dataUrl, { cache: 'no-store' });
-  if (!res.ok) throw new Error(`API error: ${res.status}`);
-  const json = await res.json();
+  const etagKey = 'ws:alldata:etag';
+  const bodyKey = 'ws:alldata:body';
+  const url = `/world-spil/backend/api/alldata.php`;
+
+  // Read stored ETag (if any)
+  let storedETag = null;
+  try {
+    storedETag = localStorage.getItem(etagKey);
+  } catch (e) {
+    storedETag = null;
+  }
+
+  const headers = {};
+  if (storedETag) headers['If-None-Match'] = storedETag;
+
+  // Perform conditional request. credentials: 'include' so session cookies travel.
+  let res;
+  try {
+    res = await fetch(url, { cache: 'no-store', headers, credentials: 'include' });
+  } catch (err) {
+    // Network error -> try to return cached copy if available
+    try {
+      const raw = localStorage.getItem(bodyKey);
+      if (raw) {
+        let cached = JSON.parse(raw);
+        // ensure defs are normalized before returning cached data
+        if (cached?.defs) {
+          try {
+            cached.defs = normalizeDefsForIcons(cached.defs, { baseIconPath: deduceBaseIconPath() });
+            try { if (!window.data) window.data = cached; } catch (e) { /* ignore */ }
+          } catch (e) { /* ignore */ }
+        }
+        try { cached.meta = { ...(cached.meta || {}), lastUpdated: Date.now() }; } catch (e) { /* ignore */ }
+        return cached;
+      }
+    } catch (e) { /* ignore */ }
+    throw new Error('Network error while fetching alldata');
+  }
+
+  // If server says 304 Not Modified -> use cached body
+  if (res.status === 304) {
+    try {
+      const raw = localStorage.getItem(bodyKey);
+      if (raw) {
+        let cached = JSON.parse(raw);
+        // IMPORTANT: normalize defs here as well — JSON.parse won't create icon getters
+        if (cached?.defs) {
+          try {
+            cached.defs = normalizeDefsForIcons(cached.defs, { baseIconPath: deduceBaseIconPath() });
+            try { if (!window.data) window.data = cached; } catch (e) { /* ignore */ }
+          } catch (e) { /* ignore */ }
+        }
+        try { cached.meta = { ...(cached.meta || {}), lastUpdated: Date.now() }; } catch (e) { /* ignore */ }
+        return cached;
+      } else {
+        // No cached body available; perform a full fetch
+        const freshRes = await fetch(url, { cache: 'no-store', credentials: 'include' });
+        if (!freshRes.ok) throw new Error(`API error: ${freshRes.status}`);
+        const freshJson = await freshRes.json();
+        if (!freshJson?.ok) throw new Error(freshJson?.error?.message || 'API data error');
+        const data = freshJson.data;
+        // store and normalize
+        const respETag = freshRes.headers.get('ETag') || null;
+        try {
+          if (respETag) localStorage.setItem(etagKey, respETag);
+          localStorage.setItem(bodyKey, JSON.stringify(data));
+        } catch (e) { /* ignore storage errors */ }
+        if (data?.defs) {
+          data.defs = normalizeDefsForIcons(data.defs, { baseIconPath: deduceBaseIconPath() });
+          try { if (!window.data) window.data = data; } catch (e) { /* ignore */ }
+        }
+        try { data.meta = { ...(data.meta || {}), lastUpdated: Date.now() }; } catch (e) { /* ignore */ }
+        return data;
+      }
+    } catch (e) {
+      // If reading cache fails -> attempt a full fetch
+      const freshRes = await fetch(url, { cache: 'no-store', credentials: 'include' });
+      if (!freshRes.ok) throw new Error(`API error: ${freshRes.status}`);
+      const freshJson = await freshRes.json();
+      if (!freshJson?.ok) throw new Error(freshJson?.error?.message || 'API data error');
+      const data = freshJson.data;
+      const respETag = freshRes.headers.get('ETag') || null;
+      try {
+        if (respETag) localStorage.setItem(etagKey, respETag);
+        localStorage.setItem(bodyKey, JSON.stringify(data));
+      } catch (e) { /* ignore storage errors */ }
+      if (data?.defs) {
+        data.defs = normalizeDefsForIcons(data.defs, { baseIconPath: deduceBaseIconPath() });
+        try { if (!window.data) window.data = data; } catch (e) { /* ignore */ }
+      }
+      try { data.meta = { ...(data.meta || {}), lastUpdated: Date.now() }; } catch (e) { /* ignore */ }
+      return data;
+    }
+  }
+
+  // For 200 responses, parse JSON and store ETag + body
+  if (!res.ok) {
+    // allow callers to see HTTP error
+    throw new Error(`API error: ${res.status}`);
+  }
+
+  const jsonText = await res.text();
+  let json = null;
+  try {
+    json = jsonText ? JSON.parse(jsonText) : null;
+  } catch (e) {
+    throw new Error('Invalid JSON from alldata');
+  }
+
   if (!json?.ok) throw new Error(json?.error?.message || 'API data error');
 
+  const data = json.data;
+
+  // store ETag + body (store json.data, not the entire envelope)
   try {
-    if (json?.data?.defs) {
-      const normalized = normalizeDefsForIcons(json.data.defs, { baseIconPath: '/assets/icons/' });
-      json.data.defs = normalized;
-      try { if (!window.data) window.data = json.data; } catch (e) { /* ignore */ }
+    const respETag = res.headers.get('ETag') || null;
+    if (respETag) localStorage.setItem(etagKey, respETag);
+    localStorage.setItem(bodyKey, JSON.stringify(data));
+  } catch (e) {
+    // ignore storage errors
+  }
+
+  // Normalize defs to include icon helper
+  try {
+    if (data?.defs) {
+      const normalized = normalizeDefsForIcons(data.defs, { baseIconPath: deduceBaseIconPath() });
+      data.defs = normalized;
+      try { if (!window.data) window.data = data; } catch (e) { /* ignore */ }
     }
   } catch (e) {
-    // eslint-disable-next-line no-console
-    console.warn('normalizeDefsForIcons failed', e);
+    // noop - normalization failing should not break the entire fetch
   }
 
   try {
-    json.data.meta = { ...(json.data.meta || {}), lastUpdated: Date.now() };
+    data.meta = { ...(data.meta || {}), lastUpdated: Date.now() };
   } catch (e) { /* ignore */ }
 
-  return json.data;
+  return data;
 }
