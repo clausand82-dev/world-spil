@@ -18,7 +18,8 @@ export default function InventoryPage() {
     const refresh = async (payload = null) => {
       try {
         // Hvis event kom med en delta fra markedet, patch global state i stedet for at refetche hele payload
-        if (payload && payload.type === 'market_buy' && payload.delta) {
+        // Hvis event har en delta, anvend den generisk (dæmper race og gør UI instant)
+        if (payload && payload.delta) {
           try {
             updateState(payload.delta);
             return;
@@ -26,6 +27,15 @@ export default function InventoryPage() {
             console.warn('InventoryTab apply payload failed', e);
             // fallback til refetch
           }
+        }
+
+        // For andre markeds-events uden delta, refetch kun hvis fanen er synlig
+        if (payload && payload.type && !payload.delta) {
+          if (document.visibilityState === 'visible') {
+            if (typeof refetch === 'function') await refetch();
+            else setTick(t => t + 1);
+          }
+          return;
         }
 
         if (document.visibilityState !== 'visible') return;

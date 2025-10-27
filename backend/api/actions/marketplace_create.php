@@ -79,32 +79,54 @@ try {
     $selNewRes->execute([$userId, $resId]);
     $newResAmount = (float)($selNewRes->fetchColumn() ?? 0.0);
 
-    $selMoney = $pdo->prepare("SELECT amount FROM inventory WHERE user_id = ? AND res_id = 'res.money' LIMIT 1");
-    $selMoney->execute([$userId]);
-    $newMoney = (float)($selMoney->fetchColumn() ?? 0.0);
-
     $plainKey = preg_replace('/^res\\./', '', $resId);
+
+    // load defs for unit/bucket determination (samme som i market_local_sell.php)
+    $defs = null;
+    try {
+      if (function_exists('load_all_defs')) $defs = load_all_defs();
+    } catch (Throwable $_) { $defs = null; }
+    $defsRes = (array)($defs['res'] ?? []);
+    $resDef = $defsRes[$plainKey] ?? $defsRes[$resId] ?? ($defsRes["res.$plainKey"] ?? null);
+
+    $unit = strtolower((string)($resDef['unit'] ?? $resDef['stats']['unit'] ?? ''));
+    $isLiquid = ($unit === 'l');
+    $bucket = $isLiquid ? 'liquid' : 'solid';
+
+    // build delta with correct bucket and ensure money handled consistently
     $deltaState = [
       'inv' => [
         'solid' => [],
         'liquid' => []
       ],
       'market' => [
-        'offer' => [
-          'id' => $newId,
-          'amount' => $amount
-        ]
+        'listing' => $listing ?? ($entry ?? null)
       ]
     ];
-    $deltaState['inv']['solid']['money'] = $newMoney;
-    $deltaState['inv']['solid'][$plainKey] = $newResAmount;
 
-    // convert empty arrays -> objects for JSON
+    // put resulting amount into correct bucket
+    if ($bucket === 'liquid') {
+      $deltaState['inv']['liquid'][$plainKey] = $newResAmount;
+    } else {
+      $deltaState['inv']['solid'][$plainKey] = $newResAmount;
+    }
+
+    // convert empties to objects for nicer JSON on frontend
+    if (!function_exists('convertEmptyArraysToObjects')) {
+      function convertEmptyArraysToObjects($v) {
+        if (is_array($v)) {
+          if (count($v) === 0) return (object)[];
+          foreach ($v as $k => $sub) $v[$k] = convertEmptyArraysToObjects($sub);
+          return $v;
+        }
+        return $v;
+      }
+    }
     $deltaState = convertEmptyArraysToObjects($deltaState);
 
     echo json_encode(['ok'=>true,'data'=>[
       'message'=>'Listing created',
-      'listing' => ['id' => $newId, 'res_id' => $resId, 'amount' => $amount, 'price' => $price],
+      'listing' => $listing ?? ($entry ?? null),
       'delta' => ['state' => $deltaState]
     ]], JSON_UNESCAPED_UNICODE);
     exit;

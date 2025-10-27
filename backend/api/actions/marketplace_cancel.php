@@ -3,13 +3,12 @@ declare(strict_types=1);
 /**
  * Marketplace cancel — authoritative checks using alldata state/caps.
  *
- * Improvements in this version:
- * - Fix penalty calculation so returned amount = amount - penalty (rounded safely).
- * - Try robust inventory upsert (handles res_id with/without 'res.' prefix).
- * - Persist penalty/returned fields into marketplace row if columns exist.
- * - Cleaner structure, better error messages and defensive checks.
+ * Improvements:
+ * - Returns a compact delta under data.delta.state (inv / market.offer) so frontend can patch cache.
+ * - Builds delta as associative arrays, then converts empty arrays -> stdClass for JSON to encode {}.
+ * - Keeps existing penalty/return logic and robust inventory upsert attempts.
  *
- * Requirements: include backend/api/_init.php (it loads alldata helpers).
+ * NOTE: This file closely follows existing logic but ensures the response includes a delta.
  */
 
 require_once __DIR__ . '/../_init.php';
@@ -22,6 +21,15 @@ const CANCEL_PENALTY_PCT = 0.10;
 
 /** Number of decimals used when storing/returning fractional resources (safe rounding) */
 const RETURN_ROUND_DECIMALS = 8;
+
+function convertEmptyArraysToObjects($v) {
+  if (is_array($v)) {
+    if (count($v) === 0) return (object)[];
+    foreach ($v as $k => $sub) $v[$k] = convertEmptyArraysToObjects($sub);
+    return $v;
+  }
+  return $v;
+}
 
 try {
   $pdo = db();
@@ -47,7 +55,7 @@ try {
     exit;
   }
 
-  // Lock listing and work in transaction
+  // begin transaction and lock listing
   $pdo->beginTransaction();
 
   $st = $pdo->prepare("SELECT * FROM marketplace WHERE id = ? FOR UPDATE");
@@ -77,49 +85,53 @@ try {
   $resId = (string)$m['res_id'];
   $amount = (float)$m['amount'];
   if ($amount <= 0.0) {
-    // Nothing sensible to return — just cancel
+    // mark canceled with no return and respond
     $pdo->prepare("UPDATE marketplace SET status='canceled', canceled_at = NOW() WHERE id = ?")->execute([$id]);
     $pdo->commit();
-    echo json_encode(['ok'=>true,'data'=>['id'=>$id,'res_id'=>$resId,'listed_amount'=>$amount,'returned_amount'=>0.0,'penalty_applied'=>false]], JSON_UNESCAPED_UNICODE);
+
+    // Build delta: no returned resource, but mark listing removed
+    $deltaState = [
+      'inv' => ['solid' => [], 'liquid' => []],
+      'market' => ['offer' => ['id' => $id, 'amount' => 0]]
+    ];
+    $deltaState = convertEmptyArraysToObjects($deltaState);
+
+    echo json_encode(['ok'=>true,'data'=>[
+      'id'=>$id,
+      'res_id'=>$resId,
+      'listed_amount'=>$amount,
+      'returned_amount'=>0.0,
+      'penalty_applied'=>false,
+      'delta' => ['state' => $deltaState]
+    ]], JSON_UNESCAPED_UNICODE);
     exit;
   }
 
-  // compute penalty and returned amount (defensive checks + rounding)
+  // compute penalty & return amount
   $pct = max(0.0, min(1.0, (float)CANCEL_PENALTY_PCT));
   $penaltyAmt = round($amount * $pct, RETURN_ROUND_DECIMALS);
-  // ensure we don't return negative due to rounding
   $returnAmount = max(0.0, round($amount - $penaltyAmt, RETURN_ROUND_DECIMALS));
 
-  // Load defs (metadata)
+  // load defs and compute capacity for return
   $defs = load_all_defs();
   $defsRes = (array)($defs['res'] ?? []);
   $bare = (strpos($resId, 'res.') === 0) ? substr($resId, 4) : $resId;
   $resDef = $defsRes[$bare] ?? $defsRes[$resId] ?? $defsRes["res.$bare"] ?? null;
 
-  // determine unitSpace and bucket (liquid/solid)
   $unit = strtolower((string)($resDef['unit'] ?? $resDef['stats']['unit'] ?? ''));
   $isLiquid = ($unit === 'l');
   $unitSpace = 0.0;
   if (isset($resDef['unitSpace'])) $unitSpace = (float)$resDef['unitSpace'];
   elseif (isset($resDef['stats']['unitSpace'])) $unitSpace = (float)$resDef['stats']['unitSpace'];
+
   $needSpace = $returnAmount * $unitSpace;
-
-  // Ensure we can read authoritative caps/usage via yield helpers.
-  if (!function_exists('yield__read_user_caps') || !function_exists('yield__compute_bucket_usage') || !function_exists('yield__build_min_state')) {
-    $pdo->rollBack();
-    http_response_code(500);
-    echo json_encode(['ok'=>false,'error'=>['message'=>'Required yield/repro helpers missing (yield__read_user_caps, yield__compute_bucket_usage, yield__build_min_state)']], JSON_UNESCAPED_UNICODE);
-    exit;
-  }
-
-  // Build minimal state (needed by some yield helpers)
-  $state = yield__build_min_state($pdo, (int)$uid) ?? [];
-
-  // Get total caps and usage per bucket (solid/liquid)
-  $capsBuckets = yield__read_user_caps($pdo, (int)$uid, $defs, $state);
-  $usageBuckets = yield__compute_bucket_usage($pdo, (int)$uid, $defs);
-
   $bucket = $isLiquid ? 'liquid' : 'solid';
+
+  // authoritative caps/usage via yield helpers
+  $state = yield__build_min_state($pdo, $uid);
+  $capsBuckets = yield__read_user_caps($pdo, $uid, $defs, $state);
+  $usageBuckets = yield__compute_bucket_usage($pdo, $uid, $defs);
+
   $total = isset($capsBuckets[$bucket]) ? (float)$capsBuckets[$bucket] : null;
   $used  = isset($usageBuckets[$bucket]) ? (float)$usageBuckets[$bucket] : null;
 
@@ -128,16 +140,7 @@ try {
     http_response_code(500);
     echo json_encode(['ok'=>false,'error'=>[
       'message' => 'Authoritative storage caps/usage not available. Refusing to recalculate.',
-      'missing' => [
-        $total === null ? "caps.{$bucket}.total" : null,
-        $used  === null ? "usage.{$bucket}" : null,
-      ],
-      'debug' => [
-        'caps_buckets' => $capsBuckets,
-        'usage_buckets'=> $usageBuckets,
-        'state_cap'    => $state['cap'] ?? null,
-        'state_inv'    => $state['inv'] ?? null,
-      ]
+      'debug' => ['caps'=>$capsBuckets,'usage'=>$usageBuckets]
     ]], JSON_UNESCAPED_UNICODE);
     exit;
   }
@@ -163,42 +166,39 @@ try {
     exit;
   }
 
-  // Upsert inventory — try several res_id variants to match how inventory rows are stored
+  // Upsert inventory — try multiple res_id variants
   $attempts = [];
   $resCandidates = [$resId];
-
-  // add/unadd 'res.' prefix variants
   $plain = preg_replace('/^res\./', '', $resId);
-  if ($plain !== $resId) {
-    $resCandidates[] = $plain;
-  } else {
-    $resCandidates[] = 'res.' . $plain;
-  }
-  // ensure unique order
-  $resCandidates = array_values(array_unique($resCandidates, SORT_REGULAR));
+  if ($plain !== $resId) $resCandidates[] = $plain;
+  else $resCandidates[] = 'res.' . $plain;
 
-  $updated = false;
-  foreach ($resCandidates as $candId) {
-    // try update existing row first
-    $upd = $pdo->prepare("UPDATE inventory SET amount = amount + ? WHERE user_id = ? AND res_id = ?");
-    $upd->execute([$returnAmount, $uid, $candId]);
-    if ($upd->rowCount() > 0) {
-      $attempts[] = ['action'=>'update','res_id'=>$candId,'amount_added'=>$returnAmount];
-      $updated = true;
+  $inserted = false;
+  foreach ($resCandidates as $insId) {
+    try {
+      $ins = $pdo->prepare("
+        INSERT INTO inventory (user_id, res_id, amount)
+        VALUES (?, ?, ?)
+        ON DUPLICATE KEY UPDATE amount = amount + VALUES(amount)
+      ");
+      $ins->execute([$uid, $insId, $returnAmount]);
+      $attempts[] = ['action'=>'insert','res_id'=>$insId,'amount_added'=>$returnAmount];
+      $inserted = true;
       break;
+    } catch (Throwable $e) {
+      $attempts[] = ['action'=>'insert_failed','res_id'=>$insId,'error'=>$e->getMessage()];
+      // try next candidate
     }
   }
 
-  if (!$updated) {
-    // no existing row matched — insert with original listing res_id (first candidate)
-    $insId = $resCandidates[0];
-    $ins = $pdo->prepare("INSERT INTO inventory (user_id, res_id, amount) VALUES (?, ?, ?)");
-    $ins->execute([$uid, $insId, $returnAmount]);
-    $attempts[] = ['action'=>'insert','res_id'=>$insId,'amount_added'=>$returnAmount];
+  if (!$inserted) {
+    $pdo->rollBack();
+    http_response_code(500);
+    echo json_encode(['ok'=>false,'error'=>['message'=>'Failed to upsert returned inventory','attempts'=>$attempts]], JSON_UNESCAPED_UNICODE);
+    exit;
   }
 
-  // Mark listing canceled and persist penalty info if marketplace table has those columns
-  // Detect columns
+  // Mark listing canceled and persist penalty info if marketplace table supports those columns
   $marketCols = [];
   $colStmt = $pdo->query("SHOW COLUMNS FROM marketplace");
   foreach ($colStmt->fetchAll(PDO::FETCH_ASSOC) as $c) $marketCols[] = $c['Field'] ?? '';
@@ -219,6 +219,33 @@ try {
 
   $pdo->commit();
 
+  // Read new inventory snapshot for delta
+  $selMoney = $pdo->prepare("SELECT amount FROM inventory WHERE user_id = ? AND res_id = 'res.money' LIMIT 1");
+  $selMoney->execute([$uid]);
+  $newMoney = (float)($selMoney->fetchColumn() ?? 0.0);
+
+  $selNewRes = $pdo->prepare("SELECT amount FROM inventory WHERE user_id = ? AND res_id = ? LIMIT 1");
+  $selNewRes->execute([$uid, $resCandidates[0]]);
+  $newResAmount = (float)($selNewRes->fetchColumn() ?? 0.0);
+
+  // Build delta (associative arrays)
+  $plainKey = preg_replace('/^res\\./', '', $resId);
+  $deltaState = [
+    'inv' => ['solid' => [], 'liquid' => []],
+    'market' => ['offer' => ['id' => $id, 'amount' => 0]]
+  ];
+
+  // Money to solid bucket (frontend reads state.inv.solid.money)
+  $deltaState['inv']['solid']['money'] = $newMoney;
+  if ($bucket === 'liquid') {
+    $deltaState['inv']['liquid'][$plainKey] = $newResAmount;
+  } else {
+    $deltaState['inv']['solid'][$plainKey] = $newResAmount;
+  }
+
+  // convert empty arrays -> objects for JSON only
+  $deltaState = convertEmptyArraysToObjects($deltaState);
+
   echo json_encode(['ok'=>true,'data'=>[
     'id'=>$id,
     'res_id'=>$resId,
@@ -229,6 +256,7 @@ try {
     'unit_space'=>$unitSpace,
     'bucket'=>$bucket,
     'inventory_upsert_attempts'=>$attempts,
+    'delta' => ['state' => $deltaState]
   ]], JSON_UNESCAPED_UNICODE);
   exit;
 

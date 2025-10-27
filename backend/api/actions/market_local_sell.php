@@ -122,30 +122,57 @@ try {
     $newResAmount = (float)($selNewRes->fetchColumn() ?? 0.0);
 
     $plainKey = preg_replace('/^res\\./', '', $resId);
-    $deltaState = [
-      'inv' => [
-        'solid' => [],
-        'liquid' => []
-      ],
-      'market' => [
-        'offer' => [
-          'id' => $localId,
-          'amount' => $amount
-        ]
-      ]
-    ];
-    $deltaState['inv']['solid']['money'] = $newMoney;
-    $deltaState['inv']['solid'][$plainKey] = $newResAmount;
 
-    // convert empties to objects for JSON
-    $deltaState = convertEmptyArraysToObjects($deltaState);
+// Bestem bucket (solid vs liquid) ud fra defs, som i marketplace_buy.php
+$defs = null;
+try {
+  if (function_exists('load_all_defs')) $defs = load_all_defs();
+} catch (Throwable $_) { $defs = null; }
+$defsRes = (array)($defs['res'] ?? []);
+$resDef = $defsRes[$plainKey] ?? $defsRes[$resId] ?? ($defsRes["res.$plainKey"] ?? null);
 
-    echo json_encode(['ok'=>true,'data'=>[
-      'message'=>'Local sell created',
-      'listing' => $entry,
-      'delta' => ['state' => $deltaState]
-    ]], JSON_UNESCAPED_UNICODE);
-    exit;
+$unit = strtolower((string)($resDef['unit'] ?? $resDef['stats']['unit'] ?? ''));
+$isLiquid = ($unit === 'l');
+$unitSpace = 0.0;
+if (isset($resDef['unitSpace'])) $unitSpace = (float)$resDef['unitSpace'];
+elseif (isset($resDef['stats']['unitSpace'])) $unitSpace = (float)$resDef['stats']['unitSpace'];
+
+$needSpace = $amount * $unitSpace;
+$bucket = $isLiquid ? 'liquid' : 'solid';
+
+// Når du bygger deltaState, sæt den ændrede res i korrekt bucket:
+$deltaState = [
+  'inv' => [
+    'solid' => [],
+    'liquid' => []
+  ],
+  'market' => [
+    'offer' => [
+      'id' => $localId,
+      'amount' => $amount
+    ]
+  ]
+];
+
+// money i solid bucket
+$deltaState['inv']['solid']['money'] = $newMoney;
+
+// sæt den ændrede resource i korrekt bucket (liquid vs solid)
+if ($bucket === 'liquid') {
+  $deltaState['inv']['liquid'][$plainKey] = $newResAmount;
+} else {
+  $deltaState['inv']['solid'][$plainKey] = $newResAmount;
+}
+
+// convert empties to objects for JSON
+$deltaState = convertEmptyArraysToObjects($deltaState);
+
+echo json_encode(['ok'=>true,'data'=>[
+  'message'=>'Local sell created',
+  'listing' => $entry,
+  'delta' => ['state' => $deltaState]
+]], JSON_UNESCAPED_UNICODE);
+exit;
 
   } catch (Throwable $e) {
     if ($pdo->inTransaction()) $pdo->rollBack();

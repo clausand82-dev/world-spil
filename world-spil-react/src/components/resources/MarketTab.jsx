@@ -5,8 +5,11 @@ import { addMarketRefreshListener, removeMarketRefreshListener, triggerMarketRef
 import Icon from '../ui/Icon.jsx';
 
 /*
-  MarketTab — kun ændring: brug updateState fra GameDataContext hvis backend returnerer delta.
-  ALT andet er uændret så købsflow (BuyModal + onBuy) forbliver præcis som før.
+  MarketTab — komplet fil. Denne version:
+   - indlæser local/global lister
+   - håndterer buy, cancel, insert via delta hvis backend returnerer det
+   - opdaterer lokale rækker (localRows/globalRows) ud fra payload
+   - fallback: refetch/fetchLocal/fetchGlobal
 */
 
 export default function MarketTab() {
@@ -71,13 +74,11 @@ export default function MarketTab() {
     setErrorOpen(true);
   };
 
-  // Render error details (try to convert common backend JSON into friendly text)
   const formatNumber = (v) => { const n = Number(v); if (!Number.isFinite(n)) return String(v); return Math.abs(n - Math.round(n)) < 1e-9 ? String(Math.round(n)) : n.toFixed(2); };
   const renderDetails = (details) => {
     if (typeof details === 'string') return details;
     if (!details || typeof details !== 'object') return String(details);
 
-    // Storage/capacity error returned from backend
     if (details.need_space !== undefined && details.free_space !== undefined) {
       const unit = details.unit_space !== undefined ? Number(details.unit_space) : null;
       const need = Number(details.need_space || 0);
@@ -95,21 +96,17 @@ export default function MarketTab() {
       return out;
     }
 
-    // Insufficient funds
     if (details.need !== undefined && details.have !== undefined) {
       return `Du mangler penge: Har ${formatNumber(details.have)}, kræver ${formatNumber(details.need)}.`;
     }
 
-    // Amount exceeds available
     if (details.available !== undefined) {
       return `Tilgængelig mængde er kun ${formatNumber(details.available)}.`;
     }
 
-    // Fallback: pretty-printed JSON
     try { return JSON.stringify(details, null, 2); } catch { return String(details); }
   };
 
-  // defs lookup helper
   const defs = gameData?.defs || gameData?.data?.defs || gameData?.state?.defs || gameData?.state?.resourceDefs || {};
 
   function normalizeOffer(offer, defsObj) {
@@ -141,7 +138,6 @@ export default function MarketTab() {
     return { ...offer, res_id: originalResId, res_key: lookupKey, res_name: resName, res_emoji: resEmoji };
   }
 
-  // format helpers
   const formatAmountAsInt = v => { const n = Number(v); return Number.isFinite(n) ? String(Math.round(n)) : String(v); };
   const formatTwoDecimals = v => { const n = Number(v); return Number.isFinite(n) ? n.toFixed(2) : String(v); };
 
@@ -175,14 +171,60 @@ export default function MarketTab() {
   useEffect(() => { fetchLocal(); fetchGlobal(); }, []);
   useEffect(() => { if (viewMode === 'global') fetchGlobal(); }, [ownMode, sort, q, viewMode]);
 
-  // NEW: refresh on focus/visibility + global event
+  // refresh on focus/visibility + incoming payload handling
   useEffect(() => {
-    const refreshLists = () => {
+    const refreshLists = (payload = null) => {
+      try {
+        if (payload && payload.type) {
+          if (payload.type === 'market_buy' && payload.delta) {
+            const offer = (payload.delta.state && payload.delta.state.market && payload.delta.state.market.offer) || (payload.delta.market && payload.delta.market.offer) || null;
+            if (offer && offer.id !== undefined) {
+              const idStr = String(offer.id);
+              const amount = Number(offer.amount || 0);
+              setLocalRows(prev => prev.map(r => (String(r.id) === idStr ? { ...r, amount } : r)).filter(r => Number(r.amount) > 0));
+              setGlobalRows(prev => prev.map(r => (String(r.id) === idStr ? { ...r, amount } : r)).filter(r => Number(r.amount) > 0));
+              return;
+            }
+          }
+
+          if (payload.type === 'local_sell') {
+            const listing = payload.listing || (payload.delta && payload.delta.listing) || null;
+            if (listing) {
+              setLocalRows(prev => [listing, ...prev]);
+              return;
+            }
+            if (document.visibilityState === 'visible') { fetchLocal(); return; }
+          }
+
+          if (payload.type === 'global_listing') {
+            const listing = payload.listing || (payload.delta && payload.delta.listing) || null;
+            if (listing) {
+              setGlobalRows(prev => [listing, ...prev]);
+              return;
+            }
+            if (document.visibilityState === 'visible') { fetchGlobal(); return; }
+          }
+
+          if (payload.type === 'market_cancel' && payload.delta) {
+            const offer = (payload.delta.state && payload.delta.state.market && payload.delta.state.market.offer) || (payload.delta.market && payload.delta.market.offer) || null;
+            if (offer && offer.id !== undefined) {
+              const idStr = String(offer.id);
+              setLocalRows(prev => prev.filter(r => String(r.id) !== idStr));
+              setGlobalRows(prev => prev.filter(r => String(r.id) !== idStr));
+              return;
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('refreshLists targeted update failed', e);
+      }
+
       if (document.visibilityState === 'visible') {
         fetchLocal();
         fetchGlobal();
       }
     };
+
     const onFocus = () => refreshLists();
     const onVisibility = () => refreshLists();
 
@@ -195,16 +237,14 @@ export default function MarketTab() {
       document.removeEventListener('visibilitychange', onVisibility);
       removeMarketRefreshListener(refreshLists);
     };
-  }, []);
+  }, [refetch, updateState, viewMode, ownMode, sort, q]);
 
-  // open buy (use normalized offer) and clear previous errors
   const openBuy = (offer) => {
     setBuyError(null);
     setBuyOffer(normalizeOffer(offer, defs));
     setBuyOpen(true);
   };
 
-  // cancel own listing
   const requestCancelOwn = (id, title, message) => {
     setConfirmPayload({
       id,
@@ -227,31 +267,52 @@ export default function MarketTab() {
         body: params.toString()
       });
       const json = await res.json().catch(() => null);
+
+      console.debug('cancelOwn response', { status: res.status, json });
+
       if (!res.ok || !json?.ok) {
-        console.warn('cancelOwn failed', res.status, json);
-        // show inside modal
         const err = json?.error || {};
         const friendly = err.message || 'Kunne ikke fortryde opslaget';
         showError({ message: friendly, details: err.details || err.debug || json });
         return;
       }
-      // optimistic UI update
-      setLocalRows(prev => prev.filter(x => String(x.id) !== String(id)));
-      setGlobalRows(prev => prev.filter(x => String(x.id) !== String(id)));
+
+      const delta = json?.data?.delta ?? null;
+      if (delta) {
+        try {
+          updateState?.(delta);
+        } catch (e) {
+          console.warn('updateState failed during cancel, will fallback to refetch', e);
+          try { await refetch?.(); } catch (e2) { /* ignore */ }
+        }
+
+        const offer = (delta.state && delta.state.market && delta.state.market.offer) || (delta.market && delta.market.offer) || null;
+        if (offer && offer.id !== undefined) {
+          const offerId = String(offer.id);
+          setLocalRows(prev => prev.filter(r => String(r.id) !== offerId));
+          setGlobalRows(prev => prev.filter(r => String(r.id) !== offerId));
+        }
+
+        try { triggerMarketRefresh({ type: 'market_cancel', delta }); } catch (e) { /* ignore */ }
+      } else {
+        setLocalRows(prev => prev.filter(x => String(x.id) !== String(id)));
+        setGlobalRows(prev => prev.filter(x => String(x.id) !== String(id)));
+        try { await refetch?.(); } catch (e) { /* ignore */ }
+        await fetchLocal(); await fetchGlobal();
+        try { triggerMarketRefresh(); } catch (e) { /* ignore */ }
+      }
+
       const msg = json?.data?.message || json?.message || 'Opslaget er annulleret';
       setSuccessMessage(msg);
       setSuccessOpen(true);
       setTimeout(() => setSuccessOpen(false), 2500);
-      try { await refetch?.(); } catch (e) { /* ignore */ }
-      await fetchLocal(); await fetchGlobal();
-      try { triggerMarketRefresh(); } catch (e) { /* ignore */ }
     } catch (e) {
       console.error('cancelOwn error', e);
       showError({ message: e?.message || 'Uventet fejl', details: e });
     }
   };
 
-  // search normalization
+  // filtering/sorting and rendering code follows (unchanged)
   const normalizeText = (s) => {
     if (!s && s !== 0) return '';
     try {
@@ -266,13 +327,11 @@ export default function MarketTab() {
     }
   };
 
-  // Filter + search + ownMode (local listings are synthetic and include res_id already)
   const filteredGlobalRows = useMemo(() => {
     const qn = normalizeText(q);
     const rows = globalRows || [];
 
     return rows.filter((r) => {
-      // ownMode filtering
       if (ownMode === 'only' && !(r.seller && (Number(r.seller.user_id || r.seller.user?.user_id || 0) === Number(userId) || Number(r.user_id || 0) === Number(userId)))) {
         return false;
       }
@@ -315,7 +374,6 @@ export default function MarketTab() {
 
   const displayedGlobal = useMemo(() => sortRows(filteredGlobalRows), [filteredGlobalRows, sort]);
 
-  // Helper to render the icon + name cell but using ui/Icon for robustness
   const renderResCell = (rawOffer) => {
     const norm = normalizeOffer(rawOffer, defs);
     const emojiDef = { iconUrl: rawOffer.iconUrl || norm.iconUrl || null, emoji: norm.res_emoji || null, name: norm.res_name };
@@ -350,7 +408,6 @@ export default function MarketTab() {
         </div>
       </div>
 
-      {/* Global toolbar (search / ownMode / sort) restored */}
       {viewMode === 'global' && (
         <div className="market-toolbar">
           <div className="search" aria-hidden>
@@ -406,9 +463,7 @@ export default function MarketTab() {
                   const norm = normalizeOffer(r, defs);
                   return (
                     <tr key={r.id}>
-                      <td>
-                        {renderResCell(r)}
-                      </td>
+                      <td>{renderResCell(r)}</td>
                       <td>{formatAmountAsInt(r.amount)}</td>
                       <td>{formatTwoDecimals(r.price)}</td>
                       <td>{formatTwoDecimals(Number(r.amount)*Number(r.price))}</td>
@@ -451,9 +506,7 @@ export default function MarketTab() {
                   const isSelf = r.seller?.user_id && Number(r.seller.user_id) === Number(userId);
                   return (
                     <tr key={r.id}>
-                      <td>
-                        {renderResCell(r)}
-                      </td>
+                      <td>{renderResCell(r)}</td>
                       <td>{formatAmountAsInt(r.amount)}</td>
                       <td>{formatTwoDecimals(r.price)}</td>
                       <td>{formatTwoDecimals(Number(r.amount)*Number(r.price))}</td>
@@ -518,21 +571,16 @@ export default function MarketTab() {
               return;
             }
 
-            // success: hvis backend returnerede en kompakt delta, brug den til at patch'e global state
             const delta = json?.data?.delta ?? null;
 
             if (delta) {
               try {
-                // Opdater global game state i GameDataContext (patch)
-                // NOTE: updateState expects the patch to be shaped like { state: { ... } } (we return that from backend)
-                updateState(delta);
+                updateState?.(delta);
               } catch (e) {
                 console.warn('updateState failed', e);
                 try { await refetch?.(); } catch (e) { /* ignore */ }
               }
 
-              // Anvend evt. market delta (opdater rækker lokalt)
-              // Offer info may sit under delta.state.market.offer or delta.market.offer depending on backend shape
               const offer = (delta.state && delta.state.market && delta.state.market.offer) || (delta.market && delta.market.offer) || null;
               if (offer && offer.id !== undefined) {
                 const offerId = offer.id;
@@ -541,10 +589,8 @@ export default function MarketTab() {
                 setGlobalRows(prev => prev.map(r => (String(r.id) === String(offerId) ? { ...r, amount: offerAmount } : r)).filter(r => Number(r.amount) > 0));
               }
 
-              // notify resten af app'en — send delta (whole object) with event
               try { triggerMarketRefresh({ type: 'market_buy', delta }); } catch (e) { /* ignore */ }
             } else {
-              // fallback: original adfærd (fuld refetch)
               try { await refetch?.(); } catch (e) { console.warn('refetch failed', e); }
               await fetchLocal();
               await fetchGlobal();
@@ -569,7 +615,6 @@ export default function MarketTab() {
         }}
       />
 
-      {/* Confirm modal */}
       {confirmOpen && (
         <div role="dialog" aria-modal style={{ position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 32000 }}>
           <div style={{ padding: 20, background: 'var(--panel-bg, #071128)', borderRadius: 8 }}>
@@ -583,7 +628,6 @@ export default function MarketTab() {
         </div>
       )}
 
-      {/* success confirmation */}
       {successOpen && (
         <div style={{
           position: 'fixed', inset: 0, zIndex: 30500, display: 'flex',
@@ -602,7 +646,6 @@ export default function MarketTab() {
         </div>
       )}
 
-      {/* global error modal (renders backend/client errors) */}
       {errorOpen && (
         <div role="dialog" aria-modal style={{ position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 32000 }}>
           <div style={{ padding: 20, background: 'var(--panel-bg, #071128)', borderRadius: 8 }}>
