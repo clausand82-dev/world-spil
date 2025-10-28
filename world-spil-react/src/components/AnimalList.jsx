@@ -2,6 +2,7 @@ import React from 'react';
 import { useGameData } from '../context/GameDataContext.jsx';
 import ItemRow from './ItemRow.jsx';
 import { fmt } from '../services/helpers.js';
+import Icon from './ui/Icon.jsx'; // brug central Icon-komponent til alle ikoner
 
 /**
  * Viser ejede "ani."-items. Kan filtrere på family:
@@ -41,7 +42,12 @@ export default function AnimalList({ format = 'simple', family = null }) {
     if (format === 'simple') {
       return (
         <div className="row" key={id}>
-          <div className="left"><span>{def.emoji}</span><span>{def.name}</span></div>
+          <div className="left" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+              {def.iconUrl ? <Icon src={def.iconUrl} size={20} alt={def.name} /> : <Icon def={{ emoji: def.emoji }} size={20} alt={def.name} />}
+            </span>
+            <span>{def.name}</span>
+          </div>
           <div className="right"><strong>{fmt(qty)}</strong></div>
         </div>
       );
@@ -59,7 +65,7 @@ export default function AnimalList({ format = 'simple', family = null }) {
       return (
         <ItemRow
           key={id}
-          icon={def.emoji}
+          icon={def.iconUrl ? <Icon src={def.iconUrl} size={20} alt={def.name} /> : <Icon def={{ emoji: def.emoji }} size={20} alt={def.name} />}
           title={def.name}
           subtitle={subtitle}
           value={total}

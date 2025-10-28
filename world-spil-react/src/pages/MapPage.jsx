@@ -17,9 +17,8 @@ function fmtMultAsPercent(mult) {
 // Robust midlertidig XML-indlæsning (samme som tidligere eksempel)
 async function fetchWorldXmlText() {
   const candidates = [
-    '/src/assets/data/world.map001.land001.xml',
-    '/backend/data/xml/world.map001.land001.xml',
-  ];
+    'public/assets/data/world.map001.land001.xml',
+   ];
   for (const url of candidates) {
     try {
       const rsp = await fetch(url, { cache: 'no-store' });

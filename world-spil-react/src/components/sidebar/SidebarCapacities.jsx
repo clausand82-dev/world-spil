@@ -368,9 +368,7 @@ export default function SidebarCapacities() {
       {rows.map((r) => (
         <div
           key={r.key}
-          onMouseEnter={() => { if (!hoverLocked) openHover(r.key); }}
-          onMouseLeave={closeHoverSoon}
-          onClick={() => { if (!hoverLocked) { setHoverKey(r.key); setHoverLocked(true); } }}
+          onClick={() => { setHoverKey(r.key); setHoverLocked(true); }}
           style={{ cursor: 'pointer' }}
         >
           <InlineCapacityBar

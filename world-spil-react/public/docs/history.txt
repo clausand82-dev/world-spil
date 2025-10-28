@@ -2,6 +2,10 @@ Change/update History (working/prototype versions)
 
 4.3
 - STAGE 1 pipeline clean up (see help system for more information on STAGE 1) 
+- STAGE 2 added
+- STAGE 3 is in progress
+- done some basic core optimizing and some layout tweaks
+- NEW FEATURE TO DO IS WEATHER, EVENT, PRESENTATIONS AND STATE CONSEKVENSES
 
 4.2
 - fixed research page where it did scroll effect more then once

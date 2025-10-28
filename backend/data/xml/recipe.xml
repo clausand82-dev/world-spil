@@ -315,9 +315,9 @@
   <!--- SLAUGHTER ANIMALS-->
   <recipe id="rcp.slaughterchicken.l1" family="farm" type="butchery" lvl="1" stage="1" mode="active">
     <yield>
-      <res id="res.rawmeat" amount="2"/>
-      <res id="res.bone" amount="1"/>
       <res id="res.feather" amount="10"/>
+      <res id="res.rawmeat" amount="2"/>
+      <res id="res.bone" amount="1"/>      
     </yield>
     <cost>
       <res id="ani.chicken" amount="1"/>
@@ -340,9 +340,9 @@
 
   <recipe id="rcp.slaughtergoat.l1" family="farm" type="butchery" lvl="1" stage="1" mode="active">
     <yield>
-      <res id="res.rawmeat" amount="8"/>
-      <res id="res.bone" amount="5"/>
       <res id="res.rawhide" amount="1"/>
+      <res id="res.rawmeat" amount="8"/>
+      <res id="res.bone" amount="5"/>      
     </yield>
     <cost>
       <res id="ani.goat" amount="1"/>
@@ -353,9 +353,9 @@
 
   <recipe id="rcp.slaughtersheep.l1" family="farm" type="butchery" lvl="1" stage="1" mode="active">
     <yield>
-      <res id="res.rawmeat" amount="8"/>
-      <res id="res.bone" amount="5"/>
       <res id="res.rawhide" amount="1"/>
+      <res id="res.rawmeat" amount="8"/>
+      <res id="res.bone" amount="5"/>      
     </yield>
     <cost>
       <res id="ani.sheep" amount="1"/>

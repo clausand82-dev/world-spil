@@ -42,7 +42,7 @@ export default function Sidebar() {
     <aside id="sidebar">
       <section className="panel section res-panel">
         <div className="section-head">
-          Stats <span style={{ fontSize: 8, opacity: 0.7 }}>(klik på bar for at låse hover - klik uden for hover for at deaktivere):</span>
+          Stats <span style={{ fontSize: 10, opacity: 0.7 }}>(klik på bar for flere informationer):</span>
         </div>
         <div className="section-body">
           <HeaderCapacities />
@@ -92,7 +92,7 @@ export default function Sidebar() {
       </section>
 
       <section className="panel section res-panel">
-        <div className="section-head">🐄 Dyr</div>
+        <div className="section-head">🐄 Dyr/Units</div>
         <div className="section-body">
           <AnimalList format="simple" />
         </div>

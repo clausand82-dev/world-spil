@@ -202,23 +202,7 @@ function RecipeRow({ entry, defs: passedDefs, state, baseOwned, requirementCache
       <StatsEffectsTooltip def={def} translations={translations} />
       <div style={{ height: 8 }} />
 
-      <div style={{ marginBottom: 8 }}>
-        {/* Compact formula lines (maks 3 pr række) */}
-        <div style={{ fontWeight: 700, marginBottom: 6 }}>{t('ui.labels.formula', 'Opskrift')}</div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 8, fontSize: '1.2em' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              {renderInlineFormulaRows(formulaInputTokens, 3)}
-            </div>
-            <div style={{ fontWeight: 700, marginLeft: 4, marginRight: 4, alignSelf: 'center', }}>→</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: '1.5'   }}>
-              {renderInlineFormulaRows(formulaOutputTokens, 3, '')}
-            </div>
-          </div>
-        </div>
 
-        
-      </div>
 
       <RequirementPanel def={def} defs={defs} state={state} requirementCaches={requirementCaches} />
     </div>

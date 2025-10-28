@@ -1,13 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useGameData } from '../context/GameDataContext.jsx';
 
 const API_BASE = '/world-spil/backend/api';
 
-/**
- * Robust fetch helper der:
- * - sender cookies (credentials: 'include')
- * - håndterer non-JSON respons
- * - returnerer { ok, status, data, error }
- */
 async function apiGet(path) {
   try {
     const res = await fetch(`${API_BASE}${path}`, {
@@ -51,312 +47,156 @@ async function apiPost(path, body) {
   }
 }
 
+/* Centered modal used for login/register */
+function CenterModal({ title, onClose, children }) {
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      className="modal-backdrop"
+      style={{
+        position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: 'rgba(0,0,0,0.5)', zIndex: 1200,
+      }}
+      onClick={onClose}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          width: 360,
+          maxWidth: '92%',
+          background: 'var(--panel-bg, #0b1220)',
+          color: 'var(--text, #fff)',
+          borderRadius: 10,
+          padding: 16,
+          boxShadow: '0 8px 30px rgba(0,0,0,0.6)'
+        }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+          <strong style={{ fontSize: 16 }}>{title}</strong>
+          <button className="icon-btn" onClick={onClose} aria-label="Luk" style={{ color: 'inherit' }}>✕</button>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+/*
+  TopbarAuth
+  - Uses react-query for profile + mutations to avoid manual hook races.
+  - On login/register/logout we update the 'profile' query and trigger refreshData from GameDataContext.
+  - On logout we also clear language-scoped alldata cache keys in localStorage (as previously added).
+  - This reduces hook errors and race conditions on startup because react-query centralises fetch lifecycle.
+*/
 export default function TopbarAuth({ onAuthChange = () => window.location.reload() }) {
-  const [loading, setLoading] = useState(true);
-  const [session, setSession] = useState({ loggedIn: false, userId: null, username: null });
-  const [showLogin, setShowLogin] = useState(false);
-  const [showRegister, setShowRegister] = useState(false);
+  const queryClient = useQueryClient();
+  const { refreshData, updateState } = useGameData() || {}; // used to refresh app-level data after auth change
+
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
+
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showRegisterModal, setShowRegisterModal] = useState(false);
+
   const [loginUser, setLoginUser] = useState('');
   const [loginPass, setLoginPass] = useState('');
   const [regUser, setRegUser] = useState('');
   const [regEmail, setRegEmail] = useState('');
   const [regPass, setRegPass] = useState('');
   const [err, setErr] = useState('');
-  const popRef = useRef(null);
 
-  // Luk popups ved klik udenfor
-  useEffect(() => {
-    const onDocClick = (e) => {
-      if (!popRef.current) return;
-      if (!popRef.current.contains(e.target)) {
-        setShowLogin(false);
-        setShowRegister(false);
-        setErr('');
+  // PROFILE QUERY - single source of truth for current session
+  const { data: profileData, isLoading: profileLoading, refetch: refetchProfile } = useQuery({
+    queryKey: ['profile'],
+    queryFn: async () => {
+      const p = await apiGet('/user/profile.php');
+      if (p.ok && p.data?.data?.userId) return p.data.data;
+      // return null for not logged in
+      return null;
+    },
+    refetchOnWindowFocus: false,
+    staleTime: 3000,
+    retry: false
+  });
+
+  // derive session
+  const session = profileData ? { loggedIn: true, userId: profileData.userId, username: profileData.username } : { loggedIn: false, userId: null, username: null };
+
+  // MUTATIONS
+  const loginMutation = useMutation({
+    mutationFn: async ({ username, password }) => apiPost('/auth/login.php', { username, password }),
+    onSuccess: async (res) => {
+      // If login returned OK, try to update profile query from server
+      if (res?.ok && res.data?.ok) {
+        // refetch profile to get canonical data (session)
+        await refetchProfile();
+        // refresh app data & invalidate caches
+        try { await refreshData?.(); } catch {}
+        // notify external
+        try { onAuthChange && onAuthChange(); } catch {}
       }
-    };
-    document.addEventListener('click', onDocClick);
-    return () => document.removeEventListener('click', onDocClick);
-  }, []);
+    }
+  });
 
-  // Hent session/profile på mount
-  useEffect(() => {
-    let mounted = true;
-    (async () => {
-      setLoading(true);
-      setErr('');
+  const registerMutation = useMutation({
+    mutationFn: async ({ username, email, password }) => apiPost('/auth/register.php', { username, email, password }),
+    onSuccess: async (res) => {
+      if (res?.ok && res.data?.ok) {
+        // after register, servers may or may not auto-set session. attempt to refetch profile
+        await refetchProfile();
+        if (!queryClient.getQueryData(['profile'])) {
+          // attempt a login as recovery
+          try {
+            const l = await apiPost('/auth/login.php', { username: regUser, password: regPass });
+            if (l.ok && l.data?.ok) {
+              await refetchProfile();
+            }
+          } catch (e) { /* ignore */ }
+        }
+        try { await refreshData?.(); } catch {}
+        try { onAuthChange && onAuthChange(); } catch {}
+      }
+    }
+  });
+
+  const logoutMutation = useMutation({
+    mutationFn: async () => apiPost('/auth/logout.php', {}),
+    onSuccess: async () => {
+      // Immediately clear profile query to avoid UI thinking user is still present
+      queryClient.setQueryData(['profile'], null);
+      // clear sensitive in-memory user state via GameDataContext updateState
+      try { if (typeof updateState === 'function') updateState({ state: { user: {} } }); } catch (e) {}
+      // remove local language-scoped alldata caches so alldata fetches fresh
       try {
-        // Forsøg direkte profil (simplere og matcher backend location)
-        const p = await apiGet('/user/profile.php');
-        if (!mounted) return;
-        if (p.ok && p.data?.data?.userId) {
-          setSession({
-            loggedIn: true,
-            userId: p.data.data.userId,
-            username: p.data.data.username ?? null,
-          });
+        const toRemove = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (!k) continue;
+          if (k.startsWith('ws:alldata') || k === '__ws_data_update') toRemove.push(k);
+        }
+        toRemove.forEach(k => {
+          try { localStorage.removeItem(k); } catch (e) { /* ignore */ }
+        });
+      } catch (e) { /* ignore */ }
+
+      // trigger refresh of app-level data; fallback to reload
+      try {
+        if (typeof refreshData === 'function') {
+          await refreshData();
         } else {
-          // Ikke logget ind eller 401 => vis login UI (men ikke automatisk open)
-          setSession({ loggedIn: false, userId: null, username: null });
+          window.location.reload();
         }
       } catch (e) {
-        // Fallback: sæt loggedOut og vis fejl i console
-        console.error('TopbarAuth: error fetching profile', e);
-        setSession({ loggedIn: false, userId: null, username: null });
-      } finally {
-        if (mounted) setLoading(false);
+        try { window.location.reload(); } catch (_) {}
       }
-    })();
-    return () => { mounted = false; };
-  }, []);
 
-  async function handleLogin(e) {
-    e?.preventDefault();
-    setErr('');
-    if (!loginUser || !loginPass) {
-      setErr('Udfyld brugernavn og kodeord.');
-      return;
+      // notify external
+      try { onAuthChange && onAuthChange(); } catch {}
     }
-    // POST til login.php (bemærk sti)
-    const r = await apiPost('/auth/login.php', { username: loginUser, password: loginPass });
-    if (r.ok && r.data?.ok) {
-      // Forvent backend har sat session cookie; men vi opdaterer state lokalt
-      setSession({
-        loggedIn: true,
-        userId: r.data.data?.userId ?? null,
-        username: r.data.data?.username ?? loginUser,
-      });
-      setShowLogin(false);
-      setLoginPass('');
-      // Sørg for at caller opdaterer resten af app (eks. genindlæs summary)
-      onAuthChange();
-      return;
-    }
-
-    // Hvis 401 med klar besked, vis den
-    setErr(r.data?.error?.message || r.error?.message || 'Login fejlede');
-  }
-
-  async function handleLogout() {
-    setErr('');
-    const r = await apiPost('/auth/logout.php', {});
-    if (r.ok && r.data?.ok) {
-      setSession({ loggedIn: false, userId: null, username: null });
-      onAuthChange();
-    } else {
-      setErr(r.data?.error?.message || r.error?.message || 'Log ud fejlede');
-    }
-  }
-
-  async function handleRegister(e) {
-    e?.preventDefault();
-    setErr('');
-    if (!regUser || !regEmail || !regPass) {
-      setErr('Udfyld brugernavn, email og kodeord.');
-      return;
-    }
-    const r = await apiPost('/auth/register.php', { username: regUser, email: regEmail, password: regPass });
-    if (r.ok && r.data?.ok) {
-      // Auto-login: backend sætter session i register.php; men vi også forsøger login for robusthed
-      const p = await apiGet('/user/profile.php');
-      if (p.ok && p.data?.data?.userId) {
-        setSession({
-          loggedIn: true,
-          userId: p.data.data.userId,
-          username: p.data.data.username ?? regUser,
-        });
-      } else {
-        // Fallback: forsøg login-post
-        const l = await apiPost('/auth/login.php', { username: regUser, password: regPass });
-        if (l.ok && l.data?.ok) {
-          setSession({
-            loggedIn: true,
-            userId: l.data.data?.userId ?? null,
-            username: l.data.data?.username ?? regUser,
-          });
-        } else {
-          // keep logged out but close register popup
-          setSession({ loggedIn: false, userId: null, username: null });
-        }
-      }
-      setShowRegister(false);
-      setRegPass('');
-      onAuthChange();
-    } else {
-      setErr(r.data?.error?.message || r.error?.message || 'Registrering fejlede');
-    }
-  }
-
-  return (
-    <div className="topbar-auth" ref={popRef}>
-      {loading ? (
-        <span className="auth-muted">Tjekker login…</span>
-      ) : session.loggedIn ? (
-        <div className="auth-inline">
-          <span className="auth-user" title="Logget ind">
-            👤 {session.username || 'Bruger'}
-          </span>
-          <button className="btn small" onClick={handleLogout}>Log ud</button>
-        </div>
-      ) : (
-        <div className="auth-inline">
-          <button
-            className="btn small"
-            onClick={(e) => { e.stopPropagation(); setShowLogin(v => !v); setShowRegister(false); setErr(''); }}
-          >
-            Log ind
-          </button>
-          <button
-            className="btn small secondary"
-            onClick={(e) => { e.stopPropagation(); setShowRegister(v => !v); setShowLogin(false); setErr(''); }}
-          >
-            Opret
-          </button>
-
-          {showLogin && (
-            <form className="auth-pop" onSubmit={handleLogin} onClick={(e) => e.stopPropagation()}>
-              <div className="auth-title">Log ind</div>
-              <input
-                className="auth-input"
-                type="text"
-                placeholder="Brugernavn"
-                value={loginUser}
-                onChange={(e) => setLoginUser(e.target.value)}
-                autoFocus
-              />
-              <input
-                className="auth-input"
-                type="password"
-                placeholder="Kodeord"
-                value={loginPass}
-                onChange={(e) => setLoginPass(e.target.value)}
-              />
-              {err && <div className="auth-error">{err}</div>}
-              <div className="auth-actions">
-                <button type="submit" className="btn small primary">Log ind</button>
-                <button type="button" className="btn small" onClick={() => setShowLogin(false)}>Luk</button>
-              </div>
-            </form>
-          )}
-
-          {showRegister && (
-            <form className="auth-pop" onSubmit={handleRegister} onClick={(e) => e.stopPropagation()}>
-              <div className="auth-title">Opret bruger</div>
-              <input
-                className="auth-input"
-                type="text"
-                placeholder="Brugernavn"
-                value={regUser}
-                onChange={(e) => setRegUser(e.target.value)}
-                autoFocus
-              />
-              <input
-                className="auth-input"
-                type="email"
-                placeholder="Email"
-                value={regEmail}
-                onChange={(e) => setRegEmail(e.target.value)}
-              />
-              <input
-                className="auth-input"
-                type="password"
-                placeholder="Kodeord"
-                value={regPass}
-                onChange={(e) => setRegPass(e.target.value)}
-              />
-              {err && <div className="auth-error">{err}</div>}
-              <div className="auth-actions">
-                <button type="submit" className="btn small primary">Opret</button>
-                <button type="button" className="btn small" onClick={() => setShowRegister(false)}>Luk</button>
-              </div>
-            </form>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
-/* old login
-
-import React, { useEffect, useRef, useState } from 'react';
-
-const API_BASE = '/world-spil/backend/api';
-
-async function apiGet(path) {
-  const r = await fetch(`${API_BASE}${path}`, { credentials: 'include' });
-  let j = null;
-  try { j = await r.json(); } catch {}
-  return { ok: r.ok && j?.ok !== false, status: r.status, data: j };
-}
-
-async function apiPost(path, body) {
-  const r = await fetch(`${API_BASE}${path}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
-    body: JSON.stringify(body || {}),
   });
-  let j = null;
-  try { j = await r.json(); } catch {}
-  return { ok: r.ok && j?.ok !== false, status: r.status, data: j };
-}
 
-export default function TopbarAuth({ onAuthChange = () => window.location.reload() }) {
-  const [loading, setLoading] = useState(true);
-  const [session, setSession] = useState({ loggedIn: false, userId: null, username: null });
-  const [showLogin, setShowLogin] = useState(false);
-  const [showRegister, setShowRegister] = useState(false);
-  const [loginUser, setLoginUser] = useState('');
-  const [loginPass, setLoginPass] = useState('');
-  const [regUser, setRegUser] = useState('');
-  const [regEmail, setRegEmail] = useState('');
-  const [regPass, setRegPass] = useState('');
-  const [err, setErr] = useState('');
-  const popRef = useRef(null);
-
-  useEffect(() => {
-    const onDocClick = (e) => {
-      if (!popRef.current) return;
-      if (!popRef.current.contains(e.target)) {
-        setShowLogin(false);
-        setShowRegister(false);
-        setErr('');
-      }
-    };
-    document.addEventListener('click', onDocClick);
-    return () => document.removeEventListener('click', onDocClick);
-  }, []);
-
-  useEffect(() => {
-    (async () => {
-      setLoading(true);
-      setErr('');
-      // 1) Prøv session endpoint
-      let s = await apiGet('/auth/session.php');
-      if (s.ok && s.data?.data?.loggedIn) {
-        setSession({
-          loggedIn: true,
-          userId: s.data.data.userId ?? null,
-          username: s.data.data.username ?? null,
-        });
-        setLoading(false);
-        return;
-      }
-      // 2) fallback: profil (401 => ikke logget ind)
-      let p = await apiGet('/user/profile.php');
-      if (p.ok && p.data?.data?.userId) {
-        setSession({
-          loggedIn: true,
-          userId: p.data.data.userId,
-          username: p.data.data.username || null,
-        });
-      } else {
-        setSession({ loggedIn: false, userId: null, username: null });
-      }
-      setLoading(false);
-    })();
-  }, []);
-
+  // UI helpers
   async function handleLogin(e) {
     e?.preventDefault();
     setErr('');
@@ -364,29 +204,20 @@ export default function TopbarAuth({ onAuthChange = () => window.location.reload
       setErr('Udfyld brugernavn og kodeord.');
       return;
     }
-    const r = await apiPost('/auth/login.php', { username: loginUser, password: loginPass });
-    if (r.ok && r.data?.ok) {
-      setSession({
-        loggedIn: true,
-        userId: r.data.data?.userId ?? null,
-        username: r.data.data?.username ?? loginUser,
-      });
-      setShowLogin(false);
-      setLoginPass('');
-      onAuthChange();
-    } else {
-      setErr(r.data?.error?.message || 'Login fejlede');
-    }
-  }
-
-  async function handleLogout() {
-    setErr('');
-    const r = await apiPost('/auth/logout.php', {});
-    if (r.ok && r.data?.ok) {
-      setSession({ loggedIn: false, userId: null, username: null });
-      onAuthChange();
-    } else {
-      setErr(r.data?.error?.message || 'Log ud fejlede');
+    try {
+      await loginMutation.mutateAsync({ username: loginUser, password: loginPass });
+      // If mutation didn't set profile, check server response for errors
+      const prof = queryClient.getQueryData(['profile']);
+      if (prof) {
+        setShowLoginModal(false);
+        setLoginPass('');
+        setErr('');
+        return;
+      }
+      // if still no profile, try to surface mutation error
+      setErr(loginMutation.error?.data?.error?.message || loginMutation.error?.error?.message || 'Login fejlede');
+    } catch (e) {
+      setErr(e?.message || 'Netværksfejl ved login.');
     }
   }
 
@@ -397,51 +228,70 @@ export default function TopbarAuth({ onAuthChange = () => window.location.reload
       setErr('Udfyld brugernavn, email og kodeord.');
       return;
     }
-    const r = await apiPost('/auth/register.php', { username: regUser, email: regEmail, password: regPass });
-    if (r.ok && r.data?.ok) {
-      // auto-login efter succesfuld registrering (valgfrit) – vi forsøger:
-      const l = await apiPost('/auth/login.php', { username: regUser, password: regPass });
-      if (l.ok && l.data?.ok) {
-        setSession({
-          loggedIn: true,
-          userId: l.data.data?.userId ?? null,
-          username: l.data.data?.username ?? regUser,
-        });
-        setShowRegister(false);
+    try {
+      await registerMutation.mutateAsync({ username: regUser, email: regEmail, password: regPass });
+      const prof = queryClient.getQueryData(['profile']);
+      if (prof) {
+        setShowRegisterModal(false);
         setRegPass('');
-        onAuthChange();
+        setErr('');
         return;
       }
-      setShowRegister(false);
-      onAuthChange();
-    } else {
-      setErr(r.data?.error?.message || 'Registrering fejlede');
+      // If register succeeded but no profile, provide guidance
+      setErr('Bruger oprettet, men automatisk login kunne ikke bekræftes. Prøv at logge ind manuelt.');
+    } catch (e) {
+      setErr(e?.message || 'Netværksfejl ved registrering.');
     }
   }
 
-  return (
-    <div className="topbar-auth" ref={popRef}>
-      {loading ? (
-        <span className="auth-muted">Tjekker login…</span>
-      ) : session.loggedIn ? (
-        <div className="auth-inline">
-          <span className="auth-user" title="Logget ind">
-            👤 {session.username || 'Bruger'}
-          </span>
-          <button className="btn small" onClick={handleLogout}>Log ud</button>
-        </div>
-      ) : (
-        <div className="auth-inline">
-          <button className="btn small" onClick={(e) => { e.stopPropagation(); setShowLogin(v => !v); setShowRegister(false); setErr(''); }}>
-            Log ind
-          </button>
-          <button className="btn small secondary" onClick={(e) => { e.stopPropagation(); setShowRegister(v => !v); setShowLogin(false); setErr(''); }}>
-            Opret
-          </button>
+  async function handleLogout() {
+    setErr('');
+    try {
+      await logoutMutation.mutateAsync();
+    } catch (e) {
+      setErr(e?.message || 'Netværksfejl ved log ud.');
+    }
+  }
 
-          {showLogin && (
-            <form className="auth-pop" onSubmit={handleLogin} onClick={(e) => e.stopPropagation()}>
-              <div className="auth-title">Log ind</div>
+  // Derived UI state
+  const busy = loginMutation.isLoading || registerMutation.isLoading || logoutMutation.isLoading;
+  const loading = profileLoading;
+
+  // Render UI
+  const authButtons = loading ? (
+    <span className="auth-muted">Tjekker login…</span>
+  ) : session.loggedIn ? (
+    <div className="auth-inline" style={{ display: 'inline-flex', gap: 8, alignItems: 'center' }}>
+      <span className="auth-user" title="Logget ind">👤 {session.username || 'Bruger'}</span>
+      <button className="btn small" onClick={handleLogout} disabled={busy}>Log ud</button>
+    </div>
+  ) : (
+    <div className="auth-inline" style={{ display: 'inline-flex', gap: 8, alignItems: 'center' }}>
+      <button
+        className="btn small"
+        onClick={() => { setShowLoginModal(true); setShowRegisterModal(false); setErr(''); }}
+        disabled={busy}
+      >
+        Log ind
+      </button>
+      <button
+        className="btn small secondary"
+        onClick={() => { setShowRegisterModal(true); setShowLoginModal(false); setErr(''); }}
+        disabled={busy}
+      >
+        Opret
+      </button>
+    </div>
+  );
+
+  return (
+    <div className="topbar-auth" style={{ display: 'inline-block' }}>
+      {authButtons}
+
+      {showLoginModal && (
+        <CenterModal title="Log ind" onClose={() => { if (!busy) { setShowLoginModal(false); setErr(''); } }}>
+          <form onSubmit={handleLogin}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               <input
                 className="auth-input"
                 type="text"
@@ -449,6 +299,8 @@ export default function TopbarAuth({ onAuthChange = () => window.location.reload
                 value={loginUser}
                 onChange={(e) => setLoginUser(e.target.value)}
                 autoFocus
+                disabled={busy}
+                style={{ padding: '8px 10px', borderRadius: 6 }}
               />
               <input
                 className="auth-input"
@@ -456,18 +308,23 @@ export default function TopbarAuth({ onAuthChange = () => window.location.reload
                 placeholder="Kodeord"
                 value={loginPass}
                 onChange={(e) => setLoginPass(e.target.value)}
+                disabled={busy}
+                style={{ padding: '8px 10px', borderRadius: 6 }}
               />
-              {err && <div className="auth-error">{err}</div>}
-              <div className="auth-actions">
-                <button type="submit" className="btn small primary">Log ind</button>
-                <button type="button" className="btn small" onClick={() => setShowLogin(false)}>Luk</button>
+              {err && <div className="auth-error" style={{ color: '#f88' }}>{err}</div>}
+              <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 6 }}>
+                <button type="submit" className="btn small primary" disabled={busy}>Log ind</button>
+                <button type="button" className="btn small" onClick={() => { if (!busy) { setShowLoginModal(false); setErr(''); } }} disabled={busy}>Luk</button>
               </div>
-            </form>
-          )}
+            </div>
+          </form>
+        </CenterModal>
+      )}
 
-          {showRegister && (
-            <form className="auth-pop" onSubmit={handleRegister} onClick={(e) => e.stopPropagation()}>
-              <div className="auth-title">Opret bruger</div>
+      {showRegisterModal && (
+        <CenterModal title="Opret bruger" onClose={() => { if (!busy) { setShowRegisterModal(false); setErr(''); } }}>
+          <form onSubmit={handleRegister}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               <input
                 className="auth-input"
                 type="text"
@@ -475,6 +332,8 @@ export default function TopbarAuth({ onAuthChange = () => window.location.reload
                 value={regUser}
                 onChange={(e) => setRegUser(e.target.value)}
                 autoFocus
+                disabled={busy}
+                style={{ padding: '8px 10px', borderRadius: 6 }}
               />
               <input
                 className="auth-input"
@@ -482,6 +341,8 @@ export default function TopbarAuth({ onAuthChange = () => window.location.reload
                 placeholder="Email"
                 value={regEmail}
                 onChange={(e) => setRegEmail(e.target.value)}
+                disabled={busy}
+                style={{ padding: '8px 10px', borderRadius: 6 }}
               />
               <input
                 className="auth-input"
@@ -489,16 +350,18 @@ export default function TopbarAuth({ onAuthChange = () => window.location.reload
                 placeholder="Kodeord"
                 value={regPass}
                 onChange={(e) => setRegPass(e.target.value)}
+                disabled={busy}
+                style={{ padding: '8px 10px', borderRadius: 6 }}
               />
-              {err && <div className="auth-error">{err}</div>}
-              <div className="auth-actions">
-                <button type="submit" className="btn small primary">Opret</button>
-                <button type="button" className="btn small" onClick={() => setShowRegister(false)}>Luk</button>
+              {err && <div className="auth-error" style={{ color: '#f88' }}>{err}</div>}
+              <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 6 }}>
+                <button type="submit" className="btn small primary" disabled={busy}>Opret</button>
+                <button type="button" className="btn small" onClick={() => { if (!busy) { setShowRegisterModal(false); setErr(''); } }} disabled={busy}>Luk</button>
               </div>
-            </form>
-          )}
-        </div>
+            </div>
+          </form>
+        </CenterModal>
       )}
     </div>
   );
-}*/
+}
