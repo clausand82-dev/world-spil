@@ -3,6 +3,7 @@ import { useGameData } from '../../context/GameDataContext.jsx';
 import * as H from '../../services/helpers.js';
 import { collectActiveBuffs, requirementInfo } from '../../services/requirements.js';
 import { applyCostBuffsToAmount } from '../../services/calcEngine-lite.js';
+import { applyYieldBuffsToAmount } from '../../services/yieldBuffs.js';
 import Icon from '../common/Icon.jsx';
 import { useT } from '../../services/i18n.js';
 import { formatDurationFull } from '../../services/time.js';
@@ -97,7 +98,7 @@ export default function RequirementPanel({
     return out;
   }, [def, defs, activeBuffs, show.resources]);
 
-  // --- NYT: yieldsEntries (produktion / yield) - normaliseret til samme form som costEntries
+  // --- NYT: yieldsEntries (produktion / yield) - normaliseret til samme form as costEntries
   const yieldsEntries = useMemo(() => {
     if (!def || !show.resources) return [];
     const maybeObj = def.yields || def.produces || def.produce || def.output || def.outputs || def.yield || null;
@@ -129,16 +130,30 @@ export default function RequirementPanel({
       list.push({ id, amount: 1, _idx: 0 });
     }
 
-    // enrich with name/icon similarly to costEntries
+    // enrich with name/icon + compute buffed amount similarly to costEntries
     return list.map((it) => {
       const raw = String(it.id || '');
       const resKey = raw.replace(/^res\./, '');
       const resDef = defs?.res?.[resKey];
       const name = resDef?.name || resKey;
       const icon = resDef ? (resDef.iconUrl ? { iconUrl: resDef.iconUrl } : { emoji: resDef.emoji }) : null;
-      return { id: it.id, amount: Number(it.amount || 0), name, icon, _idx: it._idx };
+
+      const baseAmt = Number(it.amount || 0);
+      let buffedAmt = baseAmt;
+      try {
+        if (typeof applyYieldBuffsToAmount === 'function') {
+          buffedAmt = applyYieldBuffsToAmount(baseAmt, raw, { appliesToCtx: 'all', activeBuffs });
+        } else if (typeof applyCostBuffsToAmount === 'function') {
+          // fallback if dedicated yield-buff fn is not available
+          buffedAmt = applyCostBuffsToAmount(baseAmt, raw, { appliesToCtx: 'all', activeBuffs });
+        }
+      } catch (e) {
+        buffedAmt = baseAmt;
+      }
+
+      return { id: it.id, baseAmt, buffedAmt: Number(buffedAmt || 0), name, icon, _idx: it._idx };
     });
-  }, [def, defs, show.resources]);
+  }, [def, defs, show.resources, activeBuffs]);
 
   const getHave = (resId) => {
     if (!gameState) return 0;
@@ -383,7 +398,7 @@ export default function RequirementPanel({
                           </div>
 
                           <div className="rc-need" style={{ gridRow: 2, gridColumn: 2, fontSize: 12 }}>
-                            <span style={{ fontVariantNumeric: 'tabular-nums', fontWeight: 700 }}>{Hhelpers.fmt(e.amount)}</span>
+                            <span style={{ fontVariantNumeric: 'tabular-nums', fontWeight: 700 }}>{Hhelpers.fmt(e.buffedAmt ?? e.baseAmt ?? e.amount)}</span>
                           </div>
                         </div>
                       </div>

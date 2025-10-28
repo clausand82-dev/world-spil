@@ -354,5 +354,12 @@
     <emoji>bronzeore.png</emoji>
   </resource>
 
+<!-- STAGE 3-->
+
+<resource id="res.copperore" family="product" type="minning" lvl="1" stage="3">
+  <unit>pcs</unit>
+  <unitSpace>0.5</unitSpace>
+  <emoji>copperore.png</emoji>
+</resource>
 
 </resources>

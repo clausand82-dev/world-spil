@@ -227,7 +227,36 @@ function RecipeRow({ entry, defs: passedDefs, state, baseOwned, requirementCache
   return (
     <DockHoverCard content={hoverContent} style={{ display: 'block', width: '100%' }}>
       <div className="item" data-recipe-row={fullId}>
-        <div className="icon">{t("ui.emoji.research.h1")}</div>
+        <div className="icon" style={{ position: 'relative', width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          {(() => {
+            const list = yieldEntries || [];
+            if (!list.length) return <span style={{ fontSize: 18 }}>{t("ui.emoji.research.h1")}</span>;
+            const first = list[0];
+            if (!first) return <span style={{ fontSize: 18 }}>{t("ui.emoji.research.h1")}</span>;
+
+            if (first.icon?.iconUrl) {
+              return <Icon iconUrl={first.icon.iconUrl} size={28} alt={first.name} />;
+            }
+            if (first.icon?.emoji) {
+              return <span style={{ fontSize: 20, lineHeight: 1 }}>{first.icon.emoji}</span>;
+            }
+            return <Icon iconUrl="/assets/icons/default.png" size={28} alt={first.name} />;
+          })()}
+  
+         { (yieldEntries?.length || 0) > 1 ? (
+           <span style={{
+             position: 'absolute',
+             right: -2,
+             bottom: -2,
+             background: 'rgba(0,0,0,0.6)',
+             color: '#fff',
+             fontSize: 10,
+             padding: '0 4px',
+             borderRadius: 6,
+             lineHeight: '14px'
+           }}>...</span>
+         ) : null}
+       </div>
         <div className="grow">
           <div className="title">
             {def.name || fullId}

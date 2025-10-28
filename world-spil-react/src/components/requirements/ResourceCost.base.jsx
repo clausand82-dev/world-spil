@@ -7,6 +7,8 @@ import Icon from '../common/Icon.jsx';
   ResourceCost.base.jsx
   - Uses CSS classes (rc-inline, rc-tile, rc-icon, rc-name, rc-need, rc-sep-plus, rc-sep-arrow)
   - Keeps logic unchanged; visual appearance moved to requirement-layout.css
+  - CHANGED: accept optional extraTransform prop to allow different transform behavior
+    for the `extra` list (yields) vs the main `cost` list.
 */
 
 function getHave(state, id) {
@@ -62,7 +64,7 @@ function CostItem({ id, needAmount = 0, isExtra = false }) {
   return (
     <div className={`rc-tile ${isExtra ? 'rc-extra' : ''} ${statusClass}`} title={title}>
       <div className="rc-icon">
-        <Icon iconUrl={iconUrl} value={value || 'default.png'} size={20} alt={displayName} /> {/* Størrelse på ikoner */}
+        <Icon iconUrl={iconUrl} value={value || 'default.png'} size={24} alt={displayName} /> {/* Størrelse på ikoner */}
       </div>
 
       <div className="rc-name" title={displayName}>
@@ -76,7 +78,13 @@ function CostItem({ id, needAmount = 0, isExtra = false }) {
   );
 }
 
-export default function ResourceCost({ cost = {}, extra = null, transform } = {}) {
+/*
+  NOTE: added extraTransform param.
+  - `transform` is applied to cost items (existing behavior)
+  - `extraTransform` if provided is applied to extra items (yields).
+  - If extraTransform is not provided we fallback to using transform (backwards compatible).
+*/
+export default function ResourceCost({ cost = {}, extra = null, transform, extraTransform } = {}) {
   const baseItems = Object.values(normalizePrice(cost || {}));
   const extraItemsRaw = extra ? Object.values(normalizePrice(extra || {})) : [];
 
@@ -90,12 +98,15 @@ export default function ResourceCost({ cost = {}, extra = null, transform } = {}
       })
     : baseItems;
 
-  const extraItems = transform
+  // Use extraTransform if provided; otherwise fall back to transform for compatibility
+  const chosenExtraTransform = extraTransform ?? transform;
+
+  const extraItems = chosenExtraTransform
     ? extraItemsRaw.map(it => {
         const id = (it.id || '').startsWith('res.') || (it.id || '').startsWith('ani.')
           ? it.id
           : (it.id in (window?.data?.defs?.res || {}) ? `res.${it.id}` : it.id);
-        const amt = transform(id, it.amount);
+        const amt = chosenExtraTransform(id, it.amount);
         return { ...it, id, amount: amt };
       })
     : extraItemsRaw;
@@ -107,17 +118,17 @@ export default function ResourceCost({ cost = {}, extra = null, transform } = {}
       {costItems.map((item, i) => (
         <React.Fragment key={`cost-${item.id}-${i}`}>
           <CostItem id={item.id} needAmount={item.amount} isExtra={false} />
-       
         </React.Fragment>
       ))}
 
       {extraItems.length > 0 && (
         <>
+          {/* Kun én pil mellem cost og yield */}
           <div className="rc-sep-arrow">→</div>
+
           {extraItems.map((item, i) => (
             <React.Fragment key={`extra-${item.id}-${i}`}>
               <CostItem id={item.id} needAmount={item.amount} isExtra={true} />
-              {i < extraItems.length - 1 && <div className="rc-sep-plus">→</div>}
             </React.Fragment>
           ))}
         </>

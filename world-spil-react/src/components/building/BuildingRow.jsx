@@ -122,7 +122,7 @@ function BuildingRowInner({ bld, state: propState, defs, requirementCaches }) {
             durationBase={durationBase}
             footprint={footprint}
             footprintOk={footprintOk}
-            yieldPrice={def?.yield || null}
+            // yieldPrice={def?.yield || null}
           />
         </div>
       </div>

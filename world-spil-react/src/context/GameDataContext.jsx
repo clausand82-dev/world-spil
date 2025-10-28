@@ -1,18 +1,3 @@
-/* Entire file - GameDataContext with normalization for res/ani/bld/add/rsd and lazy non-enumerable icon getter
- *
- * Revisions in this version:
- * - Ensures that any cached alldata body loaded from localStorage (used when server returns 304)
- *   is normalized with normalizeDefsForIcons before being returned to the app.
- * - Deduce baseIconPath dynamically to handle apps hosted under a subpath (e.g. /world-spil).
- * - Keeps ETag/If-None-Match conditional fetch logic and localStorage cache.
- *
- * After replacing this file:
- * - Clear the cache keys in DevTools console:
- *     localStorage.removeItem('ws:alldata:etag');
- *     localStorage.removeItem('ws:alldata:body');
- * - Then reload the page.
- */
-
 import React, { createContext, useContext, useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
@@ -130,6 +115,17 @@ export function GameDataProvider({ children }) {
   const tabIdRef = useRef(Math.random().toString(36).slice(2));
   const incomingDebounceRef = useRef(null);
 
+  // Language state: keep in React state so changes trigger useQuery refresh via queryKey
+  const initialLang = (() => {
+    try {
+      if (typeof window === 'undefined') return 'da';
+      return localStorage.getItem('ws_lang') || (navigator?.language || '').slice(0,2) || 'da';
+    } catch (e) {
+      return 'da';
+    }
+  })();
+  const [lang, setLangState] = useState(initialLang);
+
   useEffect(() => {
     let active = true;
     (async () => {
@@ -146,11 +142,151 @@ export function GameDataProvider({ children }) {
     return () => { active = false; };
   }, []);
 
+  // Keep lang in sync with localStorage changes from other tabs
+  useEffect(() => {
+    const onStorage = (ev) => {
+      try {
+        if (!ev) return;
+        if (ev.key === 'ws_lang') {
+          const newLang = ev.newValue || (navigator?.language || '').slice(0,2) || 'da';
+          if (newLang && newLang !== lang) setLangState(newLang);
+        }
+      } catch (e) { /* ignore */ }
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, [lang]);
+
+  // Expose a setter that persists selection, clears language-specific ETag/body cache for that lang
+  const setLang = useCallback((newLang) => {
+    if (!newLang) return;
+    try { localStorage.setItem('ws_lang', newLang); } catch (e) {}
+    // Remove cached ETag/body for the selected language to force fresh download
+    try {
+      localStorage.removeItem(`ws:alldata:etag:${newLang}`);
+      localStorage.removeItem(`ws:alldata:body:${newLang}`);
+    } catch (e) { /* ignore */ }
+    setLangState(newLang);
+    // Invalidate queries for the new lang so useQuery will fetch fresh
+    try { queryClient.invalidateQueries({ queryKey: ['alldata', newLang] }); } catch (e) {}
+  }, [queryClient]);
+
+  const fetchAllData = useCallback(async () => {
+    // Use current lang state for language-scoped caching
+    const curLang = lang || 'da';
+    const etagKey = `ws:alldata:etag:${curLang}`;
+    const bodyKey = `ws:alldata:body:${curLang}`;
+    // Prefer sending Accept-Language header and include lang param to be explicit
+    const url = `/world-spil/backend/api/alldata.php?lang=${encodeURIComponent(curLang)}`;
+
+    // Read stored ETag (if any)
+    let storedETag = null;
+    try {
+      storedETag = localStorage.getItem(etagKey);
+    } catch (e) {
+      storedETag = null;
+    }
+
+    const headers = {};
+    if (storedETag) headers['If-None-Match'] = storedETag;
+    headers['Accept-Language'] = curLang;
+
+    // Perform conditional request. credentials: 'include' so session cookies travel.
+    let res;
+    try {
+      res = await fetch(url, { cache: 'no-store', headers, credentials: 'include' });
+    } catch (err) {
+      // Network error -> try to return cached copy if available
+      try {
+        const raw = localStorage.getItem(bodyKey);
+        if (raw) {
+          let cached = JSON.parse(raw);
+          // ensure defs are normalized before returning cached data
+          if (cached?.defs) cached.defs = normalizeDefsForIcons(cached.defs, { baseIconPath: deduceBaseIconPath() });
+          try { cached.meta = { ...(cached.meta || {}), lastUpdated: Date.now() }; } catch (e) {}
+          return cached;
+        }
+      } catch (e) { /* ignore */ }
+      throw err;
+    }
+
+    // If server responded 304 (Not Modified) -> reuse cached body
+    if (res.status === 304) {
+      try {
+        const raw = localStorage.getItem(bodyKey);
+        if (raw) {
+          let cached = JSON.parse(raw);
+          if (cached?.defs) cached.defs = normalizeDefsForIcons(cached.defs, { baseIconPath: deduceBaseIconPath() });
+          try { cached.meta = { ...(cached.meta || {}), lastUpdated: Date.now() }; } catch (e) {}
+          return cached;
+        }
+        // No cached body present despite 304 -> fallthrough to fetch fresh copy
+      } catch (e) {
+        // ignore parse error and fallthrough
+      }
+    }
+
+    if (!res.ok) {
+      // try to return cached copy if available
+      try {
+        const raw = localStorage.getItem(bodyKey);
+        if (raw) {
+          let cached = JSON.parse(raw);
+          if (cached?.defs) cached.defs = normalizeDefsForIcons(cached.defs, { baseIconPath: deduceBaseIconPath() });
+          try { cached.meta = { ...(cached.meta || {}), lastUpdated: Date.now() }; } catch (e) {}
+          return cached;
+        }
+      } catch (e) { /* ignore */ }
+      const text = await res.text().catch(() => null);
+      let json = null;
+      if (text) {
+        try { json = JSON.parse(text); } catch {}
+      }
+      throw new Error(json?.error?.message || `HTTP ${res.status}`);
+    }
+
+    // If we get here: we have a 200 response with fresh body
+    try {
+      const freshJson = await res.json();
+      if (!freshJson?.ok) throw new Error(freshJson?.error?.message || 'API data error');
+      const data = freshJson.data;
+      const respETag = res.headers.get('ETag') || null;
+      try {
+        if (respETag) localStorage.setItem(etagKey, respETag);
+        localStorage.setItem(bodyKey, JSON.stringify(data));
+      } catch (e) { /* ignore storage errors */ }
+      if (data?.defs) {
+        data.defs = normalizeDefsForIcons(data.defs, { baseIconPath: deduceBaseIconPath() });
+        try { if (!window.data) window.data = data; } catch (e) { /* ignore */ }
+      }
+      try { data.meta = { ...(data.meta || {}), lastUpdated: Date.now() }; } catch (e) { /* ignore */ }
+      return data;
+    } catch (e) {
+      // If parsing failed, try to serve cached copy if present
+      try {
+        const raw = localStorage.getItem(bodyKey);
+        if (raw) {
+          let cached = JSON.parse(raw);
+          if (cached?.defs) cached.defs = normalizeDefsForIcons(cached.defs, { baseIconPath: deduceBaseIconPath() });
+          try { cached.meta = { ...(cached.meta || {}), lastUpdated: Date.now() }; } catch (e) {}
+          return cached;
+        }
+      } catch (er) { /* ignore */ }
+      throw e;
+    }
+  }, [lang]);
+
+  // useQuery keyed by lang so switching language triggers a new fetch
   const { data, error, isLoading, refetch } = useQuery({
-    queryKey: ['alldata'],
+    queryKey: ['alldata', lang],
     queryFn: fetchAllData,
+    // keep previous data briefly while refetching
+    keepPreviousData: true,
+    // stale time short so refreshData will work predictably
+    staleTime: 1000 * 3,
   });
 
+  // BroadcastChannel / storage listeners for cross-tab updates
   useEffect(() => {
     try {
       const bc = new BroadcastChannel('ws-game-data');
@@ -207,7 +343,7 @@ export function GameDataProvider({ children }) {
 
   const applyLockedCostsDelta = useCallback((lockedList = [], sign = -1) => {
     if (!Array.isArray(lockedList) || lockedList.length === 0) return;
-    queryClient.setQueryData(['alldata'], (prev) => {
+    queryClient.setQueryData(['alldata', lang], (prev) => {
       if (!prev) return prev;
       const next = {
         ...prev,
@@ -239,11 +375,11 @@ export function GameDataProvider({ children }) {
       return next;
     });
     broadcastUpdate();
-  }, [queryClient, broadcastUpdate]);
+  }, [queryClient, broadcastUpdate, lang]);
 
   const applyResourceDeltaMap = useCallback((resources = {}) => {
     if (!resources || typeof resources !== 'object') return;
-    queryClient.setQueryData(['alldata'], (prev) => {
+    queryClient.setQueryData(['alldata', lang], (prev) => {
       if (!prev) return prev;
       const next = {
         ...prev,
@@ -268,10 +404,10 @@ export function GameDataProvider({ children }) {
       return next;
     });
     broadcastUpdate();
-  }, [queryClient, broadcastUpdate]);
+  }, [queryClient, broadcastUpdate, lang]);
 
   const removeActiveBuild = useCallback((jobId) => {
-    queryClient.setQueryData(['alldata'], (prev) => {
+    queryClient.setQueryData(['alldata', lang], (prev) => {
       if (!prev) return prev;
       const next = { ...prev, state: { ...(prev.state || {}) } };
       const active = { ...(next.state?.activeBuilds || {}) };
@@ -283,7 +419,7 @@ export function GameDataProvider({ children }) {
       return prev;
     });
     broadcastUpdate();
-  }, [queryClient, broadcastUpdate]);
+  }, [queryClient, broadcastUpdate, lang]);
 
   // --- NYT: updateState(patch) - merge en lille patch ind i query cache uden at overskrive alt ---
   const deepMergeObj = useCallback((target, patch) => {
@@ -314,7 +450,7 @@ export function GameDataProvider({ children }) {
   const updateState = useCallback((patch) => {
     if (!patch || typeof patch !== 'object') return;
     try {
-      queryClient.setQueryData(['alldata'], (prev) => {
+      queryClient.setQueryData(['alldata', lang], (prev) => {
         if (!prev) return prev;
         const merged = deepMergeObj(prev, patch);
         // ensure lastUpdated changes so listeners can react
@@ -326,14 +462,16 @@ export function GameDataProvider({ children }) {
       // defensive: if merge fails, fall back to a full refresh (caller can choose)
       // removed console.warn per cleanup request
     }
-  }, [queryClient, deepMergeObj, broadcastUpdate]);
+  }, [queryClient, deepMergeObj, broadcastUpdate, lang]);
   // --- /NYT ---
 
   const refreshData = useCallback(async (...args) => {
     try {
+      // ensure we invalidate the keyed query so fetchAllData runs for current lang
+      await queryClient.invalidateQueries({ queryKey: ['alldata', lang], refetchType: 'all' });
       const res = await refetch(...args);
       const ts = Date.now();
-      queryClient.setQueryData(['alldata'], (prev) => {
+      queryClient.setQueryData(['alldata', lang], (prev) => {
         if (!prev) return prev;
         return { ...prev, meta: { ...(prev.meta || {}), lastUpdated: ts } };
       });
@@ -342,7 +480,7 @@ export function GameDataProvider({ children }) {
     } catch (e) {
       throw e;
     }
-  }, [refetch, queryClient, broadcastUpdate]);
+  }, [refetch, queryClient, broadcastUpdate, lang]);
 
   const ensureFreshData = useCallback(async (ttlMs = 5000) => {
     const last = Number(data?.meta?.lastUpdated || 0);
@@ -357,6 +495,8 @@ export function GameDataProvider({ children }) {
     data,
     artManifest,
     error,
+    lang,
+    setLang, // expose setter so HeaderLangSelector can call it
     refreshData,
     ensureFreshData,
     applyLockedCostsDelta,
@@ -365,7 +505,7 @@ export function GameDataProvider({ children }) {
     normalizeDefsForIcons,
     // eksporter updateState så komponenter kan anvende kompakte patches
     updateState,
-  }), [isLoading, data, artManifest, error, refreshData, ensureFreshData, applyLockedCostsDelta, applyResourceDeltaMap, removeActiveBuild, normalizeDefsForIcons, updateState]);
+  }), [isLoading, data, artManifest, error, lang, setLang, refreshData, ensureFreshData, applyLockedCostsDelta, applyResourceDeltaMap, removeActiveBuild, normalizeDefsForIcons, updateState]);
 
   return (
     <GameDataContext.Provider value={value}>
@@ -375,158 +515,3 @@ export function GameDataProvider({ children }) {
 }
 
 export const useGameData = () => useContext(GameDataContext);
-
-/**
- * fetchAllData
- *
- * Reworked to:
- * - Use If-None-Match header with ETag stored in localStorage to avoid re-downloading full payload when unchanged.
- * - Store parsed data.data in localStorage for reuse when server responds 304.
- * - IMPORTANT: Normalize defs (normalizeDefsForIcons) on any cached body before returning.
- *
- * LocalStorage keys used:
- * - ws:alldata:etag  => stored ETag string (including quotes if server includes them)
- * - ws:alldata:body  => JSON.stringify(data) where `data` is json.data from the server response
- *
- * Important: the server must emit ETag header and honor If-None-Match -> return 304 Not Modified.
- */
-async function fetchAllData() {
-  const etagKey = 'ws:alldata:etag';
-  const bodyKey = 'ws:alldata:body';
-  const url = `/world-spil/backend/api/alldata.php`;
-
-  // Read stored ETag (if any)
-  let storedETag = null;
-  try {
-    storedETag = localStorage.getItem(etagKey);
-  } catch (e) {
-    storedETag = null;
-  }
-
-  const headers = {};
-  if (storedETag) headers['If-None-Match'] = storedETag;
-
-  // Perform conditional request. credentials: 'include' so session cookies travel.
-  let res;
-  try {
-    res = await fetch(url, { cache: 'no-store', headers, credentials: 'include' });
-  } catch (err) {
-    // Network error -> try to return cached copy if available
-    try {
-      const raw = localStorage.getItem(bodyKey);
-      if (raw) {
-        let cached = JSON.parse(raw);
-        // ensure defs are normalized before returning cached data
-        if (cached?.defs) {
-          try {
-            cached.defs = normalizeDefsForIcons(cached.defs, { baseIconPath: deduceBaseIconPath() });
-            try { if (!window.data) window.data = cached; } catch (e) { /* ignore */ }
-          } catch (e) { /* ignore */ }
-        }
-        try { cached.meta = { ...(cached.meta || {}), lastUpdated: Date.now() }; } catch (e) { /* ignore */ }
-        return cached;
-      }
-    } catch (e) { /* ignore */ }
-    throw new Error('Network error while fetching alldata');
-  }
-
-  // If server says 304 Not Modified -> use cached body
-  if (res.status === 304) {
-    try {
-      const raw = localStorage.getItem(bodyKey);
-      if (raw) {
-        let cached = JSON.parse(raw);
-        // IMPORTANT: normalize defs here as well — JSON.parse won't create icon getters
-        if (cached?.defs) {
-          try {
-            cached.defs = normalizeDefsForIcons(cached.defs, { baseIconPath: deduceBaseIconPath() });
-            try { if (!window.data) window.data = cached; } catch (e) { /* ignore */ }
-          } catch (e) { /* ignore */ }
-        }
-        try { cached.meta = { ...(cached.meta || {}), lastUpdated: Date.now() }; } catch (e) { /* ignore */ }
-        return cached;
-      } else {
-        // No cached body available; perform a full fetch
-        const freshRes = await fetch(url, { cache: 'no-store', credentials: 'include' });
-        if (!freshRes.ok) throw new Error(`API error: ${freshRes.status}`);
-        const freshJson = await freshRes.json();
-        if (!freshJson?.ok) throw new Error(freshJson?.error?.message || 'API data error');
-        const data = freshJson.data;
-        // store and normalize
-        const respETag = freshRes.headers.get('ETag') || null;
-        try {
-          if (respETag) localStorage.setItem(etagKey, respETag);
-          localStorage.setItem(bodyKey, JSON.stringify(data));
-        } catch (e) { /* ignore storage errors */ }
-        if (data?.defs) {
-          data.defs = normalizeDefsForIcons(data.defs, { baseIconPath: deduceBaseIconPath() });
-          try { if (!window.data) window.data = data; } catch (e) { /* ignore */ }
-        }
-        try { data.meta = { ...(data.meta || {}), lastUpdated: Date.now() }; } catch (e) { /* ignore */ }
-        return data;
-      }
-    } catch (e) {
-      // If reading cache fails -> attempt a full fetch
-      const freshRes = await fetch(url, { cache: 'no-store', credentials: 'include' });
-      if (!freshRes.ok) throw new Error(`API error: ${freshRes.status}`);
-      const freshJson = await freshRes.json();
-      if (!freshJson?.ok) throw new Error(freshJson?.error?.message || 'API data error');
-      const data = freshJson.data;
-      const respETag = freshRes.headers.get('ETag') || null;
-      try {
-        if (respETag) localStorage.setItem(etagKey, respETag);
-        localStorage.setItem(bodyKey, JSON.stringify(data));
-      } catch (e) { /* ignore storage errors */ }
-      if (data?.defs) {
-        data.defs = normalizeDefsForIcons(data.defs, { baseIconPath: deduceBaseIconPath() });
-        try { if (!window.data) window.data = data; } catch (e) { /* ignore */ }
-      }
-      try { data.meta = { ...(data.meta || {}), lastUpdated: Date.now() }; } catch (e) { /* ignore */ }
-      return data;
-    }
-  }
-
-  // For 200 responses, parse JSON and store ETag + body
-  if (!res.ok) {
-    // allow callers to see HTTP error
-    throw new Error(`API error: ${res.status}`);
-  }
-
-  const jsonText = await res.text();
-  let json = null;
-  try {
-    json = jsonText ? JSON.parse(jsonText) : null;
-  } catch (e) {
-    throw new Error('Invalid JSON from alldata');
-  }
-
-  if (!json?.ok) throw new Error(json?.error?.message || 'API data error');
-
-  const data = json.data;
-
-  // store ETag + body (store json.data, not the entire envelope)
-  try {
-    const respETag = res.headers.get('ETag') || null;
-    if (respETag) localStorage.setItem(etagKey, respETag);
-    localStorage.setItem(bodyKey, JSON.stringify(data));
-  } catch (e) {
-    // ignore storage errors
-  }
-
-  // Normalize defs to include icon helper
-  try {
-    if (data?.defs) {
-      const normalized = normalizeDefsForIcons(data.defs, { baseIconPath: deduceBaseIconPath() });
-      data.defs = normalized;
-      try { if (!window.data) window.data = data; } catch (e) { /* ignore */ }
-    }
-  } catch (e) {
-    // noop - normalization failing should not break the entire fetch
-  }
-
-  try {
-    data.meta = { ...(data.meta || {}), lastUpdated: Date.now() };
-  } catch (e) { /* ignore */ }
-
-  return data;
-}
