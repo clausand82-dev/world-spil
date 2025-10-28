@@ -273,10 +273,10 @@
       <res id="res.clay" amount="25" />
     </cost>
     <yield period="1h">
-      <res id="res.money" amount="20" />
-      <res id="res.wood" amount="5" />
-      <res id="res.stone" amount="5" />
-      <res id="res.water" amount="5" />
+      <res id="res.money" amount="45" />
+      <res id="res.wood" amount="7" />
+      <res id="res.stone" amount="7" />
+      <res id="res.water" amount="7" />
     </yield>
     <durability>100</durability>
     <upgradesTo>bld.basecamp.l5</upgradesTo>

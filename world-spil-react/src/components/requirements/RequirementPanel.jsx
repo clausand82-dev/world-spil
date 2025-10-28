@@ -283,7 +283,7 @@ export default function RequirementPanel({
   return (
     <div className="requirement-panel" style={{ minWidth: 280 }}>
       {show.resources && (
-        <div style={{ marginBottom: 8 }}>
+        <div style={{ marginBottom: 8, marginTop: 8 }}>
           <div style={{ borderTop: '1px solid rgba(0,0,0,0.08)', paddingTop: 0, display: 'grid', gap: 4, fontSize: 12 }} />
           <div style={{ fontWeight: 700, marginBottom: 6 }}>{t('ui.labels.resources', 'Ressourcekrav')}</div>
           {costEntries.length ? (

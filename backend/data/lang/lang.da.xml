@@ -369,13 +369,13 @@
   <entry key="bld.basecamp.l4.name">Stor lejrplads</entry>
   <entry key="bld.basecamp.l4.desc">Øger lejrens størrelse fra mellem lejr til stor lejrplads</entry>
   <entry key="bld.tent.l1.name">Lille telt</entry>
-  <entry key="bld.tent.l1.desc">Giver plads til 5 indbygger pr. telt</entry>
+  <entry key="bld.tent.l1.desc">Giver plads til flere indbygger pr. telt</entry>
   <entry key="bld.tent.l2.name">Mellem telt</entry>
-  <entry key="bld.tent.l2.desc">Giver plads til 15 indbygger pr. telt</entry>
+  <entry key="bld.tent.l2.desc">Giver plads til flere indbygger pr. telt</entry>
   <entry key="bld.tent.l3.name">Familie telt</entry>
-  <entry key="bld.tent.l3.desc">Giver plads til 25 indbygger pr. telt</entry>
+  <entry key="bld.tent.l3.desc">Giver plads til flere indbygger pr. telt</entry>
   <entry key="bld.tent.l4.name">Store telte</entry>
-  <entry key="bld.tent.l4.desc">Giver plads til 50 indbygger pr. telt</entry>
+  <entry key="bld.tent.l4.desc">Giver plads til flere indbygger pr. telt</entry>
   <entry key="bld.farm.l1.name">Gård</entry>
   <entry key="bld.farm.l1.desc">Gård til dyr og marker. Højere niveau giver plads til flere dyr.</entry>
   <entry key="bld.farm.l2.name">Større Gård</entry>
