@@ -18,7 +18,7 @@ function BuildingHero({ heroDef, heroId, durabilityPct, jobActiveId, footprintTe
   const defs = data?.defs || {};
   const t = useT(); // bruges til sprog
   // Toggle: vis kilde-opdeling for yields (true = vis breakdown pr. resource)
-  const SHOW_YIELD_SOURCES = true;
+  const SHOW_YIELD_SOURCES = true; // HER TÆNDES OG SLUKKES FOR UDVIDES YIELDS INFORMATION
   const jobActive = !!jobActiveId;
   const hasBuffedTime = Number.isFinite(actionTarget?.duration) && Number.isFinite(actionTarget?.durationBase)
     ? Math.round(actionTarget.duration) !== Math.round(actionTarget.durationBase)
@@ -86,17 +86,74 @@ function BuildingHero({ heroDef, heroId, durabilityPct, jobActiveId, footprintTe
     const bldCtx = `bld.${baseKey}`;
     processYieldDef(def, bldCtx, 1, 'bld', baseKey);
 
-    // 2) installed addons (try def.addons and instance state paths)
+    // --- New logic: find addons & research by family and count them only if owned in state ---
+    const baseFamily = heroDef?.family || (heroDef && heroDef.family === undefined ? null : heroDef.family);
+
+    // 2) installed addons: prefer explicit installed list, but also include any addon defs that share family and are owned in state
     const installedAddons = new Set();
-    (def.addons || def.installedAddons || actionTarget?.addons || []).forEach(a => a && installedAddons.add(a));
+    const gatherAddonId = (a) => {
+      if (!a) return null;
+      if (typeof a === 'string') return a;
+      if (typeof a === 'object') {
+        if (a.id) return a.id;
+        if (a.key) return a.key;
+        if (a.def) return a.def;
+      }
+      return null;
+    };
+    // Add explicit sources (instance-level)
+    (def.addons || def.installedAddons || actionTarget?.addons || []).forEach(a => {
+      const aid = gatherAddonId(a);
+      if (aid) installedAddons.add(aid);
+    });
     const tryPaths = [
       state.buildings?.[heroId]?.addons,
       state.units?.[heroId]?.addons,
       state.blds?.[heroId]?.addons,
       state[heroId]?.addons,
     ];
-    tryPaths.forEach(p => Array.isArray(p) && p.forEach(a => a && installedAddons.add(a)));
+    tryPaths.forEach(p => Array.isArray(p) && p.forEach(a => {
+      const aid = gatherAddonId(a);
+      if (aid) installedAddons.add(aid);
+    }));
+    // Also detect by family: include any addon defs whose def.family matches baseFamily and that are OWNED in state
+    if (baseFamily) {
+      const stateAddMap = state.add || state.adds || state.installedAddons || {};
+      Object.keys(defs?.add || {}).forEach((addKey) => {
+        const addDef = defs.add[addKey];
+        if (!addDef) return;
+        if (String(addDef.family) !== String(baseFamily)) return;
+        // canonical addon id variants
+        const variants = [
+          addKey,
+          `add.${addKey}`,
+          `add.${String(addDef.id || '')}`.replace(/^add\./, '') ? addKey : addKey,
+        ];
+        // check several possible places in state for ownership
+        let owned = false;
+        // 1) positional/collection-based state where addons are stored keyed by id
+        if (stateAddMap && (stateAddMap[`add.${addKey}`] || stateAddMap[addKey] || stateAddMap[`add.${addDef.id}`] || stateAddMap[String(addDef.id)])) {
+          owned = true;
+        }
+        // 2) sometimes addon instances live under state.add or state.adds with full id keys
+        if (!owned) {
+          if (state.add && (state.add[`add.${addKey}`] || state.add[addKey] || state.add[`add.${addDef.id}`])) owned = true;
+          if (state.adds && (state.adds[`add.${addKey}`] || state.adds[addKey])) owned = true;
+        }
+        // 3) check if this addon is listed as installed on the specific building in state.buildings/blds/etc.
+        if (!owned) {
+          for (const p of tryPaths) {
+            if (Array.isArray(p) && p.some(x => String(gatherAddonId(x || '')).includes(addKey))) {
+              owned = true;
+              break;
+            }
+          }
+        }
+        if (owned) installedAddons.add(addKey);
+      });
+    }
 
+    // Process installedAddons defs (only the ones we actually found/own)
     installedAddons.forEach((aid) => {
       const key = String(aid).replace(/^add\./, '');
       const adddef = defs?.add?.[key] || defs?.add?.[String(aid)] || null;
@@ -107,25 +164,71 @@ function BuildingHero({ heroDef, heroId, durabilityPct, jobActiveId, footprintTe
 
     // 3) research that applies to this building OR completed research with global yields
     const completed = new Set();
-    (state.research?.completed || state.completedResearch || state.completedRsd || state.rsdCompleted || []).forEach(r => r && completed.add(r));
-    // include activeBuffs keys as potential research ids
+    // collect from several possible state paths; some snapshots use state.research.completed, others use state.rsd
+    (state.research?.completed || state.completedResearch || state.completedRsd || state.rsdCompleted || []).forEach(r => r && completed.add(String(r)));
+    // include legacy list paths
+    (state.rsd && Object.keys(state.rsd)).forEach(k => {
+      if (!k) return;
+      // keys may be like 'rsd.tools.13' or 'tools.13' — normalize to full id when possible
+      const norm = String(k);
+      completed.add(norm);
+    });
+    // include activeBuffs keys as potential research ids (already used in previous logic)
     Object.keys(activeBuffs || {}).forEach(k => {
       const candidate = String(k).replace(/^rsd\.|^research\./, '');
       if (candidate) completed.add(candidate);
     });
 
+    // Additionally: include any research defs that share family and are present/owned in state.rsd (explicit family matching)
+    const processedResearch = new Set();
+    if (baseFamily) {
+      Object.keys(defs?.rsd || {}).forEach((rsdKey) => {
+        const rdef = defs.rsd[rsdKey];
+        if (!rdef) return;
+        if (String(rdef.family) !== String(baseFamily)) return;
+        // determine if owned: state.rsd might contain entries keyed by 'rsd.<key>' or '<key>'
+        const stateRsd = state.rsd || state.rsdCompleted || {};
+        const owned = !!(stateRsd[`rsd.${rsdKey}`] || stateRsd[rsdKey] || stateRsd[String(rdef.id)] || state.rsd?.[String(rdef.id)]);
+        if (owned) {
+          // add to completed set using a normalized id
+          completed.add(rsdKey);
+        }
+      });
+    }
+
+    // Now process unique completed research defs; ensure we don't double-process same def twice
     completed.forEach((rid) => {
       const key = String(rid).replace(/^rsd\.|^research\./, '');
+      if (processedResearch.has(key)) return;
       const rdef = defs?.rsd?.[key] || defs?.rsd?.[rid] || null;
       if (!rdef) return;
-      // include yields if research directly yields resources
-      processYieldDef(rdef, `rsd.${key}`, 1, 'rsd', key);
+      // Only include research yields if owned (we try to be permissive about state shapes)
+      const stateRsd = state.rsd || state.research || {};
+      const owned = !!(
+        stateRsd[`rsd.${key}`] ||
+        stateRsd[key] ||
+        (state.research?.completed && state.research.completed.includes(rid)) ||
+        (state.completedResearch && state.completedResearch.includes(rid))
+      );
+      // if activeBuffs includes it, consider it as applied (some research show via buffs)
+      const buffKeyMatch = Object.keys(activeBuffs || {}).some(k => String(k).includes(key) || String(k).includes(rid));
+      if (owned || buffKeyMatch) {
+        processYieldDef(rdef, `rsd.${key}`, 1, 'rsd', key);
+        processedResearch.add(key);
+      } else {
+        // Extra safety: if rdef.family matches baseFamily and completed set included it (from earlier family scan), include it
+        if (String(rdef.family) === String(baseFamily) && completed.has(key)) {
+          processYieldDef(rdef, `rsd.${key}`, 1, 'rsd', key);
+          processedResearch.add(key);
+        }
+      }
 
-      // include research yields only if research targets this building (common fields: for, targets, appliesTo)
+      // Also: some research definitions explicitly target this building; if so, ensure yields are applied (but avoid duplicates)
       const maybeTargets = [].concat(rdef.for || rdef.targets || rdef.appliesTo || []);
       const heroKeys = new Set([String(heroId), baseKey, heroDef?.id, heroDef?.key].filter(Boolean));
-      if (maybeTargets.some(t => heroKeys.has(String(t)))) {
+      if (!processedResearch.has(key) && maybeTargets.some(t => heroKeys.has(String(t)))) {
         processYieldDef(rdef, `rsd.${key}`, 1, 'rsd', key);
+        processedResearch.add(key);
       }
     });
 
@@ -173,6 +276,30 @@ function BuildingHero({ heroDef, heroId, durabilityPct, jobActiveId, footprintTe
     });
   }, [actionTarget, defs, activeBuffs]);
 
+  // helper to find player's current amount for a resource (be permissive about paths)
+  const getPlayerResAmount = (rid) => {
+    const state = data?.state || {};
+    const resKey = String(rid).replace(/^res\./, '');
+    // prefer the game's canonical resource containers; from your screenshot many things live under state.inv and state.rsd (research state)
+    // For resources we check common containers in order:
+    const candidates = [
+      state?.inv?.liquid, // sometimes resources stored under inv.liquid / inv.solid
+      state?.inv?.solid
+    ];
+    for (const c of candidates) {
+      if (!c) continue;
+      if (resKey in c) return Number(c[resKey] || 0);
+      if (rid in c) return Number(c[rid] || 0);
+    }
+    // fallback: some snapshots use state.rsd for research-level values; this is not typical resource count but check anyway
+    if (state?.rsd && (state.rsd[resKey] || state.rsd[rid])) {
+      return Number(state.rsd[resKey] || state.rsd[rid] || 0);
+    }
+    return 0;
+  };
+
+// LAYOUT DELEN
+
   return (
     <div className="detail-hero">
       <div className="photo">
@@ -212,6 +339,36 @@ function BuildingHero({ heroDef, heroId, durabilityPct, jobActiveId, footprintTe
                       <div style={{ display: 'flex', flexDirection: 'column' }}>
                         <div style={{ fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 140 }}>{y.name}</div>
                         <div style={{ fontSize: 11, }}>{Hhelpers.fmt(y.amount)}</div>
+                        {/* Small debug/source breakdown if enabled */}
+                        {SHOW_YIELD_SOURCES && y.sources ? (
+                          <div style={{ fontSize: 10, color: 'var(--subtext, #8b8b8b)', marginTop: 4 }}>
+                            {y.sources.bld ? <div>Bygning: +{Hhelpers.fmt(y.sources.bld)}</div> : null}
+                            {y.sources.misc ? <div>Andet: +{Hhelpers.fmt(y.sources.misc)}</div> : null}
+                            {y.sources.addons && Object.keys(y.sources.addons).length ? (
+                              <div>
+                                Addons:
+                                <div style={{ marginLeft: 8 }}>
+                                  {Object.entries(y.sources.addons).map(([aid, amt]) => {
+                                    const addName = defs?.add?.[String(aid)]?.name || String(aid);
+                                    const addlvl = defs?.add?.[String(aid)]?.lvl ? ` (Lvl ${defs.add[String(aid)].lvl})` : '';
+                                    return <div key={aid}>{addName}: +{Hhelpers.fmt(amt)}{addlvl}</div>;
+                                  })}
+                                </div>
+                              </div>
+                            ) : null}
+                            {y.sources.rsd && Object.keys(y.sources.rsd).length ? (
+                              <div>
+                                Research:
+                                <div style={{ marginLeft: 8 }}>
+                                  {Object.entries(y.sources.rsd).map(([rid, amt]) => {
+                                    const rname = defs?.rsd?.[String(rid)]?.name || String(rid);
+                                    return <div key={rid}>{rname}: +{Hhelpers.fmt(amt)}</div>;
+                                  })}
+                                </div>
+                              </div>
+                            ) : null}
+                          </div>
+                        ) : null}
                       </div>
                     </div>
                   ))}
@@ -227,19 +384,24 @@ function BuildingHero({ heroDef, heroId, durabilityPct, jobActiveId, footprintTe
               {actionTarget ? (
                 priceEntries.length ? (
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 6 }}>
-                    {priceEntries.map((p) => (
-                      <div key={p._idx} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <div style={{ width: 20, flex: '0 0 20px' }}>
-                          {p.icon?.iconUrl
-                            ? <Icon src={p.icon.iconUrl} size={20} alt={p.name} />
-                            : <Icon def={{ emoji: p.icon?.emoji }} size={20} alt={p.name} />}
+                    {priceEntries.map((p) => {
+                      const have = getPlayerResAmount(p.id);
+                      const ok = Number(have || 0) >= Number(p.amount || 0);
+                      const color = ok ? 'green' : 'crimson';
+                      return (
+                        <div key={p._idx} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <div style={{ width: 20, flex: '0 0 20px' }}>
+                            {p.icon?.iconUrl
+                              ? <Icon src={p.icon.iconUrl} size={20} alt={p.name} />
+                              : <Icon def={{ emoji: p.icon?.emoji }} size={20} alt={p.name} />}
+                          </div>
+                          <div style={{ display: 'flex', flexDirection: 'column', flex: '1 1 auto' }}>
+                            <div style={{ fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 140, color }}>{p.name}</div>
+                            <div style={{ fontSize: 11, color }}>{Hhelpers.fmt(have)} / {Hhelpers.fmt(p.amount)}</div>
+                          </div>
                         </div>
-                        <div style={{ display: 'flex', flexDirection: 'column' }}>
-                          <div style={{ fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 140 }}>{p.name}</div>
-                          <div style={{ fontSize: 11, }}>{Hhelpers.fmt(p.amount)}</div>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 ) : '-'
               ) : '-'}
@@ -271,19 +433,26 @@ function BuildingHero({ heroDef, heroId, durabilityPct, jobActiveId, footprintTe
 
           {/* Row 3, Col 1: Bygge point (footprint) */}
           <div style={{ gridColumn: '1', gridRow: '3' }}>
-            <div className="label">{t("ui.footprint.h1")}</div>
-            <div className="value"><Icon src="/assets/icons/symbol_footprint.png" size={18} alt={t("ui.labels.buildpoints", "Bygge point")} />
+            <div className="label">
+              {t("ui.footprint.h1")+': '}
+              <Icon src="/assets/icons/symbol_footprint.png" size={18} alt={t("ui.labels.buildpoints", "Bygge point")} />
               {actionTarget?.footprint > 0 ? (
-                <StatRequirement label={t("ui.labels.buildpoints", "Bygge point")} value={`${actionTarget.footprint} BP`} isOk={requirementState.footprintOk} />
-              ) : '-'}
+                              <StatRequirement label={t("ui.labels.buildpoints", "Bygge point")} value={`${actionTarget.footprint} BP`} isOk={requirementState.footprintOk} />
+                            ) : '-'}
             </div>
+
           </div>
 
           {/* Row 3, Col 2: Byggetid */}
           <div style={{ gridColumn: '2', gridRow: '3' }}>
-            <div className="label">{t("ui.time.h1")}</div>
-            <div className="value" title={timeTitle}><Icon src="/assets/icons/symbol_time.png" size={18} alt={t("ui.time.h1", "Bygge point")} />
+            <div className="label">
+              {t("ui.time.h1")+': '}
+              <Icon src="/assets/icons/symbol_time.png" size={18} alt={t("ui.time.h1", "Byggetid")} />
               {timeValue}
+
+            </div>
+            <div className="value" title={timeTitle}>
+              
             </div>
           </div>
         </div>

@@ -552,8 +552,8 @@
   <entry key="rcp.firewood.l1.name">Make Firewood</entry>
   <entry key="rcp.firewood.l1.desc">Produces firewood.</entry>
 
-  <entry key="rcp.cockedmeat.l1.name">Cook Food</entry>
-  <entry key="rcp.cockedmeat.l1.desc">Produces cooked food.</entry>
+  <entry key="rcp.cookedmeat.l1.name">Cook Food</entry>
+  <entry key="rcp.cookedmeat.l1.desc">Produces cooked food.</entry>
 
   <entry key="rcp.hide.l1.name">Prepare Hide</entry>
   <entry key="rcp.hide.l1.desc">Processes raw hides for use.</entry>

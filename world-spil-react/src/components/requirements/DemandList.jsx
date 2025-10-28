@@ -85,7 +85,7 @@ export function DemandToken({ reqId, compact = true }) {
       aria-disabled={false}
     >
       <span className="dt-icon">
-        <Icon iconUrl={typeIconUrl} value={'default.png'} size={20} />
+        <Icon iconUrl={typeIconUrl} value={'default.png'} size={18} />
       </span>
       <span className="dt-label">{label}</span>
     </a>

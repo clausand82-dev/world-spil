@@ -761,8 +761,8 @@
 <!--RECIPES-->
   <entry key="rcp.firewood.l1.name">Lav brænde</entry>
   <entry key="rcp.firewood.l1.desc">Producer brænde</entry>
-  <entry key="rcp.cockedmeat.l1.name">Lav mad</entry>
-  <entry key="rcp.cockedmeat.l1.desc">Producerer mad</entry>
+  <entry key="rcp.cookedmeat.l1.name">Lav mad</entry>
+  <entry key="rcp.cookedmeat.l1.desc">Producerer mad</entry>
   <entry key="rcp.hide.l1.name">Lav bearbejdet skind</entry>
   <entry key="rcp.hide.l1.desc">Laver skind brugbart</entry>
   <entry key="rcp.leather.l1.name">Lav læder</entry>
@@ -806,12 +806,12 @@
   <entry key="rcp.clothtorope.l1.desc">Producer reb af stof</entry>
   <entry key="rcp.cloth.l1.name">Lav stof</entry>
   <entry key="rcp.cloth.l1.desc">Producer stof af uld, læder og skind.</entry>
-  <entry key="rcp.cockedfish.l1.name">Lav kogt fisk</entry>
-  <entry key="rcp.cockedfish.l1.desc">Producer kogt fisk</entry>
-  <entry key="rcp.cockedmeattofood.l1.name">Lav mad</entry>
-  <entry key="rcp.cockedmeattofood.l1.desc">Producer kogt kød til mad</entry>
-  <entry key="rcp.cockedfishtofood.l1.name">Lav mad</entry>
-  <entry key="rcp.cockedfishtofood.l1.desc">Producer kogt fisk til mad</entry>
+  <entry key="rcp.cookedfish.l1.name">Lav kogt fisk</entry>
+  <entry key="rcp.cookedfish.l1.desc">Producer kogt fisk</entry>
+  <entry key="rcp.cookedmeattofood.l1.name">Lav mad</entry>
+  <entry key="rcp.cookedmeattofood.l1.desc">Producer kogt kød til mad</entry>
+  <entry key="rcp.cookedfishtofood.l1.name">Lav mad</entry>
+  <entry key="rcp.cookedfishtofood.l1.desc">Producer kogt fisk til mad</entry>
   <entry key="rcp.souptofood.l1.name">Lav mad</entry>
   <entry key="rcp.souptofood.l1.desc">Producer suppe til mad</entry>
   <entry key="rcp.breadtofood.l1.name">Lav mad</entry>
@@ -957,11 +957,11 @@
   <entry key="res.cloth.name">Stof</entry>
   <entry key="res.cloth.desc">Kan bruges til tøj og reb</entry>
 
-  <entry key="res.cockedmeat.name">Kogt kød</entry>
-  <entry key="res.cockedmeat.desc">Kan laves af rå kød</entry>
+  <entry key="res.cookedmeat.name">Kogt kød</entry>
+  <entry key="res.cookedmeat.desc">Kan laves af rå kød</entry>
 
-  <entry key="res.cockedfish.name">Kogt fisk</entry>
-  <entry key="res.cockedfish.desc">Kan laves af rå fisk</entry>
+  <entry key="res.cookedfish.name">Kogt fisk</entry>
+  <entry key="res.cookedfish.desc">Kan laves af rå fisk</entry>
 
   <entry key="res.wheatflour.name">Hvedemel</entry>
   <entry key="res.wheatflour.desc">Kan laves af hvede</entry>

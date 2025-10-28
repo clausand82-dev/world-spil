@@ -576,7 +576,7 @@ body{padding-bottom:72px} /* plads til quickbar */
 :root{
   --ws-font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
   --ws-font-size-base: 13px;
-  --ws-font-size-sm: 12px;
+  --ws-font-size-sm: 11px;
   --ws-font-size-md: 14px;
   --ws-font-size-lg: 16px;
   --ws-line-height: 1.2;
@@ -636,7 +636,7 @@ body{padding-bottom:72px} /* plads til quickbar */
   align-items: center;
   padding: 6px 8px;
   border-radius: 8px;
-  min-width: 80px;
+  min-width: 60px;
   min-height: 40px; /* ensure consistent vertical size so + aligns nicely */
   box-sizing: border-box;
   background: transparent;
@@ -644,7 +644,7 @@ body{padding-bottom:72px} /* plads til quickbar */
 
 /* Icon / name / need classes */
 .rc-tile .rc-icon { display: grid; place-items: center; grid-row: 1 / span 2; }
-.rc-tile .rc-name { font-weight: 700; font-size: var(--ws-font-size-md); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rc-tile .rc-name { font-weight: 600; font-size: var(--ws-font-size-sm); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .rc-tile .rc-need { font-variant-numeric: tabular-nums; font-weight: 700; font-size: var(--ws-font-size-sm); }
 
 /* Separator elements: display inline-flex and vertically center within the same flow */
@@ -653,7 +653,7 @@ body{padding-bottom:72px} /* plads til quickbar */
   align-items: center;
   justify-content: center;
   font-size: 18px;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--ws-muted);
   margin: 0 6px;
   height: 40px; /* match tile min-height so centered vertically */
@@ -664,12 +664,12 @@ body{padding-bottom:72px} /* plads til quickbar */
 .rc-extra { opacity: 0.98; }
 
 /* --- Demand tokens (requirements) --- */
-.demand-list { display: flex; flex-direction: column; gap: var(--ws-gap-md); }
+.demand-list { display: flex; flex-direction: column; gap: 6px; }
 .demand-token {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 8px;
+  padding: 0px 8px;
   border-radius: 6px;
   text-decoration: none;
 }

@@ -214,32 +214,10 @@ function RecipeRow({ entry, defs: passedDefs, state, baseOwned, requirementCache
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: '1.5'   }}>
               {renderInlineFormulaRows(formulaOutputTokens, 3, '')}
             </div>
-          </div><div style={{ borderTop: '1px solid rgba(0,0,0,0.08)', paddingTop: 0, display: 'grid', gap: 4, fontSize: 12 }}></div>
+          </div>
         </div>
 
-        <div style={{ fontWeight: 700, marginBottom: 6 }}>{t('ui.labels.products', 'Produkter (per start)')}</div>
-        {yieldEntries.length ? (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0,1fr))', gap: 8 }}>
-            {yieldEntries.map((y) => {
-              const changed = Math.abs((y.buffedAmt || 0) - (y.baseAmt || 0)) > 1e-6;
-              return (
-                <div key={`${y.effId}::${y._idx}`} style={{ display: 'flex', gap: 8, alignItems: 'center', padding: '4px 0px', borderRadius: 8, background: 'rgba(255,255,255,0.02)' }}>
-                  <div style={{ width: 28, textAlign: 'center' }}>
-                    {y.icon?.iconUrl ? <Icon iconUrl={y.icon.iconUrl} size="2em" /> : <span style={{ fontSize: 18 }}>{y.icon?.emoji || '📦'}</span>}
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: 700, fontSize: 13 }}>{y.name}</div>
-                    <div style={{ fontSize: 12, color: changed ? '#0a0' : '#333' }}>
-                      {changed ? `${H.fmt(y.baseAmt)} → ${H.fmt(y.buffedAmt)}` : H.fmt(y.baseAmt)}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="sub">Ingen produkter</div>
-        )}
+        
       </div>
 
       <RequirementPanel def={def} defs={defs} state={state} requirementCaches={requirementCaches} />
@@ -260,15 +238,15 @@ function RecipeRow({ entry, defs: passedDefs, state, baseOwned, requirementCache
             )}
           </div>
           {def.desc ? <div className="sub">{t("ui.emoji.info.h1")} {def.desc}</div> : null}
-          <div className="sub">
+          {/* fjerner mini cost to yield i linjen}<div className="sub">
             {t("ui.emoji.recipe.h1")} {t("ui.text.recipe.h1")}:&nbsp;
             {renderTokensAsNodes(inputTokens) || <em>-</em>}
             &nbsp;·&nbsp;
             {renderTokensAsNodes(outputTokens) || <em>-</em>}
-          </div>
+          </div>{*/}
           <RequirementSummary
             price={def.cost || {}}
-            //yieldPrice={def.yield || {}} hvis jeg vil have yield med på res listen, er det den her linje
+            yieldPrice={def.yield || {}}
             reqString={requirement.reqString}
             duration={durationValue}
             durationBase={durationBase}

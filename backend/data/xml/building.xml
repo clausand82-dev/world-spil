@@ -45,7 +45,7 @@
     <time>5s</time>
     
     <buffs applies_to="all">
-      <res id="res.money" type="mult" amount="50" mode="cost"/>
+      <res id="all" type="mult" amount="50" mode="cost"/>
       <speed target="all" type="mult" amount="100"/>
     </buffs>
     
