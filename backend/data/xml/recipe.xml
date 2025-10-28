@@ -128,9 +128,9 @@
     <require>add.choppingblock.l1, rsd.tools.l1</require>
   </recipe>
 
-  <recipe id="rcp.cockedmeat.l1" family="basecamp" type="food" lvl="1" stage="1" mode="active">
+  <recipe id="rcp.cookedmeat.l1" family="basecamp" type="food" lvl="1" stage="1" mode="active">
     <yield>
-      <res id="res.cockedmeat" amount="10"/>
+      <res id="res.cookedmeat" amount="10"/>
     </yield>
     <cost>
       <res id="res.rawmeat" amount="10"/>
@@ -139,9 +139,9 @@
     <require>rsd.cooking.l1</require>
   </recipe>
 
-  <recipe id="rcp.cockedfish.l1" family="basecamp" type="food" lvl="1" stage="1" mode="active">
+  <recipe id="rcp.cookedfish.l1" family="basecamp" type="food" lvl="1" stage="1" mode="active">
     <yield>
-      <res id="res.cockedfish" amount="10"/>
+      <res id="res.cookedfish" amount="10"/>
     </yield>
     <cost>
       <res id="res.rawcommonfish" amount="10"/>
@@ -150,23 +150,23 @@
     <require>rsd.cooking.l1</require>
   </recipe>
 
-  <recipe id="rcp.cockedmeattofood.l1" family="basecamp" type="food" lvl="1" stage="1" mode="active">
+  <recipe id="rcp.cookedmeattofood.l1" family="basecamp" type="food" lvl="1" stage="1" mode="active">
     <yield>
       <res id="res.food" amount="2"/>
     </yield>
     <cost>
-      <res id="res.cockedmeat" amount="4"/>
+      <res id="res.cookedmeat" amount="4"/>
     </cost>
     <time>5m</time>
     <require>rsd.cooking.l1</require>
   </recipe>
 
-  <recipe id="rcp.cockedfishtofood.l1" family="basecamp" type="food" lvl="1" stage="1" mode="active">
+  <recipe id="rcp.cookedfishtofood.l1" family="basecamp" type="food" lvl="1" stage="1" mode="active">
     <yield>
       <res id="res.food" amount="3"/>
     </yield>
     <cost>
-      <res id="res.cockedfish" amount="4"/>
+      <res id="res.cookedfish" amount="4"/>
     </cost>
     <time>5m</time>
     <require>rsd.cooking.l1</require>

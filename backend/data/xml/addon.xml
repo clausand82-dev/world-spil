@@ -694,7 +694,7 @@
       <res id="res.plank" amount="50"/>
       <res id="res.stonebrick" amount="4"/> 
       <res id="res.basictools" amount="4"/>
-      <res id="res.cockedfish" amount="20"/>
+      <res id="res.cookedfish" amount="20"/>
     </cost>
     <require>rsd.irrigation.l2,bld.lake.l2</require>
     <yield period="1h">

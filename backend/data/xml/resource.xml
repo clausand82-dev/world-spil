@@ -119,17 +119,17 @@
     <emoji>rawcommonfish.png</emoji>
   </resource>
 
-  <resource id="res.cockedfish" family="product" type="product" lvl="1" stage="1">
+  <resource id="res.cookedfish" family="product" type="product" lvl="1" stage="1">
     <unit>pcs</unit>
     <unitSpace>0.05</unitSpace>
-    <emoji>cockedfish.png</emoji>
+    <emoji>cookedfish.png</emoji>
   </resource>
 
-  <resource id="res.cockedmeat" family="product" type="product" lvl="1" stage="1">
+  <resource id="res.cookedmeat" family="product" type="product" lvl="1" stage="1">
   <stats>provisionCapacity=0.1</stats>
     <unit>pcs</unit>
     <unitSpace>0.05</unitSpace>
-    <emoji>cockedmeat.png</emoji>
+    <emoji>cookedmeat.png</emoji>
   </resource>
 
   <resource id="res.food" family="food" type="product" lvl="1" stage="1">
