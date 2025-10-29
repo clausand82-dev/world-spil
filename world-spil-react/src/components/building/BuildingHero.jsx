@@ -432,16 +432,34 @@ function BuildingHero({ heroDef, heroId, durabilityPct, jobActiveId, footprintTe
           </div>
 
           {/* Row 3, Col 1: Bygge point (footprint) */}
-          <div style={{ gridColumn: '1', gridRow: '3' }}>
-            <div className="label">
-              {t("ui.footprint.h1")+': '}
-              <Icon src="/assets/icons/symbol_footprint.png" size={18} alt={t("ui.labels.buildpoints", "Bygge point")} />
-              {actionTarget?.footprint > 0 ? (
-                              <StatRequirement label={t("ui.labels.buildpoints", "Bygge point")} value={`${actionTarget.footprint} BP`} isOk={requirementState.footprintOk} />
-                            ) : '-'}
-            </div>
-
-          </div>
+<div style={{ gridColumn: '1', gridRow: '3' }}>
+  <div className="label">{t("ui.footprint.h1")}</div>
+  <div className="value" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+    <Icon src="/assets/icons/symbol_footprint.png" size={18} alt={t("ui.labels.buildpoints", "Bygge point")} />
+    {typeof actionTarget?.footprint === 'number' && actionTarget?.footprint !== 0 ? (
+      <StatRequirement
+        label={t("ui.labels.buildpoints", "Bygge point")}
+        value={`${actionTarget.footprint > 0 ? `+${actionTarget.footprint}` : `${actionTarget.footprint}`} BP`}
+        isOk={requirementState?.footprintOk}
+      />
+    ) : (
+      '-'
+    )}
+    {/* Show summary of current availability (optional, helpful) */}
+    {actionTarget?.footprint != null && data?.cap?.footprint ? (
+      <div style={{ marginLeft: 8, fontSize: 12, opacity: 0.9 }}>
+        {/* Use normalized values from helpers when available — show available / total */}
+        {(() => {
+          const cap = data?.cap?.footprint || {};
+          const { available, total } = (typeof window !== 'undefined' && window.normalizeFootprintStateCached)
+            ? window.normalizeFootprintStateCached(cap)
+            : { available: (Number(cap.total || 0) - Math.max(0, Number(cap.used || 0)) + (Number(cap.used || 0) < 0 ? Math.abs(Number(cap.used || 0)) : 0)), total: Number(cap.total || 0) };
+          return `${Hhelpers.fmt(available)} / ${Hhelpers.fmt(total)} BP`;
+        })()}
+      </div>
+    ) : null}
+  </div>
+</div>
 
           {/* Row 3, Col 2: Byggetid */}
           <div style={{ gridColumn: '2', gridRow: '3' }}>

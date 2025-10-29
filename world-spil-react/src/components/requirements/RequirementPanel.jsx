@@ -177,14 +177,43 @@ export default function RequirementPanel({
   }, [costEntries, requirement, gameState]);
 
   const footprint = useMemo(() => {
-    const baseFP = Number(def?.stats?.footprint ?? def?.footprint ?? 0);
-    const buffedFP = baseFP;
-    const totalFP = Number(data?.cap?.footprint?.total ?? 0);
-    const usedFP = Number(data?.cap?.footprint?.used ?? 0);
-    // Apply sign semantics:
-    const ok = (baseFP >= 0) ? true : ((usedFP + Math.abs(baseFP)) <= totalFP);
-    return { base: baseFP, buffed: buffedFP, ok, totalFP, usedFP };
-  }, [def, data]);
+  // def may contain footprint stat (positive = gives space, negative = consumes space)
+  const baseFP = Number(def?.stats?.footprint ?? def?.footprint ?? 0);
+  const buffedFP = baseFP; // apply yield/time/buff adjustments here if you have them
+
+  // Read cap object from game data
+  const capObj = data?.cap?.footprint || {};
+  const normalized = H.normalizeFootprintState(capObj);
+
+  // Computation:
+  // - If building's footprint value is negative => it consumes space (requires)
+  // - If positive => it provides space
+  const requires = baseFP < 0 ? Math.abs(baseFP) : 0;
+  const provides = baseFP > 0 ? baseFP : 0;
+
+  // available space after considering current usage
+  const available = Number(normalized.available || 0);
+  const totalFP = Number(normalized.total || 0);
+  const usedRaw = Number(normalized.usedRaw || 0);
+  const consumed = Number(normalized.consumed || 0);
+  const extraFree = Number(normalized.extraFree || 0);
+
+  // OK if required space <= available
+  const ok = requires <= available;
+
+  return {
+    base: baseFP,
+    buffed: buffedFP,
+    ok,
+    totalFP,
+    usedRaw,
+    consumed,
+    extraFree,
+    available,
+    requires,
+    provides,
+  };
+}, [def, data]);
 
   const duration = useMemo(() => {
     const baseS = Number(def?.duration_s ?? def?.time ?? 0);
