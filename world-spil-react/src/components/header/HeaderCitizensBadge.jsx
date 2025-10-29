@@ -2,6 +2,7 @@ import React, { useMemo, useRef, useEffect, useState } from 'react';
 import { useGameData } from '../../context/GameDataContext.jsx';
 import useHeaderSummary from '../../hooks/useHeaderSummary.js';
 import HoverCard from '../ui/HoverCard.jsx';
+import Icon from '../ui/Icon.jsx';
 import { useT } from "../../services/i18n.js";
 import { fmt } from '../../services/helpers.js';
  
@@ -89,31 +90,31 @@ export default function HeaderCitizensBadge() {
           ) : (
             <>
               <Row label="Voksne:" strong/>
-              <Row label={`${t("ui.emoji.adults_police.h1")} ${t("ui.citizens.adults_police.h1")}`}  value={fmt(adultsPolice)} />
-              <Row label={`${t("ui.emoji.adults_fire.h1")} ${t("ui.citizens.adults_fire.h1")}`}  value={fmt(adultsFire)} />
-              <Row label={`${t("ui.emoji.adults_health.h1")} ${t("ui.citizens.adults_health.h1")}`}  value={fmt(adultsHealth)} />
-              <Row label={`${t("ui.emoji.adults_politician.h1")} ${t("ui.citizens.adults_politician.h1")}`}  value={fmt(adultsPolitician)} />
-              <Row label={`${t("ui.emoji.adults_government.h1")} ${t("ui.citizens.adults_government.h1")}`}  value={fmt(adultsGovernment)} />
-              <Row label={`${t("ui.emoji.adults_worker.h1")} ${t("ui.citizens.adults_worker.h1")}`}  value={fmt(adultsWorker)} />
-              <Row label={`${t("ui.emoji.adults_soldier.h1")} ${t("ui.citizens.adults_soldier.h1")}`}  value={fmt(adultsSoldier)} />
-              <Row label={`${t("ui.emoji.old.h1")} ${t("ui.citizens.old.h1")}`}  value={fmt(old)} />
-              <Row label={`${t("ui.emoji.adults_unemployed.h1")} ${t("ui.citizens.adults_unemployed.h1")}`}  value={fmt(adultsUnemployed)} />
-              <Row label={`${t("ui.emoji.adults_homeless.h1")} ${t("ui.citizens.adults_homeless.h1")}`}  value={fmt(homeless)} />
+              <Row label={<LabeledIcon src="/assets/icons/citizens_police.png" label={t("ui.citizens.adults_police.h1")} />} value={fmt(adultsPolice)} />
+              <Row label={<LabeledIcon src="/assets/icons/citizens_fire.png" label={t("ui.citizens.adults_fire.h1")} />} value={fmt(adultsFire)} />
+              <Row label={<LabeledIcon src="/assets/icons/citizens_health.png" label={t("ui.citizens.adults_health.h1")} />} value={fmt(adultsHealth)} />
+              <Row label={<LabeledIcon src="/assets/icons/citizens_politician.png" label={t("ui.citizens.adults_politician.h1")} />} value={fmt(adultsPolitician)} />
+              <Row label={<LabeledIcon src="/assets/icons/citizens_government.png" label={t("ui.citizens.adults_government.h1")} />} value={fmt(adultsGovernment)} />
+              <Row label={<LabeledIcon src="/assets/icons/citizens_worker.png" label={t("ui.citizens.adults_worker.h1")} />} value={fmt(adultsWorker)} />
+              <Row label={<LabeledIcon src="/assets/icons/citizens_soldier.png" label={t("ui.citizens.adults_soldier.h1")} />} value={fmt(adultsSoldier)} />
+              <Row label={<LabeledIcon src="/assets/icons/citizens_old.png" label={t("ui.citizens.old.h1")} />} value={fmt(old)} />
+              <Row label={<LabeledIcon src="/assets/icons/citizens_unemployed.png" label={`${t("ui.citizens.adults_unemployed.h1")}`} />} value={fmt(adultsUnemployed)} />
+              <Row label={<LabeledIcon src="/assets/icons/citizens_homeless.png" label={`${t("ui.citizens.adults_homeless.h1")}`} />} value={fmt(homeless)} />
               <hr />
               <Row label="Unge:" strong/>
-              <Row label={`${t("ui.emoji.young_student.h1")} ${t("ui.citizens.young_student.h1")}`}  value={fmt(youngStudent)} />
-              <Row label={`${t("ui.emoji.young_worker.h1")} ${t("ui.citizens.young_worker.h1")}`}  value={fmt(youngWorker)} />
+              <Row label={<LabeledIcon src="/assets/icons/citizens_youngstudent.png" label={`${t("ui.citizens.young_student.h1")}`} />} value={fmt(youngStudent)} />
+              <Row label={<LabeledIcon src="/assets/icons/citizens_youngworker.png" label={` ${t("ui.citizens.young_worker.h1")}`} />} value={fmt(youngWorker)} />
               <hr />
               <Row label="Børn og babyer:" strong/>
-              <Row label={`${t("ui.emoji.kids_student.h1")} ${t("ui.citizens.kids_student.h1")}`}  value={fmt(kidsStudent)} />
-              <Row label={`${t("ui.emoji.kids_street.h1")} ${t("ui.citizens.kids_street.h1")}`}  value={fmt(kidsStreet)} />
-              <Row label={`${t("ui.emoji.baby.h1")} ${t("ui.citizens.baby.h1")}`}   value={fmt(baby)} />
+              <Row label={<LabeledIcon src="/assets/icons/citizens_kidstudent.png" label={`${t("ui.citizens.kids_student.h1")}`} />} value={fmt(kidsStudent)} />
+              <Row label={<LabeledIcon src="/assets/icons/citizens_kidsstreet.png" label={`${t("ui.citizens.kids_street.h1")}`} />} value={fmt(kidsStreet)} />
+              <Row label={<LabeledIcon src="/assets/icons/citizens_baby.png" label={`${t("ui.citizens.baby.h1")}`} />} value={fmt(baby)} />
               <hr />
               <Row label="Stats:" strong/>
-              <Row label="Housing"  value={`${fmt(housingUsed)} / ${fmt(housingCap)}`} mono />
-              <Row label="Health"   value={`${fmt(healthUsed)} / ${fmt(healthCap)}`} mono />
-              <Row label="Provision forbrug" value={fmt(provisionUse)} mono />
-              <Row label="Vand forbrug"      value={fmt(waterUse)} mono />
+              <Row label={<LabeledIcon src="/assets/icons/stats_housing.png" label="Housing" />} value={`${fmt(housingUsed)} / ${fmt(housingCap)}`} mono />
+              <Row label={<LabeledIcon src="/assets/icons/stats_health.png" label="Health" />} value={`${fmt(healthUsed)} / ${fmt(healthCap)}`} mono />
+              <Row label={<LabeledIcon src="/assets/icons/stats_food.png" label="Provision forbrug" />} value={fmt(provisionUse)} mono />
+              <Row label={<LabeledIcon src="/assets/icons/stats_water.png" label="Vand forbrug" />} value={fmt(waterUse)} mono />
               <hr />
               Se detaljer i <a href="#/help?topic=population">Hjælp: Befolkning</a> og <a href="#/help?topic=stats-overview">Hjælp: Stats</a>
             </>
@@ -131,8 +132,8 @@ export default function HeaderCitizensBadge() {
 
   return (
     <HoverCard content={content} cardStyle={{ maxWidth: 480, minWidth: 320 }}>
-      <span className="res-chip" title="Borgere" style={{ cursor: 'pointer', userSelect: 'none' }}>
-        👥 {fmt(total)}
+      <span className="res-chip" title="Borgere" style={{ cursor: 'pointer', userSelect: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+        <Icon src="/assets/icons/symbol_citizens.png" size={18} alt="Borgere" /> {fmt(total)}
       </span>
     </HoverCard>
   );
@@ -171,3 +172,10 @@ function getTotal(x) {
   }
   return x;
 }
+
+const LabeledIcon = ({ src, label, size = 14 }) => (
+  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+    <Icon src={src} size={size} alt={label} />
+    <span>{label}</span>
+  </span>
+);

@@ -53,6 +53,7 @@ function parse_duration_to_seconds(?string $str): ?int {
         foreach ($m as $tok) {
             $matched = true; $val = (float)$tok[1]; $unit = $tok[2];
             switch ($unit) {
+                case 'd': $total += $val * 86400; break;
                 case 'h': $total += $val * 3600; break;
                 case 'm': $total += $val * 60; break;
                 case 's': $total += $val; break;

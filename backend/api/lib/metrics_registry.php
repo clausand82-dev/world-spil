@@ -294,7 +294,7 @@ function metrics_registry(): array {
     'product' => [
       'label' => 'Product',
       'usageField' => 'useProduct',
-      'capacityField' => 'productClothCapacity',
+      'capacityField' => 'productCapacity',
       'capacityStatKeys' => ['productCapacity'],
       'usageStatKeys' => ['productUsage'],
       'sources' => ['bld'=>true,'add'=>true,'rsd'=>true,'ani'=>true,'res'=>true],
@@ -316,7 +316,7 @@ function metrics_registry(): array {
       'stage' => ['unlock_at'=>2,'visible_at'=>2],
       'happiness' => ['enabled'=>true, 'weight_key'=>'clothingHappinessWeight'], // eller clothHappinessWeight, hvis du opretter den
       'popularity'=> ['enabled'=>true, 'weight_key'=>'clothingPopularityWeight'],
-      'parent' => ['product'],
+      'parent' => 'product',
       'demands' => [],
       'flows' => [],
     ],
@@ -330,7 +330,7 @@ function metrics_registry(): array {
       'stage' => ['unlock_at'=>2,'visible_at'=>2],
       'happiness' => ['enabled'=>true, 'weight_key'=>'medicinHappinessWeight'], // eksempel – sæt din egen
       'popularity'=> ['enabled'=>true, 'weight_key'=>'medicinPopularityWeight'],
-      'parent' => ['product'],
+      'parent' => 'product',
       'demands' => [],
       'flows' => [],
     ],

@@ -6,6 +6,7 @@ import HeaderCitizensBadge from './header/HeaderCitizensBadge.jsx';
 import HeaderHappinessBadge from './header/HeaderHappinessBadge.jsx';
 import HoverCard from './ui/HoverCard.jsx';
 import CapHoverContent from './ui/CapHoverContent.jsx';
+import Icon from './ui/Icon.jsx';
 import HeaderPopularityBadge from './header/HeaderPopularityBadge.jsx'; // NY
 import HeaderCrimeBadge from './header/HeaderCrimeBadge.jsx';
 import HeaderBudgetBadge from './header/HeaderBudgetBadge.jsx';
@@ -116,13 +117,13 @@ export default function Header() {
 
         <HoverCard content={animalCapHover}>
           <span className="res-chip">
-            🐾 {fmt(animalUsed)}<span className="max">/{fmt(animalTotal)}</span>
+            <Icon src="/assets/icons/stats_animalcap.png" size={18} alt="Staldplads" /> {fmt(animalUsed)}<span className="max">/{fmt(animalTotal)}</span>
           </span>
         </HoverCard>
 
         <HoverCard content={footprintHover}>
           <span className="res-chip">
-            ⬛ {fmt(Math.abs(footprintUsed) || 0)}<span className="max">/{fmt(footprintTotal)}</span>
+            <Icon src="/assets/icons/symbol_footprint.png" size={18} alt="Byggepoint" /> {fmt(Math.abs(footprintUsed) || 0)}<span className="max">/{fmt(footprintTotal)}</span>
           </span>
         </HoverCard>
       </div>

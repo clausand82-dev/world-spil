@@ -10,6 +10,7 @@
     </cost>
     <time>5m</time>
     <require>bld.basecamp.l1</require>
+    <emoji>flintstone.png</emoji>
   </research>
 
  <research id="rsd.rope.l1" family="basecamp" type="ressource" lvl="1" stage="1">

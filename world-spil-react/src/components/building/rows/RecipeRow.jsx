@@ -219,7 +219,7 @@ function RecipeRow({ entry, defs: passedDefs, state, baseOwned, requirementCache
             if (!first) return <span style={{ fontSize: 18 }}>{t("ui.emoji.research.h1")}</span>;
 
             if (first.icon?.iconUrl) {
-              return <Icon iconUrl={first.icon.iconUrl} size={28} alt={first.name} />;
+              return <Icon iconUrl={first.icon.iconUrl} size={36} alt={first.name} />;
             }
             if (first.icon?.emoji) {
               return <span style={{ fontSize: 20, lineHeight: 1 }}>{first.icon.emoji}</span>;

@@ -80,9 +80,11 @@ export function useStatsLabels() {
   powerFossil: makeLabelNode("stats_powerfossil", "ui.label.power_fossil.h1") || 'Power (Fossil)',
   powerGreen: makeLabelNode("stats_powergreen", "ui.label.power_green.h1") || 'Power (Green)',
   powerNuclear: makeLabelNode("stats_powernuclear", "ui.label.power_nuclear.h1") || 'Power (Nuclear)',
+
   product: makeLabelNode("stats_product", "ui.label.product.h1") || 'Product',
   productClothing: makeLabelNode("stats_productclothing", "ui.label.product_clothing.h1") || 'Clothing',
   productMedicin: makeLabelNode("stats_productmedicin", "ui.label.product_medicin.h1") || 'Medicine',
+
   social: makeLabelNode("stats_social", "ui.label.social.h1") || 'Social',
 
   waste: makeLabelNode("stats_waste", "ui.label.waste.h1") || 'Waste',

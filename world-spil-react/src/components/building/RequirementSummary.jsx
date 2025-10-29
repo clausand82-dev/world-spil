@@ -66,7 +66,7 @@ export default function RequirementSummary({
               <div style={{ fontWeight: 600, color: '#888' }}>Ingen Info</div>
             ) : (
               <>
-                <div style={{ fontWeight: 600 }}>{resolvedDuration || '-'}</div>
+                <div style={{ fontWeight: 600 }}>Buffed: {resolvedDuration || '-'}</div>
                 <div style={{ fontSize: 11, opacity: 0.85 }}>
                   {hasDurationBuff ? `Normal: ${prettyTime(durationBase ?? 0)}` : (durationBase ? prettyTime(durationBase) : '-')}
                 </div>

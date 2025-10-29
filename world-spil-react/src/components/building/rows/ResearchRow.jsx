@@ -5,6 +5,7 @@ import RequirementSummary from '../RequirementSummary.jsx';
 import { requirementInfo } from '../../../services/requirements.js';
 import DockHoverCard from '../../../components/ui/DockHoverCard.jsx';
 import StatsEffectsTooltip from '../../ui/StatsEffectsTooltip.jsx';
+import Icon from '../../ui/Icon.jsx';
 import { useT } from "../../../services/i18n.js";
 import { useGameData } from '../../../context/GameDataContext.jsx';
 import RequirementPanel from '../../../components/requirements/RequirementPanel.jsx';
@@ -76,7 +77,32 @@ function ResearchRow({ entry, state, baseOwned, requirementCaches }) {
   return (
     <DockHoverCard content={hoverContent} style={{ display: 'block', width: '100%' }}>
       <div className="item" data-research-row={fullId}>
-        <div className="icon">{t("ui.emoji.research.h1")}</div>
+        <div className="icon" style={{ width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div
+            style={{
+              position: 'relative',
+              width: 36,
+              height: 36,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundImage: "url('/assets/icons/rsd_bg.png')",
+              backgroundSize: '36px 36px',
+              backgroundRepeat: 'no-repeat',
+              backgroundPosition: 'center',
+            }}
+          >
+            {def?.iconUrl ? (
+              <div style={{ position: 'absolute', zIndex: 2, width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Icon src={def.iconUrl} size={32} alt={def?.name || fullId} />
+              </div>
+            ) : (
+              <div style={{ position: 'absolute', zIndex: 2, fontSize: 18 }}>
+                {t("ui.emoji.research.h1")}
+              </div>
+            )}
+          </div>
+        </div>
 
         <div className="grow">
           <div className="title">

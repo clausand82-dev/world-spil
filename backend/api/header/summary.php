@@ -413,7 +413,8 @@ if (!empty($summary['capChoice']) && is_array($summary['capChoice'])) {
   $taxOther  = (float)($usages['useTax']['total'] ?? 0);
 
   $productClothing = (float)($usages['useProductClothing']['total'] ?? 0);
-  $productMedicin  = (float)($usages['useProductMedicin']['total'] ?? 0);
+  $productMedicin  = (float)($usages['useProductMedicin']['total']  ?? 0);
+  $product = (float)($usages['useProduct']['total']  ?? 0);
 
 
   $usages['useHeat']['total']    = $heatF + $heatG + $heatN + $useHeatTop;
@@ -424,7 +425,7 @@ if (!empty($summary['capChoice']) && is_array($summary['capChoice'])) {
   $usages['useTax']['total']     = $taxHealth + $taxOther + $taxCitizens;
   $usages['useTransport']['total'] = $transportP + $transportG + $transportT;
 
-  $usages['useProduct']['total'] = $usages['useProductClothing']['total'] + $usages['useProductMedicin']['total'];
+  $usages['useProduct']['total'] = $productClothing + $productMedicin + $product;
 
     // Aggreger totals for heat/power/health
   $capacities['heatCapacity']  = (float)(
@@ -471,7 +472,7 @@ if (!empty($summary['capChoice']) && is_array($summary['capChoice'])) {
   );
    $capacities['productCapacity'] = (float)(
     ($capacities['productMedicinCapacity']  ?? 0) +
-    ($capacities['productClothCapacity']  ?? 0) +
+    ($capacities['productClothingCapacity']  ?? 0) +
     ($capacities['productCapacity']         ?? 0)
 
   );

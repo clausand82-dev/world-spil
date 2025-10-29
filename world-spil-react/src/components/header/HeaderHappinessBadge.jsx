@@ -160,7 +160,7 @@ export default function HeaderHappinessBadge() {
     }
 
     // Build ordered array: prefer some order similar to current PREFERRED behaviour
-    const PREFERRED = ['health', 'food', 'water', 'housing', 'heat', 'power'];
+    const PREFERRED = ['health', 'food', 'water', 'housing', 'heat', 'power', 'product'];
     const ordered = Object.keys(candidateRows).sort((a, b) => {
       const ai = PREFERRED.indexOf(a), bi = PREFERRED.indexOf(b);
       if (ai >= 0 || bi >= 0) {
