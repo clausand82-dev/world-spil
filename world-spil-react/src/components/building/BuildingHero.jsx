@@ -5,6 +5,7 @@ import ResourceCost from '../requirements/ResourceCost.jsx';
 import DemandList from '../requirements/DemandList.jsx';
 import StatRequirement from '../requirements/StatRequirement.jsx';
 import Icon from '../ui/Icon.jsx';
+import HoverCard from '../ui/HoverCard.jsx';
 import * as Hhelpers from '../../services/helpers.js';
 import { useT } from "../../services/i18n.js";
 import { useGameData } from '../../context/GameDataContext.jsx';
@@ -16,33 +17,26 @@ import { applyYieldBuffsToAmount } from '../../services/yieldBuffs.js';
 /*
   BuildingHero.jsx – include animals/units yields associated directly with building family
 
-  Summary of behavior:
-  - building has a family (heroDef.family or derived)
-  - animal defs have a family string that directly references building family (e.g. 'farm')
-  - owned animals are in state.ani (various shapes supported)
-  - we aggregate yields from:
-      * the building itself
-      * owned & relevant addons (existing logic)
-      * research
-      * owned animals whose aniDef.family matches the building family
-  - yields are buffed via applyYieldBuffsToAmount with the relevant context (bld.*, add.*, rsd.*, add.<family> for animals)
-  - optional debug via window.WS_DEBUG_YIELDS = true
+  Changes compared to previous:
+  - Removed humanize fallback.
+  - Added small resolveAddDef / resolveRsdDef helpers that try likely candidate keys
+    and return the matching def if found. When rendering, we ONLY use def.name / def.displayName
+    if present — otherwise we fall back to the raw id (same behaviour as earlier).
+  - Ensures addon source ids are normalized to base keys when we push amounts.
 */
 
 function normalizeBaseKey(s) {
   if (!s) return '';
   let k = String(s);
-  k = k.replace(/^add\./, '');
-  k = k.replace(/^ani\./, '');
+  k = k.replace(/^add\./i, '');
+  k = k.replace(/^ani\./i, '');
   k = k.replace(/\.l\d+$/i, '');
   return k.trim();
 }
 
 function gatherAnimalEntriesFromState(stateAni = {}) {
-  // return array { key, qty }
   if (!stateAni) return [];
   const out = [];
-  // If array shape
   if (Array.isArray(stateAni)) {
     stateAni.forEach((it) => {
       if (!it) return;
@@ -52,7 +46,6 @@ function gatherAnimalEntriesFromState(stateAni = {}) {
     });
     return out;
   }
-  // object keyed shape
   Object.entries(stateAni || {}).forEach(([k, v]) => {
     const rawKey = String(k || '');
     const key = rawKey.startsWith('ani.') ? rawKey.replace(/^ani\./, '') : rawKey;
@@ -66,11 +59,63 @@ function gatherAnimalEntriesFromState(stateAni = {}) {
   return out;
 }
 
+// Try to resolve an addon def by a few likely candidate keys (no humanize fallback)
+function resolveAddDef(aid, defs) {
+  if (!aid || !defs || !defs.add) return null;
+  const raw = String(aid);
+  // try exact key forms first
+  if (defs.add[raw]) return defs.add[raw];
+  const noPrefix = raw.replace(/^add\./i, '');
+  if (defs.add[noPrefix]) return defs.add[noPrefix];
+  const noLevel = noPrefix.replace(/\.l\d+$/i, '');
+  if (defs.add[noLevel]) return defs.add[noLevel];
+
+  // If none matched, try to find a defs.add key that starts with the base key + '.'
+  // (handles defs keys like "well.11", "bigfireplace.12" when we only have "well" or "bigfireplace")
+  const keys = Object.keys(defs.add);
+  for (const k of keys) {
+    if (!k) continue;
+    const kNoPrefix = String(k).replace(/^add\./i, '').replace(/\.l\d+$/i, '');
+    if (k === raw || k === noPrefix || kNoPrefix === noLevel) return defs.add[k];
+    if (k.startsWith(noLevel + '.') || k.toLowerCase().startsWith(noLevel.toLowerCase() + '.')) return defs.add[k];
+  }
+
+  return null;
+}
+
+function resolveRsdDef(rid, defs) {
+  if (!rid || !defs || !defs.rsd) return null;
+  const raw = String(rid);
+  if (defs.rsd[raw]) return defs.rsd[raw];
+  const noPrefix = raw.replace(/^rsd\./i, '');
+  if (defs.rsd[noPrefix]) return defs.rsd[noPrefix];
+  const noLevel = noPrefix.replace(/\.l\d+$/i, '');
+  if (defs.rsd[noLevel]) return defs.rsd[noLevel];
+
+  // fallback: try keys that start with base
+  const keys = Object.keys(defs.rsd);
+  for (const k of keys) {
+    if (!k) continue;
+    const kNoPrefix = String(k).replace(/^rsd\./i, '').replace(/\.l\d+$/i, '');
+    if (k === raw || k === noPrefix || kNoPrefix === noLevel) return defs.rsd[k];
+    if (k.startsWith(noLevel + '.') || k.toLowerCase().startsWith(noLevel.toLowerCase() + '.')) return defs.rsd[k];
+  }
+
+  return null;
+}
+
+function resolveResDef(rid, defs) {
+  if (!rid || !defs || !defs.res) return null;
+  const key = String(rid).replace(/^res\./, '');
+  if (defs.res[key]) return defs.res[key];
+  return null;
+}
+
 export default function BuildingHero({ heroDef, heroId, durabilityPct, jobActiveId, footprintText, animalCapText, actionTarget, requirementState }) {
   const { data } = useGameData();
   const defs = data?.defs || {};
   const t = useT();
-  const SHOW_YIELD_SOURCES = true;
+  const SHOW_YIELD_SOURCES = true; // om hover kommer eller ej
   const jobActive = !!jobActiveId;
   const hasBuffedTime = Number.isFinite(actionTarget?.duration) && Number.isFinite(actionTarget?.durationBase)
     ? Math.round(actionTarget.duration) !== Math.round(actionTarget.durationBase)
@@ -135,7 +180,7 @@ export default function BuildingHero({ heroDef, heroId, durabilityPct, jobActive
     const bldCtx = `bld.${baseKey}`;
     processYieldDef(def, bldCtx, 1, 'bld', baseKey);
 
-    // installed addons (existing detection)
+    // installed addons detection
     const installedAddons = new Set();
     const gatherAddonId = (a) => {
       if (!a) return null;
@@ -162,7 +207,7 @@ export default function BuildingHero({ heroDef, heroId, durabilityPct, jobActive
       if (aid) installedAddons.add(aid);
     }));
 
-    // also include owned addons by family as before
+    // include owned addons by family
     const baseFamily = heroDef?.family ?? null;
     if (baseFamily) {
       const stateAddMapCandidates = [ state.add, state.adds, state.installedAddons, state.addon || {} ];
@@ -193,23 +238,23 @@ export default function BuildingHero({ heroDef, heroId, durabilityPct, jobActive
       });
     }
 
-    // process installed addons yields
+    // normalize and process installed addon defs (use base key as sourceId)
     const installedAddonBaseKeys = new Set();
     installedAddons.forEach(aid => {
       let s = String(aid || '');
-      s = s.replace(/^add\./, '');
+      s = s.replace(/^add\./i, '');
       s = s.replace(/\.l\d+$/i, '');
       installedAddonBaseKeys.add(s);
     });
     installedAddons.forEach((aid) => {
-      const key = String(aid).replace(/^add\./, '').replace(/\.l\d+$/i, '');
-      const adddef = defs?.add?.[key] || defs?.add?.[String(aid).replace(/^add\./, '')] || null;
+      const key = String(aid).replace(/^add\./i, '').replace(/\.l\d+$/i, '');
+      const adddef = defs?.add?.[key] || defs?.add?.[String(aid).replace(/^add\./i, '')] || null;
       if (!adddef) return;
       const ctx = `add.${key}`;
-      processYieldDef(adddef, ctx, 1, 'add', key);
+      processYieldDef(adddef, ctx, 1, 'add', key); // pass base key as sourceId
     });
 
-    // research (existing)
+    // research yields
     const completed = new Set();
     (state.research?.completed || state.completedResearch || state.completedRsd || state.rsdCompleted || []).forEach(r => {
       if (r) completed.add(String(r));
@@ -225,6 +270,7 @@ export default function BuildingHero({ heroDef, heroId, durabilityPct, jobActive
       const candidate = String(k).replace(/^rsd\.|^research\./, '');
       if (candidate) completed.add(candidate);
     });
+
     if (baseFamily) {
       const stateRsd = state.rsd || {};
       Object.keys(defs?.rsd || {}).forEach((rsdKey) => {
@@ -238,6 +284,7 @@ export default function BuildingHero({ heroDef, heroId, durabilityPct, jobActive
         }
       });
     }
+
     const processedResearch = new Set();
     completed.forEach((rid) => {
       const key = String(rid).replace(/^rsd\.|^research\./, '');
@@ -261,6 +308,7 @@ export default function BuildingHero({ heroDef, heroId, durabilityPct, jobActive
           processedResearch.add(key);
         }
       }
+
       const maybeTargets = [].concat(rdef.for || rdef.targets || rdef.appliesTo || []);
       const heroKeys = new Set([String(heroId), baseKey, heroDef?.id, heroDef?.key].filter(Boolean));
       if (!processedResearch.has(key) && maybeTargets.some(t => heroKeys.has(String(t)))) {
@@ -269,7 +317,7 @@ export default function BuildingHero({ heroDef, heroId, durabilityPct, jobActive
       }
     });
 
-    // ANIMALS: directly associate animals by animal.family === building family
+    // ANIMALS: match by animal.family === building family
     try {
       const aniMap = state?.ani || {};
       const aniEntries = gatherAnimalEntriesFromState(aniMap);
@@ -283,7 +331,6 @@ export default function BuildingHero({ heroDef, heroId, durabilityPct, jobActive
         const familyRaw = String(aniDef.family || '').trim();
         if (!familyRaw) return;
         const familyBase = normalizeBaseKey(familyRaw);
-        // match directly to building family
         if (familyBase !== targetFamilyBase) return;
         matchedAnimals.push({ aniKey, qty: ae.qty, family: familyBase, def: aniDef });
       });
@@ -326,14 +373,14 @@ export default function BuildingHero({ heroDef, heroId, durabilityPct, jobActive
         console.debug('[YIELDS] totals pre-convert:', totals);
       }
     } catch (e) {
-      // don't break
+      // ignore
     }
 
-    // convert totals -> array
+    // convert totals -> array; resolve resource names from defs when possible (no humanize)
     const out = Object.keys(totals).map((rid, idx) => {
       const resKey = String(rid).replace(/^res\./, '');
-      const resDef = defs?.res?.[resKey];
-      const name = resDef?.name || resKey;
+      const resDef = resolveResDef(rid, defs) || defs?.res?.[resKey];
+      const name = resDef?.name || resDef?.displayName || resKey;
       const icon = resDef ? (resDef.iconUrl ? { iconUrl: resDef.iconUrl } : { emoji: resDef.emoji }) : { emoji: rid };
       const entry = totals[rid];
       return { id: rid, amount: Number(entry.total || 0), name, icon, sources: SHOW_YIELD_SOURCES ? entry.sources : undefined, _idx: idx };
@@ -351,8 +398,8 @@ export default function BuildingHero({ heroDef, heroId, durabilityPct, jobActive
     return Object.values(norm).map((p, idx) => {
       const rid = String(p.id || '');
       const resKey = rid.replace(/^res\./, '');
-      const resDef = defs?.res?.[resKey];
-      const name = resDef?.name || resKey;
+      const resDef = resolveResDef(rid, defs) || defs?.res?.[resKey];
+      const name = resDef?.name || resDef?.displayName || resKey;
       const icon = resDef ? (resDef.iconUrl ? { iconUrl: resDef.iconUrl } : { emoji: resDef.emoji }) : { emoji: rid };
       const baseAmount = Number(p.amount || 0);
       let amount = baseAmount;
@@ -420,49 +467,58 @@ export default function BuildingHero({ heroDef, heroId, durabilityPct, jobActive
             <div className="value">
               {yieldsEntries.length ? (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 6 }}>
-                  {yieldsEntries.map((y) => (
-                    <div key={y._idx} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <div style={{ width: 20, flex: '0 0 20px' }}>
-                        {y.icon?.iconUrl
-                          ? <Icon src={y.icon.iconUrl} size={20} alt={y.name} />
-                          : <Icon def={{ emoji: y.icon?.emoji }} size={20} alt={y.name} />}
-                      </div>
-                      <div style={{ display: 'flex', flexDirection: 'column' }}>
-                        <div style={{ fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 140 }}>{y.name}</div>
-                        <div style={{ fontSize: 11, }}>{Hhelpers.fmt(y.amount)}</div>
-                        {SHOW_YIELD_SOURCES && y.sources ? (
-                          <div style={{ fontSize: 10, color: 'var(--subtext, #8b8b8b)', marginTop: 4 }}>
-                            {y.sources.bld ? <div>Bygning: +{Hhelpers.fmt(y.sources.bld)}</div> : null}
-                            {y.sources.animals ? <div>Dyr: +{Hhelpers.fmt(y.sources.animals)}</div> : null}
-                            {y.sources.misc ? <div>Andet: +{Hhelpers.fmt(y.sources.misc)}</div> : null}
-                            {y.sources.addons && Object.keys(y.sources.addons).length ? (
-                              <div>
-                                Addons:
-                                <div style={{ marginLeft: 8 }}>
-                                  {Object.entries(y.sources.addons).map(([aid, amt]) => {
-                                    const addName = defs?.add?.[String(aid)]?.name || String(aid);
-                                    const addLvl = defs?.add?.[String(aid)]?.lvl || 1;
-                                    return <div key={aid}>{addName} (Level {addLvl}): +{Hhelpers.fmt(amt)}</div>;
-                                  })}
-                                </div>
-                              </div>
-                            ) : null}
-                            {y.sources.rsd && Object.keys(y.sources.rsd).length ? (
-                              <div>
-                                Research:
-                                <div style={{ marginLeft: 8 }}>
-                                  {Object.entries(y.sources.rsd).map(([rid, amt]) => {
-                                    const rname = defs?.rsd?.[String(rid)]?.name || String(rid);
-                                    return <div key={rid}>{rname}: +{Hhelpers.fmt(amt)}</div>;
-                                  })}
-                                </div>
-                              </div>
-                            ) : null}
+                  {yieldsEntries.map((y) => {
+                    // build hover card content as JSX
+                    const hoverContent = (
+                      <div style={{ minWidth: 240, maxWidth: 480, padding: 0 }}>
+                        <span style={{ fontWeight: 700, fontSize: 12 }}>Denne resource kommer fra:</span>
+                        {y.sources?.bld ? <div>Bygning: +{Hhelpers.fmt(y.sources.bld)}</div> : null}
+                        {y.sources?.animals ? <div>Dyr: +{Hhelpers.fmt(y.sources.animals)}</div> : null}
+                        {y.sources?.misc ? <div>Andet: +{Hhelpers.fmt(y.sources.misc)}</div> : null}
+                        {y.sources?.addons && Object.keys(y.sources.addons || {}).length ? (
+                          <div style={{ marginTop: 6 }}>
+                            <strong>Addons:</strong>
+                            <div style={{ marginLeft: 8 }}>
+                              {Object.entries(y.sources.addons).map(([aid, amt]) => {
+                                const addDef = resolveAddDef(aid, defs);
+                                const addName = addDef?.name || String(aid);
+                                const addLvl = addDef?.lvl ?? addDef?.level ?? null;
+                                return <div key={aid}>{addName}{addLvl ? ` (Lvl ${addLvl})` : ''}: +{Hhelpers.fmt(amt)}</div>;
+                              })}
+                            </div>
+                          </div>
+                        ) : null}
+                        {y.sources?.rsd && Object.keys(y.sources.rsd || {}).length ? (
+                          <div style={{ marginTop: 6 }}>
+                            <strong>Research:</strong>
+                            <div style={{ marginLeft: 8 }}>
+                              {Object.entries(y.sources.rsd).map(([rid, amt]) => {
+                                const rDef = resolveRsdDef(rid, defs);
+                                const rname = rDef?.name || String(rid);
+                                return <div key={rid}>{rname}: +{Hhelpers.fmt(amt)}</div>;
+                              })}
+                            </div>
                           </div>
                         ) : null}
                       </div>
-                    </div>
-                  ))}
+                    );
+
+                    return (
+                      <HoverCard key={y._idx} content={hoverContent}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                          <div style={{ width: 20, flex: '0 0 20px' }}>
+                            {y.icon?.iconUrl
+                              ? <Icon src={y.icon.iconUrl} size={20} alt={y.name} />
+                              : <Icon def={{ emoji: y.icon?.emoji }} size={20} alt={y.name} />}
+                          </div>
+                          <div style={{ display: 'flex', flexDirection: 'column' }}>
+                            <div style={{ fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 140 }}>{y.name}</div>
+                            <div style={{ fontSize: 11 }}>{Hhelpers.fmt(y.amount)}</div>
+                          </div>
+                        </div>
+                      </HoverCard>
+                    );
+                  })}
                 </div>
               ) : '-'}
             </div>

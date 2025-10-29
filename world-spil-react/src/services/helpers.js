@@ -12,8 +12,14 @@ export const fmt = (n) => (typeof n === "number" ? n.toLocaleString("da-DK") : S
 export const prettyTime = (secs) => {
     if (secs == null) return '';
     const s = Math.max(0, Math.round(+secs));
-    const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), ss = s % 60;
-    return h ? `${h}h ${m}m ${ss}s` : (m ? `${m}m ${ss}s` : `${ss}s`);
+    const d = Math.floor(s / 86400);
+    const h = Math.floor((s % 86400) / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    const ss = s % 60;
+    if (d) return `${d}d ${h}h ${m}m ${ss}s`;
+    if (h) return `${h}h ${m}m ${ss}s`;
+    if (m) return `${m}m ${ss}s`;
+    return `${ss}s`;
 };
 
 // --- Parsere ---
