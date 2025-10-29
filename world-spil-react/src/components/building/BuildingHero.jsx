@@ -436,6 +436,7 @@ function BuildingHero({ heroDef, heroId, durabilityPct, jobActiveId, footprintTe
   <div className="label">{t("ui.footprint.h1")}</div>
   <div className="value" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
     <Icon src="/assets/icons/symbol_footprint.png" size={18} alt={t("ui.labels.buildpoints", "Bygge point")} />
+
     {typeof actionTarget?.footprint === 'number' && actionTarget?.footprint !== 0 ? (
       <StatRequirement
         label={t("ui.labels.buildpoints", "Bygge point")}
@@ -445,19 +446,18 @@ function BuildingHero({ heroDef, heroId, durabilityPct, jobActiveId, footprintTe
     ) : (
       '-'
     )}
-    {/* Show summary of current availability (optional, helpful) */}
-    {actionTarget?.footprint != null && data?.cap?.footprint ? (
-      <div style={{ marginLeft: 8, fontSize: 12, opacity: 0.9 }}>
-        {/* Use normalized values from helpers when available — show available / total */}
-        {(() => {
-          const cap = data?.cap?.footprint || {};
-          const { available, total } = (typeof window !== 'undefined' && window.normalizeFootprintStateCached)
-            ? window.normalizeFootprintStateCached(cap)
-            : { available: (Number(cap.total || 0) - Math.max(0, Number(cap.used || 0)) + (Number(cap.used || 0) < 0 ? Math.abs(Number(cap.used || 0)) : 0)), total: Number(cap.total || 0) };
-          return `${Hhelpers.fmt(available)} / ${Hhelpers.fmt(total)} BP`;
-        })()}
-      </div>
-    ) : null}
+
+    {/* vis tilgængelig / total ved siden af */}
+    {data?.cap?.footprint ? (() => {
+      // importér normalizeFootprintState i toppen af filen:
+      // import { normalizeFootprintState } from '../../services/helpers.js';
+      const norm = normalizeFootprintState(data.cap.footprint || {});
+      return (
+        <div style={{ marginLeft: 8, fontSize: 12, opacity: 0.95 }}>
+          {Hhelpers.fmt(norm.available)} / {Hhelpers.fmt(norm.total)} BP
+        </div>
+      );
+    })() : null}
   </div>
 </div>
 

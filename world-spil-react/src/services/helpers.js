@@ -258,36 +258,28 @@ export function renderTextWithIcons(str, { baseIconPath = '/assets/icons/' } = {
   return parts;
 }
 
-// Add this helper to src/services/helpers.js (or the helpers file you already have).
-// It normalizes the footprint/cap object coming from state so the UI can consistently
-// reason about total/used/available regardless of whether backend uses negative used
-// to indicate "extra free" or positive used for consumption.
+// Tilføj / erstat i src/services/helpers.js
+// Normaliserer footprint cap-objekt så frontend konsekvent kan beregne forbrug og tilgængelig plads.
 //
-// Semantik used here:
-// - total: total capacity (base + bonus)
-// - usedRaw: raw value from state.cap.footprint.used (can be negative)
-// - consumed: positive amount consumed (>=0)
-// - extraFree: positive number interpreted from negative usedRaw (>=0)
-// - available: total - consumed + extraFree (>= 0)
-
+// Semantik (som du beskrev):
+// - base + bonus => total
+// - used i state = -X betyder "vi forbruger X plads" -> consumed = abs(used)
+// - available = total - consumed
 export function normalizeFootprintState(capObj = {}) {
   const total = Number(capObj?.total || 0);
   const usedRaw = Number(capObj?.used || 0);
 
-  // If backend reports used >= 0 => that is consumed amount.
-  // If backend reports used < 0  => we treat that as extra free capacity (abs(used)).
-  const consumed = usedRaw >= 0 ? usedRaw : 0;
-  const extraFree = usedRaw < 0 ? Math.abs(usedRaw) : 0;
+  // If used is stored as negative (your convention), the consumed space is abs(usedRaw).
+  // If usedRaw is positive for some reason, treat that also as consumed (abs) to be robust.
+  const consumed = Math.abs(usedRaw);
 
-  // Available = total - consumed + extraFree.
-  // Clamp >= 0 for safety.
-  const available = Math.max(0, total - consumed + extraFree);
+  // available = total - consumed. Clamp to 0 min.
+  const available = Math.max(0, total - consumed);
 
   return {
     total,
     usedRaw,
     consumed,
-    extraFree,
     available,
   };
 }

@@ -176,29 +176,27 @@ export default function RequirementPanel({
     return map;
   }, [costEntries, requirement, gameState]);
 
-  const footprint = useMemo(() => {
-  // def may contain footprint stat (positive = gives space, negative = consumes space)
+  // footprint: normaliseret og robust check
+const footprint = useMemo(() => {
+  // def's footprint: positive = giver plads, negative = forbruger plads
   const baseFP = Number(def?.stats?.footprint ?? def?.footprint ?? 0);
-  const buffedFP = baseFP; // apply yield/time/buff adjustments here if you have them
+  const buffedFP = baseFP; // hvis du har buff-logik, anvend her
 
-  // Read cap object from game data
+  // hent kapacitets-objekt fra game data
   const capObj = data?.cap?.footprint || {};
-  const normalized = H.normalizeFootprintState(capObj);
+  const norm = H.normalizeFootprintState(capObj);
 
-  // Computation:
-  // - If building's footprint value is negative => it consumes space (requires)
-  // - If positive => it provides space
+  // krav og provision fra def
   const requires = baseFP < 0 ? Math.abs(baseFP) : 0;
   const provides = baseFP > 0 ? baseFP : 0;
 
-  // available space after considering current usage
-  const available = Number(normalized.available || 0);
-  const totalFP = Number(normalized.total || 0);
-  const usedRaw = Number(normalized.usedRaw || 0);
-  const consumed = Number(normalized.consumed || 0);
-  const extraFree = Number(normalized.extraFree || 0);
+  // tilgængelig efter nuværende forbrug
+  const available = Number(norm.available || 0);
+  const totalFP = Number(norm.total || 0);
+  const consumed = Number(norm.consumed || 0);
+  const usedRaw = Number(norm.usedRaw || 0);
 
-  // OK if required space <= available
+  // ok hvis required <= available
   const ok = requires <= available;
 
   return {
@@ -208,7 +206,6 @@ export default function RequirementPanel({
     totalFP,
     usedRaw,
     consumed,
-    extraFree,
     available,
     requires,
     provides,
