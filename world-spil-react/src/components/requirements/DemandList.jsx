@@ -92,7 +92,12 @@ export function DemandToken({ reqId, compact = true }) {
   );
 }
 
-export default function DemandList({ req }) {
+export default function DemandList({ req, defs, state, compact = false, isMaxBuilt = false }) {
+  // Når bygningen er maksbygget, vises "Ingen Info" i stedet for kravene
+  if (isMaxBuilt) {
+    return <div className="sub" style={{ color: '#888' }}>Ingen Info</div>;
+  }
+
   if (!req) return null;
   const reqIds = Array.isArray(req)
     ? req.map(s => String(s || '').trim()).filter(Boolean)

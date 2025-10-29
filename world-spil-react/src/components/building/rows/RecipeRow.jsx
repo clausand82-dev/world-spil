@@ -265,6 +265,8 @@ function RecipeRow({ entry, defs: passedDefs, state, baseOwned, requirementCache
             durationBase={durationBase}
             footprint={0}
             footprintOk
+            // recipe: footprint ikke relevant -> vis "Ikke relevant"
+            footprintOverrideWhenIrrelevant={'Ikke relevant'}
           />
         </div>
         <div className="right">

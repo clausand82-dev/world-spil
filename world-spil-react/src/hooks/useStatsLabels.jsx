@@ -121,7 +121,7 @@ export function defaultLabelMap() {
 
   const map = {
 // STAGE 1
-    'footprint': { label: makeLabelNode("stats_footprint", "ui.label.footprint.h1"), desc: t("ui.desc.footprint.h1") },
+    'footprint': { label: makeLabelNode("symbol_footprint", "ui.label.footprint.h1"), desc: t("ui.desc.footprint.h1") },
     'animal_cap': { label: makeLabelNode("stats_animalcap", "ui.label.animalcap.h1"), desc: t("ui.desc.animalcap.h1") },
     'housing': { label: makeLabelNode("stats_housing", "ui.label.housing.h1"), desc: t("ui.capdesc.housing.h1") },
     'housingCapacity': { label: makeLabelNode("stats_housing", "ui.label.housing.h1"), desc: t("ui.capdesc.housing.h1") },

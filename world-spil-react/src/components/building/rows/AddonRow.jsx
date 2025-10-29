@@ -22,6 +22,23 @@ function AddonRow({ entry, state, baseOwned, requirementCaches }) {
   const defs = data?.defs || {};
   const translations = data?.i18n?.current ?? {};
 
+  // Robust ownedLevel lookup: brug entry hvis tilgængelig, ellers prøv forskellige state-veje
+  const ownedLevelLocal = (typeof ownedLevel === 'number' && !Number.isNaN(ownedLevel))
+    ? ownedLevel
+    : Number(
+        state?.add?.[fullId]?.level ??
+        state?.addons?.[fullId]?.level ??
+        state?.add?.[def?.id]?.level ??
+        state?.addons?.[def?.id]?.level ??
+        0
+      );
+
+  // Best-effort max level fra def (forskellige feltnavne), fallback til displayLevel hvis det giver mening
+  const maxLevel = Number(def?.maxLevel ?? def?.max_lvl ?? def?.max ?? def?.lvl ?? def?.levels?.length ?? displayLevel ?? 0);
+
+  // Kompakt flag: enten entry.isMax, eller vi kan udlede at ownedLevel >= maxLevel
+  const isMaxBuilt = Boolean(isMax || (maxLevel > 0 && ownedLevelLocal >= maxLevel));
+
   const requirement = requirementInfo(
     {
       id: fullId,
@@ -59,10 +76,10 @@ function AddonRow({ entry, state, baseOwned, requirementCaches }) {
     <div style={{ minWidth: 300 }}>
       <StatsEffectsTooltip def={def} translations={translations} />
       <div style={{ height: 8 }} />
-      {isMax ? (
+      {isMaxBuilt ? (
         <div style={{ padding: 8, fontWeight: 600 }}>{t("ui.text.maxlevel.h1") || 'Addonet kan ikke opgraderes mere'}</div>
       ) : (
-        <RequirementPanel def={def} defs={defs} state={state} requirementCaches={requirementCaches} />
+        <RequirementPanel def={def} defs={defs} state={state} requirementCaches={requirementCaches} isMaxBuilt={isMaxBuilt} />
       )}
     </div>
   );
@@ -82,12 +99,14 @@ function AddonRow({ entry, state, baseOwned, requirementCaches }) {
         {def.desc ? <div className="sub">{t("ui.emoji.info.h1")} {def.desc}</div> : null}
         <RequirementSummary
           price={def.cost || {}}
+          yieldPrice={def.yield || {}}
           reqString={requirement.reqString}
           duration={durationValue}
           durationBase={durationBase}
-          durationText={durationText}
           footprint={Number(def.stats?.footprint ?? 0)}
           footprintOk={requirement.footprintOk}
+          // send det beregnede isMaxBuilt-flag så summary/hover bruger samme logik
+          //isMaxBuilt={isMaxBuilt}
         />
       </div>
       <div className="right">

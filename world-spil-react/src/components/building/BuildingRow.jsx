@@ -49,9 +49,9 @@ function BuildingRowInner({ bld, state: propState, defs, requirementCaches }) {
       src={`/assets/art/${imgKey}.png`}
       fallback="/assets/art/placeholder.medium.png"
       className="bld-thumb"
-      width={50}
-      height={50}
-      style={{ width: 50, height: 50 }}
+      width={32}
+      height={32}
+      style={{ width: 32, height: 32 }}
       loading="lazy"
     />
   ), [imgKey]);
@@ -122,6 +122,7 @@ function BuildingRowInner({ bld, state: propState, defs, requirementCaches }) {
             durationBase={durationBase}
             footprint={footprint}
             footprintOk={footprintOk}
+            isMaxBuilt={!!bld.isMax}
             // yieldPrice={def?.yield || null}
           />
         </div>

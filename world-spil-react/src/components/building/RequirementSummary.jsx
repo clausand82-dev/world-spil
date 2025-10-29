@@ -11,9 +11,23 @@ import Icon from '../common/Icon.jsx';
   - Uses requirement-summary, requirement-summary__grid and column class wrappers
   - Passes yieldPrice into ResourceCost via extra prop (ResourceCost handles inline placement)
   - footprintOk prop now used to color status text (green/red)
+  - NEW: isMaxBuilt (bool) — hvis true vises hverken tid eller footprint
 */
 
-export default function RequirementSummary({ price = {}, yieldPrice = null, reqString = '', duration = null, durationBase = null, durationText = null, footprint = 0, footprintOk = true }) {
+export default function RequirementSummary({
+  price = {},
+  yieldPrice = null,
+  reqString = '',
+  duration = null,
+  durationBase = null,
+  durationText = null,
+  footprint = 0,
+  footprintOk = true,
+  isMaxBuilt = false, // ny prop: skjul tid + footprint hvis max level allerede er bygget
+  // nye overrides: vis denne tekst i stedet for tid/footprint når relevant (uafhængig af isMaxBuilt)
+  footprintOverrideWhenIrrelevant = null,
+  timeOverrideWhenIrrelevant = null,
+}) {
   const t = useT();
 
   const resolvedDuration = durationText || (duration != null ? prettyTime(duration) : null);
@@ -34,7 +48,7 @@ export default function RequirementSummary({ price = {}, yieldPrice = null, reqS
           {reqString ? (
             <div className="demand-list">
               {String(reqString).split(/[,;]/).map((id) => id.trim()).filter(Boolean).map((id, i) => (
-                <div key={`${id}-${i}`}><DemandList req={id} /></div>
+                <div key={`${id}-${i}`}><DemandList req={id} isMaxBuilt={isMaxBuilt} /></div>
               ))}
             </div>
           ) : (
@@ -42,31 +56,50 @@ export default function RequirementSummary({ price = {}, yieldPrice = null, reqS
           )}
         </div>
 
-        {/* COLUMN 3: Time */}
+        {/* COLUMN 3: Time — viser override hvis oplyst, ellers "Ingen Info" ved isMaxBuilt */}
         <div className="requirement-summary__col requirement-summary__col--time">
           <Icon iconUrl={'/assets/icons/symbol_time.png'} value={'default.png'} size={18} />
           <div style={{ textAlign: 'center' }}>
-            <div style={{ fontWeight: 600 }}>{resolvedDuration || '-'}</div>
-            <div style={{ fontSize: 11, opacity: 0.85 }}>{hasDurationBuff ? `Normal: ${prettyTime(durationBase ?? 0)}` : (durationBase ? prettyTime(durationBase) : '-')}</div>
+            {/* hvis caller angiver override, vis den altid */}
+            {timeOverrideWhenIrrelevant ? (
+              <div style={{ fontWeight: 600, color: '#888' }}>{timeOverrideWhenIrrelevant}</div>
+            ) : isMaxBuilt ? (
+              <div style={{ fontWeight: 600, color: '#888' }}>Ingen Info</div>
+            ) : (
+              <>
+                <div style={{ fontWeight: 600 }}>{resolvedDuration || '-'}</div>
+                <div style={{ fontSize: 11, opacity: 0.85 }}>
+                  {hasDurationBuff ? `Normal: ${prettyTime(durationBase ?? 0)}` : (durationBase ? prettyTime(durationBase) : '-')}
+                </div>
+              </>
+            )}
           </div>
         </div>
 
-        {/* COLUMN 4: Footprint / Buildpoints */}
+        {/* COLUMN 4: Footprint / Buildpoints — vis override hvis oplyst, ellers "Ingen Info" ved isMaxBuilt */}
         <div className="requirement-summary__col requirement-summary__col--fp">
           <Icon iconUrl={'/assets/icons/symbol_footprint.png'} value={'default.png'} size={18} />
           <div style={{ textAlign: 'center' }}>
-            <div style={{ fontWeight: 600 }}>{footprint > 0 ? `+${footprint} BP` : `${footprint} BP`}</div>
-            <div
-              style={{
-                fontSize: 11,
-                opacity: 0.95,
-                color: footprintOk ? 'var(--ws-good, #0a0)' : 'var(--ws-bad, #c33)',
-                fontWeight: 700,
-                marginTop: 4,
-              }}
-            >
-              {footprintOk ? 'OK' : 'Mangler'}
-            </div>
+            {footprintOverrideWhenIrrelevant ? (
+              <div style={{ fontWeight: 600, color: '#888' }}>{footprintOverrideWhenIrrelevant}</div>
+            ) : isMaxBuilt ? (
+              <div style={{ fontWeight: 600, color: '#888' }}>Ingen Info</div>
+            ) : (
+              <>
+                <div style={{ fontWeight: 600 }}>{footprint > 0 ? `+${footprint} BP` : `${footprint} BP`}</div>
+                <div
+                  style={{
+                    fontSize: 11,
+                    opacity: 0.95,
+                    color: footprintOk ? 'var(--ws-good, #0a0)' : 'var(--ws-bad, #c33)',
+                    fontWeight: 700,
+                    marginTop: 4,
+                  }}
+                >
+                  {footprintOk ? 'OK' : 'Mangler'}
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>

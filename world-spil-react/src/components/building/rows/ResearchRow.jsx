@@ -102,6 +102,7 @@ function ResearchRow({ entry, state, baseOwned, requirementCaches }) {
             durationText={durationText}
             footprint={0}
             footprintOk
+            footprintOverrideWhenIrrelevant={'Ikke relevant'}
           />
         </div>
 
