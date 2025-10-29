@@ -12,22 +12,72 @@ import { prettyTime } from '../../services/helpers.js';
 import { collectActiveBuffs } from '../../services/requirements.js';
 import { applyCostBuffsToAmount } from '../../services/calcEngine-lite.js';
 import { applyYieldBuffsToAmount } from '../../services/yieldBuffs.js';
-import { normalizeFootprintState } from '../../services/helpers.js'; // juster sti hvis nødvendig
 
-function BuildingHero({ heroDef, heroId, durabilityPct, jobActiveId, footprintText, animalCapText, actionTarget, requirementState }) {
+/*
+  BuildingHero.jsx – include animals/units yields associated directly with building family
+
+  Summary of behavior:
+  - building has a family (heroDef.family or derived)
+  - animal defs have a family string that directly references building family (e.g. 'farm')
+  - owned animals are in state.ani (various shapes supported)
+  - we aggregate yields from:
+      * the building itself
+      * owned & relevant addons (existing logic)
+      * research
+      * owned animals whose aniDef.family matches the building family
+  - yields are buffed via applyYieldBuffsToAmount with the relevant context (bld.*, add.*, rsd.*, add.<family> for animals)
+  - optional debug via window.WS_DEBUG_YIELDS = true
+*/
+
+function normalizeBaseKey(s) {
+  if (!s) return '';
+  let k = String(s);
+  k = k.replace(/^add\./, '');
+  k = k.replace(/^ani\./, '');
+  k = k.replace(/\.l\d+$/i, '');
+  return k.trim();
+}
+
+function gatherAnimalEntriesFromState(stateAni = {}) {
+  // return array { key, qty }
+  if (!stateAni) return [];
+  const out = [];
+  // If array shape
+  if (Array.isArray(stateAni)) {
+    stateAni.forEach((it) => {
+      if (!it) return;
+      const key = String(it.id || it.key || it.def || '').replace(/^ani\./, '');
+      const qty = Number(it.quantity ?? it.qty ?? it.count ?? it.amount ?? 0);
+      if (key && qty) out.push({ key, qty });
+    });
+    return out;
+  }
+  // object keyed shape
+  Object.entries(stateAni || {}).forEach(([k, v]) => {
+    const rawKey = String(k || '');
+    const key = rawKey.startsWith('ani.') ? rawKey.replace(/^ani\./, '') : rawKey;
+    let qty = 0;
+    if (v == null) qty = 0;
+    else if (typeof v === 'number') qty = Number(v);
+    else if (typeof v === 'object') qty = Number(v.quantity ?? v.qty ?? v.count ?? v.amount ?? 0);
+    else qty = Number(v || 0);
+    if (key && qty > 0) out.push({ key, qty });
+  });
+  return out;
+}
+
+export default function BuildingHero({ heroDef, heroId, durabilityPct, jobActiveId, footprintText, animalCapText, actionTarget, requirementState }) {
   const { data } = useGameData();
   const defs = data?.defs || {};
-  const t = useT(); // bruges til sprog
-  // Toggle: vis kilde-opdeling for yields (true = vis breakdown pr. resource)
-  const SHOW_YIELD_SOURCES = true; // HER TÆNDES OG SLUKKES FOR UDVIDES YIELDS INFORMATION
+  const t = useT();
+  const SHOW_YIELD_SOURCES = true;
   const jobActive = !!jobActiveId;
   const hasBuffedTime = Number.isFinite(actionTarget?.duration) && Number.isFinite(actionTarget?.durationBase)
     ? Math.round(actionTarget.duration) !== Math.round(actionTarget.durationBase)
     : false;
   const timeValue = actionTarget?.duration != null ? prettyTime(actionTarget.duration) : '-';
   const timeTitle = hasBuffedTime ? `Normal: ${prettyTime(actionTarget.durationBase ?? 0)}` : undefined;
-  
-  const imgKey = String(heroId || '').replace(/^bld\./, '').replace(/\.l\d+$/i, '');
+  const imgKey = String(heroId || heroDef?.id || '').replace(/^bld\./, '').replace(/\.l\d+$/i, '');
 
   const yieldsEntries = useMemo(() => {
     const def = heroDef || actionTarget;
@@ -35,23 +85,24 @@ function BuildingHero({ heroDef, heroId, durabilityPct, jobActiveId, footprintTe
 
     const state = data?.state || {};
     const activeBuffs = data?.activeBuffs || state.activeBuffs || {};
-    // map rid -> { total: number, sources: { bld: number, addons: {k:amt}, rsd: {k:amt} } }
-    const totals = {};
+
+    const totals = {}; // rid -> { total, sources: { bld, addons:{}, rsd:{}, animals, misc } }
 
     const pushAmount = (resId, amount = 0, sourceType = 'misc', sourceId = null) => {
       if (!resId) return;
       const rid = String(resId).startsWith('res.') ? String(resId) : `res.${String(resId).replace(/^res\./, '')}`;
       const val = Number(amount || 0);
-      const entry = totals[rid] || (totals[rid] = { total: 0, sources: { bld: 0, addons: {}, rsd: {} , misc: 0 } });
-      entry.total += val;
+      if (!val) return;
+      const e = totals[rid] || (totals[rid] = { total: 0, sources: { bld: 0, addons: {}, rsd: {}, animals: 0, misc: 0 } });
+      e.total += val;
       if (!SHOW_YIELD_SOURCES) return;
-      if (sourceType === 'bld') entry.sources.bld += val;
-      else if (sourceType === 'add') entry.sources.addons[sourceId || 'unknown'] = (entry.sources.addons[sourceId || 'unknown'] || 0) + val;
-      else if (sourceType === 'rsd') entry.sources.rsd[sourceId || 'unknown'] = (entry.sources.rsd[sourceId || 'unknown'] || 0) + val;
-      else entry.sources.misc += val;
+      if (sourceType === 'bld') e.sources.bld += val;
+      else if (sourceType === 'add') e.sources.addons[sourceId || 'unknown'] = (e.sources.addons[sourceId || 'unknown'] || 0) + val;
+      else if (sourceType === 'rsd') e.sources.rsd[sourceId || 'unknown'] = (e.sources.rsd[sourceId || 'unknown'] || 0) + val;
+      else if (sourceType === 'ani') e.sources.animals += val;
+      else e.sources.misc += val;
     };
 
-    // helper: process def that uses def.yield + def.yield_period_s (same logic as PassiveYieldList)
     const processYieldDef = (itemDef, ctxId = null, qty = 1, sourceType = 'misc', sourceId = null) => {
       if (!itemDef) return;
       const yields = itemDef.yield || itemDef.yields || itemDef.produces || itemDef.output || itemDef.outputs;
@@ -62,18 +113,15 @@ function BuildingHero({ heroDef, heroId, durabilityPct, jobActiveId, footprintTe
         if (!baseAmt) continue;
         const rawRes = String(y.id ?? y.res_id ?? y.res ?? y.resource ?? '');
         if (!rawRes) continue;
-        // if we have a period, compute per-hour and apply yield buffs (then convert back to per-cycle)
+        const ridForBuff = rawRes.startsWith('res.') ? rawRes : `res.${rawRes}`;
         if (period_s > 0) {
           const basePerHour = baseAmt * (3600 / period_s);
-          const ridForBuff = rawRes.startsWith('res.') ? rawRes : `res.${rawRes}`;
           const buffedPerHour = typeof applyYieldBuffsToAmount === 'function'
             ? applyYieldBuffsToAmount(basePerHour, ridForBuff, { appliesToCtx: ctxId, activeBuffs })
             : basePerHour;
           const buffedPerCycle = buffedPerHour * (period_s / 3600);
           pushAmount(ridForBuff, buffedPerCycle * qty, sourceType, sourceId);
         } else {
-          // no period — treat as simple amount (apply generic yield buff if available)
-          const ridForBuff = rawRes.startsWith('res.') ? rawRes : `res.${rawRes}`;
           const buffed = typeof applyYieldBuffsToAmount === 'function'
             ? applyYieldBuffsToAmount(baseAmt, ridForBuff, { appliesToCtx: ctxId, activeBuffs })
             : baseAmt;
@@ -82,15 +130,12 @@ function BuildingHero({ heroDef, heroId, durabilityPct, jobActiveId, footprintTe
       }
     };
 
-    // 1) building's own yields
-    const baseKey = String(heroId || heroDef?.id || '').replace(/^bld\./, '').replace(/\.l\d+$/, '');
+    // building own yields
+    const baseKey = String(heroId || heroDef?.id || '').replace(/^bld\./, '').replace(/\.l\d+$/i, '');
     const bldCtx = `bld.${baseKey}`;
     processYieldDef(def, bldCtx, 1, 'bld', baseKey);
 
-    // --- New logic: find addons & research by family and count them only if owned in state ---
-    const baseFamily = heroDef?.family || (heroDef && heroDef.family === undefined ? null : heroDef.family);
-
-    // 2) installed addons: prefer explicit installed list, but also include any addon defs that share family and are owned in state
+    // installed addons (existing detection)
     const installedAddons = new Set();
     const gatherAddonId = (a) => {
       if (!a) return null;
@@ -102,7 +147,6 @@ function BuildingHero({ heroDef, heroId, durabilityPct, jobActiveId, footprintTe
       }
       return null;
     };
-    // Add explicit sources (instance-level)
     (def.addons || def.installedAddons || actionTarget?.addons || []).forEach(a => {
       const aid = gatherAddonId(a);
       if (aid) installedAddons.add(aid);
@@ -117,34 +161,29 @@ function BuildingHero({ heroDef, heroId, durabilityPct, jobActiveId, footprintTe
       const aid = gatherAddonId(a);
       if (aid) installedAddons.add(aid);
     }));
-    // Also detect by family: include any addon defs whose def.family matches baseFamily and that are OWNED in state
+
+    // also include owned addons by family as before
+    const baseFamily = heroDef?.family ?? null;
     if (baseFamily) {
-      const stateAddMap = state.add || state.adds || state.installedAddons || {};
+      const stateAddMapCandidates = [ state.add, state.adds, state.installedAddons, state.addon || {} ];
       Object.keys(defs?.add || {}).forEach((addKey) => {
         const addDef = defs.add[addKey];
         if (!addDef) return;
         if (String(addDef.family) !== String(baseFamily)) return;
-        // canonical addon id variants
-        const variants = [
-          addKey,
-          `add.${addKey}`,
-          `add.${String(addDef.id || '')}`.replace(/^add\./, '') ? addKey : addKey,
-        ];
-        // check several possible places in state for ownership
         let owned = false;
-        // 1) positional/collection-based state where addons are stored keyed by id
-        if (stateAddMap && (stateAddMap[`add.${addKey}`] || stateAddMap[addKey] || stateAddMap[`add.${addDef.id}`] || stateAddMap[String(addDef.id)])) {
-          owned = true;
+        for (const m of stateAddMapCandidates) {
+          if (!m) continue;
+          if (m[`add.${addKey}`] || m[addKey] || m[`add.${addDef.id}`] || m[String(addDef.id)]) {
+            owned = true;
+            break;
+          }
         }
-        // 2) sometimes addon instances live under state.add or state.adds with full id keys
-        if (!owned) {
-          if (state.add && (state.add[`add.${addKey}`] || state.add[addKey] || state.add[`add.${addDef.id}`])) owned = true;
-          if (state.adds && (state.adds[`add.${addKey}`] || state.adds[addKey])) owned = true;
-        }
-        // 3) check if this addon is listed as installed on the specific building in state.buildings/blds/etc.
         if (!owned) {
           for (const p of tryPaths) {
-            if (Array.isArray(p) && p.some(x => String(gatherAddonId(x || '')).includes(addKey))) {
+            if (Array.isArray(p) && p.some(x => {
+              const aid = gatherAddonId(x);
+              return aid && (String(aid).includes(addKey) || String(aid) === `add.${addKey}`);
+            })) {
               owned = true;
               break;
             }
@@ -154,56 +193,57 @@ function BuildingHero({ heroDef, heroId, durabilityPct, jobActiveId, footprintTe
       });
     }
 
-    // Process installedAddons defs (only the ones we actually found/own)
+    // process installed addons yields
+    const installedAddonBaseKeys = new Set();
+    installedAddons.forEach(aid => {
+      let s = String(aid || '');
+      s = s.replace(/^add\./, '');
+      s = s.replace(/\.l\d+$/i, '');
+      installedAddonBaseKeys.add(s);
+    });
     installedAddons.forEach((aid) => {
-      const key = String(aid).replace(/^add\./, '');
-      const adddef = defs?.add?.[key] || defs?.add?.[String(aid)] || null;
+      const key = String(aid).replace(/^add\./, '').replace(/\.l\d+$/i, '');
+      const adddef = defs?.add?.[key] || defs?.add?.[String(aid).replace(/^add\./, '')] || null;
       if (!adddef) return;
       const ctx = `add.${key}`;
       processYieldDef(adddef, ctx, 1, 'add', key);
     });
 
-    // 3) research that applies to this building OR completed research with global yields
+    // research (existing)
     const completed = new Set();
-    // collect from several possible state paths; some snapshots use state.research.completed, others use state.rsd
-    (state.research?.completed || state.completedResearch || state.completedRsd || state.rsdCompleted || []).forEach(r => r && completed.add(String(r)));
-    // include legacy list paths
-    (state.rsd && Object.keys(state.rsd)).forEach(k => {
-      if (!k) return;
-      // keys may be like 'rsd.tools.13' or 'tools.13' — normalize to full id when possible
-      const norm = String(k);
-      completed.add(norm);
+    (state.research?.completed || state.completedResearch || state.completedRsd || state.rsdCompleted || []).forEach(r => {
+      if (r) completed.add(String(r));
     });
-    // include activeBuffs keys as potential research ids (already used in previous logic)
+    if (state.rsd && typeof state.rsd === 'object') {
+      Object.keys(state.rsd).forEach(k => {
+        if (!k) return;
+        completed.add(k);
+        if (!String(k).startsWith('rsd.')) completed.add(`rsd.${k}`);
+      });
+    }
     Object.keys(activeBuffs || {}).forEach(k => {
       const candidate = String(k).replace(/^rsd\.|^research\./, '');
       if (candidate) completed.add(candidate);
     });
-
-    // Additionally: include any research defs that share family and are present/owned in state.rsd (explicit family matching)
-    const processedResearch = new Set();
     if (baseFamily) {
+      const stateRsd = state.rsd || {};
       Object.keys(defs?.rsd || {}).forEach((rsdKey) => {
         const rdef = defs.rsd[rsdKey];
         if (!rdef) return;
         if (String(rdef.family) !== String(baseFamily)) return;
-        // determine if owned: state.rsd might contain entries keyed by 'rsd.<key>' or '<key>'
-        const stateRsd = state.rsd || state.rsdCompleted || {};
-        const owned = !!(stateRsd[`rsd.${rsdKey}`] || stateRsd[rsdKey] || stateRsd[String(rdef.id)] || state.rsd?.[String(rdef.id)]);
+        const owned =
+          !!(stateRsd[`rsd.${rsdKey}`] || stateRsd[rsdKey] || stateRsd[String(rdef.id)] || (state.research?.completed && state.research.completed.includes(rsdKey)));
         if (owned) {
-          // add to completed set using a normalized id
           completed.add(rsdKey);
         }
       });
     }
-
-    // Now process unique completed research defs; ensure we don't double-process same def twice
+    const processedResearch = new Set();
     completed.forEach((rid) => {
       const key = String(rid).replace(/^rsd\.|^research\./, '');
       if (processedResearch.has(key)) return;
       const rdef = defs?.rsd?.[key] || defs?.rsd?.[rid] || null;
       if (!rdef) return;
-      // Only include research yields if owned (we try to be permissive about state shapes)
       const stateRsd = state.rsd || state.research || {};
       const owned = !!(
         stateRsd[`rsd.${key}`] ||
@@ -211,20 +251,16 @@ function BuildingHero({ heroDef, heroId, durabilityPct, jobActiveId, footprintTe
         (state.research?.completed && state.research.completed.includes(rid)) ||
         (state.completedResearch && state.completedResearch.includes(rid))
       );
-      // if activeBuffs includes it, consider it as applied (some research show via buffs)
       const buffKeyMatch = Object.keys(activeBuffs || {}).some(k => String(k).includes(key) || String(k).includes(rid));
       if (owned || buffKeyMatch) {
         processYieldDef(rdef, `rsd.${key}`, 1, 'rsd', key);
         processedResearch.add(key);
       } else {
-        // Extra safety: if rdef.family matches baseFamily and completed set included it (from earlier family scan), include it
         if (String(rdef.family) === String(baseFamily) && completed.has(key)) {
           processYieldDef(rdef, `rsd.${key}`, 1, 'rsd', key);
           processedResearch.add(key);
         }
       }
-
-      // Also: some research definitions explicitly target this building; if so, ensure yields are applied (but avoid duplicates)
       const maybeTargets = [].concat(rdef.for || rdef.targets || rdef.appliesTo || []);
       const heroKeys = new Set([String(heroId), baseKey, heroDef?.id, heroDef?.key].filter(Boolean));
       if (!processedResearch.has(key) && maybeTargets.some(t => heroKeys.has(String(t)))) {
@@ -233,7 +269,67 @@ function BuildingHero({ heroDef, heroId, durabilityPct, jobActiveId, footprintTe
       }
     });
 
-    // convert totals to array with names/icons
+    // ANIMALS: directly associate animals by animal.family === building family
+    try {
+      const aniMap = state?.ani || {};
+      const aniEntries = gatherAnimalEntriesFromState(aniMap);
+      const matchedAnimals = [];
+      const targetFamilyBase = normalizeBaseKey(baseFamily || '');
+
+      aniEntries.forEach((ae) => {
+        const aniKey = String(ae.key || '').replace(/^ani\./, '');
+        const aniDef = defs?.ani?.[aniKey] || defs?.ani?.[String(ae.key)];
+        if (!aniDef) return;
+        const familyRaw = String(aniDef.family || '').trim();
+        if (!familyRaw) return;
+        const familyBase = normalizeBaseKey(familyRaw);
+        // match directly to building family
+        if (familyBase !== targetFamilyBase) return;
+        matchedAnimals.push({ aniKey, qty: ae.qty, family: familyBase, def: aniDef });
+      });
+
+      matchedAnimals.forEach((ma) => {
+        const family = ma.family || 'unknown';
+        const qty = Number(ma.qty || 0);
+        if (!qty) return;
+        const ctx = `add.${family}`; // reuse addon context so yield-buffs applying to add.<family> work
+        const aDef = ma.def;
+        const yields = aDef.yield || aDef.yields || aDef.produces || aDef.output || aDef.outputs;
+        const period_s = Number(aDef.yield_period_s || aDef.period_s || 0);
+        if (!yields) return;
+        for (const y of yields) {
+          const baseAmt = Number(y.amount ?? y.qty ?? y.count ?? 0);
+          if (!baseAmt) continue;
+          const rawRes = String(y.id ?? y.res_id ?? y.res ?? y.resource ?? '');
+          if (!rawRes) continue;
+          const ridForBuff = rawRes.startsWith('res.') ? rawRes : `res.${rawRes}`;
+          if (period_s > 0) {
+            const basePerHour = baseAmt * (3600 / period_s);
+            const buffedPerHour = typeof applyYieldBuffsToAmount === 'function'
+              ? applyYieldBuffsToAmount(basePerHour, ridForBuff, { appliesToCtx: ctx, activeBuffs })
+              : basePerHour;
+            const buffedPerCycle = buffedPerHour * (period_s / 3600);
+            pushAmount(ridForBuff, buffedPerCycle * qty, 'ani', family);
+          } else {
+            const buffed = typeof applyYieldBuffsToAmount === 'function'
+              ? applyYieldBuffsToAmount(baseAmt, ridForBuff, { appliesToCtx: ctx, activeBuffs })
+              : baseAmt;
+            pushAmount(ridForBuff, buffed * qty, 'ani', family);
+          }
+        }
+      });
+
+      if (typeof window !== 'undefined' && window.WS_DEBUG_YIELDS) {
+        console.debug('[YIELDS] targetFamilyBase:', targetFamilyBase);
+        console.debug('[YIELDS] aniEntries:', aniEntries);
+        console.debug('[YIELDS] matchedAnimals:', matchedAnimals);
+        console.debug('[YIELDS] totals pre-convert:', totals);
+      }
+    } catch (e) {
+      // don't break
+    }
+
+    // convert totals -> array
     const out = Object.keys(totals).map((rid, idx) => {
       const resKey = String(rid).replace(/^res\./, '');
       const resDef = defs?.res?.[resKey];
@@ -247,59 +343,53 @@ function BuildingHero({ heroDef, heroId, durabilityPct, jobActiveId, footprintTe
     return out;
   }, [heroDef, heroId, actionTarget, defs, data, SHOW_YIELD_SOURCES]);
 
-  // collect active buffs samme måde som RequirementPanel
   const activeBuffs = useMemo(() => collectActiveBuffs(defs), [defs]);
 
-  // --- priceEntries: normaliser opgraderings-/build-pris med buff anvendt
   const priceEntries = useMemo(() => {
     const priceObj = actionTarget?.price || {};
     const norm = Hhelpers.normalizePrice(priceObj || {});
-
     return Object.values(norm).map((p, idx) => {
       const rid = String(p.id || '');
       const resKey = rid.replace(/^res\./, '');
       const resDef = defs?.res?.[resKey];
       const name = resDef?.name || resKey;
       const icon = resDef ? (resDef.iconUrl ? { iconUrl: resDef.iconUrl } : { emoji: resDef.emoji }) : { emoji: rid };
-
       const baseAmount = Number(p.amount || 0);
       let amount = baseAmount;
-
       try {
-        // Samme kald som RequirementPanel for ens adfærd
         amount = applyCostBuffsToAmount(baseAmount, rid, { appliesToCtx: 'all', activeBuffs });
         if (typeof amount !== 'number' || Number.isNaN(amount)) amount = baseAmount;
       } catch (err) {
         amount = baseAmount;
       }
-
       return { id: rid, amount: Number(amount || 0), baseAmount, name, icon, _idx: idx };
     });
   }, [actionTarget, defs, activeBuffs]);
 
-  // helper to find player's current amount for a resource (be permissive about paths)
   const getPlayerResAmount = (rid) => {
     const state = data?.state || {};
     const resKey = String(rid).replace(/^res\./, '');
-    // prefer the game's canonical resource containers; from your screenshot many things live under state.inv and state.rsd (research state)
-    // For resources we check common containers in order:
     const candidates = [
-      state?.inv?.liquid, // sometimes resources stored under inv.liquid / inv.solid
-      state?.inv?.solid
+      state?.inv?.liquid,
+      state?.inv?.solid,
+      state?.inv,
+      state?.res,
+      state?.resources,
+      state?.inventory,
+      state?.stock,
+      data?.res,
+      data?.resources
     ];
     for (const c of candidates) {
       if (!c) continue;
       if (resKey in c) return Number(c[resKey] || 0);
       if (rid in c) return Number(c[rid] || 0);
     }
-    // fallback: some snapshots use state.rsd for research-level values; this is not typical resource count but check anyway
     if (state?.rsd && (state.rsd[resKey] || state.rsd[rid])) {
       return Number(state.rsd[resKey] || state.rsd[rid] || 0);
     }
     return 0;
   };
-
-// LAYOUT DELEN
 
   return (
     <div className="detail-hero">
@@ -340,10 +430,10 @@ function BuildingHero({ heroDef, heroId, durabilityPct, jobActiveId, footprintTe
                       <div style={{ display: 'flex', flexDirection: 'column' }}>
                         <div style={{ fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 140 }}>{y.name}</div>
                         <div style={{ fontSize: 11, }}>{Hhelpers.fmt(y.amount)}</div>
-                        {/* Small debug/source breakdown if enabled */}
                         {SHOW_YIELD_SOURCES && y.sources ? (
                           <div style={{ fontSize: 10, color: 'var(--subtext, #8b8b8b)', marginTop: 4 }}>
                             {y.sources.bld ? <div>Bygning: +{Hhelpers.fmt(y.sources.bld)}</div> : null}
+                            {y.sources.animals ? <div>Dyr: +{Hhelpers.fmt(y.sources.animals)}</div> : null}
                             {y.sources.misc ? <div>Andet: +{Hhelpers.fmt(y.sources.misc)}</div> : null}
                             {y.sources.addons && Object.keys(y.sources.addons).length ? (
                               <div>
@@ -351,8 +441,8 @@ function BuildingHero({ heroDef, heroId, durabilityPct, jobActiveId, footprintTe
                                 <div style={{ marginLeft: 8 }}>
                                   {Object.entries(y.sources.addons).map(([aid, amt]) => {
                                     const addName = defs?.add?.[String(aid)]?.name || String(aid);
-                                    const addlvl = defs?.add?.[String(aid)]?.lvl ? ` (Lvl ${defs.add[String(aid)].lvl})` : '';
-                                    return <div key={aid}>{addName}: +{Hhelpers.fmt(amt)}{addlvl}</div>;
+                                    const addLvl = defs?.add?.[String(aid)]?.lvl || 1;
+                                    return <div key={aid}>{addName} (Level {addLvl}): +{Hhelpers.fmt(amt)}</div>;
                                   })}
                                 </div>
                               </div>
@@ -433,45 +523,20 @@ function BuildingHero({ heroDef, heroId, durabilityPct, jobActiveId, footprintTe
           </div>
 
           {/* Row 3, Col 1: Bygge point (footprint) */}
-<div style={{ gridColumn: '1', gridRow: '3' }}>
-  <div className="label">{t("ui.footprint.h1")}</div>
-  <div className="value" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-    <Icon src="/assets/icons/symbol_footprint.png" size={18} alt={t("ui.labels.buildpoints", "Bygge point")} />
-
-    {typeof actionTarget?.footprint === 'number' && actionTarget?.footprint !== 0 ? (
-      <StatRequirement
-        label={t("ui.labels.buildpoints", "Bygge point")}
-        value={`${actionTarget.footprint > 0 ? `+${actionTarget.footprint}` : `${actionTarget.footprint}`} BP`}
-        isOk={requirementState?.footprintOk}
-      />
-    ) : (
-      '-'
-    )}
-
-    {/* vis tilgængelig / total ved siden af */}
-    {data?.cap?.footprint ? (() => {
-      // importér normalizeFootprintState i toppen af filen:
-      // import { normalizeFootprintState } from '../../services/helpers.js';
-      const { total, usedRaw, consumed, available } = normalizeFootprintState(requirementState?.cap?.footprint ?? {});
-      return (
-        <div style={{ marginLeft: 8, fontSize: 12, opacity: 0.95 }}>
-          {Hhelpers.fmt(available)} / {Hhelpers.fmt(total)} BP
-        </div>
-      );
-    })() : null}
-  </div>
-</div>
+          <div style={{ gridColumn: '1', gridRow: '3' }}>
+            <div className="label">{t("ui.footprint.h1")}</div>
+            <div className="value">
+              {actionTarget?.footprint > 0 ? (
+                <StatRequirement label={t("ui.labels.buildpoints", "Bygge point")} value={`${actionTarget.footprint} BP`} isOk={requirementState.footprintOk} />
+              ) : '-'}
+            </div>
+          </div>
 
           {/* Row 3, Col 2: Byggetid */}
           <div style={{ gridColumn: '2', gridRow: '3' }}>
-            <div className="label">
-              {t("ui.time.h1")+': '}
-              <Icon src="/assets/icons/symbol_time.png" size={18} alt={t("ui.time.h1", "Byggetid")} />
+            <div className="label">{t("ui.time.h1")}</div>
+            <div className="value" title={timeTitle}><Icon src="/assets/icons/symbol_time.png" size={18} alt={t("ui.time.h1", "Bygge point")} />
               {timeValue}
-
-            </div>
-            <div className="value" title={timeTitle}>
-              
             </div>
           </div>
         </div>
@@ -479,5 +544,3 @@ function BuildingHero({ heroDef, heroId, durabilityPct, jobActiveId, footprintTe
     </div>
   );
 }
-
-export default BuildingHero;
