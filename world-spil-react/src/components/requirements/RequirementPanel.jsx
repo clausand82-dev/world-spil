@@ -176,14 +176,14 @@ export default function RequirementPanel({
     return map;
   }, [costEntries, requirement, gameState]);
 
-  // footprint: normaliseret og robust check
+  // footprint: normaliseret og robust check (brug gameState før global data)
 const footprint = useMemo(() => {
   // def's footprint: positive = giver plads, negative = forbruger plads
   const baseFP = Number(def?.stats?.footprint ?? def?.footprint ?? 0);
-  const buffedFP = baseFP; // hvis du har buff-logik, anvend her
+  const buffedFP = baseFP; // apply buff logic here if needed
 
-  // hent kapacitets-objekt fra game data
-  const capObj = data?.cap?.footprint || {};
+  // hent kapacitets-objekt: foretræk gameState (prop) ellers fallback til global data.cap
+  const capObj = gameState?.cap?.footprint ?? data?.cap?.footprint ?? {};
   const norm = H.normalizeFootprintState(capObj);
 
   // krav og provision fra def
@@ -194,7 +194,7 @@ const footprint = useMemo(() => {
   const available = Number(norm.available || 0);
   const totalFP = Number(norm.total || 0);
   const consumed = Number(norm.consumed || 0);
-  const usedRaw = Number(norm.usedRaw || 0);
+  const usedRaw = Number(norm.usedRaw ?? norm.rawUsed ?? 0);
 
   // ok hvis required <= available
   const ok = requires <= available;
@@ -210,7 +210,7 @@ const footprint = useMemo(() => {
     requires,
     provides,
   };
-}, [def, data]);
+}, [def, gameState, data]);
 
   const duration = useMemo(() => {
     const baseS = Number(def?.duration_s ?? def?.time ?? 0);

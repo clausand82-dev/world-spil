@@ -8,6 +8,7 @@ import StatsEffectsTooltip from '../../ui/StatsEffectsTooltip.jsx';
 import { useT } from "../../../services/i18n.js";
 import { useGameData } from '../../../context/GameDataContext.jsx';
 import RequirementPanel from '../../../components/requirements/RequirementPanel.jsx';
+import { normalizeFootprintState } from '../../../services/helpers.js';
 
 /**
  * AddonRow
@@ -77,12 +78,18 @@ function AddonRow({ entry, state, baseOwned, requirementCaches }) {
       <StatsEffectsTooltip def={def} translations={translations} />
       <div style={{ height: 8 }} />
       {isMaxBuilt ? (
-        <div style={{ padding: 8, fontWeight: 600 }}>{t("ui.text.maxlevel.h1") || 'Addonet kan ikke opgraderes mere'}</div>
+        <div style={{ padding: 8, fontWeight: 600 }}>{t("ui.text.addonmaxlevel.h1") || 'Addonet kan ikke opgraderes mere'}</div>
       ) : (
         <RequirementPanel def={def} defs={defs} state={state} requirementCaches={requirementCaches} isMaxBuilt={isMaxBuilt} />
       )}
     </div>
   );
+
+  const footprintVal = Number(def.stats?.footprint ?? 0);
+  const { total, usedRaw, consumed, available } = normalizeFootprintState(state?.cap?.footprint ?? {});
+  const footprintOk = footprintVal >= 0 ? true : ((consumed + Math.abs(footprintVal)) <= total);
+  const footprintDebug = `RawTotal: ${state?.cap?.footprint?.total} • RawUsed: ${usedRaw} • Total: ${total} • Consumed: ${consumed} • Footprint: ${footprintVal} • Needed: ${Math.abs(footprintVal)} • OK: ${footprintOk ? 'yes' : 'no'}`;
+  // send footprint, footprintOk, footprintDebug to RequirementPanel
 
   const row =  (
     <div className="item" data-addon-row={fullId}>

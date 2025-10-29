@@ -23,10 +23,9 @@ export default function RequirementSummary({
   durationText = null,
   footprint = 0,
   footprintOk = true,
-  isMaxBuilt = false, // ny prop: skjul tid + footprint hvis max level allerede er bygget
-  // nye overrides: vis denne tekst i stedet for tid/footprint når relevant (uafhængig af isMaxBuilt)
-  footprintOverrideWhenIrrelevant = null,
+  isMaxBuilt = false,  footprintOverrideWhenIrrelevant = null,
   timeOverrideWhenIrrelevant = null,
+  footprintDebug = null,
 }) {
   const t = useT();
 
@@ -86,7 +85,7 @@ export default function RequirementSummary({
               <div style={{ fontWeight: 600, color: '#888' }}>Ingen Info</div>
             ) : (
               <>
-                <div style={{ fontWeight: 600 }}>{footprint > 0 ? `+${footprint} BP` : `${footprint} BP`}</div>
+                <div title={footprintDebug || undefined} style={{ fontWeight: 600 }}>{footprint > 0 ? `+${footprint} BP` : `${footprint} BP`}</div>
                 <div
                   style={{
                     fontSize: 11,

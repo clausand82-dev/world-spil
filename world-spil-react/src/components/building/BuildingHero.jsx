@@ -12,6 +12,7 @@ import { prettyTime } from '../../services/helpers.js';
 import { collectActiveBuffs } from '../../services/requirements.js';
 import { applyCostBuffsToAmount } from '../../services/calcEngine-lite.js';
 import { applyYieldBuffsToAmount } from '../../services/yieldBuffs.js';
+import { normalizeFootprintState } from '../../services/helpers.js'; // juster sti hvis nødvendig
 
 function BuildingHero({ heroDef, heroId, durabilityPct, jobActiveId, footprintText, animalCapText, actionTarget, requirementState }) {
   const { data } = useGameData();
@@ -451,10 +452,10 @@ function BuildingHero({ heroDef, heroId, durabilityPct, jobActiveId, footprintTe
     {data?.cap?.footprint ? (() => {
       // importér normalizeFootprintState i toppen af filen:
       // import { normalizeFootprintState } from '../../services/helpers.js';
-      const norm = normalizeFootprintState(data.cap.footprint || {});
+      const { total, usedRaw, consumed, available } = normalizeFootprintState(requirementState?.cap?.footprint ?? {});
       return (
         <div style={{ marginLeft: 8, fontSize: 12, opacity: 0.95 }}>
-          {Hhelpers.fmt(norm.available)} / {Hhelpers.fmt(norm.total)} BP
+          {Hhelpers.fmt(available)} / {Hhelpers.fmt(total)} BP
         </div>
       );
     })() : null}

@@ -24,7 +24,7 @@
     healthDentistCapacity=144;
     adultsWorkerCapacity=100;
     storageUnitsCapacity=500;
-    footprint=350;
+    footprint=24;
     storageLiquidCap=5000;
     storageSolidCap=5000;
     </stats>

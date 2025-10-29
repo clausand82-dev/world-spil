@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { useGameData } from '../../context/GameDataContext.jsx';
-import * as H from '../../services/helpers.js';
+import { normalizeFootprintState } from '../../services/helpers.js';
 import GameImage from '../GameImage.jsx';
 import ActionButton from '../ActionButton.jsx';
 import BuildProgress from '../BuildProgress.jsx';
@@ -31,17 +31,7 @@ function BuildingRowInner({ bld, state: propState, defs, requirementCaches }) {
 
   const translations = data?.i18n?.current ?? {};
 
-  const hoverContent = useMemo(() => (
-    <div style={{ minWidth: 300 }}>
-      <StatsEffectsTooltip def={def || bld} translations={translations} />
-      <div style={{ height: 8 }} />
-      {bld.isMax ? (
-        <div style={{ padding: 8, fontWeight: 600 }}>{'Bygningen kan ikke opgraderes mere'}</div>
-      ) : (
-        <RequirementPanel def={def || bld} defs={defs} state={gameState} requirementCaches={requirementCaches} isMax={bld.isMax} />
-      )}
-    </div>
-  ), [def, bld, translations, defs, gameState, requirementCaches]);
+  // hoverContent oprettes senere (efter footprint/footprintOk) så vi kan sende de samme værdier som rækken
 
   const imgKey = String(bld.id || '').replace(/^bld\./, '').replace(/\.l\d+$/i, '');
   const image = useMemo(() => (
@@ -60,7 +50,8 @@ function BuildingRowInner({ bld, state: propState, defs, requirementCaches }) {
   const reqString = bld.req || bld.require || def?.require || def?.requirements || '';
   const durationVal = Number(bld.duration_s ?? bld.build_time_s ?? def?.duration_s ?? def?.build_time_s ?? 0) || null;
   const durationBase = durationVal;
-  const footprint = Number(def?.stats?.footprint ?? def?.footprint ?? 0);
+  // footprint: fallback bld override -> def.stats -> def. Semantik: + gives space, - consumes space
+  const footprint = Number(bld?.footprint ?? def?.stats?.footprint ?? def?.footprint ?? 0);
 
   // compute requirement info using the authoritative gameState (propState preferred)
   const reqInfo = useMemo(() => {
@@ -84,25 +75,38 @@ function BuildingRowInner({ bld, state: propState, defs, requirementCaches }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bld.id, def?.id, price, reqString, durationVal, gameState, defs]);
 
-  // FOOTPRINT check now respects sign semantics:
-  //  - footprint >= 0  => gives space (OK)
-  //  - footprint < 0   => requires space: check used + |footprint| <= total
+  // normaliser cap-objektet (brug backend state-objekt direkte)
+  const { total, usedRaw, consumed, available } = normalizeFootprintState(gameState?.cap?.footprint ?? {});
+
   const footprintOk = useMemo(() => {
-    try {
-      const totalFP = Number(data?.cap?.footprint?.total ?? 0);
-      const usedFP = Number(data?.cap?.footprint?.used ?? 0);
-      if (Number.isNaN(totalFP) || Number.isNaN(usedFP)) return true;
-      if (footprint >= 0) {
-        // positive footprint gives space -> OK
-        return true;
-      } else {
-        const needed = Math.abs(footprint);
-        return (usedFP + needed) <= totalFP;
-      }
-    } catch (e) {
-      return true;
-    }
-  }, [data?.cap?.footprint?.total, data?.cap?.footprint?.used, footprint]);
+    if (Number(footprint) >= 0) return true;
+    const needed = Math.abs(Number(footprint));
+    return (consumed + needed) <= total;
+  }, [total, consumed, footprint]);
+
+  const footprintDebug = `RawTotal: ${gameState?.cap?.footprint?.total} • RawUsed: ${usedRaw} • Total: ${total} • Consumed: ${consumed} • Available: ${available} • Footprint: ${footprint} • Needed: ${Math.abs(footprint)} • OK: ${footprintOk ? 'yes' : 'no'}`;
+
+  // hoverContent defineres nu efter footprint/footprintOk så samme tjek bruges i hover
+  const hoverContent = useMemo(() => (
+    <div style={{ minWidth: 300 }}>
+      <StatsEffectsTooltip def={def || bld} translations={translations} />
+      <div style={{ height: 8 }} />
+      {bld.isMax ? (
+        <div style={{ padding: 8, fontWeight: 600 }}>{'Bygningen kan ikke opgraderes mere'}</div>
+      ) : (
+        <RequirementPanel
+          def={def || bld}
+          defs={defs}
+          state={gameState}
+          requirementCaches={requirementCaches}
+          isMax={bld.isMax}
+          footprint={footprint}
+          footprintOk={footprintOk}
+          footprintDebug={footprintDebug}
+        />
+      )}
+    </div>
+  ), [def, bld, translations, defs, gameState, requirementCaches, footprint, footprintOk, footprintDebug]);
 
   const row = useMemo(() => (
     <div className="item" data-bld-id={bld.id}>
@@ -122,6 +126,7 @@ function BuildingRowInner({ bld, state: propState, defs, requirementCaches }) {
             durationBase={durationBase}
             footprint={footprint}
             footprintOk={footprintOk}
+            footprintDebug={footprintDebug}
             isMaxBuilt={!!bld.isMax}
             // yieldPrice={def?.yield || null}
           />
