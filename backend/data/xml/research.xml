@@ -19,6 +19,7 @@
     </cost>
     <time>5m</time>
     <require>rsd.flintstone.l1</require>
+    <emoji>rope.png</emoji>
   </research>
 
 <research id="rsd.tools.l1" family="basecamp" type="tools" lvl="1" stage="1">
@@ -28,6 +29,7 @@
     <time>5m</time>
     <require>rsd.rope.l1</require>
     <upgradesTo>rsd.tools.l2</upgradesTo>
+    <emoji>basictools.png</emoji>
   </research>
 
  <research id="rsd.tools.l2" family="basecamp" type="tools" lvl="2" stage="1">
@@ -37,6 +39,7 @@
     <time>15m</time>
     <require>bld.basecamp.l2,rsd.leatherwork.l1</require>
     <upgradesTo>rsd.tools.l3</upgradesTo>
+    <emoji>basictools.png</emoji>
   </research>
 
   <research id="rsd.tools.l3" family="basecamp" type="tools" lvl="3" stage="1">
@@ -45,6 +48,7 @@
     </cost>
     <time>30m</time>
     <require>bld.mine.l1,rsd.mining.l1</require>
+    <emoji>basictools.png</emoji>
   </research>
 
   <research id="rsd.leatherwork.l1" family="basecamp" type="storage" lvl="1" stage="1">
@@ -53,6 +57,7 @@
     </cost>
     <time>20m</time>
     <require>rsd.animalhusbandry.l1</require>
+    <emoji>leather.png</emoji>
   </research>
 
   <research id="rsd.mining.l1" family="mine" type="storage" lvl="1" stage="1">
@@ -63,6 +68,7 @@
     </cost>
     <time>10m</time>
     <require>rsd.leatherwork.l1,bld.basecamp.l2</require>
+    <emoji>mining.png</emoji>
   </research>
 
   <research id="rsd.mining.l2" family="mine" type="storage" lvl="2" stage="2">
@@ -71,6 +77,7 @@
     </cost>
     <time>2h</time>
     <require>rsd.tools.l3</require>
+    <emoji>mining.png</emoji>
   </research>
 
   <research id="rsd.irrigation.l1" family="basecamp" type="agri" lvl="1" stage="1">
@@ -81,6 +88,7 @@
     </cost>
     <time>15m</time>
     <require>bld.basecamp.l2,rsd.leatherwork.l1</require>
+    <emoji>irrigation.png</emoji>
   </research>
 
   <research id="rsd.forestry.l1" family="forest" type="agri" lvl="1" stage="1">
@@ -90,6 +98,7 @@
     </cost>
     <time>10m</time>
     <require>bld.basecamp.l2,rsd.leatherwork.l1</require>
+    <emoji>forestry.png</emoji>
   </research>
 
    <research id="rsd.fishing.l1" family="lake" type="storage" lvl="1" stage="1">
@@ -99,6 +108,7 @@
     </cost>
     <time>10m</time>
     <require>bld.lake.l1,rsd.irrigation.l1</require>
+    <emoji>fishing.png</emoji>
   </research>
 
   <research id="rsd.fishing.l2" family="lake" type="storage" lvl="2" stage="1">
@@ -111,6 +121,7 @@
       <res id="res.rawcommonfish" type="mult" amount="50" mode="yield"/> <!--50 % more to fishing of rawcommonfish on all-->
     </buffs>
     <require>rsd.fishing.l1,add.mole.l1</require>
+    <emoji>fishing.png</emoji>
   </research>
 
   <research id="rsd.betterstorage.l1" family="storage" type="storage" lvl="1" stage="1">
@@ -121,6 +132,7 @@
     </cost>
     <time>30m</time>
     <require>bld.storage.l1</require>
+    <emoji>stats_product.png</emoji>
   </research>
 
   <research id="rsd.campmanagement.l1" family="storage" type="storage" lvl="2" stage="2">
@@ -132,6 +144,7 @@
       <res id="res.money" type="mult" amount="5" mode="yield"/> <!--5 % more to fishing of money on all-->
     </buffs>
     <require>bld.tent.l2, rsd.tools.l2</require>
+    <emoji>campmanagement.png</emoji>
   </research>
 
  <research id="rsd.farming.l1" family="farm" type="agri" lvl="1" stage="1">
@@ -149,6 +162,7 @@
     </cost>
     <time>5m</time>
     <require>rsd.farming.l1</require>
+    <emoji>animalhusbandry.png</emoji>
   </research>
 
       <research id="rsd.animalhusbandry.l2" family="farm" type="animal" lvl="2" stage="1">
@@ -158,6 +172,7 @@
     </cost>
     <time>15m</time>
     <require>add.barn.l1,rsd.animalhusbandry.l1</require>
+    <emoji>animalhusbandry.png</emoji>
   </research>
 
   <research id="rsd.betterfeeding.l1" family="farm" type="agri" lvl="1" stage="1">
@@ -174,6 +189,7 @@
     </cost>
     <time>10m</time>
     <require>add.barn.l1,rsd.animalhusbandry.l1</require>
+    <emoji>fertilizer.png</emoji>
   </research>
 
    <research id="rsd.bedding.l1" family="farm" type="storage" lvl="1" stage="1">
@@ -182,6 +198,7 @@
     </cost>
     <time>10m</time>
     <require>add.barn.l1,rsd.animalhusbandry.l1</require>    
+    <emoji>straw.png</emoji>
   </research>
 
   <research id="rsd.maizefield_scarecrow.l1" family="farm" type="agri" lvl="2" stage="2">
@@ -205,6 +222,7 @@
     <buffs applies_to="all">
       <res id="res.straw" type="add" amount="2" mode="yield"/> <!--2  more of straw on all-->
     </buffs>
+    <emoji>straw.png</emoji>
   </research>
   
  <research id="rsd.stage.l2" family="basecamp" type="stage" lvl="2" stage="1">
@@ -229,6 +247,7 @@
     </cost>
     <time>10m</time>
     <require>bld.basecamp.l3,rsd.campmanagement.l1,add.bigfireplace.l1</require>
+    <emoji>cooking.png</emoji>
   </research>
 
 
@@ -246,6 +265,7 @@
     </cost>
     <time>30m</time>
     <require>rsd.tools.l3, bld.basecamp.l3</require>
+    <emoji>stats_health.png</emoji>
   </research>
 
   <research id="rsd.cloth.l1" family="basecamp" type="cloth" lvl="1" stage="2">
@@ -257,6 +277,7 @@
     </cost>
     <time>1h</time>
     <require>rsd.tools.l3, bld.basecamp.l3</require>
+    <emoji>cloth.png</emoji>
   </research>
 
   <research id="rsd.bed.l1" family="tent" type="comfort" lvl="1" stage="2">
@@ -267,6 +288,7 @@
     </cost>
     <time>45m</time>
     <require>rsd.cloth.l1</require>
+    <emoji>bed.png</emoji>
   </research>
 
   <research id="rsd.betterprovision.l1" family="basecamp" type="ability" lvl="1" stage="2">
@@ -278,6 +300,7 @@
     <time>6h</time>
     <stats>provision_cap=50</stats>
     <require>rsd.tools.l3,bld.basecamp.l3</require>
+    <emoji>stats_food.png</emoji>
   </research>
 
   <research id="rsd.bettersleepingquarters.l1" family="tent" type="ability" lvl="1" stage="1">
@@ -288,6 +311,7 @@
     </cost>
     <time>10m</time>
     <require>rsd.campmanagement.l1, bld.tent.l3</require>
+    <emoji>bed.png</emoji>
   </research>
 
   <research id="rsd.social.l1" family="basecamp" type="social" lvl="1" stage="1">
@@ -299,6 +323,7 @@
     <time>6h</time>
     <stats>socialCapacity=50</stats>
     <require>rsd.tools.l3, bld.basecamp.l3</require>
+    <emoji>stats_social.png</emoji>
   </research>
 
    <research id="rsd.clay.l1" family="mine" type="storage" lvl="1" stage="2">
@@ -309,6 +334,7 @@
     </cost>
     <time>10m</time>
     <require>rsd.tools.l3, bld.mine.l2</require>
+    <emoji>clay.png</emoji>
   </research>
 
   <research id="rsd.formingclay.l1" family="mine" type="processing" lvl="1" stage="2">
@@ -317,6 +343,7 @@
     </cost>
     <time>20m</time>
     <require>rsd.clay.l1</require>
+    <emoji>clay.png</emoji>
   </research>
 
   <research id="rsd.stonebrick.l1" family="mine" type="storage" lvl="1" stage="2">
@@ -326,6 +353,7 @@
     </cost>
     <time>30m</time>
     <require>rsd.formingclay.l1</require>
+    <emoji>stonebrick.png</emoji>
   </research>
 
   <research id="rsd.tunnelsupport.l1" family="mine" type="ability" lvl="1" stage="2">
@@ -346,6 +374,7 @@
     </cost>
     <time>3h</time>
     <require>rsd.tunnelsupport.l1</require>
+    <emoji>mining.png</emoji>
   </research>
 
  <research id="rsd.forestry.l2" family="forest" type="agri" lvl="2" stage="2">
@@ -355,6 +384,7 @@
     </cost>
     <time>1h</time>
     <require>rsd.forestry.l1, bld.forest.l1</require>
+    <emoji>forestry.png</emoji>
   </research>
 
   <research id="rsd.irrigation.l2" family="basecamp" type="agri" lvl="2" stage="2">
@@ -365,6 +395,7 @@
     </cost>
     <time>15m</time>
     <require>rsd.fishing.l2</require>
+    <emoji>irrigation.png</emoji>
   </research>
   
   <research id="rsd.storeherb.l1" family="health" type="processing" lvl="1" stage="2">
@@ -376,6 +407,7 @@
     </cost>
     <time>30m</time>
     <require>rsd.campmanagement.l2</require>
+    <emoji>herb.png</emoji>
   </research>
 
   <research id="rsd.income.l1" family="basecamp" type="economy" lvl="1" stage="2">
@@ -387,6 +419,7 @@
       <res id="res.money" type="mult" amount="10" mode="yield"/> <!-- 10% more money from all -->
     </buffs>
     <require>rsd.campmanagement.l2, bld.basecamp.l4</require>
+    <emoji>income.png</emoji>
   </research>
 
   <research id="rsd.income.l2" family="basecamp" type="economy" lvl="2" stage="2">
@@ -398,7 +431,7 @@
       <res id="res.money" type="mult" amount="20" mode="yield"/> <!-- 20% more money from all -->
     </buffs>
     <require>rsd.income.l1</require>
-
+    <emoji>income.png</emoji>
   </research>
 
   <research id="rsd.culture.l1" family="basecamp" type="culture" lvl="1" stage="2">
@@ -407,6 +440,7 @@
     </cost>
     <time>12h</time>
     <require>rsd.stage.l2</require>
+    <emoji>stats_culture.png</emoji>
   </research>
 
   <research id="rsd.civilization.l1" family="basecamp" type="stage" lvl="1" stage="2">
@@ -415,6 +449,7 @@
     </cost>
     <time>12h</time>
     <require>rsd.stage.l2</require>
+    <emoji>stats_civilization.png</emoji>
   </research>
 
   <research id="rsd.carrot.l1" family="farm" type="agri" lvl="1" stage="2">
@@ -424,6 +459,7 @@
     </cost>
     <time>2h</time>
     <require>rsd.garden.l1, add.garden.l1</require>
+    <emoji>carrot.png</emoji>
   </research>
 
   <research id="rsd.sunflower.l1" family="farm" type="agri" lvl="1" stage="2">
@@ -433,6 +469,7 @@
     </cost>
     <time>2h</time>
     <require>rsd.garden.l1, add.garden.l1</require>
+    <emoji>sunflower.png</emoji>
   </research>
 
   <research id="rsd.herbalism.l1" family="health" type="health" lvl="1" stage="2">
@@ -442,6 +479,7 @@
     </cost>
     <time>30m</time>
     <require>rsd.garden.l1, add.garden.l1</require>
+    <emoji>herb.png</emoji>
   </research>
 
   <research id="rsd.seed.l1" family="farm" type="agri" lvl="1" stage="2">
@@ -452,6 +490,7 @@
     </cost>
     <time>2h</time>
     <require>rsd.garden.l1, add.garden.l1</require>
+    <emoji>seed.png</emoji>
   </research>
 
   <research id="rsd.garden.l1" family="farm" type="agri" lvl="1" stage="2">
@@ -473,6 +512,7 @@
     </cost>
     <time>30m</time>
     <require>rsd.farming.l2, bld.farm.l2</require>
+    <emoji>animalhusbandry.png</emoji>
   </research>  
 
     <research id="rsd.farming.l2" family="farm" type="agri" lvl="2" stage="2">
@@ -491,6 +531,7 @@
     </cost>
     <time>30m</time>
     <require>bld.farm.l1,rsd.farming.l1</require>
+    <emoji>oats.png</emoji>
   </research>
 
   <research id="rsd.fieldwork.l1" family="farm" type="storage" lvl="1" stage="2">
@@ -511,6 +552,7 @@
     </cost>
     <time>30m</time>
     <require>rsd.stacking.l1, add.storageliquid.l2, addstoragesolid.l2</require>
+    <emoji>stats_product.png</emoji>
   </research>
 
    <research id="rsd.barrel.l1" family="storage" type="storage" lvl="1" stage="2">
@@ -521,6 +563,7 @@
     </cost>
     <time>1h</time>
     <require>rsd.betterstorage.l2</require>
+    <emoji>woodbarrel.png</emoji>
   </research>
 
       <research id="rsd.bronze.l1" family="mine" type="storage" lvl="1" stage="2">
@@ -531,6 +574,7 @@
     </cost>
     <time>1h</time>
     <require>rsd.mining.l3, bld.mine.l3</require>
+    <emoji>bronzeore.png</emoji>
   </research>
 
   <research id="rsd.bronzemoulding.l1" family="mine" type="storage" lvl="1" stage="2">
@@ -540,6 +584,7 @@
     </cost>
     <time>1h</time>
     <require>rsd.mining.l3, bld.mine.l3</require>
+    <emoji>bronzebar.png</emoji>
   </research>
 
   <research id="rsd.production.l1" family="basecamp" type="production" lvl="1" stage="2">
@@ -551,6 +596,7 @@
       <speed target="all" type="mult" amount="5"/>
     </buffs>
     <require>rsd.campmanagement.l1</require>
+    <emoji>production.png</emoji>
   </research>
 
   <research id="rsd.fishing.l3" family="lake" type="storage" lvl="3" stage="2">
@@ -563,6 +609,7 @@
       <res id="res.turtle" type="mult" amount="50" mode="yield"/>
     </buffs>
     <require>rsd.irrigation.l2, add.mole.l2</require>
+    <emoji>fishing.png</emoji>
   </research>
 
   <research id="rsd.sawmill.l1" family="forest" type="production" lvl="1" stage="2">
@@ -573,6 +620,7 @@
     </cost>
     <time>10m</time>
     <require>rsd.production.l1</require>
+    <emoji>log.png</emoji>
   </research>
 
   <research id="rsd.logging.l1" family="forest" type="production" lvl="1" stage="2">
@@ -582,6 +630,7 @@
     </cost>
     <time>10m</time>
     <require>rsd.sawmill.l1, bld.sawmill.l1</require>
+    <emoji>log.png</emoji>
   </research>
 
    <research id="rsd.campmanagement.l2" family="basecamp" type="stage" lvl="2" stage="2">
@@ -593,6 +642,7 @@
       <res id="res.money" type="mult" amount="10" mode="yield"/>
     </buffs>
     <require>rsd.iron.l1</require>
+    <emoji>campmanagement.png</emoji>
   </research>
 
 
@@ -627,13 +677,16 @@
     </cost>
     <time>1h</time>
     <require>rsd.bronze.l1</require>
+    <emoji>ironore.png</emoji>
   </research>
+
   <research id="rsd.ironmoulding.l1" family="mine" type="storage" lvl="1" stage="2">
     <cost>
       <res id="res.money" amount="100"/>
     </cost>
     <time>1h</time>
     <require>rsd.bronzemoulding.l1</require>
+    <emoji>ironbar.png</emoji>
   </research>
 
 <!-- STORAGE-->
@@ -689,6 +742,7 @@
     </cost>
     <time>10m</time>
     <require>rsd.herbalism.l2</require>
+    <emoji>stats_health.png</emoji>
   </research>
 
 <!-- STAGE RESEARCH -->

@@ -221,12 +221,13 @@ function renderCostInline(costLike, defs) {
  * - Forsøger at hente yields/produce fra forskellige def-formater.
  * - Normaliserer til [{id: 'res.foo', amount: N}, ...]
  */
-function extractYields(def) {
+
+/*function extractYields(def) {
   if (!def) return [];
   const maybeObj = def.yields || def.produces || def.produce || def.output || def.outputs || def.yield;
   if (maybeObj && typeof maybeObj === 'object' && !Array.isArray(maybeObj)) {
     return Object.entries(maybeObj).map(([k, v]) => {
-      const id = String(k).startsWith('res.') ? String(k) : String(k).replace(/^res\./, '').trim();
+      const id = String(k).startsWith('res.') ? String(k) : `res.${k.replace(/^res\./, '').trim()}`;
       const amt = Number(v || 0);
       return { id: id.startsWith('res.') ? id : `res.${id}`, amount: amt };
     }).filter(e => e.amount > 0);
@@ -259,7 +260,7 @@ function extractYields(def) {
   }
 
   return [];
-}
+}*/
 
 /**
  * YieldBlock({ def, defs, H })
@@ -390,6 +391,19 @@ function InlineIcon({ def, size = 32, fallback = '📦' }) {
   const emojiStr = (def && typeof def.emoji === 'string') ? def.emoji : (def && def.emojiChar) || null;
   if (emojiStr) return <span style={{ fontSize: typeof size === 'number' ? size : undefined }}>{emojiStr}</span>;
   return <span>{fallback}</span>;
+}
+
+/* NEW: Tab icon helper — viser emoji hvis tilstede, ellers brug Icon med filnavn/url */
+function TabIcon({ g, size = 16 }) {
+  // Vi bruger kun filnavn i "emoji"-feltet. Hvis det ikke er et gyldigt filnavn,
+  // fallback til default.png. Ingen emoji-visning længere.
+  const raw = g && typeof g.emoji === 'string' ? g.emoji.trim() : '';
+  const isFileName = /^[^\/\\]+\.(png|jpe?g|svg|gif)$/i.test(raw);
+  let src = isFileName ? raw : '';
+  if (src && !/^\/|https?:\/\//i.test(src)) src = `/assets/icons/${src}`;
+  if (!src) src = '/assets/icons/default.png';
+  const def = { iconUrl: src, icon: src };
+  return <Icon def={def} size={size} alt={g?.label || ''} fallback="/assets/icons/default.png" />;
 }
 
 /* ---------------------------
@@ -755,7 +769,7 @@ export default function UnitPage({ embedFamily = null, embed = false }) {
       {!embed && (
         <section className="panel section">
           <div className="section-head" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <span>Units</span>
+            <span><Icon src="/assets/icons/menu_unit.png" size={18} alt="Animals and Units" /> Units</span>
             <div className="tabs" style={{ marginLeft: 'auto' }}>
               {visibleGroups.map((g) => (
                 <button
@@ -766,7 +780,10 @@ export default function UnitPage({ embedFamily = null, embed = false }) {
                     setSelectedKey(g.key);
                   }}
                 >
-                  {g.label}
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                    <TabIcon g={g} size={16} />
+                    <span>{g.label}</span>
+                  </span>
                 </button>
               ))}
             </div>

@@ -756,8 +756,8 @@
   <entry key="rsd.sawmill.l1.name">Savværk</entry>
   <entry key="rsd.sawmill.l1.desc">Giver evnen til at forarbejde træ til tømmer og planker.</entry>
 
-  <entry key="rsd.logging.l1.name">Skovbrug</entry>
-  <entry key="rsd.logging.l1.desc">Forbedrer træhugst, vedligeholdelse af skov og træressourceudbytte.</entry>
+  <entry key="rsd.logging.l1.name">Stamme behandling</entry>
+  <entry key="rsd.logging.l1.desc">Forbedrer træbrug, vedligeholdelse af skov og træressourceudbytte.</entry>
 
 <!--RECIPES-->
   <entry key="rcp.firewood.l1.name">Lav brænde</entry>

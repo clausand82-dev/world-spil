@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import Icon from '../components/ui/Icon.jsx';
 import { useGameData } from '../context/GameDataContext.jsx';
 import { useT } from '../services/i18n.js';
 import ResearchRow from '../components/building/rows/ResearchRow.jsx';
@@ -293,26 +294,52 @@ export default function ResearchPage() {
     return () => { clearTimeout(t1); clearTimeout(t2); };
   }, [activeFamily, families]);
 
+  // Tilpas her: map fra familyKey -> { label, icon }
+  // Tilføj/ret entries som du ønsker
+  const FAMILY_META = {
+    all: { label: 'Alle', icon: '/assets/icons/menu_research.png' },
+    basecamp: { label: 'Hovedbase', icon: '/assets/icons/symbol_building.png' },
+    farm: { label: 'Gård', icon: '/assets/icons/cow.png' },
+    forest: { label: 'Skov', icon: '/assets/icons/wood.png' },
+    health: { label: 'Sundhed', icon: '/assets/icons/stats_health.png' },
+    lake: { label: 'Sø', icon: '/assets/icons/irrigation.png' },
+    mine: { label: 'Mine', icon: '/assets/icons/mining.png' },
+    storage: { label: 'Lager', icon: '/assets/icons/woodbarrel.png' },
+    tent: { label: 'Beboelse', icon: '/assets/icons/stats_housing.png' },
+    // osv. — tilføj dine egne nøgler
+  };
+
+  const getFamilyMeta = (key) => {
+    if (!key) return { label: '', icon: null };
+    return FAMILY_META[key] || { label: key === 'all' ? 'Alle' : key, icon: null };
+  };
+
   return (
     <section className="panel section">
-      <div className="section-head">🔬 Research</div>
+      <div className="section-head"><Icon src="/assets/icons/menu_research.png" size={18} alt="Research" /> Research</div>
       <div className="section-body">
 
         <div className="tabs-bar" role="tablist" style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
-          {['all', ...familyKeys].map((f) => (
-            <button
-              key={f}
-              role="button"
-              aria-selected={f === activeFamily}
-              onClick={() => setActiveFamily(f)}
-              className={`tab ${activeFamily === f ? 'active' : ''}`}
-            >
-              {f === 'all' ? 'Alle' : f}
-              <span style={{ opacity: 0.7, marginLeft: 6 }}>
-                {familyCounts[f]?.visibleWithout ?? 0}/{familyCounts[f]?.visibleWith ?? 0}
-              </span>
-            </button>
-          ))}
+          {['all', ...familyKeys].map((f) => {
+            const meta = getFamilyMeta(f);
+            return (
+              <button
+                key={f}
+                role="button"
+                aria-selected={f === activeFamily}
+                onClick={() => setActiveFamily(f)}
+                className={`tab ${activeFamily === f ? 'active' : ''}`}
+              >
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                  {meta.icon ? <Icon src={meta.icon} size={14} alt={meta.label} /> : null}
+                  <span>{meta.label}</span>
+                </span>
+                <span style={{ opacity: 0.7, marginLeft: 6 }}>
+                  {familyCounts[f]?.visibleWithout ?? 0}/{familyCounts[f]?.visibleWith ?? 0}
+                </span>
+              </button>
+            );
+          })}
           <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
             <button
               className="btn"
@@ -332,9 +359,15 @@ export default function ResearchPage() {
             ) : (
               familyKeys.map((fam) => {
                 const visibleForThisFam = getVisibleForFamily(fam, showOwned);
+                const famMeta = getFamilyMeta(fam);
                 return (
                   <section key={fam} className="panel section" style={{ marginBottom: 12 }}>
-                    <div className="section-head">{fam}</div>
+                    <div className="section-head">
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                        {famMeta.icon ? <Icon src={famMeta.icon} size={18} alt={famMeta.label} /> : null}
+                        <span>{famMeta.label}</span>
+                      </span>
+                    </div>
                     <div className="section-body">
                       {(!visibleForThisFam || visibleForThisFam.length === 0) ? (
                         <div className="sub">Ingen</div>
@@ -360,9 +393,20 @@ export default function ResearchPage() {
               })
             )
           ) : (
-            // Per-family view: reuse same layout as before, but pass requirementCaches so durations compute the same
+            // Per-family view: reuse same layout as before, men brug kun én section-head
             <section className="panel section">
-              <div className="section-head">🔬 {activeFamily}</div>
+              <div className="section-head">
+                {(() => {
+                  const meta = getFamilyMeta(activeFamily);
+                  return (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                      {meta.icon ? <Icon src={meta.icon} size={18} alt={meta.label} /> : null}
+                      <span>{meta.label}</span>
+                    </span>
+                  );
+                })()}
+              </div>
+
               <div className="section-body">
                 {visibleFamilyEntries.length === 0 ? (
                   <div className="sub">Ingen research i denne kategori.</div>

@@ -4,7 +4,7 @@ export const UNIT_GROUPS = [
   {
     key: 'farm',
     label: 'Gårddyr',
-    emoji: '🐾',
+    emoji: 'stats_animalcap.png',
     family: 'farm',
     perItemStat: 'animal_cap',     // per item “pladsforbrug”
     capacityMode: 'animalCap',     // brug state.cap.animal_cap
@@ -12,8 +12,8 @@ export const UNIT_GROUPS = [
   },
   {
     key: 'health',
-    label: 'Health',
-    emoji: '🏥',
+    label: 'Sundhed',
+    emoji: 'stats_health.png',
     family: 'health',
     perItemStat: 'healthUnitUsage',
     headerCapacityKey: 'healthUnitCapacity',  // header.capacities.healthUnitCapacity
@@ -24,7 +24,7 @@ export const UNIT_GROUPS = [
   {
     key: 'housing',
     label: 'Housing',
-    emoji: '🏕️',
+    emoji: 'stats_housing.png',
     family: 'tent',
     perItemStat: 'housingUnitUsage',
     headerCapacityKey: 'housingUnitCapacity',  // header.capacities.housingUnitCapacity
@@ -35,7 +35,7 @@ export const UNIT_GROUPS = [
   {
     key: 'storage',
     label: 'Storage',
-    emoji: '🗄️',
+    emoji: 'woodbarrel.png',
     family: 'storage',
     perItemStat: 'storageUnitsUsage',
     buildingCapacityStat: 'storageUnitsCapacity',
@@ -59,7 +59,7 @@ export const UNIT_GROUPS = [
   {
     key: 'lake',
     label: 'Lake',
-    emoji: '🐟',
+    emoji: 'stats_water.png',
     family: 'lake',
     perItemStat: 'animal_cap',     // brug samme per-item stat som dyr
     capacityMode: 'animalCap',     // samme kapacitetsmode som farm
@@ -74,7 +74,7 @@ export const UNIT_GROUPS = [
   {
     key: 'forest',
     label: 'Forest',
-    emoji: '🦌',
+    emoji: 'wood.png',
     family: 'forest',
     perItemStat: 'animal_cap',
     capacityMode: 'animalCap',
@@ -87,7 +87,7 @@ export const UNIT_GROUPS = [
   {
     key: 'police',
     label: 'Politi',
-    emoji: '👮',
+    emoji: 'citizens_police.png',
     family: 'police',
     perItemStat: 'policeUnitUsage',
     headerCapacityKey: 'policeUnitCapacity',
@@ -98,7 +98,7 @@ export const UNIT_GROUPS = [
   {
     key: 'fire',
     label: 'Brand',
-    emoji: '🚒',
+    emoji: 'citizens_fire.png',
     family: 'fire',
     perItemStat: 'fireUnitUsage',
     headerCapacityKey: 'fireUnitCapacity',
@@ -109,7 +109,7 @@ export const UNIT_GROUPS = [
   {
     key: 'military',
     label: 'Militær',
-    emoji: '🪖',
+    emoji: 'citizens_soldier.png',
     family: 'military',
     perItemStat: 'militaryUnitUsage',
     headerCapacityKey: 'militaryUnitCapacity',

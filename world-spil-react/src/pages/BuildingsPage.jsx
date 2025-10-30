@@ -1,4 +1,5 @@
 import React from 'react';
+import Icon from '../components/ui/Icon.jsx';
 import { useGameData } from '../context/GameDataContext.jsx';
 import * as H from '../services/helpers.js';
 import { collectActiveBuffs } from '../services/requirements.js';
@@ -130,12 +131,17 @@ export default function BuildingsPage() {
 
     return (
         <section className="panel section">
-            <div className="section-head">🏗 Buildings</div>
-            <div className="section-body">
-                {bldList.map((bld) => (
-                    <BuildingRow key={bld.id} bld={bld} state={state} defs={defs} requirementCaches={requirementCaches} />
-                ))}
+            <div className="section-head">
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                <Icon src="/assets/icons/menu_building.png" size={18} alt="Buildings" />
+                <span>Buildings</span>
+              </span>
             </div>
-        </section>
-    );
-}
+             <div className="section-body">
+                 {bldList.map((bld) => (
+                     <BuildingRow key={bld.id} bld={bld} state={state} defs={defs} requirementCaches={requirementCaches} />
+                 ))}
+             </div>
+         </section>
+     );
+ }

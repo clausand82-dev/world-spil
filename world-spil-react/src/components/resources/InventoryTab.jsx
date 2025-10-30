@@ -6,6 +6,7 @@ import AnimalList from '../../components/AnimalList.jsx';
 import { fmt } from '../../services/helpers.js';
 import HoverCard from '../../components/ui/HoverCard.jsx';
 import CapHoverContent from '../../components/ui/CapHoverContent.jsx';
+import Icon from '../../components/ui/Icon.jsx';
 import ResourceCapacityModal from './ResourceCapacityModal.jsx';
 
 /**
@@ -144,7 +145,7 @@ export default function InventoryPage() {
             style={headerButtonStyle}
             aria-haspopup="dialog"
           >
-            <span role="img" aria-hidden>💧</span>
+            <Icon src="/assets/icons/woodbarrel.png" size={18} alt="Flydende ressourcer" />
             <span>Flydende ressourcer</span>
           </button>
           <span style={{ marginLeft: 'auto', fontWeight: 600 }}>
@@ -174,7 +175,7 @@ export default function InventoryPage() {
             style={headerButtonStyle}
             aria-haspopup="dialog"
           >
-            <span role="img" aria-hidden>🧱</span>
+            <Icon src="/assets/icons/woodpallet.png" size={18} alt="Faste ressourcer" />
             <span>Faste ressourcer</span>
           </button>
           <span style={{ marginLeft: 'auto', fontWeight: 600 }}>
@@ -198,7 +199,10 @@ export default function InventoryPage() {
 
       <section className="panel section res-panel">
         <div className="section-head">
-          <span>🐄 Dyr</span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+            <Icon src="/assets/icons/symbol_stats_animalcap.png" size={18} alt="Dyr" />
+            <span>Dyr</span>
+          </span>
           <span style={{ marginLeft: 'auto', fontWeight: 600 }}>
             <HoverCard
               content={(

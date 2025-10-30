@@ -170,8 +170,10 @@ export default function MarketTab() {
     };
     const rawName = offer.res_name || offer.resName || offer.name || def.name || def.label || def.displayName || formatResName(lookupKey);
     const resName = dedupeName(rawName);
-    const resEmoji = offer.res_emoji || offer.resEmoji || offer.emoji || def.emoji || def.icon || def.symbol || '';
-    return { ...offer, res_id: originalResId, res_key: lookupKey, res_name: resName, res_emoji: resEmoji };
+    const resEmoji = offer.res_emoji || offer.resEmoji || offer.emoji || def.emoji || def.symbol || '';
+    // compute an icon url from offer or def (support multiple keys)
+    const resIconUrl = offer.iconUrl || offer.icon_url || offer.icon || def.iconUrl || def.icon || def.iconUrl || null;
+    return { ...offer, res_id: originalResId, res_key: lookupKey, res_name: resName, res_emoji: resEmoji, res_iconUrl: resIconUrl };
   }
 
   const formatAmountAsInt = v => { const n = Number(v); return Number.isFinite(n) ? String(Math.round(n)) : String(v); };
@@ -418,10 +420,11 @@ export default function MarketTab() {
 
   const renderResCell = (rawOffer) => {
     const norm = normalizeOffer(rawOffer, defs);
-    const emojiDef = { iconUrl: rawOffer.iconUrl || norm.iconUrl || null, emoji: norm.res_emoji || null, name: norm.res_name };
+    const emojiDef = { iconUrl: norm.res_iconUrl || rawOffer.iconUrl || null, emoji: norm.res_emoji || null, name: norm.res_name };
     return (
       <div style={{ display:'flex', alignItems:'center', gap:10 }}>
         <div style={{ width: 24, flex: '0 0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          {/* Icon accepterer def med iconUrl eller emoji; vi har nu sat res_iconUrl */}
           <Icon def={emojiDef} alt={norm.res_name} size={36} />
         </div>
         <div style={{ minWidth: 0 }}>
@@ -619,21 +622,28 @@ export default function MarketTab() {
               try {
                 updateState?.(delta);
               } catch (e) {
-                // console.warn removed per request; fallback to refetch on failure
-                try { await refetch?.(); } catch (e) { /* ignore */ }
+                try { await refetch?.(); } catch { /* ignore */ }
               }
 
               const offer = (delta.state && delta.state.market && delta.state.market.offer) || (delta.market && delta.market.offer) || null;
               if (offer && offer.id !== undefined) {
                 const offerId = offer.id;
                 const offerAmount = Number(offer.amount || 0);
-                setLocalRows(prev => prev.map(r => (String(r.id) === String(offerId) ? { ...r, amount: offerAmount } : r)).filter(r => Number(r.amount) > 0));
-                setGlobalRows(prev => prev.map(r => (String(r.id) === String(offerId) ? { ...r, amount: offerAmount } : r)).filter(r => Number(r.amount) > 0));
+
+                // Opdater local + global rows korrekt (fix: paranteser omkring map callback)
+                setLocalRows(prev => prev
+                  .map(r => (String(r.id) === String(offerId) ? { ...r, amount: offerAmount } : r))
+                  .filter(r => Number(r.amount) > 0)
+                );
+                setGlobalRows(prev => prev
+                  .map(r => (String(r.id) === String(offerId) ? { ...r, amount: offerAmount } : r))
+                  .filter(r => Number(r.amount) > 0)
+                );
               }
 
               try { triggerMarketRefresh({ type: 'market_buy', delta }); } catch (e) { /* ignore */ }
             } else {
-              try { await refetch?.(); } catch (e) { /* ignore */ }
+              try { await refetch?.(); } catch { /* ignore */ }
               await fetchLocal();
               await fetchGlobal();
               try { triggerMarketRefresh(); } catch (e) { /* ignore */ }
@@ -646,7 +656,6 @@ export default function MarketTab() {
             setSuccessMessage('Købet er gennemført.');
             setSuccessOpen(true);
 
-            // Clear any existing timer before setting a new one
             if (successTimerRef.current) clearTimeout(successTimerRef.current);
             successTimerRef.current = setTimeout(() => {
               setSuccessOpen(false);
