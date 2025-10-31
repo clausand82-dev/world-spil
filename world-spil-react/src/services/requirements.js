@@ -11,12 +11,22 @@ function inferAction(item) {
 }
 
 // Saml aktive buffs fra defs (bld/add/rsd). Kan kaldes fra UI og gives via caches.
-export function collectActiveBuffs(defs) {
+// Nu: optional serverData parameter bruges til at flette serverens data.activeBuffs.
+export function collectActiveBuffs(defs, state = {}, serverData = null) {
   const out = [];
   const push = arr => Array.isArray(arr) && arr.forEach(b => out.push(b));
+
+  // lokale defs-buffs (kun bundlet defs; ownership tjek afhænger af kaldssted)
   for (const key of ['bld','add','rsd']) {
     const bag = defs?.[key] || {};
     Object.values(bag).forEach(def => push(def?.buffs));
+  }
+
+  // Merge server-provided activeBuffs if available (serverData from alldata)
+  const fromServer = (serverData && Array.isArray(serverData.activeBuffs)) ? serverData.activeBuffs : [];
+  if (fromServer.length) {
+    // append server buffs after local ones; avoid modifying originals
+    return [...out, ...fromServer];
   }
   return out;
 }

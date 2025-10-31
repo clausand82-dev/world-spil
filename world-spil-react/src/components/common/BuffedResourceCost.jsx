@@ -3,19 +3,15 @@ import PureResourceCost from '../requirements/ResourceCost.base.jsx';
 import { useGameData } from '../../context/GameDataContext.jsx';
 import { applyCostBuffsToAmount } from '../../services/calcEngine-lite.js';
 import { applyYieldBuffsToAmount } from '../../services/yieldBuffs.js';
+import { collectActiveBuffs } from '../../services/requirements.js';
 
 export default function BuffedResourceCost({ cost, extra = null, ctx = 'all' }) {
    const { data } = useGameData();
  
    const activeBuffs = React.useMemo(() => {
-     const out = [];
-     const push = arr => Array.isArray(arr) && arr.forEach(b => out.push(b));
-     for (const m of ['bld','add','rsd']) {
-       const bag = data?.defs?.[m] || {};
-       Object.values(bag).forEach(def => push(def?.buffs));
-     }
-     return out;
-   }, [data?.defs]);
+  // merge local defs-buffs and server-provided activeBuffs
+  return collectActiveBuffs(data?.defs || {}, data?.state || {}, data);
+}, [data?.defs, data?.state, data?.activeBuffs]);
 
    const transform = React.useCallback((id, baseAmount) => {
     // Ensret id: nogle costs kan være "money" → lav til "res.money"

@@ -1,4 +1,10 @@
+// Passive yields helpers — compute passive per-hour yields for defs/state.
+// Exports:
+// - computePassiveYields({ defs, state, resource, mode = 'both', serverData = null })
+// - buildPassiveYieldTitle({ defs, state, resource, mode = 'both', heading = '' })
+
 import { applyYieldBuffsToAmount } from './yieldBuffs.js';
+import { collectActiveBuffs } from './requirements.js';
 
 // Normaliseringer
 function normResId(s) {
@@ -49,22 +55,6 @@ function extractNormalizedYields(def) {
   return out;
 }
 
-// Saml aktive buffs fra defs for KUN ejede kilder
-function collectActiveBuffs(defs, state) {
-  const out = [];
-  const push = (arr) => Array.isArray(arr) && arr.forEach((b) => out.push(b));
-  for (const bucket of ['bld','add','rsd']) {
-    const bag = defs?.[bucket] || {};
-    for (const [key, def] of Object.entries(bag)) {
-      const ctxId = `${bucket}.${key}`;
-      if (!isOwned(bucket, key, state)) continue;
-      push(def?.buffs);
-      // Buffs på child-noder er allerede fladet ud i alldata’s parser
-    }
-  }
-  return out;
-}
-
 // Stage-basebonus (forest/field/mining/water)
 function injectBaseStageBonusForResource({ defs, state, resourceResId, positive, modeLc }) {
   const user = state?.user || {};
@@ -91,7 +81,17 @@ function injectBaseStageBonusForResource({ defs, state, resourceResId, positive,
   }
 }
 
-export function computePassiveYields({ defs, state, resource, mode = 'both' } = {}) {
+/**
+ * computePassiveYields
+ * - defs: game defs (defs.bld, defs.add, defs.rsd, defs.ani, defs.res, etc.)
+ * - state: game state (state.bld, state.add, state.rsd, state.ani, state.user, state.inv, state.cap, ...)
+ * - resource: resource id (e.g. 'res.money' or 'money' or 'wood')
+ * - mode: 'both'|'cost'|'give' — filters what to include in positive/negative lists
+ * - serverData: optional alldata response object (if provided, serverData.activeBuffs will be merged in)
+ *
+ * Returns: { positive: [...], negative: [...], meta: { resource, mode } }
+ */
+export function computePassiveYields({ defs, state, resource, mode = 'both', serverData = null } = {}) {
   const resKey = String(resource || '').trim();
   if (!resKey) return { positive: [], negative: [], meta: { resource: resKey, mode } };
 
@@ -99,7 +99,8 @@ export function computePassiveYields({ defs, state, resource, mode = 'both' } = 
   const positive = [];
   const negative = [];
 
-  const activeBuffs = collectActiveBuffs(defs, state);
+  // Use central collectActiveBuffs and optionally include serverData
+  const activeBuffs = collectActiveBuffs(defs, state, serverData);
 
   for (const bucket of ['bld','add','rsd','ani']) {
     const group = defs?.[bucket] || {};
@@ -115,7 +116,7 @@ export function computePassiveYields({ defs, state, resource, mode = 'both' } = 
       for (const y of yields) {
         if (!sameRes(y.resourceId, resKey)) continue;
 
-        // Anvend yield-buffs
+        // Apply yield-buffs (uses merged activeBuffs)
         let perHour = y.perHour;
         perHour = applyYieldBuffsToAmount(perHour, normResId(resKey), { appliesToCtx: ctxId, activeBuffs });
 
@@ -129,7 +130,7 @@ export function computePassiveYields({ defs, state, resource, mode = 'both' } = 
     }
   }
 
-  // Injektér base stage-bonus
+  // Inject base stage-bonus entries
   injectBaseStageBonusForResource({ defs, state, resourceResId: resKey, positive, modeLc });
 
   const sortFn = (a, b) => Math.abs(b.perHour) - Math.abs(a.perHour);
@@ -139,13 +140,19 @@ export function computePassiveYields({ defs, state, resource, mode = 'both' } = 
   return { positive, negative, meta: { resource: resKey, mode: modeLc } };
 }
 
-export function buildPassiveYieldTitle({ defs, state, resource, mode = 'both', heading = '' }) {
+/**
+ * buildPassiveYieldTitle
+ * - Convenience: build a compact multi-line title string describing the positive/negative yield sources.
+ * - Uses computePassiveYields (without serverData). If you want serverData included, call computePassiveYields yourself.
+ */
+export function buildPassiveYieldTitle({ defs, state, resource, mode = 'both', heading = '' } = {}) {
   const { positive, negative } = computePassiveYields({ defs, state, resource, mode });
   const lines = [];
   if (heading) lines.push(heading);
 
   if (mode !== 'cost') for (const it of positive) lines.push(`${it.sourceType.toUpperCase()}: ${it.name} (+${round2(it.perHour)}/t)`);
-  if (mode !== 'give') for (const it of negative) lines.push(`${it.sourceType.toUpperCase()}: ${it.name} (${round2(it.perHour)}/t)`);
+  if (mode !== 'give')  for (const it of negative) lines.push(`${it.sourceType.toUpperCase()}: ${it.name} (${round2(it.perHour)}/t)`);
+
   return lines.length ? lines.join('\n') : (heading || '');
 }
 

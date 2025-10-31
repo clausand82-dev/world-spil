@@ -1,25 +1,9 @@
 import React, { useMemo, useState } from 'react';
 import * as H from '../../services/helpers.js';
 import { useGameData } from '../../context/GameDataContext.jsx';
-import { applyYieldBuffsToAmount } from '../../services/yieldBuffs.js';
+import { applyYieldBuffsToAmount, applyYieldBuffsWithServer } from '../../services/yieldBuffs.js';
 import Icon from '../ui/Icon.jsx';
-
-function collectActiveBuffs(defs, state) {
-  const out = [];
-  const push = (arr) => Array.isArray(arr) && arr.forEach((b) => out.push(b));
-  for (const bucket of ['bld','add','rsd']) {
-    const bag = defs?.[bucket] || {};
-    for (const [key, def] of Object.entries(bag || {})) {
-      const owned =
-        bucket === 'bld' ? !!state?.bld?.[`bld.${key}`] :
-        bucket === 'add' ? !!state?.add?.[`add.${key}`] :
-        !!(state?.rsd?.[key] || state?.rsd?.[`rsd.${key}`]);
-      if (!owned) continue;
-      push(def?.buffs);
-    }
-  }
-  return out;
-}
+import { collectActiveBuffs } from '../../services/requirements.js'; // <-- brug central funktion
 
 function YieldResourceInner({ resId, data, defs }) {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -76,7 +60,8 @@ export default function PassiveYieldList({ now }) {
 
     const defs = data.defs || {};
     const state = data.state || {};
-    const activeBuffs = collectActiveBuffs(defs, state);
+    // Use central collectActiveBuffs and pass server data so stat-buffs are included
+    const activeBuffs = collectActiveBuffs(defs, state, data);
 
     const pushSource = (resId, amountPerHour, source) => {
       if (!aggregated[resId]) aggregated[resId] = { total: 0, sources: [] };
@@ -105,6 +90,7 @@ export default function PassiveYieldList({ now }) {
           if (period_s <= 0) continue;
 
           const basePerHour = baseAmt * (3600 / period_s);
+          // Use activeBuffs which already includes server's stat-buffs
           const buffedPerHour = applyYieldBuffsToAmount(basePerHour, resId.startsWith('res.') ? resId : `res.${resId}`, { appliesToCtx: ctxId, activeBuffs });
           const buffedPerCycle = buffedPerHour * (period_s / 3600);
 
@@ -153,7 +139,7 @@ export default function PassiveYieldList({ now }) {
     }
 
     return aggregated;
-  }, [data?.defs, data?.state, currentTime]);
+  }, [data?.defs, data?.state, currentTime, data]);
 
   const defs = data?.defs || {};
   const sortedYields = Object.entries(aggregatedYields).sort((a, b) => (b[1].total || 0) - (a[1].total || 0));
