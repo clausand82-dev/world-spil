@@ -563,8 +563,92 @@ if (!function_exists('yield__apply_yield_buffs_assoc')) {
 }
 if (!function_exists('yield__collect_active_buffs')) {
   function yield__collect_active_buffs(array $defs, array $state, ?int $now = null): array {
+    if ($now === null) $now = time();
+
+    // 1) Collect existing buffs from defs (as before)
     if (!function_exists('collect_active_buffs')) require_once __DIR__ . '/../actions/buffs.php';
-    return collect_active_buffs($defs, $state, $now ?? time());
+    $out = collect_active_buffs($defs, $state, $now);
+
+    // 2) Ensure statsbuffs implementation is available (may live in actions/statsbuffs.php)
+    $statsFile = __DIR__ . '/../actions/statsbuffs.php';
+    if (!function_exists('compute_stats_buffs') && is_file($statsFile)) {
+      require_once $statsFile;
+    }
+
+    // 3) If compute_stats_buffs exists, build a best-effort summary and call it
+    $statBuffs = [];
+    if (function_exists('compute_stats_buffs')) {
+      $summary = [];
+
+      // Try to pick up explicit fields from state.user
+      if (!empty($state['user']) && is_array($state['user'])) {
+        $u = $state['user'];
+        if (isset($u['happiness_percentage'])) $summary['happiness_percentage'] = (float)$u['happiness_percentage'];
+        if (isset($u['happiness_total']))      $summary['happiness_total'] = (float)$u['happiness_total'];
+        if (isset($u['happiness_max']))        $summary['happiness_max'] = (float)$u['happiness_max'];
+        if (isset($u['happiness']))            $summary['happiness'] = (float)$u['happiness'];
+        if (isset($u['happiness_current']))    $summary['happiness_current'] = (float)$u['happiness_current'];
+      }
+
+      // Fallback: hvis statsbuffs også definerer get_happiness_percentage, brug den
+      if (empty($summary) && function_exists('get_happiness_percentage')) {
+        $hp = get_happiness_percentage($state['user'] ?? []);
+        if ($hp !== null) $summary['happiness_percentage'] = (float)$hp;
+      }
+
+      // Hvis vi stadig intet har, og vi har happiness helpers, prøv at beregne vha. cfg weights
+      if (empty($summary) && function_exists('happiness_calc_all')) {
+        try {
+          $cfg = yield__load_config_ini();
+          if (!empty($cfg) && isset($cfg['happiness']) && is_array($cfg['happiness'])) {
+            $usages = [];
+            foreach ($cfg['happiness'] as $cfgKey => $_w) {
+              $usageKey = preg_match('/HappinessWeight$/', (string)$cfgKey) ? preg_replace('/HappinessWeight$/','', (string)$cfgKey) : (string)$cfgKey;
+              $used = 0.0; $capacity = 0.0;
+              if (!empty($state['cap']) && is_array($state['cap'])) {
+                $candidates = [$usageKey, strtolower($usageKey), preg_replace('/[-_ ]+/', '', strtolower($usageKey))];
+                foreach ($candidates as $cand) {
+                  if (isset($state['cap'][$cand]) && is_array($state['cap'][$cand])) {
+                    $capRec = $state['cap'][$cand];
+                    $used = (float)($capRec['used'] ?? 0.0);
+                    $capacity = isset($capRec['total']) ? (float)$capRec['total'] : (float)(($capRec['base'] ?? 0.0) + ($capRec['bonus'] ?? 0.0));
+                    break;
+                  }
+                }
+              }
+              $usages[$usageKey] = ['used' => $used, 'capacity' => $capacity];
+            }
+            $hRes = happiness_calc_all($usages, $cfg['happiness']);
+            if (isset($hRes['happiness'])) {
+              $summary['happiness_percentage'] = (float)$hRes['happiness'] * 100.0;
+              $summary['happiness'] = $summary['happiness_percentage'];
+            }
+          }
+        } catch (Throwable $e) {
+          // ignore, best-effort only
+        }
+      }
+
+      // Endelig: kald compute_stats_buffs med summary (kan være tom)
+      try {
+        $computed = compute_stats_buffs($summary ?: []);
+        if (is_array($computed) && !empty($computed)) {
+          // Antag at compute_stats_buffs returnerer buffs i kompatibelt schema
+          foreach ($computed as $b) {
+            if (is_array($b)) $statBuffs[] = $b;
+          }
+        }
+      } catch (Throwable $e) {
+        // ignore - stat-buffs er ikke kritiske
+      }
+    }
+
+    // 4) Merge stat-buffs ind i output så server-udbetaling også bruger dem
+    if (!empty($statBuffs)) {
+      $out = array_merge($out, $statBuffs);
+    }
+
+    return $out;
   }
 }
 

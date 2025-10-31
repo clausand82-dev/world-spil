@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useGameData } from '../context/GameDataContext.jsx';
 import { useT } from "../services/i18n.js";
 import { getEmojiForId } from "../services/requirements.js";
-//import './sidebar-log.css';
+import Icon from '../components/ui/Icon.jsx';
 
 // Inkluder yield_lost, så tabte linjer vises i loggen
 const DEFAULT_SHOW_TYPES = ['yield_paid', 'yield_lost', 'build_completed', 'build_canceled'];
@@ -62,6 +62,34 @@ function getEmojiForIdSafe(id, defs) {
   } catch (e) {
     return '';
   }
+}
+
+function getIconDefForId(id, defs) {
+  const key = String(id || '').replace(/^res\./, '');
+  const res = defs?.res?.[key] ?? null;
+  const raw = res?.icon || res?.iconFilename || res?.iconUrl || res?.emoji || '';
+  if (!raw) return { iconUrl: '/assets/icons/default.png' };
+  if (/^[^\/\\]+\.(png|jpe?g|svg|gif)$/i.test(raw)) {
+    const src = (/^\/|https?:\/\//i.test(raw)) ? raw : `/assets/icons/${raw}`;
+    return { iconUrl: src, icon: src };
+  }
+  return { icon: raw };
+}
+
+// --- ny helper: join parts with comma separator (return array of nodes) ---
+function joinParts(parts) {
+  const out = [];
+  for (let i = 0; i < parts.length; i++) {
+    if (i > 0) out.push(<span key={`sep-${i}`} className="sl-sep">, </span>);
+    // ensure each part has a key (if it's a React node without key, wrap it)
+    const p = parts[i];
+    if (React.isValidElement(p) && p.key != null) {
+      out.push(p);
+    } else {
+      out.push(<span key={`part-${i}`}>{p}</span>);
+    }
+  }
+  return out;
 }
 
 /* ----------------------------- SidebarLog ----------------------------- */
@@ -161,39 +189,55 @@ export default function SidebarLog({
       const rows = Array.isArray(ev.payload) ? ev.payload : [];
       const parts = rows.map((r, i) => {
         const rn = resName(defs, r.res_id);
-        const emoji = getEmojiForIdSafe(r.res_id, defs) || '';
+        const iconDef = getIconDefForId(r.res_id, defs);
         const amtNum = Number(r.amount);
         const amt = (amtNum % 1 === 0) ? amtNum : amtNum.toFixed(2);
-        return <span key={i}>&nbsp;{amt}× <span className="res-emoji">{emoji}</span> {rn}</span>;
+        return (
+          <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            {amt}×
+            <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+              <Icon def={iconDef} size={16} alt={rn} fallback="/assets/icons/default.png" style={{ verticalAlign: 'middle' }} />
+            </span>
+            <span>{rn}</span>
+          </span>
+        );
       });
       const who = (scope === 'ani') ? `Dit ${name}` : name;
-      return { text: <>{<>💰</>} {who} gav {parts.reduce((acc, cur, idx) => acc === null ? cur : <>{acc}, {cur}</>, null)}</>, className: 'sl-yield' };
+      return { text: <>{<>💰</>} {who} gav {joinParts(parts)}</>, className: 'sl-yield' };
     }
 
     if (ev.event_type === 'yield_lost') {
       const rows = Array.isArray(ev.payload) ? ev.payload : [];
       const parts = rows.map((r, i) => {
         const rn = resName(defs, r.res_id);
-        const emoji = getEmojiForIdSafe(r.res_id, defs) || '';
+        const iconDef = getIconDefForId(r.res_id, defs);
         const amtNum = Number(r.amount);
         const amt = (amtNum % 1 === 0) ? amtNum : amtNum.toFixed(2);
-        return <span key={i}>&nbsp;{amt}× <span className="res-emoji">{emoji}</span> {rn}</span>;
+        return (
+          <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            {amt}×
+            <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+              <Icon def={iconDef} size={16} alt={rn} fallback="/assets/icons/default.png" style={{ verticalAlign: 'middle' }} />
+            </span>
+            <span>{rn}</span>
+          </span>
+        );
       });
       const who = (scope === 'ani') ? `Dit ${name}` : name;
-      return { text: <>{<>🚨</>} {who} tabte {parts.reduce((acc, cur, idx) => acc === null ? cur : <>{acc}, {cur}</>, null)} (ingen plads)</>, className: 'sl-yield-lost' };
+      return { text: <>{<>🚨</>} {who} tabte {joinParts(parts)} (ingen plads)</>, className: 'sl-yield-lost' };
     }
 
     if (ev.event_type === 'build_completed') {
-      if ((ev.mode || '').toLowerCase().includes('upgrade') || ev.mode === 'upgrade') {
-        return { text: `Opgradering af ${name} færdig`, className: 'sl-completed' };
-      }
       const typeLabel = typeLabelFromScope(scope);
-      return { text: `${typeLabel} ${name} færdig`, className: 'sl-completed' };
+      if ((ev.mode || '').toLowerCase().includes('upgrade') || ev.mode === 'upgrade') {
+        return { text: <>{typeLabel} {name} — {t("ui.text.upgrade_done") || 'Opgradering færdig'}</>, className: 'sl-completed' };
+      }
+      return { text: <>{typeLabel} {name} færdig</>, className: 'sl-completed' };
     }
 
     if (ev.event_type === 'build_canceled') {
       const typeLabel = typeLabelFromScope(scope);
-      return { text: `${t("ui.emoji.cancel.h1")} ${t("ui.text.cancel.h1")} ${typeLabel} ${name}`, className: 'sl-canceled' };
+      return { text: <>{t("ui.emoji.cancel.h1")} {t("ui.text.cancel.h1")} {typeLabel} {name}</>, className: 'sl-canceled' };
     }
 
     // fallback
@@ -201,14 +245,23 @@ export default function SidebarLog({
   }
 
   function typeLabelFromScope(scope) {
-    switch (scope) {
-      case 'bld': return '🔨 ' + t("ui.text.building.h1");
-      case 'add': return '🧩 ' + t("ui.text.addon.h1");
-      case 'rcp': return '🧾 ' + t("ui.text.recipe.h1");
-      case 'rsd': return ' 🧪 ' + t("ui.text.research.h1");
-      case 'ani': return '🐾 ' + t("ui.text.unit.h1");
-      default: return scope || 'Emne';
-    }
+    const map = {
+      bld: { file: 'menu_building.png', key: "ui.text.building.h1" },
+      add: { file: 'symbol_addon.png', key: "ui.text.addon.h1" },
+      rcp: { file: 'menu_production.png', key: "ui.text.recipe.h1" },
+      rsd: { file: 'menu_research.png', key: "ui.text.research.h1" },
+      ani: { file: 'menu_unit.png', key: "ui.text.unit.h1" },
+    };
+    const m = map[scope];
+    if (!m) return scope || 'Emne';
+    const src = `/assets/icons/${m.file}`;
+    const def = { iconUrl: src, icon: src };
+    return (
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+        <Icon def={def} size={12} alt={t(m.key)} fallback="/assets/icons/default.png" />
+        <span>{t(m.key)}</span>
+      </span>
+    );
   }
 
   // The core fetch function: incremental, conditional (ETag), and safe

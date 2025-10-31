@@ -8,6 +8,7 @@ import { useT } from "../services/i18n.js";
 import HeaderCapacities from './sidebar/SidebarCapacities.jsx';
 import ResourceCapacityModal from './resources/ResourceCapacityModal.jsx';
 import { StatsIcon } from '../components/common/Icon.jsx';
+import BuffSummary from './sidebar/BuffSummary.jsx';
 
 
 export default function Sidebar() {
@@ -48,6 +49,9 @@ export default function Sidebar() {
           <HeaderCapacities />
         </div>
       </section>
+
+      {/* Samlet oversigt over aktive buffs */}
+      <BuffSummary />
 
       <section className="panel section res-panel">
         <div className="section-head">

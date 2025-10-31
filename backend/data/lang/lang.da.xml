@@ -46,6 +46,8 @@
   <entry key="ui.tabs.recipes.h1">Recipes</entry>
   <entry key="ui.tabs.speciel.h1">Special</entry>
 
+  <entry key="ui.statsbuff_badhappiness.h1">Happiness under 50%</entry>
+
   <entry key="ui.animals.h1">Dyr</entry>
   <entry key="ui.fills.h1"></entry>
 
@@ -68,6 +70,8 @@
   <entry key="ui.text.demandingstage.h1">Kræver Stage</entry>
   <entry key="ui.text.owned.h1">Ejet</entry>
   <entry key="ui.text.addonmaxlevel.h1">Addonet kan ikke opgraderes mere</entry>
+  <entry key="ui.text.allresources.h1">Alle ressourcer</entry>
+  <entry key="ui.text.buffs.h1">Buffs</entry>
 
   <entry key="ui.headers.recipe.h1">Jobs / Recipes</entry>
   <entry key="ui.headers.addons.h1">Bygnings Addons</entry>
