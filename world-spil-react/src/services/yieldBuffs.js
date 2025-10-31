@@ -68,9 +68,21 @@ export function applyYieldBuffsToAmount(baseAmount, resId, { appliesToCtx = 'all
     if (!resScopeMatches(scope, rid)) continue;
     const pct = Number(b?.amount || 0);
     if (!Number.isFinite(pct) || pct === 0) continue;
+    // frontend expects pct meaning: 10 => +10%, -50 => -50%
     mul *= (1 + pct / 100);
   }
   result *= mul;
 
   return result < 0 ? 0 : result;
+}
+
+// Wrapper som foretrækker server-data hvis tilgængelig
+export function applyYieldBuffsWithServer(baseAmount, resId, { appliesToCtx = 'all', activeBuffs = [], serverData = null } = {}) {
+  // Hvis server leverer yields_preview for denne kontekst, brug den (hurtig path)
+  // NOTE: yields_preview er keyed by ctxId (fx 'bld.foo') — hvis du kan bestemme ctxId fra appliesToCtx, brug det.
+  // Hvis ikke, foretræk serverData.activeBuffs hvis tilgængelig.
+  const buffs = (serverData && Array.isArray(serverData.activeBuffs) && serverData.activeBuffs.length > 0)
+    ? serverData.activeBuffs
+    : activeBuffs;
+  return applyYieldBuffsToAmount(baseAmount, resId, { appliesToCtx, activeBuffs: buffs });
 }

@@ -147,3 +147,5 @@ Stablingsregler (frontend):
 - Clamp altid: yield/cost ≥ 0, duration ≥ 0
 ===============================================================================
 -->
+
+Virker på yields fra bld, add, rcp

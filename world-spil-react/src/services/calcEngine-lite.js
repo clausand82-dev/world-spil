@@ -1,7 +1,23 @@
+export function normResId(id) {
+  const s = String(id || '').trim();
+  return s.startsWith('res.') ? s.toLowerCase() : `res.${s.toLowerCase()}`;
+}
 
+function appliesToMatch(applies_to, ctxList) {
+  if (applies_to === 'all') return true;
+  if (!applies_to) return false;
+  if (Array.isArray(applies_to)) {
+    return ctxList.some(x => applies_to.includes(x));
+  }
+  const arr = String(applies_to).split(/[,;]/).map(s => s.trim()).filter(Boolean);
+  if (!arr.length) return false;
+  if (arr.includes('all')) return true;
+  return ctxList.some(x => arr.includes(x));
+}
 
-export function applyCostBuffsToAmount(baseAmount, resId, { appliesToCtx, activeBuffs }) {
+export function applyCostBuffsToAmount(baseAmount, resId, { appliesToCtx, activeBuffs } = {}) {
   const ctxList = Array.isArray(appliesToCtx) ? appliesToCtx : [appliesToCtx];
+  const normRid = normResId(resId);
 
   let add = 0, sub = 0, mult = 1;
 
@@ -11,23 +27,29 @@ export function applyCostBuffsToAmount(baseAmount, resId, { appliesToCtx, active
     if (!(b.mode === 'cost' || b.mode === 'both')) continue;
 
     // scope matcher resId? (all/solid/liquid/res.xxx)
+    const scope = String(b.scope ?? 'all');
+    const scopeNorm = scope === 'all' ? 'all' : normResId(scope);
     const scopeOk =
-      b.scope === 'all' ||
-      b.scope === resId ||
-      (b.scope === 'solid' && resId.startsWith('res.') /* && isSolid(resId) */) ||
-      (b.scope === 'liquid' && resId.startsWith('res.') /* && isLiquid(resId) */);
+      scopeNorm === 'all' ||
+      scopeNorm === normRid ||
+      (scope === 'solid' && normRid.startsWith('res.') /* && isSolid(resId) */) ||
+      (scope === 'liquid' && normRid.startsWith('res.') /* && isLiquid(resId) */);
     if (!scopeOk) continue;
 
     // applies_to matcher konteksten?
     const appliesAll = b.applies_to === 'all';
     const appliesSome = Array.isArray(b.applies_to) && ctxList.some(x => b.applies_to.includes(x));
-    if (!appliesAll && !appliesSome) continue;
+    if (!appliesAll && !appliesSome) {
+      if (!appliesToMatch(b.applies_to, ctxList)) continue;
+    }
 
-    if (b.op === 'adds') add += b.amount;
-    else if (b.op === 'subt') sub += b.amount;
+    if (b.op === 'adds') add += Number(b.amount || 0);
+    else if (b.op === 'subt') sub += Number(b.amount || 0);
     else if (b.op === 'mult') {
+      const amt = Number(b.amount || 0);
+      if (!Number.isFinite(amt)) continue;
       // VIGTIG REGL: cost-buff 10 => 10% BILLIGERE
-      mult *= (1 - b.amount / 100);
+      mult *= (1 - amt / 100);
     }
   }
 
@@ -37,7 +59,7 @@ export function applyCostBuffsToAmount(baseAmount, resId, { appliesToCtx, active
 }
 
 // Tilføj denne
-export function applySpeedBuffsToDuration(baseS, action, { appliesToCtx, activeBuffs }) {
+export function applySpeedBuffsToDuration(baseS, action, { appliesToCtx, activeBuffs } = {}) {
   const ctxList = Array.isArray(appliesToCtx) ? appliesToCtx : [appliesToCtx];
   let mult = 1;
 
@@ -46,11 +68,11 @@ export function applySpeedBuffsToDuration(baseS, action, { appliesToCtx, activeB
     const actionOk = b.actions === 'all' || (Array.isArray(b.actions) && b.actions.includes(action));
     if (!actionOk) continue;
 
-    const appliesAll = b.applies_to === 'all';
-    const appliesSome = Array.isArray(b.applies_to) && ctxList.some(x => b.applies_to.includes(x));
-    if (!appliesAll && !appliesSome) continue;
+    if (!appliesToMatch(b.applies_to, ctxList)) continue;
 
-    if (b.op === 'mult') mult *= (1 - b.amount / 100); // 10 => 10% hurtigere
+    const amt = Number(b.amount || 0);
+    if (!Number.isFinite(amt)) continue;
+    if (b.op === 'mult') mult *= (1 - amt / 100); // 10 => 10% hurtigere
   }
 
   // cap (max 80% hurtigere) + clamp
