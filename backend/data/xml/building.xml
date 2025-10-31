@@ -46,7 +46,7 @@
     
     <buffs applies_to="all">
       <res id="all" type="mult" amount="50" mode="yield"/>
-      <speed target="all" type="mult" amount="100"/>
+      <speed target="all" type="mult" amount="10"/>
     </buffs>
     
   </building>
