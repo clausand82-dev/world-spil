@@ -25,6 +25,9 @@ const FAMILY_ICONS = {
 // exact overrides (behold hvis du vil specifikke overrides)
 const SOURCE_OVERRIDES = {
   'stat.happiness_low_half_money_yield': { file: 'default.png', labelKey: 'ui.statsbuff_badhappiness.h1' },
+  'stat.happiness_verylow_money_yield': { file: 'default.png', labelKey: 'Meget lav Happiness Straf' },
+  'stat.popularity_low_money_penalty': { file: 'default.png', labelKey: 'Lav Popularity Money Straf' },
+  'stat.popularity_verylow_speed_penalty': { file: 'default.png', labelKey: 'Meget lav Popularity Speed Straf' },
 
 };
 

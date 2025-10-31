@@ -776,6 +776,17 @@ if (function_exists('compute_stats_buffs')) {
     // 1) Forsøg at bygge $summary direkte fra $state['user'] hvis det findes
     if (!empty($state['user']) && is_array($state['user'])) {
         $u = $state['user'];
+        // normaliser popularitets-felter (drop-in i alldata.php efter $u = $state['user'])
+if (isset($u['popularity'])) {
+    $raw = (float)$u['popularity'];
+    if ($raw >= 0.0 && $raw <= 1.0) $raw = $raw * 100.0; // fraction -> pct
+    $summary['popularity'] = max(0.0, min(100.0, $raw));
+}
+if (isset($u['popularity_percentage'])) {
+    $raw = (float)$u['popularity_percentage'];
+    if ($raw >= 0.0 && $raw <= 1.0) $raw = $raw * 100.0;
+    $summary['popularity_percentage'] = max(0.0, min(100.0, $raw));
+}
         if (isset($u['happiness_percentage'])) $summary['happiness_percentage'] = (float)$u['happiness_percentage'];
         if (isset($u['happiness_total']))      $summary['happiness_total'] = (float)$u['happiness_total'];
         if (isset($u['happiness_max']))        $summary['happiness_max'] = (float)$u['happiness_max'];

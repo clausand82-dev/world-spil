@@ -15,36 +15,49 @@ if (!function_exists('get_stat_percentage')) {
      * Prøv at finde procentværdi for en stat i $summary.
      * Acceptér flere feltnavne for kompatibilitet.
      * $key er basal-navn fx 'happiness' eller 'popularity'
+     *
+     * Normaliseringsregler:
+     * - Hvis værdien er en fraction i intervallet [0,1] antages det at være 0..1 → multiplicér med 100.
+     * - Hvis værdien er >1 og <=100 antages det at være procent allerede.
+     * - Hvis total/max findes, returnér (total/max)*100.
+     * - Returnerer null hvis ikke tilgængeligt.
      */
     function get_stat_percentage(array $summary, string $key): ?float {
-        $pctKeys = [
+        // Kandidatnøgler (prioriter direkte procentfelter)
+        $directPctKeys = [
             "{$key}_percentage",
             "{$key}_pct",
             "{$key}.percentage",
-            "{$key}_total", "{$key}_max", "{$key}", "{$key}_current",
+            $key,
         ];
 
-        // direkte procentfelter først (hurtigcheck)
-        foreach ($pctKeys as $k) {
-            if (isset($summary[$k]) && is_numeric($summary[$k])) {
-                // Hvis total/max format returneres nedenfor; hvis det allerede er procent, returnér direkte
-                if (stripos($k, '_percentage') !== false || stripos($k, '_pct') !== false || $k === $key) {
-                    return (float)$summary[$k];
+        foreach ($directPctKeys as $k) {
+            if (array_key_exists($k, $summary) && is_numeric($summary[$k])) {
+                $raw = (float)$summary[$k];
+                // Hvis råværdi er en fraction (0..1), antag 0..1 skala og konverter til pct
+                if ($raw >= 0.0 && $raw <= 1.0) {
+                    return $raw * 100.0;
                 }
+                // Hvis råværdi er rimelig procent (0..100), returnér som pct (men clamp mellem 0 og 100)
+                if ($raw > 1.0 && $raw <= 10000.0) { // tillad større tal men clamp
+                    return max(0.0, min(100.0, $raw));
+                }
+                // hvis negative eller mærkeligt stort, ignorer og fortsæt
             }
         }
 
-        // generisk søgning: hvis der findes *_percentage eller nøgle == key returnér det
-        if (isset($summary["{$key}_percentage"])) return (float)$summary["{$key}_percentage"];
-        if (isset($summary["{$key}_pct"])) return (float)$summary["{$key}_pct"];
-        if (isset($summary[$key]) && is_numeric($summary[$key])) return (float)$summary[$key];
-
-        // total/max par
-        if (isset($summary["{$key}_total"]) && isset($summary["{$key}_max"]) && $summary["{$key}_max"] > 0) {
-            return ((float)$summary["{$key}_total"] / (float)$summary["{$key}_max"]) * 100.0;
+        // Total/max par: total og max findes i summary (fx popularity_total / popularity_max)
+        if (isset($summary["{$key}_total"]) && isset($summary["{$key}_max"]) && is_numeric($summary["{$key}_max"]) && (float)$summary["{$key}_max"] > 0.0) {
+            $total = (float)$summary["{$key}_total"];
+            $max = (float)$summary["{$key}_max"];
+            $pct = ($total / $max) * 100.0;
+            return max(0.0, min(100.0, $pct));
         }
-        if (isset($summary["{$key}_current"]) && isset($summary["{$key}_max"]) && $summary["{$key}_max"] > 0) {
-            return ((float)$summary["{$key}_current"] / (float)$summary["{$key}_max"]) * 100.0;
+        if (isset($summary["{$key}_current"]) && isset($summary["{$key}_max"]) && is_numeric($summary["{$key}_max"]) && (float)$summary["{$key}_max"] > 0.0) {
+            $cur = (float)$summary["{$key}_current"];
+            $max = (float)$summary["{$key}_max"];
+            $pct = ($cur / $max) * 100.0;
+            return max(0.0, min(100.0, $pct));
         }
 
         return null;
@@ -58,14 +71,12 @@ if (!function_exists('get_stat_percentage')) {
  */
 if (!function_exists('get_happiness_percentage')) {
     function get_happiness_percentage($summaryOrUser): ?float {
-        // Hvis caller gav et array med summary-agtige keys (happiness_percentage el. happiness_total)
-        if (is_array($summaryOrUser)) {
-            $maybe = get_stat_percentage($summaryOrUser, 'happiness');
-            if ($maybe !== null) return $maybe;
-            // fallback: prøv at tolke som state['user'] struktur (har måske 'happiness' felt)
-            if (isset($summaryOrUser['happiness']) && is_numeric($summaryOrUser['happiness'])) {
-                return (float)$summaryOrUser['happiness'];
-            }
+        if (!is_array($summaryOrUser)) return null;
+        $maybe = get_stat_percentage($summaryOrUser, 'happiness');
+        if ($maybe !== null) return $maybe;
+        if (isset($summaryOrUser['happiness']) && is_numeric($summaryOrUser['happiness'])) {
+            $raw = (float)$summaryOrUser['happiness'];
+            return ($raw >= 0.0 && $raw <= 1.0) ? $raw * 100.0 : max(0.0, min(100.0, $raw));
         }
         return null;
     }
@@ -75,11 +86,11 @@ if (!function_exists('compute_stats_buffs')) {
     function compute_stats_buffs(array $summary): array {
         $buffs = [];
 
-        // --- HAPPINESS (som før) ---
+        // --- HAPPINESS ---
         $hPerc = get_stat_percentage($summary, 'happiness');
         if ($hPerc !== null) {
             if ($hPerc < 25.0) {
-                $multiplier = 0.6; $pct = ($multiplier - 1.0) * 100.0;
+                $multiplier = 0.5; $pct = ($multiplier - 1.0) * 100.0;
                 $buffs[] = [
                     'kind' => 'res',
                     'scope' => 'res.money',
@@ -91,7 +102,7 @@ if (!function_exists('compute_stats_buffs')) {
                 ];
             }
             if ($hPerc < 10.0) {
-                $multiplier = 0.5; $pct = ($multiplier - 1.0) * 100.0;
+                $multiplier = 0.7; $pct = ($multiplier - 1.0) * 100.0;
                 $buffs[] = [
                     'kind' => 'res',
                     'scope' => 'res.money',
@@ -135,16 +146,25 @@ if (!function_exists('compute_stats_buffs')) {
                 ];
             }
 
-            // Meget lav => reducer bygningers speed
-            if ($pPerc < 10.0) {
-                $buffs[] = [
-                    'kind' => 'speed',
-                    'actions' => 'all',
-                    'op' => 'mult',
-                    'amount' => 15, // øg varighed med 15%
-                    'applies_to' => 'all',
-                    'source_id' => 'stat.popularity_verylow_speed_penalty',
-                ];
+            // defensiv speed-tilføjelse: kun hvis vi har en klar popularity_pct værdi i summary
+            $pPerc = get_stat_percentage($summary, 'popularity');
+            // kun acceptér hvis get_stat_percentage returnerede en værdi indenfor 0..100
+            if ($pPerc !== null && is_numeric($pPerc)) {
+                $pPerc = (float)$pPerc;
+                // klamp 0..100 for sikkerhed
+                if ($pPerc < 0.0) $pPerc = 0.0;
+                if ($pPerc > 100.0) $pPerc = 100.0;
+
+                if ($pPerc < 10.0) {
+                    $buffs[] = [
+                        'kind' => 'speed',
+                        'actions' => 'all',
+                        'op' => 'mult',
+                        'amount' => -15.0,
+                        'applies_to' => 'all',
+                        'source_id' => 'stat.popularity_verylow_speed_penalty',
+                    ];
+                }
             }
         }
 
