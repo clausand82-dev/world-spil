@@ -4,21 +4,56 @@ import RecipeRow from '../building/rows/RecipeRow.jsx';
 import { useT } from '../../services/i18n.js';
 import * as H from '../../services/helpers.js';
 import { collectActiveBuffs } from '../../services/requirements.js';
+import Icon from '../ui/Icon.jsx';
+import { icon } from '../common/Icon.jsx';
  
 // --- Custom tab labels: map type token -> display label ---
-// Tilføj eller ret efter behov, fx 'basic' -> 'Basal'
+// Kan være enten: 'basic': 'Basal'  eller  'basic': { label: 'Basal', icon: '/assets/icons/type_basic.png' }
 const TYPE_LABELS = {
-  basic: 'Basal',
-  food: 'Mad',
-  tools: 'Værktøj',
+  basic: { label: 'Basal', icon: '/assets/icons/stats_product.png' },
+  food: { label: 'Mad', icon: '/assets/icons/stats_food.png' },
+  tools: { label: 'Værktøj', icon: '/assets/icons/irontools.png' },
   luxury: 'Luksus',
-  animal: 'Dyr',
-  butchery: 'Slagtning',
-  fabrics: 'Stof',
-  heat: 'Varme',
-  biproduct: 'Biprodukt',
+  animal: { label: 'Dyr', icon: '/assets/icons/animalhusbandry.png' },
+  butchery: { label: 'Slagtning', icon: '/assets/icons/rawhide.png' },
+  fabrics: { label: 'Stof', icon: '/assets/icons/cloth.png' },
+  heat: { label: 'Varme', icon: '/assets/icons/stats_heat.png' },
+  biproduct: { label: 'Biprodukt', icon: '/assets/icons/sand.png' },
+  wood: { label: 'Træ', icon: '/assets/icons/wood.png' },
+  health: { label: 'Sundhed', icon: '/assets/icons/stats_health.png' },
+  mining: { label: 'Mine', icon: '/assets/icons/coal.png' }, // canonical key
+  
   // tilføj flere mappings her
 };
+
+// alias map: peg alternative tokens til canonical nøgle
+const TYPE_ALIASES = {
+  mine: 'mining',
+  mines: 'mining',
+  mining: 'mining',
+  smelt: 'mining',
+  // tilføj andre aliaser her
+};
+
+function renderTypeLabel(token) {
+  const canon = TYPE_ALIASES[token] || token;
+  const entry = TYPE_LABELS[canon] || TYPE_LABELS[token];
+  const label = typeof entry === 'string' ? entry : (entry?.label || (canon.charAt(0).toUpperCase() + canon.slice(1)));
+  const iconMeta = typeof entry === 'object' ? entry?.icon : null;
+  if (!iconMeta) return label;
+
+  // iconMeta kan være en streng (src) eller et objekt { src, size, alt }
+  const src = typeof iconMeta === 'string' ? iconMeta : iconMeta.src;
+  const size = typeof iconMeta === 'object' && iconMeta.size ? iconMeta.size : 16;
+  const alt = typeof iconMeta === 'object' && iconMeta.alt ? iconMeta.alt : label;
+
+  return (
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+      <Icon src={src} size={size} alt={alt} />
+      <span>{label}</span>
+    </span>
+  );
+}
  
 export default function ActiveRecipes({ defs: defsProp, state: stateProp, stage: stageProp, debug = true }) {
    const t = useT();
@@ -103,7 +138,12 @@ export default function ActiveRecipes({ defs: defsProp, state: stateProp, stage:
      for (const [key, def] of Object.entries(recipeDefs)) {
       // Filter by active tab/type (support comma or whitespace separated type tokens)
       const typeStr = String(def?.type || '').toLowerCase();
-      const typeWords = typeStr ? typeStr.split(/[,\s]+/).map(s => s.trim()).filter(Boolean) : [];
+      const typeWords = typeStr
+        ? typeStr.split(/[,\s]+/).map(s => {
+            const tok = String(s || '').trim().toLowerCase();
+            return TYPE_ALIASES[tok] || tok;
+          }).filter(Boolean)
+        : [];
       if (activeType !== 'all' && !typeWords.includes(activeType)) continue;
       const mode = String(def?.mode || 'active').toLowerCase();
       if (mode === 'disabled') continue;
@@ -151,15 +191,19 @@ export default function ActiveRecipes({ defs: defsProp, state: stateProp, stage:
        const mode = String(def?.mode || 'active').toLowerCase();
        if (mode === 'disabled') continue;
        const stageReq = Number(def?.stage ?? def?.stage_required ?? 0) || 0;
-       // only stage requirement determines tab availability
        if (stageReq > currentStage) continue;
- 
+
        const typeStr = String(def?.type || '').toLowerCase();
        if (!typeStr) {
          set.add('other');
          continue;
        }
-       typeStr.split(/[,\s]+/).forEach((w) => { if (w && w.trim()) set.add(w.trim()); });
+       typeStr.split(/[,\s]+/).forEach((w) => {
+         const tok = w.trim();
+         if (!tok) return;
+         const canon = TYPE_ALIASES[tok] || tok;
+         set.add(canon);
+       });
      }
      return ['all', ...Array.from(set).sort()];
    }, [recipeDefs, ownedBuildingFamilies, ownedBldMax, ownedAddMax, currentStage]);
@@ -178,7 +222,7 @@ export default function ActiveRecipes({ defs: defsProp, state: stateProp, stage:
      return (
        <section className="panel section">
          <div className="section-head">
-           {tf('ui.emoji.recipe.h1', '📜')} {tf('ui.headers.recipe.h1', 'Jobs / Opskrifter')} – {tf('ui.text.available.h1', 'Tilgængelige')}
+           <Icon src="/assets/icons/menu_production.png" size={18} alt="happiness" /> {tf('ui.headers.recipe.h1', 'Jobs / Opskrifter')} – {tf('ui.text.available.h1', 'Tilgængelige')}
          </div>
          <div className="section-body">
            <div className="sub">{tf('ui.text.none.h1', 'Ingen')}</div>
@@ -191,7 +235,7 @@ export default function ActiveRecipes({ defs: defsProp, state: stateProp, stage:
    return (
      <section className="panel section">
        <div className="section-head">
-         {tf('ui.emoji.recipe.h1', '📜')} {tf('ui.headers.recipe.h1', 'Jobs / Opskrifter')} – {tf('ui.text.available.h1', 'Tilgængelige')}
+         <Icon src="/assets/icons/menu_production.png" size={18} alt="happiness" /> {tf('ui.headers.recipe.h1', 'Jobs / Opskrifter')} – {tf('ui.text.available.h1', 'Tilgængelige')}
        </div>
       
        <div className="section-body">
@@ -207,7 +251,7 @@ export default function ActiveRecipes({ defs: defsProp, state: stateProp, stage:
            >
              {t === 'all'
                ? tf('ui.text.all', 'All')
-               : (TYPE_LABELS[t] ?? (t.charAt(0).toUpperCase() + t.slice(1)))
+               : renderTypeLabel(t)
              }
            </button>
          ))}

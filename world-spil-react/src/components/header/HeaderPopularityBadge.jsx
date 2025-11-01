@@ -117,9 +117,9 @@ export default function HeaderPopularityBadge() {
             transform: blink ? 'translateY(-4px)' : 'translateY(0)',
           }}
         >
-          <span role="img" aria-label="popularity" style={{ fontSize: 16 }}>📣</span>
-          <span style={{ fontWeight: 600 }}>{pct}%</span>
-          <span>{emoji}</span>
+          <span role="img" aria-label="popularity" style={{ fontSize: 16 }}></span>
+          <span>{emoji}</span><span style={{ fontWeight: 600 }}> {pct}%</span>
+          
         </span>
       </div>
     </HoverCard>

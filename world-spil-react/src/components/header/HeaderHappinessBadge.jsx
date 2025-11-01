@@ -293,8 +293,9 @@ export default function HeaderHappinessBadge() {
           }}
         >
           <span role="img" aria-label="happiness" style={{ fontSize: 16 }}></span>
-          <span style={{ fontWeight: 600 }}>{pct}%</span>
           <span>{emoji}</span>
+          <span style={{ fontWeight: 600 }}> {pct}%</span>
+          
         </span>
       </div>
     </HoverCard>

@@ -3,6 +3,7 @@ import useHeaderSummary from '../../hooks/useHeaderSummary.js';
 import HoverCard from '../ui/HoverCard.jsx';
 import Modal from '../ui/Modal.jsx'; // <-- tilpas sti/navn hvis din modal ligger et andet sted
 import { useT } from "../../services/i18n.js";
+import Icon from '../ui/Icon.jsx';
 
 function fmtNum(v) {
   return Number(v || 0).toLocaleString('da-DK', { maximumFractionDigits: 2 });
@@ -268,7 +269,8 @@ export default function HeaderBudgetBadge() {
           }}
           onClick={(e) => { e.stopPropagation(); setOpen(true); }}
         >
-          💹 {fmtNum(taxUsed)} / {fmtNum(taxCap)}
+          
+        <Icon src="/assets/icons/symbol_tax.png" size={18} alt="happiness" /> {fmtNum(taxUsed)} / {fmtNum(taxCap)}
         </span>
       </HoverCard>
 

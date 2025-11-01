@@ -2,6 +2,7 @@ import React, { useMemo, useRef, useEffect, useState } from 'react';
 import useHeaderSummary from '../../hooks/useHeaderSummary.js';
 import { useGameData } from '../../context/GameDataContext.jsx';
 import HoverCard from '../ui/HoverCard.jsx';
+import Icon from '../ui/Icon.jsx';
 
 function fmt(n, opts = {}) {
   const v = Number(n || 0);
@@ -69,7 +70,7 @@ export default function HeaderCrimeBadge() {
           transform: blink ? 'translateY(-4px)' : 'translateY(0)',
         }}
       >
-        🦹 {pct.toLocaleString('da-DK')}%
+        <Icon src="/assets/icons/citizens_crime.png" size={18} alt="happiness" /> {pct.toLocaleString('da-DK')}%
       </span>
     </HoverCard>
   );

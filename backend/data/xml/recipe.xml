@@ -533,7 +533,7 @@
     <require>add.bronzemoulding.l1</require>
   </recipe>
 
-    <recipe id="rcp.mining.l1" family="mine" type="smelt" lvl="1" stage="2" mode="active">
+    <recipe id="rcp.mining.l1" family="mine" type="mining" lvl="1" stage="2" mode="active">
     <yield>
       <res id="res.ironore" amount="1"/>
       <res id="res.bronzeore" amount="5"/>
@@ -549,7 +549,7 @@
       <res id="res.food" amount="10"/>
     </cost>
     <time>1h</time>
-    <require>add.mine.l3</require>
+    <require>bld.mine.l3</require>
   </recipe>
 
   <recipe id="rcp.log.l1" family="forest" type="wood" lvl="1" stage="2" mode="active">

@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { useT } from '../services/i18n.js';
 import { useGameData } from '../context/GameDataContext.jsx';
 import { getIconMetaForId } from '../services/requirements.js';
+import Icon from '../components/ui/Icon.jsx';
 
 // ...existing code...
 function makeLabelNodeFactory(defs, t) {
@@ -254,20 +255,21 @@ export function defaultLabelMap() {
 }
 
 export function happinessEmojiFromScore(score01) {
-  if (score01 >= 0.90) return '😊';
-  if (score01 >= 0.80) return '😐';
-  if (score01 >= 0.70) return '😞';
-  if (score01 >= 0.60) return '😢';
-  if (score01 >= 0.50) return '😠';
-  return '😡';
+  if (score01 >= 0.95) return <Icon src="/assets/icons/smiley_veryhappy.png" size={18} alt="Very happy" />;
+  if (score01 >= 0.90) return <Icon src="/assets/icons/smiley_happy.png" size={18} alt="Very happy" />;
+  if (score01 >= 0.80) return <Icon src="/assets/icons/smiley_neutral.png" size={18} alt="Neutral" />;
+  if (score01 >= 0.55) return <Icon src="/assets/icons/smiley_concerned.png" size={18} alt="Concerned" />;
+  if (score01 >= 0.45) return <Icon src="/assets/icons/smiley_affraid.png" size={18} alt="Affraid" />;
+  if (score01 >= 0.35) return <Icon src="/assets/icons/smiley_sad.png" size={18} alt="Sad" />;
+  if (score01 >= 0.25) return <Icon src="/assets/icons/smiley_angry.png" size={18} alt="Angry" />;
+  return <Icon src="/assets/icons/smiley_veryangry.png" size={18} alt="Default" />;
 }
 
 export function popularityEmojiFromScore(x) {
   const s = Number(x || 0);
-  if (s >= 0.85) return '🏆';
-  if (s >= 0.70) return '😊';
-  if (s >= 0.55) return '🙂';
-  if (s >= 0.40) return '😐';
-  if (s >= 0.25) return '😕';
-  return '😟';
+  if (s >= 0.70) return <Icon src="/assets/icons/popularity_1.png" size={18} alt="Popularity 1" />;
+  if (s >= 0.55) return <Icon src="/assets/icons/popularity_2.png" size={18} alt="Popularity 2" />;
+  if (s >= 0.40) return <Icon src="/assets/icons/popularity_3.png" size={18} alt="Popularity 3" />;
+  if (s >= 0.25) return <Icon src="/assets/icons/popularity_4.png" size={18} alt="Popularity 4" />;
+  return <Icon src="/assets/icons/popularity_5.png" size={18} alt="Popularity 5" />;
 }
