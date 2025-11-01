@@ -1,31 +1,35 @@
-import React from 'react';
-import UserProfileCard from './UserProfileCard.jsx';
-import UserStatsTabs from './UserStatsTabs.jsx';
+import React from 'react'
+import UserProfileCard from './UserProfileCard.jsx'
+import UserStatsTabs from './UserStatsTabs.jsx'
+import UserAchievementsBox from './UserAchievementsBox.jsx'
+import './UserPage.css'
 
+/**
+ * UserPage - refactor af layout
+ * - Flytter achievements ind i sidebar under brugerinfo (UserAchievementsBox)
+ * - Fjerner activity-tab (handled i UserStatsTabs)
+ * - Holder .page og .panel så tema/ globale styles bevares
+ */
 export default function UserPage() {
   return (
-    <div id="user-page" className="page" style={{ padding: 20 }}>
-      <header className="section-head" style={{ marginBottom: 18, display: 'flex', alignItems: 'center', gap: 12 }}>
-        <div style={{ flex: '0 0 auto' }}>
-          <h1 style={{ margin: 0, fontSize: 22 }}>Brugerprofil</h1>
-          <div className="sub" style={{ color: 'var(--muted-color, #666)' }}>Oversigt og statistik</div>
+    <div id="user-page" className="page user-page">
+      <header className="section-head userpage-header">
+        <div className="userpage-title">
+          <h1>Brugerprofil</h1>
+          <div className="sub">Oversigt og statistik</div>
         </div>
       </header>
 
-      <main style={{
-        display: 'grid',
-        gridTemplateColumns: '320px 1fr',
-        gap: 16,
-        alignItems: 'start',
-      }}>
-        <div className="panel" style={{ padding: 12 }}>
+      <main className="userpage-grid">
+        <aside className="panel userpage-sidebar" aria-label="Bruger kort">
           <UserProfileCard />
-        </div>
+          <UserAchievementsBox />
+        </aside>
 
-        <div className="panel" style={{ padding: 12 }}>
+        <section className="panel userpage-main" aria-label="Bruger statistik og faner">
           <UserStatsTabs />
-        </div>
+        </section>
       </main>
     </div>
-  );
+  )
 }

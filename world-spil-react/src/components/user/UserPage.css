@@ -1,0 +1,155 @@
+/* UserPage - theme-aligned layout
+   Opdateret: tilføjet styles for achievements-box og tabsbar (ingen hvide baggrunde)
+*/
+
+/* Container */
+.user-page {
+  padding: 20px;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+  color: var(--text-primary, #e6eef8);
+}
+
+/* Header */
+.userpage-header {
+  margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.userpage-title h1 {
+  margin: 0;
+  font-size: 1.35rem;
+  line-height: 1;
+  color: var(--text-primary, #e6eef8);
+}
+
+.userpage-title .sub {
+  margin-top: 4px;
+  color: var(--text-muted, #9aa6b2);
+  font-size: 0.9rem;
+}
+
+/* Grid: sidebar + main */
+.userpage-grid {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+/* Panels - undgå at tvinge hvid baggrund */
+.userpage-grid .panel {
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.02);
+  box-shadow: 0 1px 0 rgba(255,255,255,0.02) inset, 0 6px 14px rgba(3,6,12,0.35);
+}
+
+/* Sidebar tweaks */
+.userpage-sidebar {
+  min-width: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Achievements box (i sidebar) */
+.achievements-box {
+  display: block;
+  padding: 10px;
+  border-radius: 8px;
+  background: var(--panel-bg, transparent); /* rely on global theme */
+  border: 1px solid rgba(255,255,255,0.02);
+  color: var(--text-primary, #e6eef8);
+}
+
+.achievements-head {
+  margin-bottom: 8px;
+  font-size: 0.95rem;
+  color: var(--text-primary, #e6eef8);
+}
+
+.achievements-body {
+  display: block;
+  max-height: 220px;
+  overflow: auto;
+}
+
+/* Tabs bar */
+.user-tabsbar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.user-tabsbar .tab {
+  appearance: none;
+  border: 1px solid transparent;
+  background: transparent;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--text-primary, inherit);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+}
+
+.user-tabsbar .tab:hover {
+  background: rgba(255,255,255,0.02);
+}
+
+.user-tabsbar .tab.active {
+  background: rgba(43,138,239,0.12);
+  color: var(--text-primary, #e6eef8);
+  border-color: rgba(255,255,255,0.04);
+}
+
+/* Demo panel styles */
+.demo-panel {
+  padding: 8px;
+  color: var(--text-primary, #e6eef8);
+}
+
+/* Form/input normalization inside main so white inputs don't break theme */
+.userpage-main input,
+.userpage-main select,
+.userpage-main textarea,
+.userpage-main .card,
+.userpage-main fieldset {
+  background: var(--input-bg, rgba(255,255,255,0.02));
+  color: var(--text-primary, #e6eef8);
+  border: 1px solid rgba(255,255,255,0.04);
+  border-radius: 6px;
+  box-shadow: none;
+}
+
+/* Mobile: collapse to single column */
+@media (max-width: 900px) {
+  .userpage-grid {
+    grid-template-columns: 1fr;
+  }
+  .userpage-sidebar {
+    order: 0;
+  }
+  .userpage-main {
+    order: 1;
+    margin-top: 6px;
+  }
+}
+
+/* Small devices */
+@media (max-width: 640px) {
+  .user-page {
+    padding: 12px;
+  }
+  .userpage-title h1 {
+    font-size: 1.15rem;
+  }
+}
