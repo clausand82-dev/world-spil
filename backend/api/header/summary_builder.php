@@ -419,6 +419,58 @@ if (!function_exists('build_user_summary')) {
             $effects['warnings'][] = sprintf('Applied happiness adjustment: mult=%.3f add=%.3f (baseline=%.3f -> effective=%.3f)', $mult, $add, $happyBaseline, $effective);
         }
 
+        // --- Insert: build popularity pairs and compute popularity_data ---
+$popularityWeights = $cfg['popularity'] ?? [];
+$popularityData = [];
+$popPairs = [];
+
+if (!empty($popularityWeights) && function_exists('popularity_calc_all')) {
+    // Preferer registry-aware mapping (samme mønster som happiness)
+    if (function_exists('metrics_registry')) {
+        try {
+            $registry = metrics_registry();
+            foreach ($popularityWeights as $k => $_w) {
+                $base = preg_replace('/PopularityWeight$/', '', (string)$k);
+                // Hvis registry har metrikken, læs usage/capacity felter fra den
+                if (!isset($registry[$base])) {
+                    // fallback: hent direkte fra summary arrays hvis muligt
+                    $used = isset($usages[$base]['total']) ? (float)$usages[$base]['total'] : 0.0;
+                    $cap  = isset($capacities[$base]) ? (float)$capacities[$base] : 0.0;
+                    $popPairs[$base] = ['used' => $used, 'capacity' => $cap];
+                    continue;
+                }
+                $m = $registry[$base];
+                $unlockAt = (int)($m['stage']['unlock_at'] ?? 1);
+                if ($userStage < $unlockAt) continue;
+                $uKey = $m['usageField'] ?? null;
+                $cKey = $m['capacityField'] ?? null;
+                $used = $uKey ? (float)($usages[$uKey]['total'] ?? 0.0) : 0.0;
+                $cap  = $cKey ? (float)($capacities[$cKey] ?? 0.0) : 0.0;
+                $popPairs[$base] = ['used' => $used, 'capacity' => $cap];
+            }
+        } catch (Throwable $e) {
+            // ignore and fallback below
+            $popPairs = [];
+        }
+    }
+
+    // Hvis registry ikke brugt / førte ikke data, prøv simpel direkte mapping
+    if (empty($popPairs)) {
+        foreach ($popularityWeights as $k => $_w) {
+            $base = preg_replace('/PopularityWeight$/', '', (string)$k);
+            $used = isset($usages[$base]['total']) ? (float)$usages[$base]['total'] : 0.0;
+            $cap  = isset($capacities[$base]) ? (float)$capacities[$base] : 0.0;
+            $popPairs[$base] = ['used' => $used, 'capacity' => $cap];
+        }
+    }
+
+    try {
+        $popularityData = popularity_calc_all($popPairs, $popularityWeights);
+    } catch (Throwable $e) {
+        $popularityData = [];
+    }
+}
+
         // Package and return
         $out = [
             'capacities' => $capacities,
@@ -426,6 +478,7 @@ if (!function_exists('build_user_summary')) {
             'parts'      => $parts,
             'partsList'  => $partsList,
             'happiness'  => $happinessData,
+            'popularity' => $popularityData,
             'citizens'   => ['groupCounts' => $macro, 'totals' => ['totalPersons' => $totalPersons]],
             'stage'      => ['current' => $userStage],
             'effects'    => $effects,

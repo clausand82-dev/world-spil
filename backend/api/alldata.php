@@ -9,6 +9,7 @@ require_once __DIR__ . '/lib/yield.php';
 // Indlæs de libs vi skal bruge for at kunne beregne happiness lokalt
 require_once __DIR__ . '/lib/metrics_registry.php';
 require_once __DIR__ . '/lib/happiness.php';
+require_once __DIR__ . '/lib/popularity.php';
 
 // statsbuffs (vores egen logik)
 require_once __DIR__ . '/actions/statsbuffs.php';
@@ -770,264 +771,232 @@ foreach ($state['ani'] as $id => $val) {
         if (!empty($_GET['debug']) && $capWarns) $state['__cap_warnings']=$capWarns;
 
 
-// --- Compute + map stat-buffs (robust, uses summary_builder as single source) ---
+// --- START: Stats-buffs (regelbaseret, enkel flow) ---
+// NOTE: Erstat den eksisterende stats-buffs sektion med nedenstående blok.
+
 $statBuffs = [];
 $mappedStatBuffs = [];
+$summaryForStats = [];
+$ext = null;
 
-$externalSummary = null;
+// 0) Forsøg at hente et eksternt summary via build_user_summary (hvis tilgængelig)
 if (function_exists('build_user_summary') && isset($pdo) && isset($uid)) {
     try {
-        // Hvis du allerede har parsed $defs, send dem med så builder ikke scanner XML igen
         $ext = build_user_summary($pdo, (int)$uid, $cfg, $defs);
         if (!empty($ext) && is_array($ext)) {
-            // build_user_summary bruger keys: capacities, usages, happiness, citizens, stage, effects, parts, partsList
-            // Vi kopierer de felter vi forventer videre til summaryForStats
-            $externalSummary = [];
-            if (!empty($ext['happiness'])) $externalSummary['happiness'] = $ext['happiness'];
-            if (!empty($ext['capacities'])) $externalSummary['capacities'] = $ext['capacities'];
-            if (!empty($ext['usages'])) $externalSummary['usages'] = $ext['usages'];
             // Expose full builder output for debug/inspection hvis debug er aktiv
             if (!empty($debug)) $data['__debug_external_summary_from_builder'] = $ext;
-        }
-    } catch (Throwable $e) {
-        if (!empty($debug)) $data['__debug_build_user_summary_error'] = $e->getMessage();
-    }
-} else {
-    if (!empty($debug)) $data['__debug_summary_fetch_error'] = 'build_user_summary not available or missing $pdo/$uid';
-}
 
-// Hvis vi fik payload fra summary.php, brug dens fields (capacities/usages/happiness)
-$summaryForStats = [];
-if (!empty($externalSummary) && is_array($externalSummary)) {
-    // header/summary endpoint sender sin payload under data — i mange tilfælde payload matcher
-    // Vi prioriterer: 'happiness', 'capacities', 'usages' keys from external summary
-    if (!empty($externalSummary['happiness'])) $summaryForStats['happiness'] = $externalSummary['happiness'];
-    if (!empty($externalSummary['capacities'])) $summaryForStats['capacities'] = $externalSummary['capacities'];
-    if (!empty($externalSummary['usages'])) $summaryForStats['usages'] = $externalSummary['usages'];
-
-    // Expose debug copy so du kan se hvad vi hentede
-    if (!empty($debug)) $data['__debug_external_summary_from_header'] = $externalSummary;
-}
-
-// Fallback: kald build_user_summary hvis summaryForStats stadig tomt
-if (empty($summaryForStats) && function_exists('build_user_summary') && isset($pdo) && isset($uid)) {
-    try {
-        $ext = build_user_summary($pdo, (int)$uid, $cfg, $defs);
-        if (!empty($ext) && is_array($ext)) {
-            if (!empty($ext['happiness'])) $summaryForStats['happiness'] = $ext['happiness'];
-            if (!empty($ext['capacities'])) $summaryForStats['capacities'] = $ext['capacities'];
-            if (!empty($ext['usages'])) $summaryForStats['usages'] = $ext['usages'];
-            if (!empty($debug)) $data['__debug_external_summary_from_builder'] = $ext;
+            if (!empty($ext['happiness']))   $summaryForStats['happiness']   = $ext['happiness'];
+            if (!empty($ext['capacities']))  $summaryForStats['capacities']  = $ext['capacities'];
+            if (!empty($ext['usages']))      $summaryForStats['usages']      = $ext['usages'];
+            if (!empty($ext['popularity']))  $summaryForStats['popularity']  = $ext['popularity'];
         }
     } catch (Throwable $e) {
         if (!empty($debug)) $data['__debug_build_user_summary_error'] = $e->getMessage();
     }
 }
 
-// Nu: brug $summaryForStats til at bygge det summary der sendes til compute_stats_buffs
+// 1) Hvis header/summary payload (fra tidligere flow) eksisterer, merge den (prioriteret)
+if (!empty($summaryForStats) === false && !empty($summaryForStats_from_header ?? null) && is_array($summaryForStats_from_header ?? [])) {
+    $summaryForStats = array_merge($summaryForStats, $summaryForStats_from_header);
+}
+
+// 2) Build a compact normalized $summary array for compute_stats_buffs
 $summary = [];
-if (!empty($summaryForStats)) {
-    // Normaliser: happiness_percentage (0..100) forventes af compute_stats_buffs
-    if (!empty($summaryForStats['happiness'])) {
-        $h = $summaryForStats['happiness'];
-        if (is_array($h)) {
-            // flere muligheder: 'happiness' kan være 0..1 eller 0..100 i forskellige keys
-            if (isset($h['happiness'])) {
-                $hp = (float)$h['happiness'];
-                if ($hp >= 0.0 && $hp <= 1.0) $hp = $hp * 100.0;
-                $summary['happiness_percentage'] = $hp;
-                $summary['happiness'] = $hp;
-                if (isset($h['impactTotal'])) $summary['happiness_total'] = (float)$h['impactTotal'];
-                if (isset($h['weightTotal'])) $summary['happiness_max'] = (float)$h['weightTotal'];
-            } elseif (isset($h['total'])) {
-                $hp = (float)$h['total'];
-                if ($hp >= 0.0 && $hp <= 1.0) $hp = $hp * 100.0;
-                $summary['happiness_percentage'] = $hp;
-                $summary['happiness'] = $hp;
-            } elseif (isset($h['effective'])) {
-                $hp = (float)$h['effective'];
-                if ($hp >= 0.0 && $hp <= 1.0) $hp = $hp * 100.0;
-                $summary['happiness_percentage'] = $hp;
-                $summary['happiness'] = $hp;
-            }
-        } elseif (is_numeric($h)) {
-            $hp = (float)$h;
+
+// Normalize happiness from summaryForStats (0..100)
+if (!empty($summaryForStats['happiness'])) {
+    $h = $summaryForStats['happiness'];
+    if (is_array($h)) {
+        $hp = null;
+        if (isset($h['happiness']))  $hp = (float)$h['happiness'];
+        elseif (isset($h['total']))  $hp = (float)$h['total'];
+        elseif (isset($h['effective'])) $hp = (float)$h['effective'];
+        elseif (isset($h['value']))  $hp = (float)$h['value'];
+        if ($hp !== null) {
             if ($hp >= 0.0 && $hp <= 1.0) $hp = $hp * 100.0;
-            $summary['happiness_percentage'] = $hp;
-            $summary['happiness'] = $hp;
+            $summary['happiness_percentage'] = max(0.0, min(100.0, (float)$hp));
+            $summary['happiness'] = $summary['happiness_percentage'];
         }
+        if (isset($h['impactTotal'])) $summary['happiness_total'] = (float)$h['impactTotal'];
+        if (isset($h['weightTotal']))  $summary['happiness_max']   = (float)$h['weightTotal'];
+    } elseif (is_numeric($h)) {
+        $hp = (float)$h;
+        if ($hp >= 0.0 && $hp <= 1.0) $hp = $hp * 100.0;
+        $summary['happiness_percentage'] = max(0.0, min(100.0, $hp));
+        $summary['happiness'] = $summary['happiness_percentage'];
     }
-    // Kopiér capacities/usages direkte hvis de skal bruges af compute_stats_buffs
-    if (!empty($summaryForStats['capacities'])) $summary['capacities'] = $summaryForStats['capacities'];
-    if (!empty($summaryForStats['usages'])) $summary['usages'] = $summaryForStats['usages'];
 }
 
-// Hvis summary stadig er tomt, fortsæt med eksisterende fallback (som før)
-
-// --- Compute + map stat-buffs (use header/summary payload when available) ---
-$statBuffs = [];
-$mappedStatBuffs = [];
-
-if (function_exists('compute_stats_buffs')) {
-
-    // If we already fetched summary via internal header/summary.php use that first
-    if (!empty($summaryForStats) && is_array($summaryForStats)) {
-        $summary = [];
-
-        // Normalize happiness into expected keys (0..100)
-        if (!empty($summaryForStats['happiness'])) {
-            $h = $summaryForStats['happiness'];
-            if (is_array($h)) {
-                if (isset($h['happiness'])) {
-                    $hp = (float)$h['happiness'];
-                } elseif (isset($h['total'])) {
-                    $hp = (float)$h['total'];
-                } elseif (isset($h['effective'])) {
-                    $hp = (float)$h['effective'];
-                } else {
-                    $hp = null;
-                }
-            } elseif (is_numeric($h)) {
-                $hp = (float)$h;
-            } else {
-                $hp = null;
-            }
-            if ($hp !== null) {
-                if ($hp >= 0.0 && $hp <= 1.0) $hp = $hp * 100.0;
-                $hp = max(0.0, min(100.0, (float)$hp));
-                $summary['happiness_percentage'] = $hp;
-                $summary['happiness'] = $hp;
-                if (is_array($h)) {
-                    if (isset($h['impactTotal'])) $summary['happiness_total'] = (float)$h['impactTotal'];
-                    if (isset($h['weightTotal']))  $summary['happiness_max']   = (float)$h['weightTotal'];
-                }
-            }
+// Normalize popularity from summaryForStats (0..100)
+if (!empty($summaryForStats['popularity'])) {
+    $p = $summaryForStats['popularity'];
+    if (is_array($p)) {
+        $pp = null;
+        if (isset($p['popularity'])) $pp = (float)$p['popularity'];
+        elseif (isset($p['total'])) $pp = (float)$p['total'];
+        elseif (isset($p['effective'])) $pp = (float)$p['effective'];
+        elseif (isset($p['value'])) $pp = (float)$p['value'];
+        if ($pp !== null) {
+            if ($pp >= 0.0 && $pp <= 1.0) $pp = $pp * 100.0;
+            $summary['popularity_percentage'] = max(0.0, min(100.0, (float)$pp));
+            $summary['popularity'] = $summary['popularity_percentage'];
         }
+    } elseif (is_numeric($p)) {
+        $pp = (float)$p;
+        if ($pp >= 0.0 && $pp <= 1.0) $pp = $pp * 100.0;
+        $summary['popularity_percentage'] = max(0.0, min(100.0, $pp));
+        $summary['popularity'] = $summary['popularity_percentage'];
+    }
+}
 
-        // Copy capacities/usages if present (compute_stats_buffs may use them)
-        if (!empty($summaryForStats['capacities']) && is_array($summaryForStats['capacities'])) $summary['capacities'] = $summaryForStats['capacities'];
-        if (!empty($summaryForStats['usages']) && is_array($summaryForStats['usages']))       $summary['usages']     = $summaryForStats['usages'];
+// Copy capacities/usages if present (compute_stats_buffs kan bruge dem)
+if (!empty($summaryForStats['capacities']) && is_array($summaryForStats['capacities'])) $summary['capacities'] = $summaryForStats['capacities'];
+if (!empty($summaryForStats['usages']) && is_array($summaryForStats['usages']))       $summary['usages']     = $summaryForStats['usages'];
 
-        if (!empty($debug)) $data['__debug_used_summary_source'] = 'header_summary_payload';
-    } else {
-        // No external summary — fall back to builder / old fallback (your existing logic)
-        $summary = [];
-
-        if (function_exists('build_user_summary') && isset($pdo) && isset($uid)) {
-            try {
-                $ext = build_user_summary($pdo, (int)$uid, $cfg, $defs);
-                if (!empty($ext) && is_array($ext)) {
-                    $hRes = $ext['happiness'] ?? null;
-                    if (is_array($hRes) && !empty($hRes)) {
-                        $hpRaw = null;
-                        if (isset($hRes['happiness'])) $hpRaw = (float)$hRes['happiness'];
-                        elseif (isset($hRes['total'])) $hpRaw = (float)$hRes['total'];
-                        elseif (isset($hRes['value'])) $hpRaw = (float)$hRes['value'];
-                        elseif (isset($hRes['overall'])) $hpRaw = (float)$hRes['overall'];
-                        if ($hpRaw !== null) {
-                            $hp = (float)$hpRaw;
-                            if ($hp >= 0.0 && $hp <= 1.0) $hp = $hp * 100.0;
-                            $hp = max(0.0, min(100.0, $hp));
-                            $summary['happiness_percentage'] = $hp;
-                            $summary['happiness'] = $hp;
-                        }
-                        if (isset($hRes['impactTotal'])) $summary['happiness_total'] = (float)$hRes['impactTotal'];
-                        if (isset($hRes['weightTotal']))  $summary['happiness_max']   = (float)$hRes['weightTotal'];
-                    } elseif (is_numeric($ext['happiness'] ?? null)) {
-                        $hpRaw = (float)$ext['happiness'];
-                        $hp = $hpRaw;
-                        if ($hp >= 0.0 && $hp <= 1.0) $hp = $hp * 100.0;
-                        $hp = max(0.0, min(100.0, $hp));
-                        $summary['happiness_percentage'] = $hp;
-                        $summary['happiness'] = $hp;
+// 3) If happiness missing, fallback to local happiness_calc_all (existing code path)
+if (empty($summary['happiness_percentage']) && function_exists('happiness_calc_all') && !empty($cfg['happiness']) && is_array($cfg['happiness'])) {
+    try {
+        $usages = [];
+        foreach ($cfg['happiness'] as $cfgKey => $_w) {
+            $usageKey = preg_match('/HappinessWeight$/', (string)$cfgKey) ? preg_replace('/HappinessWeight$/', '', (string)$cfgKey) : (string)$cfgKey;
+            $used = 0.0; $capacity = 0.0;
+            if (!empty($state['cap']) && is_array($state['cap'])) {
+                $candidates = [$usageKey, strtolower($usageKey), preg_replace('/[-_ ]+/', '', strtolower($usageKey))];
+                foreach ($candidates as $cand) {
+                    if (isset($state['cap'][$cand]) && is_array($state['cap'][$cand])) {
+                        $capRec = $state['cap'][$cand];
+                        $used = (float)($capRec['used'] ?? 0.0);
+                        if (isset($capRec['total'])) $capacity = (float)$capRec['total'];
+                        else $capacity = (float)(($capRec['base'] ?? 0.0) + ($capRec['bonus'] ?? 0.0));
+                        break;
                     }
-                    if (!empty($ext['capacities']) && is_array($ext['capacities'])) $summary['capacities'] = $ext['capacities'];
-                    if (!empty($ext['usages']) && is_array($ext['usages']))       $summary['usages']     = $ext['usages'];
-                    if (!empty($debug)) $data['__debug_external_summary_from_builder'] = $ext;
+                    if (isset($state['cap'][$cand]) && (is_numeric($state['cap'][$cand]) || is_float($state['cap'][$cand]))) {
+                        $capacity = (float)$state['cap'][$cand];
+                        $used = 0.0;
+                        break;
+                    }
                 }
-            } catch (Throwable $e) {
-                if (!empty($debug)) $data['__debug_build_user_summary_error'] = $e->getMessage();
             }
+            if ($used === 0.0 && $capacity === 0.0) {
+                if (isset($state['cap']['footprint']) && stripos($usageKey, 'footprint') !== false) {
+                    $capacity = (float)($state['cap']['footprint']['total'] ?? ($state['cap']['footprint']['base'] ?? 0));
+                    $used = (float)($state['cap']['footprint']['used'] ?? 0);
+                }
+                if (isset($state['cap']['animal_cap']) && stripos($usageKey, 'animal') !== false) {
+                    $capacity = (float)($state['cap']['animal_cap']['total'] ?? ($state['cap']['animal_cap']['base'] ?? 0));
+                    $used = (float)($state['cap']['animal_cap']['used'] ?? 0);
+                }
+            }
+            $usages[$usageKey] = ['used' => $used, 'capacity' => $capacity];
         }
+        $hRes = happiness_calc_all($usages, $cfg['happiness']);
+        $hPerc = isset($hRes['happiness']) ? (float)$hRes['happiness'] * 100.0 : null;
+        if ($hPerc !== null) {
+            $summary['happiness_percentage'] = $hPerc;
+            $summary['happiness'] = $hPerc;
+            $summary['happiness_total'] = $hRes['impactTotal'] ?? $hRes['happiness'] ?? $hPerc;
+            $summary['happiness_max'] = $hRes['weightTotal'] ?? 1.0;
+        }
+        if (!empty($debug)) $data['__debug_happiness_calc_all'] = $hRes;
+    } catch (Throwable $e) {
+        if (!empty($debug)) $data['__debug_happiness_calc_error'] = $e->getMessage();
+    }
+}
 
-        // If still empty, run happiness_calc_all fallback (keep your existing code here)
-        if (empty($summary) && function_exists('happiness_calc_all') && !empty($cfg) && isset($cfg['happiness']) && is_array($cfg['happiness'])) {
-            $usages = [];
-            foreach ($cfg['happiness'] as $cfgKey => $_w) {
-                $usageKey = preg_match('/HappinessWeight$/', (string)$cfgKey) ? preg_replace('/HappinessWeight$/', '', (string)$cfgKey) : (string)$cfgKey;
-                $used = 0.0; $capacity = 0.0;
-                if (!empty($state['cap']) && is_array($state['cap'])) {
-                    $candidates = [$usageKey, strtolower($usageKey), preg_replace('/[-_ ]+/', '', strtolower($usageKey))];
-                    foreach ($candidates as $cand) {
-                        if (isset($state['cap'][$cand]) && is_array($state['cap'][$cand])) {
-                            $capRec = $state['cap'][$cand];
-                            $used = (float)($capRec['used'] ?? 0.0);
-                            if (isset($capRec['total'])) $capacity = (float)$capRec['total'];
-                            else $capacity = (float)(($capRec['base'] ?? 0.0) + ($capRec['bonus'] ?? 0.0));
-                            break;
-                        }
-                        if (isset($state['cap'][$cand]) && (is_numeric($state['cap'][$cand]) || is_float($state['cap'][$cand]))) {
-                            $capacity = (float)$state['cap'][$cand];
-                            $used = 0.0;
-                            break;
-                        }
-                    }
-                }
-                if ($used === 0.0 && $capacity === 0.0) {
-                    if (isset($state['cap']['footprint']) && stripos($usageKey, 'footprint') !== false) {
-                        $capacity = (float)($state['cap']['footprint']['total'] ?? ($state['cap']['footprint']['base'] ?? 0));
-                        $used = (float)($state['cap']['footprint']['used'] ?? 0);
-                    }
-                    if (isset($state['cap']['animal_cap']) && stripos($usageKey, 'animal') !== false) {
-                        $capacity = (float)($state['cap']['animal_cap']['total'] ?? ($state['cap']['animal_cap']['base'] ?? 0));
-                        $used = (float)($state['cap']['animal_cap']['used'] ?? 0);
-                    }
-                }
-                $usages[$usageKey] = ['used' => $used, 'capacity' => $capacity];
+// --- INSERT BEFORE compute_stats_buffs(...) ---
+// --- Ensure popularity is present and normalized ---
+// summary must contain both a fraction (0..1) and a percentage (0..100).
+if (empty($summary['popularity']) && empty($summary['popularity_percentage']) && empty($summary['popularity_fraction'])) {
+    $pp_raw = null;
+
+    // 1) Try external builder output first
+    if (!empty($summaryForStats['popularity'])) {
+        $p = $summaryForStats['popularity'];
+        if (is_array($p)) {
+            if (isset($p['popularity'])) $pp_raw = $p['popularity'];
+            elseif (isset($p['value'])) $pp_raw = $p['value'];
+            elseif (isset($p['effective'])) $pp_raw = $p['effective'];
+            elseif (isset($p['total'])) $pp_raw = $p['total'];
+        } elseif (is_numeric($p)) {
+            $pp_raw = $p;
+        }
+        if (!empty($debug)) $data['__debug_popularity_from_builder'] = $p;
+    }
+
+    // 2) Fallback: try popularity_calc_all if available
+    if ($pp_raw === null && function_exists('popularity_calc_all') && !empty($cfg['popularity']) && is_array($cfg['popularity'])) {
+        try {
+            $pRes = popularity_calc_all($state, $cfg['popularity']);
+            if (is_array($pRes)) {
+                $pp_raw = $pRes['popularity'] ?? $pRes['value'] ?? null;
+            } elseif (is_numeric($pRes)) {
+                $pp_raw = $pRes;
             }
-            try {
-                $hRes = happiness_calc_all($usages, $cfg['happiness']);
-                $hPerc = isset($hRes['happiness']) ? (float)$hRes['happiness'] * 100.0 : null;
-                if ($hPerc !== null) {
-                    $summary['happiness_percentage'] = $hPerc;
-                    $summary['happiness'] = $hPerc;
-                    $summary['happiness_total'] = $hRes['impactTotal'] ?? $hRes['happiness'] ?? $hPerc;
-                    $summary['happiness_max'] = $hRes['weightTotal'] ?? 1.0;
-                }
-                if (!empty($debug)) $data['__debug_happiness_calc_all'] = $hRes;
-            } catch (Throwable $e) {
-                if (!empty($debug)) $data['__debug_happiness_calc_error'] = $e->getMessage();
-            }
+            if (!empty($debug)) $data['__debug_popularity_calc_all'] = $pRes;
+        } catch (Throwable $e) {
+            if (!empty($debug)) $data['__debug_popularity_calc_error'] = $e->getMessage();
         }
     }
 
-    // finally, call compute_stats_buffs with the prepared summary (may be empty)
+    // 3) Interpret pp_raw: could be fraction (0..1) or percent (0..100)
+    $fraction = null;
+    if ($pp_raw !== null) {
+        $pp_raw = (float)$pp_raw;
+        if ($pp_raw >= 0.0 && $pp_raw <= 1.0) {
+            // already fraction
+            $fraction = $pp_raw;
+        } elseif ($pp_raw > 1.0 && $pp_raw <= 100.0) {
+            // percent -> convert
+            $fraction = $pp_raw / 100.0;
+        } else {
+            // unexpected large value -> try to map into 0..1 by dividing by 100 if seems percent-like
+            $fraction = ($pp_raw > 100.0) ? min(1.0, $pp_raw / 100.0) : max(0.0, min(1.0, $pp_raw));
+        }
+    }
+
+    // 4) Last resort: default to 0 (no popularity)
+    if ($fraction === null) $fraction = 0.0;
+
+    // 5) Populate summary with both representations
+    $summary['popularity_fraction']   = max(0.0, min(1.0, (float)$fraction));
+    $summary['popularity_percentage'] = $summary['popularity_fraction'] * 100.0;
+    // Choose canonical 'popularity' value to be a fraction (0..1) because many rules use thresholds like 0.70
+    $summary['popularity'] = $summary['popularity_fraction'];
+
+    if (!empty($debug)) {
+        $data['__debug_stat_popularity_normalization'] = [
+            'raw' => $pp_raw,
+            'fraction' => $summary['popularity_fraction'],
+            'percentage' => $summary['popularity_percentage'],
+        ];
+    }
+}
+// --- END INSERT ---
+
+// 5) Finally: compute stat-based buffs exactly once using compute_stats_buffs
+if (function_exists('compute_stats_buffs')) {
+    $rulesFromConfig = $cfg['statsbuffs_rules'] ?? null;
     try {
-        $computed = compute_stats_buffs($summary ?: []);
-        if (is_array($computed)) $statBuffs = $computed;
+        $statBuffs = compute_stats_buffs($summary ?: [], $rulesFromConfig);
+        if (!is_array($statBuffs)) $statBuffs = [];
     } catch (Throwable $e) {
         if (!empty($debug)) $data['__debug_statbuffs_error'] = $e->getMessage();
         $statBuffs = [];
     }
+} else {
+    $statBuffs = [];
+}
 
-    // 5) Normalize / map stat-buffs to frontend buff schema (unchanged)
-    foreach ($statBuffs as $sb) {
-        if (!is_array($sb)) continue;
+// 6) Map/normalize + dedupe statBuffs (same mapping you had previously)
+$mappedStatBuffs = [];
+$seenSourceIds = [];
+foreach ($statBuffs as $sb) {
+    if (!is_array($sb)) continue;
 
-        if (isset($sb['kind']) && isset($sb['op']) && isset($sb['amount']) && is_numeric($sb['amount'])) {
-            if (($sb['kind'] ?? '') === 'res' && isset($sb['scope']) && is_string($sb['scope'])) {
-                $sc = $sb['scope'];
-                if ($sc !== 'all' && $sc !== 'solid' && $sc !== 'liquid' && !str_starts_with($sc, 'res.')) {
-                    $sb['scope'] = 'res.' . ltrim($sc, '.');
-                }
-            }
-            if (!isset($sb['source_id'])) $sb['source_id'] = 'stat.' . ($sb['id'] ?? uniqid('sb_'));
-            elseif (!str_starts_with((string)$sb['source_id'], 'stat.')) $sb['source_id'] = 'stat.' . (string)$sb['source_id'];
-
-            $mappedStatBuffs[] = $sb;
-            continue;
-        }
-
+    // Legacy mapping support (unchanged)
+    if (!isset($sb['kind']) || !isset($sb['op']) || !isset($sb['amount'])) {
         $id = $sb['id'] ?? ('statbuff_' . uniqid());
         $target = (string)($sb['target'] ?? ($sb['scope'] ?? ''));
         $operator = strtolower((string)($sb['operator'] ?? ($sb['op'] ?? '')));
@@ -1037,7 +1006,7 @@ if (function_exists('compute_stats_buffs')) {
             $scope = str_starts_with($target, 'res.') ? $target : 'res.' . ltrim($target, '.');
             $mult = (float)$val;
             $pct = ($mult - 1.0) * 100.0;
-            $mappedStatBuffs[] = [
+            $sb = [
                 'kind' => 'res',
                 'scope' => $scope,
                 'mode' => $sb['mode'] ?? 'yield',
@@ -1046,42 +1015,54 @@ if (function_exists('compute_stats_buffs')) {
                 'applies_to' => $sb['applies_to'] ?? 'all',
                 'source_id' => (str_starts_with((string)$id, 'stat.') ? $id : 'stat.' . $id),
             ];
+        } else {
+            if (!empty($debug)) $data['__debug_unmapped_statbuffs'][] = $sb;
             continue;
         }
-
-        if (str_starts_with($target, 'res.') && is_numeric($val) && in_array($operator, ['multiply','mult','*','percent','%'], true)) {
-            $pct = is_numeric($val) && (float)$val <= 2 ? (($val - 1.0) * 100.0) : ((float)$val);
-            $mappedStatBuffs[] = [
-                'kind' => 'res',
-                'scope' => $target,
-                'mode' => $sb['mode'] ?? 'yield',
-                'op' => 'mult',
-                'amount' => $pct,
-                'applies_to' => $sb['applies_to'] ?? 'all',
-                'source_id' => (str_starts_with((string)$id, 'stat.') ? $id : 'stat.' . $id),
-            ];
-            continue;
+    } else {
+        if (($sb['kind'] ?? '') === 'res' && isset($sb['scope']) && is_string($sb['scope'])) {
+            $sc = $sb['scope'];
+            if ($sc !== 'all' && $sc !== 'solid' && $sc !== 'liquid' && !str_starts_with($sc, 'res.')) {
+                $sb['scope'] = 'res.' . ltrim($sc, '.');
+            }
         }
-
-        if (!empty($debug)) {
-            $data['__debug_unmapped_statbuffs'][] = $sb;
-        }
+        if (!isset($sb['source_id'])) $sb['source_id'] = 'stat.' . ($sb['id'] ?? uniqid('sb_'));
+        elseif (!str_starts_with((string)$sb['source_id'], 'stat.')) $sb['source_id'] = 'stat.' . (string)$sb['source_id'];
     }
 
-    // 6) Merge mapped stat-buffs into activeBuffs and expose again
-    if (!empty($mappedStatBuffs)) {
-        $activeBuffs = array_merge($activeBuffs, $mappedStatBuffs);
-    }
+    $normalized = [
+        'kind' => $sb['kind'],
+        'op' => $sb['op'],
+        'amount' => (float)$sb['amount'],
+        'applies_to' => $sb['applies_to'] ?? 'all',
+        'source_id' => $sb['source_id'],
+        'name' => $sb['name'] ?? ($sb['source_id'] ?? 'stat_rule'),
+    ];
+    if (isset($sb['scope'])) $normalized['scope'] = $sb['scope'];
+    if (isset($sb['mode']))  $normalized['mode']  = $sb['mode'];
+    if (isset($sb['actions'])) $normalized['actions'] = $sb['actions'];
 
-    $data['activeBuffs'] = $activeBuffs;
+    $sid = (string)$normalized['source_id'];
+    if (isset($seenSourceIds[$sid])) continue;
+    $seenSourceIds[$sid] = true;
 
-    // 7) Debug info
-    if (!empty($debug)) {
-        $data['__debug_stat_summary'] = $summary;
-        $data['__debug_statbuffs'] = $statBuffs;
-        $data['__debug_mapped_statbuffs'] = $mappedStatBuffs;
-    }
+    $mappedStatBuffs[] = $normalized;
 }
+
+// 7) Merge mapped stat-buffs into activeBuffs once
+if (!empty($mappedStatBuffs)) {
+    $activeBuffs = array_merge($activeBuffs, $mappedStatBuffs);
+}
+
+// expose for frontend & debug
+$data['activeBuffs'] = $activeBuffs;
+if (!empty($debug)) {
+    $data['__debug_stat_summary'] = $summary;
+    $data['__debug_statbuffs_raw'] = $statBuffs;
+    $data['__debug_mapped_statbuffs'] = $mappedStatBuffs;
+}
+
+// --- END: Stats-buffs (regelbaseret, enkel flow) ---
 
 
         /* 7) Output */
