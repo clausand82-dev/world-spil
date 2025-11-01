@@ -1,175 +1,107 @@
 <?php
 /**
  * statsbuffs.php
- * Beregner dynamiske buffs baseret på summary-data (fx happiness, popularity).
+ * Beregner dynamiske buffs baseret på summary-data (fx happiness).
+ * Placér filen fx i api/actions/.
  *
  * Eksporteret funktion:
  * - compute_stats_buffs(array $summary): array  -- returnerer liste af buff-arrays
  *
- * Outputformat matches eksisterende buff-schema:
- * ['kind'=>'res','scope'=>'res.money','mode'=>'yield','op'=>'mult','amount'=>-50,'applies_to'=>'all','source_id'=>'stat.happy_low']
+ * Buff-format (eksempel):
+ * [
+ *   'id'       => 'string_unique_id',
+ *   'target'   => 'res.money' | 'yield' | '... (tilpas efter eget schema)',
+ *   'operator' => 'multiply' | 'add' | 'percent', // hvordan value skal anvendes
+ *   'value'    => 0.5, // for multiply => multiplier (0.5 = halver), for add => flat tal, for percent => ± procent som -50
+ *   'reason'   => 'Forklaring',
+ *   'priority' => 100
+ * ]
  */
 
-if (!function_exists('get_stat_percentage')) {
-    /**
-     * Prøv at finde procentværdi for en stat i $summary.
-     * Acceptér flere feltnavne for kompatibilitet.
-     * $key er basal-navn fx 'happiness' eller 'popularity'
-     *
-     * Normaliseringsregler:
-     * - Hvis værdien er en fraction i intervallet [0,1] antages det at være 0..1 → multiplicér med 100.
-     * - Hvis værdien er >1 og <=100 antages det at være procent allerede.
-     * - Hvis total/max findes, returnér (total/max)*100.
-     * - Returnerer null hvis ikke tilgængeligt.
-     */
-    function get_stat_percentage(array $summary, string $key): ?float {
-        // Kandidatnøgler (prioriter direkte procentfelter)
-        $directPctKeys = [
-            "{$key}_percentage",
-            "{$key}_pct",
-            "{$key}.percentage",
-            $key,
-        ];
-
-        foreach ($directPctKeys as $k) {
-            if (array_key_exists($k, $summary) && is_numeric($summary[$k])) {
-                $raw = (float)$summary[$k];
-                // Hvis råværdi er en fraction (0..1), antag 0..1 skala og konverter til pct
-                if ($raw >= 0.0 && $raw <= 1.0) {
-                    return $raw * 100.0;
-                }
-                // Hvis råværdi er rimelig procent (0..100), returnér som pct (men clamp mellem 0 og 100)
-                if ($raw > 1.0 && $raw <= 10000.0) { // tillad større tal men clamp
-                    return max(0.0, min(100.0, $raw));
-                }
-                // hvis negative eller mærkeligt stort, ignorer og fortsæt
-            }
-        }
-
-        // Total/max par: total og max findes i summary (fx popularity_total / popularity_max)
-        if (isset($summary["{$key}_total"]) && isset($summary["{$key}_max"]) && is_numeric($summary["{$key}_max"]) && (float)$summary["{$key}_max"] > 0.0) {
-            $total = (float)$summary["{$key}_total"];
-            $max = (float)$summary["{$key}_max"];
-            $pct = ($total / $max) * 100.0;
-            return max(0.0, min(100.0, $pct));
-        }
-        if (isset($summary["{$key}_current"]) && isset($summary["{$key}_max"]) && is_numeric($summary["{$key}_max"]) && (float)$summary["{$key}_max"] > 0.0) {
-            $cur = (float)$summary["{$key}_current"];
-            $max = (float)$summary["{$key}_max"];
-            $pct = ($cur / $max) * 100.0;
-            return max(0.0, min(100.0, $pct));
-        }
-
-        return null;
-    }
-}
-
-/**
- * Backwards-compatible helper som nogle ældre steder forventer.
- * Hvis du før brugte get_happiness_percentage($summaryOrUser), så virker det stadig.
- * Acceptér enten hele $summary fra alldata eller direkte $state['user'] array.
- */
 if (!function_exists('get_happiness_percentage')) {
-    function get_happiness_percentage($summaryOrUser): ?float {
-        if (!is_array($summaryOrUser)) return null;
-        $maybe = get_stat_percentage($summaryOrUser, 'happiness');
-        if ($maybe !== null) return $maybe;
-        if (isset($summaryOrUser['happiness']) && is_numeric($summaryOrUser['happiness'])) {
-            $raw = (float)$summaryOrUser['happiness'];
-            return ($raw >= 0.0 && $raw <= 1.0) ? $raw * 100.0 : max(0.0, min(100.0, $raw));
+    /**
+     * Forsøger at finde og returnere happiness i procent (0..100).
+     * Acceptér flere mulige feltnavne i $summary for kompatibilitet.
+     */
+    function get_happiness_percentage(array $summary): ?float {
+        // Hvis summary allerede indeholder procentværdi
+        if (isset($summary['happiness_percentage'])) {
+            return (float)$summary['happiness_percentage'];
         }
+
+        // Hvis summary indeholder total og max
+        if (isset($summary['happiness_total']) && isset($summary['happiness_max']) && $summary['happiness_max'] > 0) {
+            return ((float)$summary['happiness_total'] / (float)$summary['happiness_max']) * 100.0;
+        }
+
+        // Hvis summary indeholder et enkelt tal "happiness" antaget 0..100
+        if (isset($summary['happiness'])) {
+            return (float)$summary['happiness'];
+        }
+
+        // Hvis summary indeholder breakdown: current / max
+        if (isset($summary['happiness_current']) && isset($summary['happiness_max']) && $summary['happiness_max'] > 0) {
+            return ((float)$summary['happiness_current'] / (float)$summary['happiness_max']) * 100.0;
+        }
+
+        // Ikke tilgængeligt
         return null;
     }
 }
 
 if (!function_exists('compute_stats_buffs')) {
+    /**
+     * Beregn buffs baseret på summary-data.
+     *
+     * I første omgang: hvis happiness_total < 25% så halver ALL res.money yield.
+     * Returnerer array af buff-arrays (kan være tom).
+     *
+     * Outputformat matches eksisterende buff-schema:
+     * ['kind'=>'res','scope'=>'res.money','mode'=>'yield','op'=>'mult','amount'=>-50,'applies_to'=>'all','source_id'=>'stat.happy_low']
+     */
     function compute_stats_buffs(array $summary): array {
         $buffs = [];
 
-        // --- HAPPINESS ---
-        $hPerc = get_stat_percentage($summary, 'happiness');
-        if ($hPerc !== null) {
-            if ($hPerc < 25.0) {
-                $multiplier = 0.5; $pct = ($multiplier - 1.0) * 100.0;
-                $buffs[] = [
-                    'kind' => 'res',
-                    'scope' => 'res.money',
-                    'mode' => 'yield',
-                    'op' => 'mult',
-                    'amount' => $pct,
-                    'applies_to' => 'all',
-                    'source_id' => 'stat.happiness_low_half_money_yield',
-                ];
-            }
-            if ($hPerc < 10.0) {
-                $multiplier = 0.7; $pct = ($multiplier - 1.0) * 100.0;
-                $buffs[] = [
-                    'kind' => 'res',
-                    'scope' => 'res.money',
-                    'mode' => 'yield',
-                    'op' => 'mult',
-                    'amount' => $pct,
-                    'applies_to' => 'all',
-                    'source_id' => 'stat.happiness_verylow_money_yield',
-                ];
-            }
+        $hPerc = get_happiness_percentage($summary);
+
+        if ($hPerc === null) return $buffs;
+
+        // Tærskel (25%)
+        if ($hPerc < 25.0) {
+            // Vi udtrykker mult som procent for frontend: pct = (multiplier - 1) * 100
+            // Halvering => multiplier = 0.5 => pct = (0.5 - 1) * 100 = -50
+            $multiplier = 0.5;
+            $pct = ($multiplier - 1.0) * 100.0;
+
+            $buffs[] = [
+                // match eksisterende "res"-schema
+                'kind'       => 'res',
+                'scope'      => 'res.money',      // VIGTIGT: fuldt resource-id
+                'mode'       => 'yield',          // påvirker yield (ikke cost)
+                'op'         => 'mult',           // multiplicative (mult, adds or subt)
+                'amount'     => $pct,             // pct-format frontend forventer (fx -50)
+                'applies_to' => 'all',
+                'source_id'  => 'stat.happiness_low_half_money_yield',
+            ];
         }
 
-        // --- POPULARITY: eksempler på thresholds/effekter ---
-        $pPerc = get_stat_percentage($summary, 'popularity');
-        if ($pPerc !== null) {
-            // Høj popularitet => bonus til penge-udbytte
-            if ($pPerc >= 70.0) {
-                $pct = 10.0; // +10%
-                $buffs[] = [
-                    'kind' => 'res',
-                    'scope' => 'res.money',
-                    'mode' => 'yield',
-                    'op' => 'mult',
-                    'amount' => $pct,
-                    'applies_to' => 'all',
-                    'source_id' => 'stat.popularity_high_money_bonus',
-                ];
-            }
+         if ($hPerc < 10.0) {
+            // Vi udtrykker mult som procent for frontend: pct = (multiplier - 1) * 100
+            // Halvering => multiplier = 0.5 => pct = (0.5 - 1) * 100 = -50
+            $multiplier = 0.7;
+            $pct = ($multiplier - 1.0) * 100.0;
 
-            // Lav popularitet => straf på penge-udbytte
-            if ($pPerc < 30.0) {
-                $pct = -20.0; // -20%
-                $buffs[] = [
-                    'kind' => 'res',
-                    'scope' => 'res.money',
-                    'mode' => 'yield',
-                    'op' => 'mult',
-                    'amount' => $pct,
-                    'applies_to' => 'all',
-                    'source_id' => 'stat.popularity_low_money_penalty',
-                ];
-            }
-
-            // defensiv speed-tilføjelse: kun hvis vi har en klar popularity_pct værdi i summary
-            $pPerc = get_stat_percentage($summary, 'popularity');
-            // kun acceptér hvis get_stat_percentage returnerede en værdi indenfor 0..100
-            if ($pPerc !== null && is_numeric($pPerc)) {
-                $pPerc = (float)$pPerc;
-                // klamp 0..100 for sikkerhed
-                if ($pPerc < 0.0) $pPerc = 0.0;
-                if ($pPerc > 100.0) $pPerc = 100.0;
-
-                if ($pPerc < 10.0) {
-                    $buffs[] = [
-                        'kind' => 'speed',
-                        'actions' => 'all',
-                        'op' => 'mult',
-                        'amount' => -15.0,
-                        'applies_to' => 'all',
-                        'source_id' => 'stat.popularity_verylow_speed_penalty',
-                    ];
-                }
-            }
+            $buffs[] = [
+                // match eksisterende "res"-schema
+                'kind'       => 'res',
+                'scope'      => 'res.money',      // VIGTIGT: fuldt resource-id
+                'mode'       => 'yield',          // påvirker yield (ikke cost)
+                'op'         => 'mult',           // multiplicative (mult, adds or subt)
+                'amount'     => $pct,             // pct-format frontend forventer (fx -50)
+                'applies_to' => 'all',
+                'source_id'  => 'stat.happiness_verylow_half_money_yield',
+            ];
         }
-
-        // --- ANDRE STATS: mønster for tilføjelse ---
-        // Du kan gentage mønsteret for fx 'pollution', 'traffic', 'power' etc.
 
         return $buffs;
     }
