@@ -286,6 +286,19 @@ export function GameDataProvider({ children }) {
     staleTime: 1000 * 3,
   });
 
+React.useEffect(() => {
+  try {
+    if (typeof window !== 'undefined') {
+      // Gem en let-tilgængelig reference til den seneste game-data så collectActiveBuffs
+      // kan bruge den som fallback hvis en caller ikke sender serverData.
+      // Dette er kun en læse-reference; vi ændrer ikke data her.
+      window.__WORLD_SPIL_GAME_DATA = data || null;
+    }
+  } catch (e) {
+    // ignore
+  }
+}, [data]);
+
   // BroadcastChannel / storage listeners for cross-tab updates
   useEffect(() => {
     try {

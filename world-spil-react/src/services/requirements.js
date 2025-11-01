@@ -12,23 +12,91 @@ function inferAction(item) {
 
 // Saml aktive buffs fra defs (bld/add/rsd). Kan kaldes fra UI og gives via caches.
 // Nu: optional serverData parameter bruges til at flette serverens data.activeBuffs.
-export function collectActiveBuffs(defs, state = {}, serverData = null) {
+export function collectActiveBuffs(defs, state, serverData) {
   const out = [];
   const push = arr => Array.isArray(arr) && arr.forEach(b => out.push(b));
 
-  // lokale defs-buffs (kun bundlet defs; ownership tjek afhænger af kaldssted)
+  // 1) Lokal defs-buffs
   for (const key of ['bld','add','rsd']) {
     const bag = defs?.[key] || {};
     Object.values(bag).forEach(def => push(def?.buffs));
   }
 
-  // Merge server-provided activeBuffs if available (serverData from alldata)
-  const fromServer = (serverData && Array.isArray(serverData.activeBuffs)) ? serverData.activeBuffs : [];
-  if (fromServer.length) {
-    // append server buffs after local ones; avoid modifying originals
-    return [...out, ...fromServer];
+  // 2) Hvis caller ikke gav serverData, prøv global fallback (GameDataContext sætter window.__WORLD_SPIL_GAME_DATA)
+  let sd = serverData;
+  if (!sd) {
+    try {
+      if (typeof window !== 'undefined' && window.__WORLD_SPIL_GAME_DATA) {
+        sd = window.__WORLD_SPIL_GAME_DATA;
+        const debugFlag = (typeof window !== 'undefined' && !!window.WS_DEBUG_SPEED) || (typeof localStorage !== 'undefined' && localStorage.getItem('WS_DEBUG_SPEED'));
+        if (debugFlag) console.log('[collectActiveBuffs] serverData missing — using global cached game-data');
+      }
+    } catch (e) {}
   }
-  return out;
+
+  // 3) Merge server buffs (append)
+  const fromServer = (sd && Array.isArray(sd.activeBuffs)) ? sd.activeBuffs : [];
+  if (fromServer.length) out.push(...fromServer.map(b => ({ ...b })));
+
+  // 4) Deduplikér efter source_id (sidste forekomst vinder — det lader server overskrive def hvis begge findes)
+  const keyed = new Map();
+  for (const b of out) {
+    const sid = String(b?.source_id ?? b?.id ?? '') || `__anon_${Math.random().toString(36).slice(2,8)}`;
+    keyed.set(sid, b);
+  }
+  const merged = Array.from(keyed.values());
+
+  // 5) Normaliser felter for tolerance
+  function normalizeBuff(b) {
+    if (!b || typeof b !== 'object') return b;
+    const nb = { ...b };
+    nb.kind = String(nb.kind ?? nb.type ?? '').toLowerCase();
+    nb.op = nb.op ?? nb.type ?? null;
+    nb.applies_to = nb.applies_to ?? nb.appliesTo ?? nb.scope ?? 'all';
+    if (nb.actions == null && nb.target != null) nb.actions = nb.target;
+    if (Array.isArray(nb.actions)) {
+      // keep
+    } else if (typeof nb.actions === 'string') {
+      const s = nb.actions.trim();
+      nb.actions = s === '' ? 'all' : s;
+    } else {
+      nb.actions = nb.actions ?? 'all';
+    }
+
+    if (nb.amount != null && nb.amount !== '') {
+      nb.amount = Number(nb.amount);
+      if (!Number.isFinite(nb.amount)) nb.amount = 0;
+    } else if (nb.calc && typeof nb.calc === 'object') {
+      const c = nb.calc;
+      if (c.type === 'fixed_multiplier' && typeof c.multiplier === 'number') {
+        nb.amount = (Number(c.multiplier) - 1) * 100;
+      } else {
+        nb.amount = 0;
+      }
+    } else {
+      nb.amount = Number(nb.amount || 0);
+    }
+
+    if (nb.op != null) nb.op = String(nb.op).toLowerCase();
+    nb.applies_to = nb.applies_to ?? 'all';
+    nb.actions = nb.actions ?? 'all';
+    return nb;
+  }
+
+  const normalized = merged.map(normalizeBuff);
+
+  // 6) Debug: vis speed-entries hvis debug flag sat
+  try {
+    const debugFlag2 = (typeof window !== 'undefined' && !!window.WS_DEBUG_SPEED) || (typeof localStorage !== 'undefined' && localStorage.getItem('WS_DEBUG_SPEED'));
+    if (debugFlag2) {
+      console.log('[collectActiveBuffs] normalized buffs count=', normalized.length);
+      console.log('[collectActiveBuffs] normalized speed entries=', JSON.stringify(normalized.filter(b => (b?.kind||'') === 'speed').map(b => ({
+        source_id: b.source_id, name: b.name, op: b.op, amount: b.amount, actions: b.actions, applies_to: b.applies_to
+      })), null, 2));
+    }
+  } catch (e) {}
+
+  return normalized;
 }
 
 /** Map { "bld.family.l2": {...}, "add.something.l1": {...} } -> { "bld.family": 2, "add.something": 1 } */

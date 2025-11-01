@@ -63,19 +63,80 @@ export function applySpeedBuffsToDuration(baseS, action, { appliesToCtx, activeB
   const ctxList = Array.isArray(appliesToCtx) ? appliesToCtx : [appliesToCtx];
   let mult = 1;
 
+  const debug = (typeof window !== 'undefined' && !!window.WS_DEBUG_SPEED) || (typeof localStorage !== 'undefined' && localStorage.getItem('WS_DEBUG_SPEED'));
+  if (debug) {
+    console.log('[applySpeedBuffsToDuration] start', { baseS, action, ctxList, activeBuffsLength: (activeBuffs||[]).length });
+  }
+
   for (const b of activeBuffs || []) {
-    if (b.kind !== 'speed') continue;
-    const actionOk = b.actions === 'all' || (Array.isArray(b.actions) && b.actions.includes(action));
-    if (!actionOk) continue;
+    try {
+      const kind = (b?.kind || '').toLowerCase();
+      if (kind !== 'speed') {
+        if (debug) console.log('[applySpeedBuffsToDuration] skip(kind)', kind, b?.source_id);
+        continue;
+      }
 
-    if (!appliesToMatch(b.applies_to, ctxList)) continue;
+      // op/type
+      const op = (b?.op ?? b?.type ?? '') ? String(b?.op ?? b?.type).toLowerCase() : null;
+      if (!op) {
+        if (debug) console.log('[applySpeedBuffsToDuration] skip(no op/type)', b?.source_id);
+        continue;
+      }
 
-    const amt = Number(b.amount || 0);
-    if (!Number.isFinite(amt)) continue;
-    if (b.op === 'mult') mult *= (1 - amt / 100); // 10 => 10% hurtigere
+      if (op !== 'mult' && op !== 'add' && op !== 'subt') {
+        // only mult currently supported meaningfully; log otherwise
+        if (debug) console.log('[applySpeedBuffsToDuration] unknown op (ignored)', op, b?.source_id);
+      }
+
+      // actions matching: support array, comma-string, 'all', or property target
+      const actsRaw = b.actions ?? b.target ?? 'all';
+      let actionOk = false;
+      if (actsRaw === 'all') actionOk = true;
+      else if (Array.isArray(actsRaw)) actionOk = actsRaw.includes(action);
+      else if (typeof actsRaw === 'string') {
+        const parts = actsRaw.split(/[,;]/).map(s => s.trim()).filter(Boolean);
+        if (parts.includes('all')) actionOk = true;
+        else actionOk = parts.includes(action);
+      } else {
+        actionOk = !!actsRaw; // fallback
+      }
+      if (!actionOk) {
+        if (debug) console.log('[applySpeedBuffsToDuration] skip(actions)', { actsRaw, action, source: b.source_id });
+        continue;
+      }
+
+      // applies_to matching (reuse appliesToMatch function present in this file)
+      if (!appliesToMatch(b.applies_to, ctxList)) {
+        if (debug) console.log('[applySpeedBuffsToDuration] skip(applies_to)', { applies_to: b.applies_to, ctxList, source: b.source_id });
+        continue;
+      }
+
+      // amount numeric
+      const rawAmt = b.amount ?? 0;
+      const amt = Number(rawAmt);
+      if (!Number.isFinite(amt) || amt === 0) {
+        if (debug) console.log('[applySpeedBuffsToDuration] skip(amount invalid/zero)', { rawAmt, source: b.source_id });
+        continue;
+      }
+
+      if (op === 'mult') {
+        // Positive amt => faster (mult < 1). Negative amt => slower (mult > 1)
+        const factor = (1 - amt / 100);
+        if (debug) console.log('[applySpeedBuffsToDuration] apply mult', { amt, factor, beforeMult: mult, source: b.source_id });
+        mult *= factor;
+        if (debug) console.log('[applySpeedBuffsToDuration] after mult', mult);
+      } else {
+        // not used currently for speed but log it
+        if (debug) console.log('[applySpeedBuffsToDuration] op not implemented for speed (ignored)', op, b.source_id);
+      }
+    } catch (err) {
+      if (debug) console.error('[applySpeedBuffsToDuration] exception for buff', b, err);
+    }
   }
 
   // cap (max 80% hurtigere) + clamp
   mult = Math.max(0.2, mult); // max 80% hurtigere - NORMAL CAP
+
+  if (debug) console.log('[applySpeedBuffsToDuration] final mult=', mult, 'finalSeconds=', Math.max(0, baseS * mult));
   return Math.max(0, baseS * mult);
 }
