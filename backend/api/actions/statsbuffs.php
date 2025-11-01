@@ -147,7 +147,7 @@ if (!function_exists('compute_stats_buffs')) {
                 'name' => 'Low happiness',
                 'metric' => 'happiness_percentage',
                 'op' => 'lt',
-                'value' => 0,
+                'value' => 25,
                 'effect' => [
                     'kind' => 'res',
                     'scope' => 'res.money',

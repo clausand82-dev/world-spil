@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { useGameData } from '../context/GameDataContext.jsx';
 import { useActiveBuildFlag, updateActiveBuilds } from '../services/activeBuildsStore.js';
+import useHeaderSummary from '../hooks/useHeaderSummary.js';
 
 export default function ActionButton({ item, allOk }) {
   const { refreshData, applyLockedCostsDelta } = useGameData() || {};
@@ -38,11 +39,49 @@ export default function ActionButton({ item, allOk }) {
     return Date.UTC(Y, M - 1, D, h, mn, sc);
   };
 
+  // Hent opsummerede stats til stats-buffs (happiness/popularity)
+  const { data: headerSummary } = useHeaderSummary() || {};
+  const { data: gameData } = useGameData() || {};
+  const currentStage = Number(gameData?.state?.user?.currentstage ?? gameData?.state?.user?.stage ?? 0) || 0;
+
+  const toPct = (val) => {
+    if (val == null) return null;
+    const n = Number(val);
+    if (!Number.isFinite(n)) return null;
+    // hvis 0..1 → procentsats
+    if (n >= 0 && n <= 1) return n * 100;
+    return n;
+  };
+
+  // Tolerant udtræk af popularity/happiness fra headerSummary
+  const popularity_percentage = (
+    toPct(headerSummary?.popularity?.popularity) ??
+    toPct(headerSummary?.popularity_percentage) ??
+    toPct(headerSummary?.popularity?.effective) ??
+    toPct(headerSummary?.popularity?.value) ??
+    null
+  );
+
+  const happiness_percentage = (
+    toPct(headerSummary?.happiness?.happiness) ??
+    toPct(headerSummary?.happiness_percentage) ??
+    toPct(headerSummary?.happiness?.value) ??
+    null
+  );
+
+  // Byg userSummary kun med felter vi faktisk har
+  const userSummary = useMemo(() => {
+    const out = { stage: currentStage };
+    if (Number.isFinite(popularity_percentage)) out.popularity_percentage = Number(popularity_percentage);
+    if (Number.isFinite(happiness_percentage)) out.happiness_percentage = Number(happiness_percentage);
+    return out;
+  }, [currentStage, popularity_percentage, happiness_percentage]);
+
   const handleStart = async () => {
     try {
       if (window.BuildJobs?.start) {
-        // Hvis din eksterne starter returnerer job-data, brug dem til at opdatere ActiveBuilds
-        const maybeJob = await window.BuildJobs.start(id);
+        // Ekstern starter: giv scope + userSummary hvis den accepterer options
+        const maybeJob = await window.BuildJobs.start(id, { scope, userSummary });
         if (maybeJob && maybeJob.job_id) {
           const job = maybeJob;
           updateActiveBuilds((map) => {
@@ -58,16 +97,16 @@ export default function ActionButton({ item, allOk }) {
           if (Array.isArray(job.locked_costs) && job.locked_costs.length) {
             applyLockedCostsDelta && applyLockedCostsDelta(job.locked_costs, -1);
           }
-          
         } else {
           // Ukendt returværdi -> vis optimistisk indtil ActiveBuilds opdateres andetsteds
           setLocalActive(true);
         }
       } else {
+        // Backend fallback: inkluder userSummary så stats-buffs aktiveres serverside
         const resp = await fetch('/world-spil/backend/api/actions/build_start.php', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id, scope })
+          body: JSON.stringify({ id, scope, userSummary })
         });
         if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
         const json = await resp.json();
@@ -127,10 +166,10 @@ export default function ActionButton({ item, allOk }) {
             }
           } else {
             if (Array.isArray(payload?.locked_costs) && payload.locked_costs.length) {
-            applyLockedCostsDelta && applyLockedCostsDelta(payload.locked_costs, +1);
-          }
-          // ensure UI is current
-          refreshData && refreshData();
+              applyLockedCostsDelta && applyLockedCostsDelta(payload.locked_costs, +1);
+            }
+            // ensure UI is current
+            refreshData && refreshData();
           }
           // Uanset hvad, prøv at rydde ActiveBuilds for dette id lokalt
           updateActiveBuilds((map) => { delete map[id]; });
