@@ -143,11 +143,11 @@ if (!function_exists('compute_stats_buffs')) {
         $defaultRules = [
             // happiness < 25% => reduce money yield (multiplier 0.7 => -30%)
             [
-                'id' => 'happy_under_25',
+                'id' => 'happy_under_35',
                 'name' => 'Low happiness',
                 'metric' => 'happiness_percentage',
                 'op' => 'lt',
-                'value' => 25,
+                'value' => 35,
                 'effect' => [
                     'kind' => 'res',
                     'scope' => 'res.money',

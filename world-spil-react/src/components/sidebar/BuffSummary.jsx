@@ -25,7 +25,11 @@ const FAMILY_ICONS = {
 
 // exact overrides (behold hvis du vil specifikke overrides)
 const SOURCE_OVERRIDES = {
-  'stat.happiness_low_half_money_yield': { file: 'default.png', labelKey: 'ui.statsbuff_badhappiness.h1' },
+  'stat.happy_under_35': { file: 'default.png', labelKey: 'ui.statsbuff_badhappiness.h1' },
+  'stat.happy_under_10': { file: 'default.png', labelKey: 'ui.statsbuff_badhappiness.h1' },
+  'stat.pop_over_70': { file: 'default.png', labelKey: 'ui.statsbuff_verygoodpopularity.h1' },
+  'stat.pop_under_50': { file: 'default.png', labelKey: 'ui.statsbuff_badpopularity.h1' },
+  'stat.pop_under_10': { file: 'default.png', labelKey: 'ui.statsbuff_verybadpopularity.h1' },
 
 };
 

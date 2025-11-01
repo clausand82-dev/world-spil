@@ -580,7 +580,7 @@ if (!function_exists('yield__collect_active_buffs')) {
     if (function_exists('compute_stats_buffs')) {
       $summary = [];
 
-      // Try to pick up explicit fields from state.user
+      // --- HAPPINESS: samme som før (tolerant) ---
       if (!empty($state['user']) && is_array($state['user'])) {
         $u = $state['user'];
         if (isset($u['happiness_percentage'])) $summary['happiness_percentage'] = (float)$u['happiness_percentage'];
@@ -590,20 +590,18 @@ if (!function_exists('yield__collect_active_buffs')) {
         if (isset($u['happiness_current']))    $summary['happiness_current'] = (float)$u['happiness_current'];
       }
 
-      // Fallback: hvis statsbuffs også definerer get_happiness_percentage, brug den
       if (empty($summary) && function_exists('get_happiness_percentage')) {
         $hp = get_happiness_percentage($state['user'] ?? []);
         if ($hp !== null) $summary['happiness_percentage'] = (float)$hp;
       }
 
-      // Hvis vi stadig intet har, og vi har happiness helpers, prøv at beregne vha. cfg weights
       if (empty($summary) && function_exists('happiness_calc_all')) {
         try {
           $cfg = yield__load_config_ini();
           if (!empty($cfg) && isset($cfg['happiness']) && is_array($cfg['happiness'])) {
             $usages = [];
             foreach ($cfg['happiness'] as $cfgKey => $_w) {
-              $usageKey = preg_match('/HappinessWeight$/', (string)$cfgKey) ? preg_replace('/HappinessWeight$/','', (string)$cfgKey) : (string)$cfgKey;
+              $usageKey = preg_replace('/HappinessWeight$/', '', (string)$cfgKey);
               $used = 0.0; $capacity = 0.0;
               if (!empty($state['cap']) && is_array($state['cap'])) {
                 $candidates = [$usageKey, strtolower($usageKey), preg_replace('/[-_ ]+/', '', strtolower($usageKey))];
@@ -624,23 +622,58 @@ if (!function_exists('yield__collect_active_buffs')) {
               $summary['happiness'] = $summary['happiness_percentage'];
             }
           }
-        } catch (Throwable $e) {
-          // ignore, best-effort only
-        }
+        } catch (Throwable $e) { /* ignore */ }
       }
 
-      // Endelig: kald compute_stats_buffs med summary (kan være tom)
+      // --- NYT: POPULARITY (nødvendig for stat.pop_under_50 m.fl.) ---
+      // Læs fra state.user: acceptér både procent (0..100) og fraktion (0..1). Normaliser begge.
+      if (!empty($state['user']) && is_array($state['user'])) {
+        $u = $state['user'];
+
+        $pp = null;
+        if (isset($u['popularity_percentage'])) {
+          $pp = (float)$u['popularity_percentage'];         // kan være 0..100
+        } elseif (isset($u['popularity_fraction'])) {
+          $pp = ((float)$u['popularity_fraction']) * 100.0; // 0..1 → 0..100
+        } elseif (isset($u['popularity'])) {
+          $raw = (float)$u['popularity'];
+          // tolker automatisk: 0..1 => procent, >1 => allerede procent
+          $pp = ($raw >= 0.0 && $raw <= 1.0) ? ($raw * 100.0) : $raw;
+        }
+
+        if ($pp !== null) {
+          $pp = max(0.0, min(100.0, $pp));
+          $summary['popularity_percentage'] = $pp;
+          // Lad den kanoniske 'popularity' være fraktion (0..1), så regler kan bruge begge
+          $summary['popularity'] = $pp / 100.0;
+        }
+
+        // Stage kan være relevant for enkelte regler
+        if (isset($u['stage']))        $summary['stage'] = (float)$u['stage'];
+        if (isset($u['currentstage'])) $summary['stage'] = (float)$u['currentstage'];
+      }
+
+      // (Valgfrit) Fallback-hook hvis nogen tilbyder server-funktion til popularity:
+      if (!isset($summary['popularity_percentage']) && function_exists('get_popularity_percentage')) {
+        try {
+          $pp2 = get_popularity_percentage($state['user'] ?? []);
+          if ($pp2 !== null) {
+            $pp2 = (float)$pp2;
+            if ($pp2 >= 0.0 && $pp2 <= 1.0) $pp2 *= 100.0;
+            $pp2 = max(0.0, min(100.0, $pp2));
+            $summary['popularity_percentage'] = $pp2;
+            $summary['popularity'] = $pp2 / 100.0;
+          }
+        } catch (Throwable $e) { /* ignore */ }
+      }
+
+      // Endelig: kald compute_stats_buffs med summary (nu inkl. popularity), og merge
       try {
         $computed = compute_stats_buffs($summary ?: []);
         if (is_array($computed) && !empty($computed)) {
-          // Antag at compute_stats_buffs returnerer buffs i kompatibelt schema
-          foreach ($computed as $b) {
-            if (is_array($b)) $statBuffs[] = $b;
-          }
+          foreach ($computed as $b) if (is_array($b)) $statBuffs[] = $b;
         }
-      } catch (Throwable $e) {
-        // ignore - stat-buffs er ikke kritiske
-      }
+      } catch (Throwable $e) { /* ignore */ }
     }
 
     // 4) Merge stat-buffs ind i output så server-udbetaling også bruger dem

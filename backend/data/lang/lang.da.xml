@@ -46,7 +46,11 @@
   <entry key="ui.tabs.recipes.h1">Recipes</entry>
   <entry key="ui.tabs.speciel.h1">Special</entry>
 
-  <entry key="ui.statsbuff_badhappiness.h1">Happiness under 25%</entry>
+  <entry key="ui.statsbuff_badhappiness.h1">Happiness under 35%</entry>
+  <entry key="ui.statsbuff_verybadhappiness.h1">Happiness under 10%</entry>
+  <entry key="ui.statsbuff_verygoodpopularity.h1">Popularity er over 70%</entry>
+  <entry key="ui.statsbuff_badpopularity.h1">Popularity under 50%</entry>
+  <entry key="ui.statsbuff_verybadpopularity.h1">Popularity under 10%</entry>
 
   <entry key="ui.animals.h1">Dyr</entry>
   <entry key="ui.fills.h1"></entry>
