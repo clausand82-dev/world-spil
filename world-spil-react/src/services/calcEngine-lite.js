@@ -3,16 +3,50 @@ export function normResId(id) {
   return s.startsWith('res.') ? s.toLowerCase() : `res.${s.toLowerCase()}`;
 }
 
+/**
+ * Hierarkisk og case-insensitiv match af applies_to mod ctx-listen.
+ * - 'all' matcher alt
+ * - Array eller komma/semikolon-separeret streng understøttes
+ * - Hierarki: applies_to 'bld' matcher 'bld.family.l2' (prefix på dot-grænser)
+ */
 function appliesToMatch(applies_to, ctxList) {
+  // Normaliser ctx’er til lower-case strenge
+  const ctxs = (Array.isArray(ctxList) ? ctxList : [ctxList])
+    .map(s => String(s ?? '').trim().toLowerCase())
+    .filter(Boolean);
+
+  if (!applies_to || ctxs.length === 0) return false;
+
+  // Normaliser applies_to til en liste af tokens
+  let arr;
   if (applies_to === 'all') return true;
-  if (!applies_to) return false;
   if (Array.isArray(applies_to)) {
-    return ctxList.some(x => applies_to.includes(x));
+    arr = applies_to.map(x => String(x ?? '').trim().toLowerCase()).filter(Boolean);
+  } else {
+    arr = String(applies_to)
+      .split(/[,;]/)
+      .map(s => s.trim().toLowerCase())
+      .filter(Boolean);
   }
-  const arr = String(applies_to).split(/[,;]/).map(s => s.trim()).filter(Boolean);
-  if (!arr.length) return false;
+  if (arr.length === 0) return false;
   if (arr.includes('all')) return true;
-  return ctxList.some(x => arr.includes(x));
+
+  // Hierarkisk prefix-match: 'bld' matcher 'bld.family.l2'
+  const ctxPrefixes = (s) => {
+    const parts = s.split('.');
+    const res = [];
+    for (let i = 1; i <= parts.length; i++) {
+      res.push(parts.slice(0, i).join('.'));
+    }
+    return res;
+  };
+
+  for (const ctx of ctxs) {
+    const prefixes = ctxPrefixes(ctx);
+    // hvis applies_to indeholder en af prefix’ene, er der match
+    if (arr.some(a => prefixes.includes(a))) return true;
+  }
+  return false;
 }
 
 export function applyCostBuffsToAmount(baseAmount, resId, { appliesToCtx, activeBuffs } = {}) {
@@ -21,54 +55,55 @@ export function applyCostBuffsToAmount(baseAmount, resId, { appliesToCtx, active
 
   let add = 0, sub = 0, mult = 1;
 
-  for (const b of activeBuffs || []) {
+  for (const b of (activeBuffs || [])) {
     if (b.kind !== 'res') continue;
-    // kun cost/both
     if (!(b.mode === 'cost' || b.mode === 'both')) continue;
 
-    // scope matcher resId? (all/solid/liquid/res.xxx)
     const scope = String(b.scope ?? 'all');
     const scopeNorm = scope === 'all' ? 'all' : normResId(scope);
     const scopeOk =
       scopeNorm === 'all' ||
       scopeNorm === normRid ||
-      (scope === 'solid' && normRid.startsWith('res.') /* && isSolid(resId) */) ||
-      (scope === 'liquid' && normRid.startsWith('res.') /* && isLiquid(resId) */);
+      (scope === 'solid' && normRid.startsWith('res.')) ||
+      (scope === 'liquid' && normRid.startsWith('res.'));
     if (!scopeOk) continue;
 
-    // applies_to matcher konteksten?
-    const appliesAll = b.applies_to === 'all';
-    const appliesSome = Array.isArray(b.applies_to) && ctxList.some(x => b.applies_to.includes(x));
-    if (!appliesAll && !appliesSome) {
-      if (!appliesToMatch(b.applies_to, ctxList)) continue;
-    }
+    if (!appliesToMatch(b.applies_to, ctxList)) continue;
 
     if (b.op === 'adds') add += Number(b.amount || 0);
     else if (b.op === 'subt') sub += Number(b.amount || 0);
     else if (b.op === 'mult') {
       const amt = Number(b.amount || 0);
       if (!Number.isFinite(amt)) continue;
-      // VIGTIG REGL: cost-buff 10 => 10% BILLIGERE
-      mult *= (1 - amt / 100);
+      mult *= (1 - amt / 100); // 10 => 10% billigere
     }
   }
 
-  // clamp – ingen negative multipliers eller negative priser
   mult = Math.max(0, mult);
   return Math.max(0, (baseAmount + add - sub) * mult);
 }
 
-// Tilføj denne
+/**
+ * Ensartet speed-beregning:
+ * - Case-insensitiv actions-match (array, komma-streng, 'all')
+ * - Hierarkisk applies_to-match (se appliesToMatch)
+ * - Beholder 80%-cap (mult >= 0.2)
+ */
 export function applySpeedBuffsToDuration(baseS, action, { appliesToCtx, activeBuffs } = {}) {
   const ctxList = Array.isArray(appliesToCtx) ? appliesToCtx : [appliesToCtx];
+
+  // normalisér action til lower-case streng
+  const actionId = String(action ?? 'all').trim().toLowerCase();
+
   let mult = 1;
 
-  const debug = (typeof window !== 'undefined' && !!window.WS_DEBUG_SPEED) || (typeof localStorage !== 'undefined' && localStorage.getItem('WS_DEBUG_SPEED'));
+  const debug = (typeof window !== 'undefined' && !!window.WS_DEBUG_SPEED) ||
+                (typeof localStorage !== 'undefined' && localStorage.getItem('WS_DEBUG_SPEED'));
   if (debug) {
-    console.log('[applySpeedBuffsToDuration] start', { baseS, action, ctxList, activeBuffsLength: (activeBuffs||[]).length });
+    console.log('[applySpeedBuffsToDuration] start', { baseS, action: actionId, ctxList, activeBuffsLength: (activeBuffs||[]).length });
   }
 
-  for (const b of activeBuffs || []) {
+  for (const b of (activeBuffs || [])) {
     try {
       const kind = (b?.kind || '').toLowerCase();
       if (kind !== 'speed') {
@@ -76,7 +111,6 @@ export function applySpeedBuffsToDuration(baseS, action, { appliesToCtx, activeB
         continue;
       }
 
-      // op/type
       const op = (b?.op ?? b?.type ?? '') ? String(b?.op ?? b?.type).toLowerCase() : null;
       if (!op) {
         if (debug) console.log('[applySpeedBuffsToDuration] skip(no op/type)', b?.source_id);
@@ -84,34 +118,34 @@ export function applySpeedBuffsToDuration(baseS, action, { appliesToCtx, activeB
       }
 
       if (op !== 'mult' && op !== 'add' && op !== 'subt') {
-        // only mult currently supported meaningfully; log otherwise
         if (debug) console.log('[applySpeedBuffsToDuration] unknown op (ignored)', op, b?.source_id);
       }
 
-      // actions matching: support array, comma-string, 'all', or property target
+      // actions-match (array/komma-streng/'all'), case-insensitiv
       const actsRaw = b.actions ?? b.target ?? 'all';
       let actionOk = false;
-      if (actsRaw === 'all') actionOk = true;
-      else if (Array.isArray(actsRaw)) actionOk = actsRaw.includes(action);
-      else if (typeof actsRaw === 'string') {
-        const parts = actsRaw.split(/[,;]/).map(s => s.trim()).filter(Boolean);
-        if (parts.includes('all')) actionOk = true;
-        else actionOk = parts.includes(action);
+      if (actsRaw === 'all') {
+        actionOk = true;
+      } else if (Array.isArray(actsRaw)) {
+        const set = new Set(actsRaw.map(x => String(x ?? '').trim().toLowerCase()));
+        actionOk = set.has(actionId);
+      } else if (typeof actsRaw === 'string') {
+        const parts = actsRaw.split(/[,;]/).map(s => s.trim().toLowerCase()).filter(Boolean);
+        actionOk = parts.includes('all') || parts.includes(actionId);
       } else {
-        actionOk = !!actsRaw; // fallback
+        actionOk = !!actsRaw;
       }
       if (!actionOk) {
-        if (debug) console.log('[applySpeedBuffsToDuration] skip(actions)', { actsRaw, action, source: b.source_id });
+        if (debug) console.log('[applySpeedBuffsToDuration] skip(actions)', { actsRaw, action: actionId, source: b.source_id });
         continue;
       }
 
-      // applies_to matching (reuse appliesToMatch function present in this file)
+      // applies_to (hierarkisk)
       if (!appliesToMatch(b.applies_to, ctxList)) {
         if (debug) console.log('[applySpeedBuffsToDuration] skip(applies_to)', { applies_to: b.applies_to, ctxList, source: b.source_id });
         continue;
       }
 
-      // amount numeric
       const rawAmt = b.amount ?? 0;
       const amt = Number(rawAmt);
       if (!Number.isFinite(amt) || amt === 0) {
@@ -120,13 +154,11 @@ export function applySpeedBuffsToDuration(baseS, action, { appliesToCtx, activeB
       }
 
       if (op === 'mult') {
-        // Positive amt => faster (mult < 1). Negative amt => slower (mult > 1)
-        const factor = (1 - amt / 100);
+        const factor = (1 - amt / 100); // +10 => 0.9 (hurtigere)
         if (debug) console.log('[applySpeedBuffsToDuration] apply mult', { amt, factor, beforeMult: mult, source: b.source_id });
         mult *= factor;
         if (debug) console.log('[applySpeedBuffsToDuration] after mult', mult);
       } else {
-        // not used currently for speed but log it
         if (debug) console.log('[applySpeedBuffsToDuration] op not implemented for speed (ignored)', op, b.source_id);
       }
     } catch (err) {
@@ -135,7 +167,7 @@ export function applySpeedBuffsToDuration(baseS, action, { appliesToCtx, activeB
   }
 
   // cap (max 80% hurtigere) + clamp
-  mult = Math.max(0.2, mult); // max 80% hurtigere - NORMAL CAP
+  mult = Math.max(0.2, mult);
 
   if (debug) console.log('[applySpeedBuffsToDuration] final mult=', mult, 'finalSeconds=', Math.max(0, baseS * mult));
   return Math.max(0, baseS * mult);

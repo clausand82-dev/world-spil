@@ -35,8 +35,8 @@ export default function ActiveRecipes({ defs: defsProp, state: stateProp, stage:
    const recipeDefs = defs?.rcp || {};
    // Shared cache so requirementInfo can see active buffs
    const requirementCaches = React.useMemo(() => {
-     return { activeBuffs: collectActiveBuffs(defs) || [] };
-   }, [defs]);
+  return { activeBuffs: collectActiveBuffs(defs, state, data) || [] };
+}, [defs, state, JSON.stringify(data?.activeBuffs || [])]);
 
   // (moved) availableTypes computed later after ownedBuildingFamilies / ownedBldMax / ownedAddMax are defined
   const [activeType, setActiveType] = useState('all');

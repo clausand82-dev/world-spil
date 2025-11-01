@@ -57,7 +57,7 @@ function BuildingRowInner({ bld, state: propState, defs, requirementCaches }) {
   const reqInfo = useMemo(() => {
     try {
       const id = bld.id || def?.id || '';
-      const caches = { activeBuffs: collectActiveBuffs(defs) };
+      const caches = { activeBuffs: collectActiveBuffs(defs, gameState, data) };
       return requirementInfo(
         {
           id,

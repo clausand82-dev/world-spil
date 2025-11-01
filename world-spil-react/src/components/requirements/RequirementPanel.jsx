@@ -27,7 +27,7 @@ export default function RequirementPanel({
   const { data } = useGameData(); // fallback source of truth
   const gameState = state || data?.state || {};
 
-  const activeBuffs = requirementCaches?.activeBuffs ?? useMemo(() => collectActiveBuffs(defs), [defs]);
+ const activeBuffs = requirementCaches?.activeBuffs ?? useMemo(() => collectActiveBuffs(defs, gameState, data), [defs, gameState, JSON.stringify(data?.activeBuffs || [])]);
 
   const requirement = useMemo(() => {
     if (!def) return null;

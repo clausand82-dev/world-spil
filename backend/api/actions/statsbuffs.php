@@ -147,7 +147,7 @@ if (!function_exists('compute_stats_buffs')) {
                 'name' => 'Low happiness',
                 'metric' => 'happiness_percentage',
                 'op' => 'lt',
-                'value' => 25,
+                'value' => 0,
                 'effect' => [
                     'kind' => 'res',
                     'scope' => 'res.money',
@@ -199,7 +199,7 @@ if (!function_exists('compute_stats_buffs')) {
                     'kind' => 'speed',
                     'actions' => 'all',
                     'op' => 'mult',
-                    'calc' => ['type' => 'fixed_multiplier', 'multiplier' => 1, 'cap_pct' => 30],
+                    'calc' => ['type' => 'fixed_multiplier', 'multiplier' => 0.5, 'cap_pct' => 30],
                 ],
                 'applies_to' => 'all',
             ],

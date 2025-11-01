@@ -45,7 +45,7 @@ export default function ResearchPage() {
   // --- Beregn caches (som BuildingDetailPage bruger) for at få korrekt base vs buffed duration ---
   const ownedBuildings = useMemo(() => computeOwnedMap(state.bld || {}), [state.bld]);
   const ownedAddons = useMemo(() => computeOwnedMap(state.add || {}), [state.add]);
-  const activeBuffs = useMemo(() => collectActiveBuffs(defs), [defs]);
+  const activeBuffs = useMemo(() => collectActiveBuffs(defs, state, data), [defs, state, JSON.stringify(data?.activeBuffs || [])]);
 
   const requirementCaches = useMemo(() => ({
     ownedBuildings,

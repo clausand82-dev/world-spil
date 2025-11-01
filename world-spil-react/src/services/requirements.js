@@ -22,8 +22,9 @@ export function collectActiveBuffs(defs, state, serverData) {
     Object.values(bag).forEach(def => push(def?.buffs));
   }
 
-  // 2) Hvis caller ikke gav serverData, prøv global fallback (GameDataContext sætter window.__WORLD_SPIL_GAME_DATA)
+  // 2) Server-data (hvis givet) — fletter ind
   let sd = serverData;
+  // Fallback til global cache kun hvis caller ikke gav serverData
   if (!sd) {
     try {
       if (typeof window !== 'undefined' && window.__WORLD_SPIL_GAME_DATA) {
@@ -34,11 +35,10 @@ export function collectActiveBuffs(defs, state, serverData) {
     } catch (e) {}
   }
 
-  // 3) Merge server buffs (append)
   const fromServer = (sd && Array.isArray(sd.activeBuffs)) ? sd.activeBuffs : [];
   if (fromServer.length) out.push(...fromServer.map(b => ({ ...b })));
 
-  // 4) Deduplikér efter source_id (sidste forekomst vinder — det lader server overskrive def hvis begge findes)
+  // 3) Deduplikér efter source_id (seneste vinder)
   const keyed = new Map();
   for (const b of out) {
     const sid = String(b?.source_id ?? b?.id ?? '') || `__anon_${Math.random().toString(36).slice(2,8)}`;
@@ -46,16 +46,18 @@ export function collectActiveBuffs(defs, state, serverData) {
   }
   const merged = Array.from(keyed.values());
 
-  // 5) Normaliser felter for tolerance
+  // 4) Normalisering (tolerant)
   function normalizeBuff(b) {
     if (!b || typeof b !== 'object') return b;
     const nb = { ...b };
     nb.kind = String(nb.kind ?? nb.type ?? '').toLowerCase();
-    nb.op = nb.op ?? nb.type ?? null;
+    nb.op = (nb.op ?? nb.type ?? null) ? String(nb.op ?? nb.type).toLowerCase() : null;
     nb.applies_to = nb.applies_to ?? nb.appliesTo ?? nb.scope ?? 'all';
+
+    // normalize actions
     if (nb.actions == null && nb.target != null) nb.actions = nb.target;
     if (Array.isArray(nb.actions)) {
-      // keep
+      nb.actions = nb.actions.map(x => String(x ?? '').trim().toLowerCase());
     } else if (typeof nb.actions === 'string') {
       const s = nb.actions.trim();
       nb.actions = s === '' ? 'all' : s;
@@ -63,6 +65,7 @@ export function collectActiveBuffs(defs, state, serverData) {
       nb.actions = nb.actions ?? 'all';
     }
 
+    // normalize amount — understøt calc.fixed_multiplier
     if (nb.amount != null && nb.amount !== '') {
       nb.amount = Number(nb.amount);
       if (!Number.isFinite(nb.amount)) nb.amount = 0;
@@ -77,7 +80,6 @@ export function collectActiveBuffs(defs, state, serverData) {
       nb.amount = Number(nb.amount || 0);
     }
 
-    if (nb.op != null) nb.op = String(nb.op).toLowerCase();
     nb.applies_to = nb.applies_to ?? 'all';
     nb.actions = nb.actions ?? 'all';
     return nb;
@@ -85,7 +87,7 @@ export function collectActiveBuffs(defs, state, serverData) {
 
   const normalized = merged.map(normalizeBuff);
 
-  // 6) Debug: vis speed-entries hvis debug flag sat
+  // 5) Debug
   try {
     const debugFlag2 = (typeof window !== 'undefined' && !!window.WS_DEBUG_SPEED) || (typeof localStorage !== 'undefined' && localStorage.getItem('WS_DEBUG_SPEED'));
     if (debugFlag2) {

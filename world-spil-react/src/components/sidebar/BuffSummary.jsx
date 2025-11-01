@@ -1,6 +1,7 @@
 import React from 'react';
 import { useGameData } from '../../context/GameDataContext.jsx';
 import { useT } from '../../services/i18n.js';
+import { collectActiveBuffs } from '../../services/requirements.js';
 import Icon from '../../components/ui/Icon.jsx';
 
 // Rich icon / label map — kan udvides eller ændres til filnavne fra defs
@@ -252,6 +253,7 @@ export default function BuffSummary() {
   const t = useT();
   const defs = data?.defs ?? {};
   const activeBuffs = Array.isArray(data?.activeBuffs) ? data.activeBuffs : (Array.isArray(data?.state?.buffs) ? data.state.buffs : (Array.isArray(data?.state?.activeBuffs) ? data.state.activeBuffs : []));
+  
 
   if (!activeBuffs || activeBuffs.length === 0) {
     return (
